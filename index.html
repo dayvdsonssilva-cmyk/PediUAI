@@ -349,6 +349,30 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 .es{text-align:center;padding:2.5rem 1rem;color:var(--ink3);}
 .es .ei{font-size:2.6rem;margin-bottom:.85rem;}
 .es p{font-size:.82rem;}
+/* HERO WRAP + PHONE */
+.hero-wrap{flex:1;display:grid;grid-template-columns:1fr 420px;align-items:center;gap:2rem;padding:2rem 2rem 3rem;max-width:1200px;width:100%;margin:0 auto;}
+@media(max-width:960px){.hero-wrap{grid-template-columns:1fr;padding:2rem 1.8rem 3rem;}.phone-scene{display:flex;justify-content:center;}}
+@media(max-width:640px){.phone-scene{display:none;}}
+.hero{max-width:520px;}
+.phone-scene{perspective:1000px;display:flex;align-items:center;justify-content:center;}
+.phone-wrap{transform-style:preserve-3d;transition:transform .1s ease;animation:floatPhone 4s ease-in-out infinite;}
+@keyframes floatPhone{0%,100%{transform:translateY(0) rotateY(-8deg) rotateX(4deg);}50%{transform:translateY(-12px) rotateY(-8deg) rotateX(4deg);}}
+.phone-frame{width:240px;background:#111;border-radius:36px;padding:10px;box-shadow:0 32px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.08),inset 0 1px 0 rgba(255,255,255,.15);}
+.phone-notch{width:70px;height:14px;background:#111;border-radius:0 0 10px 10px;margin:0 auto 6px;position:relative;z-index:2;}
+.phone-screen{background:#FFF9F6;border-radius:28px;overflow:hidden;min-height:380px;}
+.ps-header{background:var(--brand);color:#fff;padding:.7rem .9rem;display:flex;align-items:center;gap:.6rem;}
+.ps-emoji{font-size:1.5rem;}
+.ps-name{font-family:'Poppins',sans-serif;font-weight:700;font-size:.75rem;}
+.ps-sub{font-size:.58rem;opacity:.75;margin-top:.1rem;}
+.ps-items{padding:.6rem;}
+.ps-item{display:flex;align-items:center;gap:.5rem;background:#fff;border-radius:8px;padding:.4rem;margin-bottom:.35rem;border:1px solid #EDE5DF;}
+.ps-item-img{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ps-item-info{flex:1;min-width:0;}
+.ps-item-name{font-size:.58rem;font-weight:700;color:#1A1208;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ps-item-price{font-size:.6rem;font-weight:800;color:var(--brand);margin-top:.08rem;}
+.ps-add{width:20px;height:20px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;flex-shrink:0;cursor:pointer;}
+.ps-cart{margin:.4rem .6rem .6rem;background:var(--brand);border-radius:8px;padding:.45rem .7rem;display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:.62rem;font-weight:700;}
+
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 .pulse{animation:pulse 2s infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -356,8 +380,43 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 /* CEO STORE DETAIL MODAL */
 .ceo-store-detail{background:var(--white);border-radius:var(--r);padding:1.2rem;margin-top:.9rem;}
 /* RESPONSIVE */
+
+/* MOBILE FIXES */
+@media(max-width:480px){
+  .lh{padding:1rem 1.1rem;}
+  .logo{font-size:1.3rem;}
+  .lh-btns .btn{padding:.38rem .7rem;font-size:.72rem;}
+  .hero{padding:1.8rem 1.2rem 2.2rem;}
+  .hero h1{font-size:2rem;}
+  .hero p{font-size:.88rem;}
+  .hero-stats{gap:1.2rem;margin-top:1.8rem;padding-top:1.5rem;}
+  .snum{font-size:1.3rem;}
+  .auth-card{padding:1.4rem;border-radius:14px;margin:.4rem;}
+  .auth-wrap{padding:1rem .8rem;}
+  .dash-content{padding:.9rem;}
+  .mg{grid-template-columns:1fr;}
+  .plan-grid{grid-template-columns:1fr;}
+  .sg{grid-template-columns:1fr 1fr;}
+  /* checkout mobile */
+  .co-content{padding:1rem 1rem 7rem;}
+  .co-footer{padding:.75rem 1rem;}
+  /* confirm-data mobile */
+  #s-confirm-data > div{padding:1rem .9rem;}
+  /* store hero */
+  .s-hero{padding:1.4rem 1.1rem 1.1rem;}
+  /* dashboard nav */
+  .dash-nav{padding:0 1rem;height:50px;}
+  /* CEO login */
+  .ceo-lc{padding:1.5rem;}
+}
+@media(max-width:360px){
+  .mg{grid-template-columns:1fr;}
+  .lh-btns{gap:.25rem;}
+  .sg{grid-template-columns:1fr 1fr;}
+  .plan-grid{grid-template-columns:1fr;}
+}
 @media(min-width:768px){
-  #s-store,#s-checkout,#s-confirm{box-shadow:0 0 0 1px var(--border),0 20px 60px rgba(26,18,8,.08);border-radius:18px;margin-top:1.5rem;margin-bottom:1.5rem;min-height:auto;}
+  #s-store,#s-checkout,#s-confirm,#s-confirm-data{box-shadow:0 0 0 1px var(--border),0 20px 60px rgba(26,18,8,.08);border-radius:18px;margin-top:1.5rem;margin-bottom:1.5rem;min-height:auto;}
   .mb{align-items:center;padding:1rem;}
   .mo{border-radius:22px;max-width:480px;margin:0 auto;}
   #s-ceo-login{display:none;align-items:center;justify-content:center;}
@@ -379,21 +438,78 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <div class="logo">PEDI<span>WAY</span></div>
     <div class="lh-btns">
       <button class="btn btn-ghost" onclick="goTo('s-login')">Entrar</button>
-      <button class="btn btn-primary" onclick="goTo('s-register')">Teste grátis 7 dias</button>
+      <button class="btn btn-primary" onclick="goTo('s-register')">Cadastrar</button>
     </div>
   </header>
-  <div class="hero">
-    <span class="badge">🚀 Plataforma delivery independente</span>
-    <h1>Seu cardápio.<br>Sua marca.<br><em>Seu lucro.</em></h1>
-    <p>Crie sua loja digital em minutos, compartilhe o link e receba pedidos. Sem comissão por venda — só uma mensalidade justa.</p>
-    <div style="display:flex;gap:.6rem;flex-wrap:wrap">
-      <button class="btn btn-primary" onclick="goTo('s-register')" style="font-size:.9rem;padding:.85rem 1.6rem">Testar grátis por 7 dias →</button>
-      <button class="btn btn-ghost" onclick="openDemo()">Ver demo</button>
+  <div class="hero-wrap">
+    <div class="hero">
+      <span class="badge">🚀 Plataforma delivery independente</span>
+      <h1>Seu cardápio.<br>Sua marca.<br><em>Seu lucro.</em></h1>
+      <p>Crie sua loja digital em minutos, compartilhe o link e receba pedidos. Sem comissão por venda — só uma mensalidade justa.</p>
+      <div style="display:flex;gap:.65rem;flex-wrap:wrap;margin-bottom:2rem">
+        <button class="btn btn-primary" onclick="goTo('s-register')" style="font-size:.9rem;padding:.85rem 1.6rem">Cadastrar →</button>
+        <button class="btn btn-ghost" onclick="openDemo()">Ver demo</button>
+      </div>
+      <div class="hero-stats">
+        <div><div class="snum">R$0</div><div class="slbl">comissão por venda</div></div>
+        <div><div class="snum">100%</div><div class="slbl">do lucro é seu</div></div>
+        <div><div class="snum">∞</div><div class="slbl">pedidos ilimitados</div></div>
+      </div>
     </div>
-    <div class="hero-stats">
-      <div><div class="snum">R$0</div><div class="slbl">comissão por venda</div></div>
-      <div><div class="snum">7 dias</div><div class="slbl">grátis pra testar</div></div>
-      <div><div class="snum">100%</div><div class="slbl">do lucro é seu</div></div>
+    <!-- PHONE MOCKUP 3D -->
+    <div class="phone-scene" id="phone-scene">
+      <div class="phone-wrap" id="phone-wrap">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="ps-header">
+              <div class="ps-emoji">🍔</div>
+              <div>
+                <div class="ps-name">Burguer do Zé</div>
+                <div class="ps-sub">⭐ 4.9 · 🛵 30-40 min</div>
+              </div>
+            </div>
+            <div class="ps-items">
+              <div class="ps-item">
+                <div class="ps-item-img" style="background:#FDF1EC;font-size:1.4rem">🍔</div>
+                <div class="ps-item-info">
+                  <div class="ps-item-name">X-Burguer Especial</div>
+                  <div class="ps-item-price">R$ 28,90</div>
+                </div>
+                <div class="ps-add">+</div>
+              </div>
+              <div class="ps-item">
+                <div class="ps-item-img" style="background:#EAF7F0;font-size:1.4rem">🍟</div>
+                <div class="ps-item-info">
+                  <div class="ps-item-name">Batata Frita Grande</div>
+                  <div class="ps-item-price">R$ 14,90</div>
+                </div>
+                <div class="ps-add">+</div>
+              </div>
+              <div class="ps-item">
+                <div class="ps-item-img" style="background:#F5F3FF;font-size:1.4rem">🥤</div>
+                <div class="ps-item-info">
+                  <div class="ps-item-name">Refrigerante 350ml</div>
+                  <div class="ps-item-price">R$ 7,90</div>
+                </div>
+                <div class="ps-add">+</div>
+              </div>
+              <div class="ps-item">
+                <div class="ps-item-img" style="background:#FDF1EC;font-size:1.4rem">🧁</div>
+                <div class="ps-item-info">
+                  <div class="ps-item-name">Sundae de Chocolate</div>
+                  <div class="ps-item-price">R$ 11,90</div>
+                </div>
+                <div class="ps-add">+</div>
+              </div>
+            </div>
+            <div class="ps-cart">
+              <span>🛒 2 itens</span>
+              <span style="font-weight:800">R$ 43,80</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -409,7 +525,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <div class="fg"><label>E-mail</label><input type="email" id="le" placeholder="seu@email.com" autocomplete="email"><div class="ferr" id="lerr">E-mail inválido</div></div>
     <div class="fg"><label>Senha</label><input type="password" id="lp" placeholder="••••••••" autocomplete="current-password"></div>
     <button class="btn btn-brand btn-full" style="margin-top:.4rem" onclick="doLogin()">Entrar no painel</button>
-    <div class="auth-sw">Não tem conta? <a onclick="goTo('s-register')">Teste grátis 7 dias</a></div>
+    <div class="auth-sw">Não tem conta? <a onclick="goTo('s-register')">Cadastrar</a></div>
     <div class="auth-sw" style="margin-top:.4rem"><a onclick="openDemo()" style="color:var(--ink3)">Ver demo →</a></div>
   </div>
 </div>
@@ -421,7 +537,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
       <button class="back-ico" onclick="goTo('sl')">←</button>
       <div class="auth-logo">PEDI<span>WAY</span></div>
     </div>
-    <div class="auth-sub">Crie sua loja — 7 dias grátis, sem cartão</div>
+    <div class="auth-sub">Crie sua conta gratuitamente</div>
     <div class="fg">
       <label>Logo do estabelecimento</label>
       <div class="logo-upload" id="logo-upload-area" onclick="document.getElementById('logo-file').click()">
@@ -436,7 +552,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <div class="fg"><label>E-mail *</label><input type="email" id="remail" placeholder="seu@email.com" autocomplete="email"><div class="ferr" id="remailerr">E-mail inválido</div></div>
     <div class="fg"><label>WhatsApp (DDI+DDD+número)</label><input type="text" id="rwpp" placeholder="5535999999999" inputmode="numeric"></div>
     <div class="fg"><label>Senha * (mínimo 6 caracteres)</label><input type="password" id="rpass" placeholder="••••••••" autocomplete="new-password"><div class="ferr" id="rpasserr">Mínimo 6 caracteres</div></div>
-    <button class="btn btn-brand btn-full" style="margin-top:.4rem" onclick="doRegister()">Continuar para plano →</button>
+    <button class="btn btn-brand btn-full" style="margin-top:.4rem" onclick="doRegister()">Cadastrar →</button>
     <div class="auth-sw">Já tem conta? <a onclick="goTo('s-login')">Entrar</a></div>
   </div>
 </div>
@@ -447,11 +563,11 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   <div style="max-width:520px;margin:0 auto;padding:1.4rem">
     <div style="text-align:center;margin-bottom:1.4rem">
       <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.2rem;margin-bottom:.3rem">Qual plano combina com você?</div>
-      <div style="font-size:.82rem;color:var(--ink3)">7 dias grátis em qualquer plano. Cancele quando quiser.</div>
+      <div style="font-size:.82rem;color:var(--ink3)">Plano básico ou ultra — escolha o que combina com você.</div>
     </div>
     <div class="billing-toggle">
       <div class="billing-opt active" onclick="setBilling('monthly',this)">Mensal</div>
-      <div class="billing-opt" onclick="setBilling('annual',this)">Anual <span style="color:var(--success);font-size:.7rem;font-weight:700">− 25%</span></div>
+      <div class="billing-opt" onclick="setBilling('annual',this)">Anual <span style="color:var(--success);font-size:.7rem;font-weight:700">-25%</span></div>
     </div>
     <div class="plan-grid">
       <div class="plan-card" id="plan-basico" onclick="selectPlan('basico')">
@@ -475,12 +591,17 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
         <div class="plan-mo">/mês</div>
         <div class="plan-annual" id="annual-ultra" style="display:none">cobrado anualmente: R$ 958,80</div>
         <div class="plan-features">
-          <div class="plan-feat">✅ Tudo do Básico</div>
+          <div class="plan-feat">✅ Cardápio digital</div>
+          <div class="plan-feat">✅ Pedidos ilimitados</div>
+          <div class="plan-feat">✅ Link do cliente</div>
+          <div class="plan-feat">✅ 🔥 Fresquinho (stories)</div>
           <div class="plan-feat">✅ Financeiro completo</div>
           <div class="plan-feat">✅ Relatórios 90 dias</div>
-          <div class="plan-feat">✅ Fechamento de caixa</div>
-          <div class="plan-feat">✅ Suporte prioritário</div>
+          <div class="plan-feat">✅ Fechamento de caixa diário</div>
+          <div class="plan-feat">✅ Histórico de vendas</div>
+          <div class="plan-feat">✅ Controle por categoria</div>
           <div class="plan-feat">✅ IA de automação</div>
+          <div class="plan-feat">✅ Suporte prioritário</div>
         </div>
       </div>
     </div>
@@ -499,15 +620,22 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 
 <!-- PENDING -->
 <div class="screen" id="s-pending">
-  <span style="font-size:3.5rem;margin-bottom:1.2rem">⏳</span>
-  <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.5rem;margin-bottom:.6rem">Cadastro em análise!</div>
-  <div style="font-size:.9rem;color:rgba(255,255,255,.65);max-width:340px;line-height:1.7;margin-bottom:2rem">Recebemos seu pedido e pagamento. Nossa equipe vai revisar e ativar sua conta em até 24h. Você receberá um e-mail assim que estiver liberado!</div>
-  <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:1rem 1.4rem;max-width:340px;width:100%;margin-bottom:1.5rem">
-    <div style="font-size:.75rem;color:rgba(255,255,255,.4);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">Seus dados de acesso</div>
-    <div style="font-size:.85rem;margin-bottom:.2rem">📧 <span id="pend-email" style="font-weight:600"></span></div>
-    <div style="font-size:.85rem">🔑 Senha definida no cadastro</div>
+  <div style="max-width:420px;margin:auto;text-align:center;padding:2rem">
+    <div style="font-size:4rem;margin-bottom:1rem;display:block">✅</div>
+    <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.5rem;color:#fff;margin-bottom:.6rem">Cadastro recebido!</div>
+    <div style="font-size:.9rem;color:rgba(255,255,255,.65);line-height:1.75;margin-bottom:1.5rem">Recebemos seu cadastro, iremos ativar em breve.<br>Assim que sua conta estiver pronta, você receberá um e-mail.</div>
+    <div style="background:rgba(255,255,255,.08);border-radius:var(--r);padding:1rem 1.5rem;margin-bottom:1.8rem">
+      <div style="font-size:.74rem;color:rgba(255,255,255,.45);margin-bottom:.25rem">E-mail cadastrado:</div>
+      <div style="font-size:1rem;font-weight:700;color:#fff" id="pend-email">—</div>
+    </div>
+    <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:1.5rem;text-align:left">
+      <div style="font-size:.75rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.65rem;text-transform:uppercase;letter-spacing:.05em">Próximos passos</div>
+      <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.55rem;font-size:.82rem;color:rgba(255,255,255,.75)"><span style="width:22px;height:22px;background:rgba(74,222,128,.2);color:#4ade80;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex-shrink:0">✓</span>Cadastro enviado com sucesso</div>
+      <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.55rem;font-size:.82rem;color:rgba(255,255,255,.75)"><span style="width:22px;height:22px;background:rgba(251,191,36,.15);color:#fbbf24;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex-shrink:0">2</span>Revisão da equipe PEDIWAY (até 24h)</div>
+      <div style="display:flex;align-items:center;gap:.65rem;font-size:.82rem;color:rgba(255,255,255,.4)"><span style="width:22px;height:22px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex-shrink:0">3</span>Login liberado por e-mail</div>
+    </div>
+    <button class="btn btn-brand btn-full" onclick="goTo('sl')" style="padding:.88rem;font-size:.92rem">← Voltar ao início</button>
   </div>
-  <button class="btn btn-ghost" onclick="goTo('sl')">← Voltar ao início</button>
 </div>
 
 <!-- DASHBOARD -->
@@ -530,7 +658,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   <div class="dash-content">
     <!-- OVERVIEW -->
     <div class="tp active" id="t-ov">
-      <div class="lb"><div><div style="font-size:.66rem;color:var(--brand);font-weight:700;margin-bottom:.15rem;text-transform:uppercase;letter-spacing:.05em">Link do seu cardápio</div><div class="lu" id="dash-link">pediway.com.br/demo</div></div><button class="cb" onclick="copyLink()">Copiar</button></div>
+      <div class="lb"><div><div style="font-size:.66rem;color:var(--brand);font-weight:700;margin-bottom:.15rem;text-transform:uppercase;letter-spacing:.05em">Link do seu cardápio</div><div class="lu" id="dash-link">pediway.com.br/restaurante/demo</div></div><button class="cb" onclick="copyLink()">Copiar</button></div>
       <div class="sg">
         <div class="sc"><div class="sc-lbl">Pedidos hoje</div><div class="sc-val o" id="st-today">0</div></div>
         <div class="sc"><div class="sc-lbl">Faturamento hoje</div><div class="sc-val g" id="st-rev">R$ 0,00</div></div>
@@ -778,6 +906,30 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   </div>
 </div>
 
+<!-- CONFIRM DATA SCREEN -->
+<div class="screen" id="s-confirm-data">
+  <div class="back-bar"><button class="back-ico" onclick="goTo('s-checkout')">←</button><span class="back-title">Confirmar pedido</span></div>
+  <div style="max-width:480px;margin:0 auto;padding:1.3rem">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem;margin-bottom:1rem">
+      <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.4rem">📋 Resumo do pedido</div>
+      <div id="confirm-data-items" style="margin-bottom:.85rem;font-size:.84rem;color:var(--ink2);line-height:1.7"></div>
+      <div style="display:flex;justify-content:space-between;padding-top:.75rem;border-top:1px solid var(--border);font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem">
+        <span>Total</span><span style="color:var(--brand)" id="confirm-data-total">R$ 0,00</span>
+      </div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem;margin-bottom:1rem">
+      <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:.75rem">📍 Dados de entrega</div>
+      <div id="confirm-data-delivery" style="font-size:.84rem;color:var(--ink2);line-height:1.8"></div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem;margin-bottom:1.2rem">
+      <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:.75rem">💳 Pagamento</div>
+      <div id="confirm-data-payment" style="font-size:.84rem;color:var(--ink2)"></div>
+    </div>
+    <button class="btn btn-brand btn-full" style="padding:.9rem;font-size:.95rem" onclick="confirmAndSendOrder()">Confirmar e enviar pedido ✅</button>
+    <button class="btn btn-outline btn-full" style="padding:.85rem;font-size:.88rem;margin-top:.65rem" onclick="goTo('s-checkout')">← Editar pedido</button>
+  </div>
+</div>
+
 <!-- CONFIRM - ARTE LINDA -->
 <div class="screen" id="s-confirm">
   <div class="conf-art" id="conf-art">
@@ -800,15 +952,15 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
       </div>
       <div class="game-area" id="game-area">
         <div class="game-start-msg" id="game-start-msg">
-          <h3>Divirta-se enquanto espera!</h3>
-          <p>Clique no lanche antes que ele escape</p>
-          <button class="game-start-btn" onclick="startGame()">Jogar agora →</button>
+          <h3>🍔 Pega o Lanche!</h3>
+          <p>Toque no lanche antes que ele escape</p>
+          <button class="game-start-btn" onclick="startGame()">Jogar →</button>
         </div>
-        <div class="game-burger" id="game-burger" style="display:none" onclick="clickBurger()">🍔</div>
+        <div class="game-burger" id="game-burger" style="display:none">🍔</div>
         <div class="game-over-msg" id="game-over" style="display:none">
-          <div style="font-size:2.5rem;margin-bottom:.5rem">🏆</div>
-          <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:.3rem">Fim de jogo!</div>
-          <div style="font-size:.85rem;opacity:.75;margin-bottom:.9rem">Você pegou <strong id="final-score" style="color:var(--brand)">0</strong> lanches!</div>
+          <div style="font-size:2.2rem;margin-bottom:.4rem">🏆</div>
+          <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;margin-bottom:.25rem">Fim de jogo!</div>
+          <div style="font-size:.82rem;opacity:.75;margin-bottom:.8rem">Pontuação: <strong id="final-score" style="color:var(--brand)">0</strong></div>
           <button class="game-start-btn" onclick="startGame()">Jogar de novo</button>
         </div>
       </div>
@@ -887,6 +1039,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 </div>
 
 <script>
+function el(id) { return document.getElementById(id); }
 // ─── STATE ────────────────────────────────────────────────────────────────
 const LS = {
   get: (k) => { try { return JSON.parse(localStorage.getItem('pw_'+k)); } catch(e) { return null; } },
@@ -1014,6 +1167,29 @@ function goTo(id) {
 
 // Hash-based routing for store links
 function initRouting() {
+  // Support /restaurante/slug path (Vercel SPA routing via vercel.json rewrites)
+  const path = window.location.pathname;
+  const pathMatch = path.match(/\/restaurante\/([\w-]+)/);
+  if (pathMatch) {
+    const slug = pathMatch[1];
+    // Try demo first
+    if (slug === 'demo') { openDemo(); return true; }
+    const users = getUsers();
+    // Match by slug (strip timestamp suffix for matching)
+    const user = users.find(u => u.slug === slug && u.status === 'active')
+      || users.find(u => u.slug.startsWith(slug.replace(/-[a-z0-9]+$/, '')) && u.status === 'active');
+    if (user) {
+      currentUser = user;
+      currentStoreSlug = user.slug;
+      goTo('s-store');
+      return true;
+    }
+    // Slug not found — show landing with message
+    showNotif('🔍 Loja não encontrada', 'Verifique o link e tente novamente.');
+    return false;
+  }
+
+  // Hash routing fallback (#store-slug or #demo)
   const hash = window.location.hash;
   if (hash.startsWith('#store-')) {
     const slug = hash.replace('#store-','');
@@ -1021,12 +1197,12 @@ function initRouting() {
     const user = users.find(u => u.slug === slug && u.status === 'active');
     if (user) {
       currentUser = user;
-      currentStoreSlug = slug;
+      currentStoreSlug = user.slug;
       goTo('s-store');
       return true;
     }
   }
-  if (hash === '#demo') { openDemo(); return true; }
+  if (hash === '#demo' || hash === '#/demo') { openDemo(); return true; }
   return false;
 }
 
@@ -1057,7 +1233,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key && e.key.length === 1 && /\d/.test(e.key)) {
     secretSeq += e.key;
     if (secretSeq.length > 8) secretSeq = secretSeq.slice(-8);
-    if (secretSeq === '35585201') { secretSeq = ''; goTo('s-ceo-login'); }
+    if (secretSeq === '35585201') { secretSeq = ''; goTo('s-ceo'); renderCeo(); }
   } else if (e.key === 'Escape') { secretSeq = ''; }
 });
 
@@ -1090,7 +1266,29 @@ function doRegister() {
   show('remailerr','remail', isEmail(document.getElementById('remail').value));
   show('rpasserr','rpass', document.getElementById('rpass').value.length >= 6);
   if (!ok) return;
-  goTo('s-payment');
+
+  const name = document.getElementById('rn').value.trim();
+  const email = document.getElementById('remail').value.trim();
+  const pass = document.getElementById('rpass').value;
+  const doc = document.getElementById('rdoc').value;
+  const wp = document.getElementById('rwpp').value;
+  const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') + '-' + Date.now().toString(36);
+  const logoData = document.getElementById('logo-preview').src || null;
+  const newUser = {
+    id: Date.now().toString(), name,
+    desc: document.getElementById('rdesc').value,
+    emoji: '🍔', color: '#E8410A', slug,
+    logo: logoData && logoData.startsWith('data:') ? logoData : null,
+    email, pass, whatsapp: digits(wp||'5511999999999'),
+    plan: 'basico', status: 'pending', dueDate: '',
+    payMethod: '', since: new Date().toISOString().slice(0,10),
+    doc, orders: [], menuItems: [], flashItems: [], welcome: 'Seja bem-vindo!'
+  };
+  const solics = getSolicitations();
+  solics.push({...newUser, submittedAt: new Date().toLocaleDateString('pt-BR')});
+  setSolicitations(solics);
+  document.getElementById('pend-email').textContent = email;
+  goTo('s-pending');
 }
 
 function previewLogo(input) {
@@ -1170,7 +1368,8 @@ function renderDashboard() {
   if (!currentUser) return;
   const u = currentUser;
   document.getElementById('dash-sname').textContent = u.name;
-  document.getElementById('dash-link').textContent = 'pediway.com.br/#store-' + u.slug;
+  const slug = u.slug || 'demo';
+  document.getElementById('dash-link').textContent = 'pediway.com.br/restaurante/' + slug;
   document.getElementById('st-items').textContent = (u.menuItems||[]).filter(i=>i.available).length;
   document.getElementById('st-plan').textContent = u.plan === 'ultra' ? 'Ultra 🚀' : 'Básico';
   // Plan feature lock
@@ -1521,20 +1720,14 @@ function selPayment(el,m){document.querySelectorAll('.po').forEach(o=>o.classLis
 function placeOrder(){
   const name=document.getElementById('cl-name').value.trim();
   const phone=document.getElementById('cl-phone').value.trim();
-  const addr=deliveryType==='delivery'?document.getElementById('cl-addr').value.trim():'Retirada no local';
-  if(!name||!phone||(deliveryType==='delivery'&&!document.getElementById('cl-addr').value.trim())){alert('Preencha nome, telefone'+(deliveryType==='delivery'?' e endereço':''));return;}
-  orderCounter++;
-  const total=cart.reduce((s,c)=>s+c.qty*c.price,0);
-  const order={id:'#'+orderCounter,client:name,phone,address:addr,delivery:deliveryType,items:cart.map(c=>({name:c.name,qty:c.qty,price:c.price})),payment:selectedPayment,total,status:'new',time:'agora',ts:Date.now()};
-  if(!currentUser.orders) currentUser.orders=[];
-  currentUser.orders.unshift(order);
-  saveCurrentUser();
-  document.getElementById('conf-order-id').textContent=order.id;
-  cart=[]; updateCartUI();
-  showNotif('🎉 Novo pedido!','Pedido '+order.id+' recebido!');
-  spawnParticles();
-  goTo('s-confirm');
+  if(!name||!phone){alert('Preencha nome e telefone');return;}
+  if(deliveryType==='delivery'&&!document.getElementById('cl-addr').value.trim()){alert('Preencha o endereço de entrega');return;}
+  if(cart.length===0){alert('Carrinho vazio');return;}
+  buildConfirmData();
+  goTo('s-confirm-data');
 }
+
+
 function openWhatsApp(){
   const orders=currentUser?.orders||[]; const o=orders[0]; if(!o) return;
   const msg=encodeURIComponent(`Olá! Fiz um pedido pelo PEDIWAY 🎉\n\nPedido ${o.id}\nNome: ${o.client}\nTelefone: ${o.phone}\nEntrega: ${o.delivery==='pickup'?'Retirada':'Entrega - '+o.address}\nItens: ${o.items.map(i=>`${i.qty}x ${i.name}`).join(', ')}\nPagamento: ${o.payment}\nTotal: R$ ${o.total.toFixed(2).replace('.',',')}`);
@@ -1614,7 +1807,7 @@ function doCeoLogin(){
   const e=document.getElementById('ceo-email').value.trim();
   const p=document.getElementById('ceo-pass').value;
   const err=document.getElementById('ceo-err');
-  if(e==='ceo@pediway.com.br'&&p==='35585201'){err.style.display='none';goTo('s-ceo');}
+  if(e==='ceo@pediway.com.br'&&p==='35585201'){err.style.display='none';goTo('s-ceo');renderCeo();}
   else{err.style.display='block';}
 }
 
@@ -1686,7 +1879,7 @@ function viewCeoStore(i){
   const det=document.getElementById('ceo-store-detail');
   det.style.display='block';
   document.getElementById('csd-name').textContent=u.name;
-  document.getElementById('csd-link').textContent='pediway.com.br/#store-'+u.slug;
+  document.getElementById('csd-link').textContent='pediway.com.br/restaurante/'+u.slug;
   document.getElementById('csd-act-btn').textContent=u.status==='active'?'Desativar loja':'Ativar loja';
   const items=u.menuItems||[];
   document.getElementById('csd-items').innerHTML=items.length?items.map((it,j)=>`<div style="display:flex;align-items:center;gap:.6rem;padding:.5rem;background:rgba(255,255,255,.04);border-radius:var(--rs)">
@@ -1750,9 +1943,14 @@ function saveCurrentUser(){
 function openModal(id){document.getElementById(id)?.classList.add('open');}
 function closeModal(id){document.getElementById(id)?.classList.remove('open');}
 function copyLink(){
-  const link='https://pediway.com.br/#store-'+(currentUser?.slug||'demo');
-  navigator.clipboard?.writeText(link).catch(()=>{});
-  const btn=event?.target; if(btn){const t=btn.textContent;btn.textContent='Copiado!';setTimeout(()=>btn.textContent=t,2000);}
+  const slug = currentUser?.slug || 'demo';
+  const link = window.location.origin + '/restaurante/' + slug;
+  navigator.clipboard?.writeText(link).catch(()=>{
+    const ta = document.createElement('textarea'); ta.value=link; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  });
+  const btn=event?.target; if(btn){const t=btn.textContent;btn.textContent='Copiado! ✓';setTimeout(()=>btn.textContent=t,2500);}
+  // Also update displayed link
+  const lu=document.getElementById('dash-link'); if(lu) lu.textContent='pediway.com.br/restaurante/'+slug;
 }
 let notifTimer;
 function showNotif(title,body){
@@ -1763,6 +1961,48 @@ function showNotif(title,body){
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────
+
+// ─── PHONE 3D EFFECT ─────────────────────────────────────────────────────
+(function() {
+  const scene = document.getElementById('phone-scene');
+  const wrap = document.getElementById('phone-wrap');
+  if (!scene || !wrap) return;
+
+  function applyTilt(rx, ry) {
+    wrap.style.animation = 'none';
+    wrap.style.transform = `rotateY(${ry}deg) rotateX(${rx}deg)`;
+  }
+
+  // Mouse
+  scene.addEventListener('mousemove', (e) => {
+    const rect = scene.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (e.clientX - cx) / (rect.width / 2);
+    const dy = (e.clientY - cy) / (rect.height / 2);
+    applyTilt(-dy * 12, dx * 16 - 8);
+  });
+  scene.addEventListener('mouseleave', () => {
+    wrap.style.animation = 'floatPhone 4s ease-in-out infinite';
+    wrap.style.transform = '';
+  });
+
+  // Touch
+  scene.addEventListener('touchmove', (e) => {
+    const t = e.touches[0];
+    const rect = scene.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (t.clientX - cx) / (rect.width / 2);
+    const dy = (t.clientY - cy) / (rect.height / 2);
+    applyTilt(-dy * 8, dx * 12 - 8);
+  }, { passive: true });
+  scene.addEventListener('touchend', () => {
+    wrap.style.animation = 'floatPhone 4s ease-in-out infinite';
+    wrap.style.transform = '';
+  });
+})();
+
 document.addEventListener('DOMContentLoaded',()=>{
   initDemoData();
   if (!initRouting()) {
@@ -1771,6 +2011,82 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Set delivery animation
   setDeliveryType('delivery');
 });
+
+function confirmAndSendOrder() {
+  const u = currentUser;
+  if (!u) return;
+  const name=document.getElementById('cl-name').value.trim();
+  const phone=document.getElementById('cl-phone').value.trim();
+  const addr=deliveryType==='delivery'?document.getElementById('cl-addr').value.trim():'Retirada no local';
+  const total=cart.reduce((s,c)=>s+c.qty*c.price,0);
+  orderCounter++;
+  const order={
+    id:'#'+orderCounter,client:name,phone,address:addr,delivery:deliveryType,
+    items:cart.map(c=>({name:c.name,qty:c.qty,price:c.price})),
+    payment:selectedPayment,total,status:'new',time:'agora',ts:Date.now()
+  };
+  u.orders=[order,...(u.orders||[])];
+  saveCurrentUser();
+  showNotif('🎉 Pedido '+order.id,'Cliente: '+name);
+  cart=[];
+  updateCartUI(); // alias
+  buildConfirmation(order);
+  goTo('s-confirm');
+  // Jogo só inicia APÓS pedido enviado, com pequeno delay para animação
+  setTimeout(()=>startGame(), 1000);
+}
+
+// Alias para compatibilidade
+function updateCartFab() { updateCartUI(); }
+
+function buildConfirmation(order) {
+  // Define ícone baseado no tipo de entrega
+  const icon = order.delivery==='pickup' ? '🏃' : '🛵';
+  const iconEl = document.getElementById('conf-icon');
+  if (iconEl) { iconEl.textContent = icon; iconEl.style.animation = 'pulse 1s ease-in-out 3'; }
+  const orderIdEl = document.getElementById('conf-order-id');
+  if (orderIdEl) orderIdEl.textContent = order.id;
+  // Personaliza a arte com a cor da loja
+  const art = document.getElementById('conf-art');
+  if (art && currentUser?.color) {
+    const c = currentUser.color;
+    const cd = currentUser.colorDark || '#B83208';
+    art.style.background = `linear-gradient(135deg, ${c} 0%, ${cd} 100%)`;
+  }
+  // Partículas de confetti
+  spawnParticles();
+  // Reseta barra de status
+  const bar = document.getElementById('client-status-bar');
+  if (bar) { bar.className='csb'; bar.innerHTML=''; }
+  // Reseta jogo para mostrar botão de iniciar
+  const gmsg = document.getElementById('game-start-msg');
+  const gover = document.getElementById('game-over');
+  const gburger = document.getElementById('game-burger');
+  if (gmsg) gmsg.style.display='flex';
+  if (gover) gover.style.display='none';
+  if (gburger) gburger.style.display='none';
+  gameActive=false; clearInterval(gTimer); cancelAnimationFrame(gAnimFrame);
+  gameScore=0;
+  const scoreEl = document.getElementById('g-score'); if(scoreEl) scoreEl.textContent='0';
+  const timerEl = document.getElementById('g-timer'); if(timerEl) timerEl.textContent='20';
+}
+
+function buildConfirmData() {
+  const total=cart.reduce((s,c)=>s+c.qty*c.price,0);
+  const name=document.getElementById('cl-name').value;
+  const phone=document.getElementById('cl-phone').value;
+  const addr=deliveryType==='delivery'?document.getElementById('cl-addr').value:'Retirada no local';
+  const items=cart.map(c=>`${c.qty}x ${c.name} — R$ ${(c.qty*c.price).toFixed(2).replace('.',',')}`);
+  const cdItems=document.getElementById('confirm-data-items');
+  const cdTotal=document.getElementById('confirm-data-total');
+  const cdDel=document.getElementById('confirm-data-delivery');
+  const cdPay=document.getElementById('confirm-data-payment');
+  if(cdItems) cdItems.innerHTML=items.join('<br>');
+  if(cdTotal) cdTotal.textContent='R$ '+total.toFixed(2).replace('.',',');
+  if(cdDel) cdDel.innerHTML=`<strong>Nome:</strong> ${name}<br><strong>Telefone:</strong> ${phone}<br><strong>Tipo:</strong> ${deliveryType==='pickup'?'🏃 Retirada no local':'🛵 Entrega'}${deliveryType==='delivery'?'<br><strong>Endereço:</strong> '+addr:''}`;
+  if(cdPay) cdPay.textContent=selectedPayment;
+}
+
 </script>
 </body>
 </html>
