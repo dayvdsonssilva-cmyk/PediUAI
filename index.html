@@ -1218,8 +1218,18 @@ const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
 let _supa = null;
 function getSupa() {
-  if (!_supa && window.supabase) _supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-  return _supa;
+  if (_supa) return _supa;
+  // Tenta window.supabase (CDN padrão)
+  if (window.supabase?.createClient) {
+    _supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+    return _supa;
+  }
+  // Fallback: supabase como variável global direta
+  if (typeof supabase !== 'undefined' && supabase?.createClient) {
+    _supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+    return _supa;
+  }
+  return null;
 }
 async function carregarLojaSupa(slug) {
   const db = getSupa(); if (!db) return null;
@@ -1336,36 +1346,9 @@ function goTo(id) {
   window.scrollTo(0,0);
 }
 
-// Hash-based routing for store links
+// initRouting — apenas fallback para hash (#demo, #store-slug)
+// O roteamento principal está em initRoutingAsync()
 function initRouting() {
-  const path = window.location.pathname;
-  const pathMatch = path.match(/\/restaurante\/([\w-]+)/);
-  if (pathMatch) {
-    const slug = pathMatch[1];
-    if (slug === 'demo') { openDemo(); return true; }
-    // 1. Tenta localStorage (instantâneo)
-    const users = getUsers();
-    const localUser = users.find(u => u.slug === slug && u.status === 'active')
-      || users.find(u => u.slug.startsWith(slug.replace(/-[a-z0-9]+$/, '')) && u.status === 'active');
-    if (localUser) {
-      currentUser = localUser; currentStoreSlug = slug;
-      goTo('s-store'); return true;
-    }
-    // 2. Busca no Supabase — funciona em qualquer celular do mundo
-    goTo('s-store');
-    document.getElementById('sn').textContent = 'Carregando...';
-    document.getElementById('sd').textContent = '';
-    carregarLojaSupa(slug).then(loja => {
-      if (loja) {
-        currentUser = loja; currentStoreSlug = slug;
-        renderStore();
-      } else {
-        document.getElementById('sn').textContent = 'Loja não encontrada';
-        document.getElementById('sd').textContent = 'Verifique o link e tente novamente.';
-      }
-    });
-    return true;
-  }
   const hash = window.location.hash;
   if (hash.startsWith('#store-')) {
     const slug = hash.replace('#store-','');
@@ -2366,14 +2349,65 @@ function showNotif(title,body){
   });
 })();
 
-document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Inicializa demo ANTES do routing (garante que o slug 'demo' existe)
   initDemoData();
-  if (!initRouting()) {
-    // Default landing
-  }
-  // Set delivery animation
+  // 2. Roteamento — agora async para aguardar Supabase se necessário
+  initRoutingAsync();
+  // 3. Animação de entrega padrão
   setDeliveryType('delivery');
 });
+
+async function initRoutingAsync() {
+  const path = window.location.pathname;
+  const pathMatch = path.match(/\/restaurante\/([\w-]+)/);
+  if (!pathMatch) {
+    // Página normal — não é link de loja
+    return;
+  }
+
+  const slug = pathMatch[1];
+
+  // Demo — sempre do localStorage
+  if (slug === 'demo') {
+    openDemo();
+    return;
+  }
+
+  // 1. Tenta localStorage primeiro (instantâneo)
+  const users = getUsers();
+  const localUser = users.find(u => u.slug === slug && u.status === 'active')
+    || users.find(u => u.slug.startsWith(slug) && u.status === 'active');
+  if (localUser) {
+    currentUser = localUser;
+    currentStoreSlug = slug;
+    goTo('s-store');
+    return;
+  }
+
+  // 2. Abre a tela de loja mostrando "Carregando..."
+  goTo('s-store');
+  document.getElementById('sn').textContent = 'Carregando...';
+  document.getElementById('sd').textContent = '';
+
+  // 3. Aguarda Supabase estar pronto (até 3 tentativas)
+  let loja = null;
+  for (let tentativa = 0; tentativa < 3; tentativa++) {
+    if (tentativa > 0) await new Promise(r => setTimeout(r, 600));
+    loja = await carregarLojaSupa(slug);
+    if (loja) break;
+  }
+
+  if (loja) {
+    currentUser = loja;
+    currentStoreSlug = slug;
+    renderStore();
+  } else {
+    document.getElementById('sn').textContent = 'Loja não encontrada';
+    document.getElementById('sd').textContent = 'Verifique o link e tente novamente.';
+    document.getElementById('sd').style.color = 'rgba(255,255,255,.5)';
+  }
+}
 
 function confirmAndSendOrder() {
   const u = currentUser;
