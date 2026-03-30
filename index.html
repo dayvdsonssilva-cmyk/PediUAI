@@ -469,7 +469,6 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="script.js" defer></script>
 </head>
 <body>
 
@@ -575,7 +574,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <div style="margin-top:.85rem;padding:.85rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs)">
       <div style="font-size:.66rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem">🔑 Acesso de teste</div>
       <div style="font-size:.75rem;color:var(--ink2);margin-bottom:.55rem;line-height:1.5">
-        <strong>E-mail:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d1b5b4bcbe91a1b4b5b8a6b0a8ffb2bebcffb3a3">[email&#160;protected]</a><br>
+        <strong>E-mail:</strong> demo@pediway.com.br<br>
         <strong>Senha:</strong> 123456
       </div>
       <button class="btn btn-outline btn-full" style="font-size:.78rem;padding:.48rem" onclick="loginDemo()">Entrar como loja de teste →</button>
@@ -1121,7 +1120,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   <div onclick="flashNext()" style="position:absolute;right:0;top:0;width:35%;height:100%;z-index:5;cursor:pointer;"></div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 function el(id) { return document.getElementById(id); }
 // ─── STATE ────────────────────────────────────────────────────────────────
 const LS = {
@@ -1157,6 +1156,53 @@ function getUsers() { return LS.get('users') || []; }
 function setUsers(u) { LS.set('users', u); }
 function getSolicitations() { return LS.get('solics') || []; }
 function setSolicitations(s) { LS.set('solics', s); }
+
+// ─── SUPABASE ────────────────────────────────────────────────────────────
+const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
+let _supa = null;
+function getSupa() {
+  if (!_supa && window.supabase) _supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  return _supa;
+}
+async function carregarLojaSupa(slug) {
+  const db = getSupa(); if (!db) return null;
+  try {
+    const { data: loja } = await db.from('estabelecimentos').select('*').eq('slug', slug).eq('status', 'active').single();
+    if (!loja) return null;
+    const { data: itens } = await db.from('menu_items').select('*').eq('establishment_id', loja.id).eq('available', true).order('category');
+    return {
+      id: loja.id, name: loja.name,
+      desc: loja.desc || '', emoji: loja.emoji || '🍔',
+      color: loja.color || '#E8410A', slug: loja.slug,
+      logo: loja.logo_url || null, email: loja.email,
+      pass: loja.pass || loja.password_plain || '',
+      whatsapp: loja.whatsapp || '', plan: loja.plan_type || 'basico',
+      status: 'active', dueDate: loja.due_date || '',
+      menuItems: (itens || []).map(i => ({
+        id: i.id, name: i.name, desc: i.desc || '',
+        price: Number(i.price), cat: i.category || 'Geral',
+        emoji: i.emoji || '🍔', photo: i.photo_url || null, available: i.available
+      })),
+      orders: [], flashItems: [], welcome: 'Seja bem-vindo!'
+    };
+  } catch(e) { console.warn('Supa erro:', e); return null; }
+}
+async function salvarPedidoSupa(lojaId, pedido) {
+  const db = getSupa(); if (!db) return;
+  try {
+    await db.from('orders').insert({
+      establishment_id: lojaId, client_name: pedido.client,
+      client_phone: pedido.phone, address: pedido.address,
+      delivery_type: pedido.delivery,
+      items: JSON.stringify(pedido.items),
+      payment_method: pedido.payment, total: pedido.total,
+      status: 'new', created_at: new Date().toISOString()
+    });
+  } catch(e) { console.warn('Erro pedido supa:', e); }
+}
+
+
 
 // Initialize demo store data if not set
 function initDemoData() {
@@ -1250,40 +1296,35 @@ function goTo(id) {
 
 // Hash-based routing for store links
 function initRouting() {
-  // Support /restaurante/slug path (Vercel SPA routing via vercel.json rewrites)
   const path = window.location.pathname;
   const pathMatch = path.match(/\/restaurante\/([\w-]+)/);
   if (pathMatch) {
     const slug = pathMatch[1];
-    // Try demo first
     if (slug === 'demo') { openDemo(); return true; }
+    // 1. Tenta localStorage (rápido)
     const users = getUsers();
-    // Match by slug (strip timestamp suffix for matching)
-    const user = users.find(u => u.slug === slug && u.status === 'active')
+    const localUser = users.find(u => u.slug === slug && u.status === 'active')
       || users.find(u => u.slug.startsWith(slug.replace(/-[a-z0-9]+$/, '')) && u.status === 'active');
-    if (user) {
-      currentUser = user;
-      currentStoreSlug = user.slug;
-      goTo('s-store');
-      return true;
+    if (localUser) {
+      currentUser = localUser; currentStoreSlug = slug;
+      goTo('s-store'); return true;
     }
-    // Slug not found — show landing with message
-    showNotif('🔍 Loja não encontrada', 'Verifique o link e tente novamente.');
-    return false;
+    // 2. Busca no Supabase (funciona em qualquer celular)
+    goTo('s-store');
+    document.getElementById('sn').textContent = 'Carregando...';
+    document.getElementById('sd').textContent = '';
+    carregarLojaSupa(slug).then(loja => {
+      if (loja) { currentUser = loja; currentStoreSlug = slug; renderStore(); }
+      else { document.getElementById('sn').textContent = 'Loja não encontrada'; }
+    });
+    return true;
   }
-
-  // Hash routing fallback (#store-slug or #demo)
   const hash = window.location.hash;
   if (hash.startsWith('#store-')) {
     const slug = hash.replace('#store-','');
     const users = getUsers();
     const user = users.find(u => u.slug === slug && u.status === 'active');
-    if (user) {
-      currentUser = user;
-      currentStoreSlug = user.slug;
-      goTo('s-store');
-      return true;
-    }
+    if (user) { currentUser = user; currentStoreSlug = slug; goTo('s-store'); return true; }
   }
   if (hash === '#demo' || hash === '#/demo') { openDemo(); return true; }
   return false;
@@ -2149,6 +2190,7 @@ function confirmAndSendOrder() {
   u.orders=[order,...(u.orders||[])];
   saveCurrentUser();
   showNotif('🎉 Pedido '+order.id,'Cliente: '+name);
+  if (u.id && typeof u.id === 'string' && u.id.length > 10) salvarPedidoSupa(u.id, order);
   cart=[];
   updateCartUI(); // alias
   buildConfirmation(order);
@@ -2204,4 +2246,10 @@ function buildConfirmData() {
   const cdPay=document.getElementById('confirm-data-payment');
   if(cdItems) cdItems.innerHTML=items.join('<br>');
   if(cdTotal) cdTotal.textContent='R$ '+total.toFixed(2).replace('.',',');
-  if(cdDel) cdDel.innerHTML=`<strong>Nome:</strong> ${name}<br><strong>Telefone:</strong> ${phone}<br><strong>Tipo:</s
+  if(cdDel) cdDel.innerHTML=`<strong>Nome:</strong> ${name}<br><strong>Telefone:</strong> ${phone}<br><strong>Tipo:</strong> ${deliveryType==='pickup'?'🏃 Retirada no local':'🛵 Entrega'}${deliveryType==='delivery'?'<br><strong>Endereço:</strong> '+addr:''}`;
+  if(cdPay) cdPay.textContent=selectedPayment;
+}
+
+</script>
+</body>
+</html>
