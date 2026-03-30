@@ -90,7 +90,8 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 .billing-opt{flex:1;padding:.4rem;border-radius:100px;text-align:center;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;color:var(--ink3);}
 .billing-opt.active{background:var(--white);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08);}
 /* PENDING SCREEN */
-#s-pending{background:var(--ink);color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
+#s-pending{background:var(--ink);color:#fff;min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
+#s-pending.active{display:flex;}
 /* DASHBOARD */
 #s-dash{background:var(--surface);min-height:100vh;}
 .dash-nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 1.4rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;}
@@ -247,43 +248,86 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 .co-sum{display:flex;justify-content:space-between;margin-bottom:.65rem;font-size:.82rem;color:var(--ink2);}
 .co-total{font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;}
 /* DELIVERY TYPE SELECTOR */
-.del-type-row{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.4rem;}
+.del-type-row{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.85rem;}
 .del-type-card{border:2px solid var(--border);border-radius:var(--r);padding:.9rem;cursor:pointer;text-align:center;transition:all .2s;background:var(--white);}
 .del-type-card.active{border-color:var(--brand);background:var(--brand-light);}
-.del-anim-wrap{height:40px;overflow:hidden;position:relative;border-radius:var(--rs);background:var(--surface);border:1px solid var(--border);margin-top:.5rem;}
-.del-runner{position:absolute;top:50%;transform:translateY(-50%);font-size:1.4rem;white-space:nowrap;}
-@keyframes driveRight{0%{left:-60px}100%{left:calc(100% + 20px)}}
-.anim-delivery .del-runner{animation:driveRight 1.8s linear infinite;}
-.anim-pickup .del-runner{animation:driveRight 2.4s linear infinite;}
-/* CONFIRM SCREEN - BEAUTIFUL ART */
-#s-confirm{min-height:100vh;max-width:480px;margin:0 auto;display:flex;flex-direction:column;}
-.conf-art{flex:1;background:linear-gradient(135deg,var(--brand) 0%,var(--brand-dark) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem 1.5rem;text-align:center;position:relative;overflow:hidden;min-height:60vh;}
-.conf-art::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.1);}
-.conf-art::after{content:'';position:absolute;bottom:-80px;left:-60px;width:250px;height:250px;border-radius:50%;background:rgba(255,255,255,.06);}
-.conf-check{font-size:4rem;margin-bottom:1rem;display:block;animation:popIn .6s cubic-bezier(.34,1.56,.64,1) forwards;}
-@keyframes popIn{0%{transform:scale(0)}100%{transform:scale(1)}}
-.conf-title{font-family:'Poppins',sans-serif;font-weight:800;font-size:1.8rem;color:#fff;margin-bottom:.4rem;letter-spacing:-.02em;}
-.conf-sub{font-size:.88rem;color:rgba(255,255,255,.75);margin-bottom:1.5rem;}
+/* ── CONFIRM SCREEN ─────────────────────────────────────────────────────── */
+#s-confirm{min-height:100vh;max-width:480px;margin:0 auto;display:none;flex-direction:column;background:var(--surface);}
+#s-confirm.active{display:flex;}
+
+/* Topo — arte colorida */
+.conf-art{
+  background:linear-gradient(150deg,var(--brand) 0%,var(--brand-dark) 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:2.8rem 1.5rem 2.2rem;text-align:center;position:relative;overflow:hidden;
+  min-height:52vh;
+}
+.conf-art::before{content:'';position:absolute;top:-70px;right:-70px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.08);}
+.conf-art::after{content:'';position:absolute;bottom:-80px;left:-60px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.05);}
 .conf-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
-.particle{position:absolute;font-size:1.2rem;animation:fall linear infinite;}
+.particle{position:absolute;font-size:1.1rem;animation:fall linear infinite;}
 @keyframes fall{0%{opacity:1;transform:translateY(-20px) rotate(0deg);}100%{opacity:0;transform:translateY(100vh) rotate(360deg);}}
-.conf-bottom{background:var(--white);padding:1.4rem;}
-/* MINI GAME */
-#game-wrap{padding:1rem 1.3rem 1.3rem;}
-.game-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;}
-.game-title{font-family:'Poppins',sans-serif;font-weight:700;font-size:.95rem;}
-.game-stats{display:flex;gap:1rem;}
-.game-stat{font-size:.78rem;color:var(--ink2);}
+.conf-check{font-size:3.8rem;margin-bottom:.75rem;display:block;animation:popIn .5s cubic-bezier(.34,1.56,.64,1) forwards;position:relative;z-index:1;}
+@keyframes popIn{0%{transform:scale(0) rotate(-10deg)}80%{transform:scale(1.1) rotate(3deg)}100%{transform:scale(1) rotate(0deg)}}
+.conf-title{font-family:'Poppins',sans-serif;font-weight:900;font-size:1.7rem;color:#fff;margin-bottom:.3rem;letter-spacing:-.02em;position:relative;z-index:1;}
+.conf-sub{font-size:.86rem;color:rgba(255,255,255,.8);margin-bottom:1.4rem;position:relative;z-index:1;line-height:1.5;}
+.conf-order-badge{
+  background:rgba(255,255,255,.18);backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:12px;padding:.85rem 1.6rem;
+  text-align:center;position:relative;z-index:1;
+}
+.conf-order-lbl{font-size:.65rem;color:rgba(255,255,255,.7);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.18rem;}
+.conf-order-num{font-family:'Poppins',sans-serif;font-size:1.3rem;font-weight:900;color:#fff;}
+
+/* Seção de status do pedido */
+.conf-status-section{
+  background:var(--white);
+  margin:0;padding:.85rem 1.3rem;
+  border-bottom:1px solid var(--border);
+}
+.csb{display:none;align-items:center;gap:.7rem;border-radius:var(--rs);padding:.75rem 1rem;}
+.csb.vis{display:flex;}
+.csb-prep{background:#EEF2FF;border:1.5px solid #C7D2FE;}
+.csb-ready{background:var(--success-bg);border:1.5px solid #A7F3D0;}
+
+/* Seção do jogo */
+.conf-game-section{
+  background:var(--white);
+  margin:.65rem .9rem 0;
+  border-radius:var(--r);
+  border:1px solid var(--border);
+  overflow:hidden;
+}
+.conf-game-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.85rem 1.1rem .65rem;
+  border-bottom:1px solid var(--border);
+}
+.game-title{font-family:'Poppins',sans-serif;font-weight:700;font-size:.92rem;color:var(--ink);}
+.game-stats{display:flex;gap:.85rem;}
+.game-stat{font-size:.76rem;color:var(--ink3);}
 .game-stat span{font-weight:800;color:var(--brand);}
-.game-area{width:100%;height:200px;background:linear-gradient(135deg,#1a0f05,#2d1a0a);border-radius:var(--r);position:relative;overflow:hidden;cursor:pointer;touch-action:manipulation;}
-.game-burger{position:absolute;font-size:2.2rem;cursor:pointer;transition:transform .05s;user-select:none;-webkit-user-select:none;}
-.game-burger:hover{transform:scale(1.2);}
-.game-start-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;}
-.game-start-msg h3{font-family:'Poppins',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:.35rem;}
-.game-start-msg p{font-size:.78rem;opacity:.65;}
-.game-start-btn{margin-top:.9rem;background:var(--brand);color:#fff;border:none;border-radius:100px;padding:.5rem 1.4rem;font-family:'Poppins',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;}
-.game-over-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(26,18,8,.85);color:#fff;text-align:center;border-radius:var(--r);}
-/* MODALS */
+.game-area{
+  width:100%;height:190px;
+  background:linear-gradient(135deg,#1a0f05,#2a160a);
+  position:relative;overflow:hidden;cursor:pointer;touch-action:manipulation;
+}
+.game-burger{position:absolute;font-size:2.6rem;cursor:pointer;transition:transform .08s;user-select:none;-webkit-user-select:none;line-height:1;touch-action:manipulation;}
+.game-start-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:1rem;}
+.game-start-msg h3{font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;margin-bottom:.3rem;}
+.game-start-msg p{font-size:.75rem;opacity:.6;line-height:1.4;}
+.game-start-btn{margin-top:.85rem;background:var(--brand);color:#fff;border:none;border-radius:100px;padding:.48rem 1.3rem;font-family:'Poppins',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.game-over-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(26,18,8,.88);color:#fff;text-align:center;border-radius:0;}
+
+/* Seção de ações (WhatsApp + voltar) */
+.conf-actions-section{
+  padding:1rem .9rem 1.5rem;
+  display:flex;flex-direction:column;gap:.55rem;
+}
+
+/* MINI GAME (compat) */
+#game-wrap{} 
 .mb{position:fixed;inset:0;background:rgba(26,18,8,.55);z-index:200;display:flex;align-items:flex-end;padding:0;opacity:0;pointer-events:none;transition:opacity .25s;}
 .mb.open{opacity:1;pointer-events:all;}
 .mo{background:var(--white);border-radius:22px 22px 0 0;padding:1.3rem;width:100%;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.1,.64,1);}
@@ -305,6 +349,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 /* CEO */
 #s-ceo-login{background:var(--ink);min-height:100vh;display:none;align-items:center;justify-content:center;padding:1.5rem;}
 #s-ceo-login.active{display:flex;}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
 .ceo-lc{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:1.8rem;width:100%;max-width:360px;}
 #s-ceo{background:#0a0705;min-height:100vh;}
 .ceo-nav{background:#0d0a06;border-bottom:1px solid rgba(255,255,255,.08);padding:0 1.4rem;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;}
@@ -525,6 +570,14 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <div class="fg"><label>E-mail</label><input type="email" id="le" placeholder="seu@email.com" autocomplete="email"><div class="ferr" id="lerr">E-mail inválido</div></div>
     <div class="fg"><label>Senha</label><input type="password" id="lp" placeholder="••••••••" autocomplete="current-password"></div>
     <button class="btn btn-brand btn-full" style="margin-top:.4rem" onclick="doLogin()">Entrar no painel</button>
+    <div style="margin-top:.85rem;padding:.85rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs)">
+      <div style="font-size:.66rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem">🔑 Acesso de teste</div>
+      <div style="font-size:.75rem;color:var(--ink2);margin-bottom:.55rem;line-height:1.5">
+        <strong>E-mail:</strong> demo@pediway.com.br<br>
+        <strong>Senha:</strong> 123456
+      </div>
+      <button class="btn btn-outline btn-full" style="font-size:.78rem;padding:.48rem" onclick="loginDemo()">Entrar como loja de teste →</button>
+    </div>
     <div class="auth-sw">Não tem conta? <a onclick="goTo('s-register')">Cadastrar</a></div>
     <div class="auth-sw" style="margin-top:.4rem"><a onclick="openDemo()" style="color:var(--ink3)">Ver demo →</a></div>
   </div>
@@ -611,10 +664,6 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     </div>
     <button class="btn btn-brand btn-full" id="pay-btn" style="font-size:.95rem;padding:.9rem;margin-bottom:.7rem" onclick="goToMercadoPago()">Pagar com Mercado Pago 💳</button>
     <div style="text-align:center;font-size:.72rem;color:var(--ink3)">🔒 Pagamento seguro via Mercado Pago · Cancele quando quiser</div>
-    <div style="margin-top:1rem;padding:1rem;background:var(--surface);border-radius:var(--rs);border:1px solid var(--border)">
-      <div style="font-size:.72rem;font-weight:700;color:var(--ink3);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.04em">MODO DEMO</div>
-      <button class="btn btn-outline btn-full" style="font-size:.8rem;padding:.6rem" onclick="simulatePayment()">Simular pagamento aprovado →</button>
-    </div>
   </div>
 </div>
 
@@ -754,12 +803,12 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 <div class="screen" id="s-ceo-login">
   <div class="ceo-lc">
     <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.2rem;color:#fff;margin-bottom:.2rem">PEDI<span style="color:var(--brand)">WAY</span></div>
-    <div style="font-size:.74rem;color:rgba(255,255,255,.35);margin-bottom:1.3rem">Área restrita — acesso CEO</div>
-    <div class="fg"><label style="color:rgba(255,255,255,.5)">E-mail CEO</label><input type="email" id="ceo-email" placeholder="ceo@pediway.com.br" autocomplete="email" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:#fff"></div>
-    <div class="fg"><label style="color:rgba(255,255,255,.5)">Senha</label><input type="password" id="ceo-pass" placeholder="••••••••" autocomplete="current-password" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:#fff"></div>
+    <div style="font-size:.74rem;color:rgba(255,255,255,.35);margin-bottom:1.3rem">Área restrita — somente o proprietário da plataforma</div>
+    <div class="fg"><label style="color:rgba(255,255,255,.5)">Login</label><input type="email" id="ceo-email" placeholder="Login" autocomplete="off" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:#fff"></div>
+    <div class="fg"><label style="color:rgba(255,255,255,.5)">Senha</label><input type="password" id="ceo-pass" placeholder="••••••••" autocomplete="off" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:#fff"></div>
     <div class="ferr" id="ceo-err" style="color:#f87171;margin-bottom:.4rem">Credenciais inválidas</div>
-    <button class="btn btn-brand btn-full" onclick="doCeoLogin()">Entrar na área CEO</button>
-    <div style="text-align:center;margin-top:.9rem"><a onclick="goTo('sl')" style="color:rgba(255,255,255,.3);font-size:.74rem;cursor:pointer">← Voltar ao início</a></div>
+    <button class="btn btn-brand btn-full" onclick="doCeoLogin()">Acessar painel</button>
+    <div style="text-align:center;margin-top:.9rem"><a onclick="goTo('sl')" style="color:rgba(255,255,255,.3);font-size:.74rem;cursor:pointer">← Voltar</a></div>
   </div>
 </div>
 
@@ -792,8 +841,20 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <!-- CEO STORES -->
     <div class="tp" id="ceo-stores">
       <div class="ceo-card">
-        <div style="font-family:'Poppins',sans-serif;font-weight:700;color:#fff;margin-bottom:.85rem;font-size:.9rem">Todos os estabelecimentos — clique para detalhes</div>
-        <div style="overflow-x:auto"><table class="ctb"><thead><tr><th>Nome</th><th>Doc</th><th>E-mail</th><th>Senha</th><th>Plano</th><th>Venc.</th><th>Status</th><th>Ações</th></tr></thead><tbody id="ceo-all-body"></tbody></table></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:.85rem">
+          <div style="font-family:'Poppins',sans-serif;font-weight:700;color:#fff;font-size:.9rem">Todos os estabelecimentos</div>
+          <div style="position:relative;flex:1;max-width:260px;min-width:180px">
+            <span style="position:absolute;left:.7rem;top:50%;transform:translateY(-50%);font-size:.9rem;pointer-events:none">🔍</span>
+            <input type="text" id="ceo-search" placeholder="Buscar por nome, e-mail..." oninput="filterCeoStores(this.value)"
+              style="width:100%;padding:.48rem .75rem .48rem 2.1rem;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:100px;font-family:'Poppins',sans-serif;font-size:.76rem;color:#fff;outline:none;">
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="ctb">
+            <thead><tr><th>Nome</th><th>E-mail</th><th>Senha</th><th>Plano</th><th>Venc.</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="ceo-all-body"></tbody>
+          </table>
+        </div>
       </div>
       <!-- Store Detail Panel -->
       <div id="ceo-store-detail" style="display:none" class="ceo-card">
@@ -874,16 +935,15 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <div class="sl-label">Tipo de entrega</div>
     <div class="del-type-row">
       <div class="del-type-card active" id="dt-delivery" onclick="setDeliveryType('delivery')">
-        <div style="font-size:.9rem;font-weight:700;margin-bottom:.2rem">🛵 Entrega</div>
-        <div style="font-size:.72rem;color:var(--ink3)">Recebo em casa</div>
+        <div style="font-size:1.6rem;margin-bottom:.3rem">🛵</div>
+        <div style="font-size:.9rem;font-weight:700">Entrega</div>
+        <div style="font-size:.72rem;color:var(--ink3);margin-top:.15rem">Recebo em casa</div>
       </div>
       <div class="del-type-card" id="dt-pickup" onclick="setDeliveryType('pickup')">
-        <div style="font-size:.9rem;font-weight:700;margin-bottom:.2rem">🏃 Retirada</div>
-        <div style="font-size:.72rem;color:var(--ink3)">Busco no local</div>
+        <div style="font-size:1.6rem;margin-bottom:.3rem">🏃</div>
+        <div style="font-size:.9rem;font-weight:700">Retirada</div>
+        <div style="font-size:.72rem;color:var(--ink3);margin-top:.15rem">Busco no local</div>
       </div>
-    </div>
-    <div class="del-anim-wrap" id="del-anim">
-      <div class="del-runner" id="del-runner">🛵</div>
     </div>
     <div class="sl-label">Seus dados</div>
     <div class="fg"><label>Nome completo *</label><input type="text" id="cl-name" placeholder="Ex: Maria Silva" autocomplete="name"></div>
@@ -930,46 +990,67 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   </div>
 </div>
 
-<!-- CONFIRM - ARTE LINDA -->
+<!-- ════════════════════════════════════════════════════════
+     TELA 5 — PEDIDO ENVIADO (cada bloco bem separado)
+     ════════════════════════════════════════════════════════ -->
 <div class="screen" id="s-confirm">
+
+  <!-- BLOCO 1 · Arte principal com confetti -->
   <div class="conf-art" id="conf-art">
     <div class="conf-particles" id="conf-particles"></div>
-    <span class="conf-check" id="conf-icon">✅</span>
+    <span class="conf-check" id="conf-icon">🛵</span>
     <div class="conf-title">PEDIDO ENVIADO!</div>
-    <div class="conf-sub">Seu pedido foi recebido pelo estabelecimento 🎉</div>
-    <div style="background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border-radius:var(--r);padding:1rem 1.5rem;max-width:280px;width:100%">
-      <div style="font-size:.72rem;color:rgba(255,255,255,.65);margin-bottom:.25rem;font-weight:600">Pedido</div>
-      <div style="font-size:1.2rem;font-weight:800;color:#fff" id="conf-order-id">#1001</div>
+    <div class="conf-sub">Recebemos seu pedido e já avisamos o estabelecimento 🎉</div>
+    <div class="conf-order-badge">
+      <div class="conf-order-lbl">Número do pedido</div>
+      <div class="conf-order-num" id="conf-order-id">#—</div>
     </div>
   </div>
-  <div class="conf-bottom">
-    <div id="client-status-bar" class="csb" style="margin:0 0 1rem;padding:.85rem 1rem;border-radius:var(--r)"></div>
-    <!-- MINI GAME -->
-    <div id="game-wrap">
-      <div class="game-hdr">
-        <div class="game-title">🍔 Pega o Lanche!</div>
-        <div class="game-stats"><div class="game-stat">Pontos: <span id="g-score">0</span></div><div class="game-stat">Tempo: <span id="g-timer">20</span>s</div></div>
-      </div>
-      <div class="game-area" id="game-area">
-        <div class="game-start-msg" id="game-start-msg">
-          <h3>🍔 Pega o Lanche!</h3>
-          <p>Toque no lanche antes que ele escape</p>
-          <button class="game-start-btn" onclick="startGame()">Jogar →</button>
-        </div>
-        <div class="game-burger" id="game-burger" style="display:none">🍔</div>
-        <div class="game-over-msg" id="game-over" style="display:none">
-          <div style="font-size:2.2rem;margin-bottom:.4rem">🏆</div>
-          <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;margin-bottom:.25rem">Fim de jogo!</div>
-          <div style="font-size:.82rem;opacity:.75;margin-bottom:.8rem">Pontuação: <strong id="final-score" style="color:var(--brand)">0</strong></div>
-          <button class="game-start-btn" onclick="startGame()">Jogar de novo</button>
-        </div>
-      </div>
-    </div>
-    <div style="padding:0 1.3rem 1.3rem;display:flex;flex-direction:column;gap:.6rem">
-      <button class="btn btn-full" style="background:#25D366;color:#fff;padding:.85rem;font-size:.88rem;font-weight:700;border:none" onclick="openWhatsApp()">💬 Falar com o estabelecimento</button>
-      <button class="btn btn-full" style="border:1px solid var(--border);padding:.85rem;font-size:.88rem;color:var(--ink2)" onclick="goBackFromStore()">← Voltar ao cardápio</button>
+
+  <!-- BLOCO 2 · Status em tempo real (aparece quando o dono atualiza) -->
+  <div class="conf-status-section">
+    <div id="client-status-bar" class="csb"></div>
+    <div id="status-waiting" style="display:flex;align-items:center;gap:.6rem;padding:.5rem 0;font-size:.82rem;color:var(--ink3);">
+      <span style="font-size:1.1rem">⏳</span>
+      <span>Aguardando confirmação do estabelecimento...</span>
     </div>
   </div>
+
+  <!-- BLOCO 3 · Jogo enquanto aguarda -->
+  <div class="conf-game-section">
+    <div class="conf-game-hdr">
+      <div class="game-title">🍔 Pega o Lanche!</div>
+      <div class="game-stats">
+        <div class="game-stat">Pontos: <span id="g-score">0</span></div>
+        <div class="game-stat">Tempo: <span id="g-timer">30</span>s</div>
+      </div>
+    </div>
+    <div class="game-area" id="game-area">
+      <div class="game-start-msg" id="game-start-msg">
+        <h3>🍔 Pega o Lanche!</h3>
+        <p>Toque no lanche antes<br>que ele escape!</p>
+        <button class="game-start-btn" onclick="startGame()">Jogar agora →</button>
+      </div>
+      <div class="game-burger" id="game-burger" style="display:none" onclick="clickBurger()">🍔</div>
+      <div class="game-over-msg" id="game-over" style="display:none">
+        <div style="font-size:2rem;margin-bottom:.35rem">🏆</div>
+        <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:.95rem;margin-bottom:.2rem">Fim de jogo!</div>
+        <div style="font-size:.8rem;opacity:.7;margin-bottom:.75rem">Pontuação: <strong id="final-score" style="color:var(--brand)">0</strong></div>
+        <button class="game-start-btn" onclick="startGame()">Jogar de novo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOCO 4 · Ações do cliente -->
+  <div class="conf-actions-section">
+    <button class="btn btn-full" style="background:#25D366;color:#fff;padding:.9rem;font-size:.88rem;font-weight:700;border:none;border-radius:var(--rs)" onclick="openWhatsApp()">
+      💬 Falar com o estabelecimento
+    </button>
+    <button class="btn btn-full btn-outline" style="padding:.85rem;font-size:.86rem" onclick="goBackFromStore()">
+      ← Voltar ao cardápio
+    </button>
+  </div>
+
 </div>
 
 <!-- MODAL ADD ITEM -->
@@ -1233,7 +1314,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key && e.key.length === 1 && /\d/.test(e.key)) {
     secretSeq += e.key;
     if (secretSeq.length > 8) secretSeq = secretSeq.slice(-8);
-    if (secretSeq === '35585201') { secretSeq = ''; goTo('s-ceo'); renderCeo(); }
+    if (secretSeq === '35585201') { secretSeq = ''; goTo('s-ceo-login'); }
   } else if (e.key === 'Escape') { secretSeq = ''; }
 });
 
@@ -1254,6 +1335,18 @@ function doLogin() {
   goTo('s-dash');
 }
 
+function loginDemo() {
+  const users = getUsers();
+  const demo = users.find(u => u.id === 'demo');
+  if (demo) {
+    currentUser = demo;
+    currentStoreSlug = 'demo';
+    goTo('s-dash');
+  } else {
+    alert('Loja de teste não encontrada. Recarregue a página.');
+  }
+}
+
 function doRegister() {
   let ok = true;
   const show = (id, inputId, cond) => {
@@ -1266,29 +1359,19 @@ function doRegister() {
   show('remailerr','remail', isEmail(document.getElementById('remail').value));
   show('rpasserr','rpass', document.getElementById('rpass').value.length >= 6);
   if (!ok) return;
-
-  const name = document.getElementById('rn').value.trim();
-  const email = document.getElementById('remail').value.trim();
-  const pass = document.getElementById('rpass').value;
-  const doc = document.getElementById('rdoc').value;
-  const wp = document.getElementById('rwpp').value;
-  const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') + '-' + Date.now().toString(36);
+  // Armazena dados temporários para finalizar no pagamento
   const logoData = document.getElementById('logo-preview').src || null;
-  const newUser = {
-    id: Date.now().toString(), name,
+  window._pendingReg = {
+    name: document.getElementById('rn').value.trim(),
+    email: document.getElementById('remail').value.trim(),
+    pass: document.getElementById('rpass').value,
+    doc: document.getElementById('rdoc').value,
+    wp: document.getElementById('rwpp').value,
     desc: document.getElementById('rdesc').value,
-    emoji: '🍔', color: '#E8410A', slug,
     logo: logoData && logoData.startsWith('data:') ? logoData : null,
-    email, pass, whatsapp: digits(wp||'5511999999999'),
-    plan: 'basico', status: 'pending', dueDate: '',
-    payMethod: '', since: new Date().toISOString().slice(0,10),
-    doc, orders: [], menuItems: [], flashItems: [], welcome: 'Seja bem-vindo!'
   };
-  const solics = getSolicitations();
-  solics.push({...newUser, submittedAt: new Date().toLocaleDateString('pt-BR')});
-  setSolicitations(solics);
-  document.getElementById('pend-email').textContent = email;
-  goTo('s-pending');
+  // Avança para escolha do plano
+  goTo('s-payment');
 }
 
 function previewLogo(input) {
@@ -1327,34 +1410,32 @@ function selectPlan(plan) {
   document.getElementById('psi-desc').textContent = plan === 'basico' ? 'Cardápio digital completo com pedidos ilimitados.' : 'Tudo do Básico + Financeiro, relatórios 90 dias e IA de automação.';
 }
 function goToMercadoPago() {
-  // In production, backend generates the checkout URL
-  // For now, open Mercado Pago with preapproval plan ID
-  const planId = selectedPlan === 'basico' ? 'PLAN_BASICO_ID' : 'PLAN_ULTRA_ID';
+  if (!selectedPlan) { alert('Selecione um plano primeiro'); return; }
+  if (!window._pendingReg) { goTo('s-register'); return; }
   const price = selectedPlan === 'basico' ? (billingCycle === 'annual' ? 29.90 : 39.90) : (billingCycle === 'annual' ? 79.90 : 99.90);
-  // Production: window.open(`https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=${planId}`)
-  alert('Mercado Pago: Plano ' + (selectedPlan==='basico'?'Básico':'Ultra') + ' por R$ ' + price.toFixed(2) + '/mês\n\nNo ambiente de produção, redireciona para o Mercado Pago.\nUse "Simular pagamento aprovado" para testar.');
+  // Em produção: redireciona para o Mercado Pago via backend
+  // window.location.href = '/api/subscribe?plan='+selectedPlan+'&billing='+billingCycle;
+  alert('Em produção isto abre o Mercado Pago.\n\nPlano ' + (selectedPlan==='basico'?'Básico':'Ultra') + ' · R$ ' + price.toFixed(2).replace('.',',') + '/mês\n\nUse "Simular pagamento" para testar agora.');
 }
 function simulatePayment() {
-  const name = document.getElementById('rn').value.trim();
-  const email = document.getElementById('remail').value.trim();
-  const pass = document.getElementById('rpass').value;
-  const doc = document.getElementById('rdoc').value;
-  const wp = document.getElementById('rwpp').value;
-  const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') + '-' + Date.now().toString(36);
+  const reg = window._pendingReg;
+  if (!reg || !reg.name) { alert('Dados do cadastro não encontrados. Volte e preencha o formulário.'); goTo('s-register'); return; }
+  if (!selectedPlan) { alert('Selecione um plano.'); return; }
+  const slug = reg.name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') + '-' + Date.now().toString(36);
   const newUser = {
     id: Date.now().toString(),
-    name, desc: document.getElementById('rdesc').value, emoji: '🍔', color: '#E8410A',
-    slug, logo: null, email, pass, whatsapp: digits(wp||'5511999999999'),
+    name: reg.name, desc: reg.desc||'', emoji: '🍔', color: '#E8410A',
+    slug, logo: reg.logo||null, email: reg.email, pass: reg.pass,
+    whatsapp: digits(reg.wp||'5511999999999'),
     plan: selectedPlan, status: 'pending', dueDate: getDueDate(),
     payMethod: 'Mercado Pago', since: new Date().toISOString().slice(0,10),
-    doc, orders: [], menuItems: [], flashItems: [], welcome: 'Seja bem-vindo!'
+    doc: reg.doc||'', orders: [], menuItems: [], flashItems: [], welcome: 'Seja bem-vindo!'
   };
-  // Add to solicitations
   const solics = getSolicitations();
   solics.push({...newUser, submittedAt: new Date().toLocaleDateString('pt-BR')});
   setSolicitations(solics);
-  pendingEmail = email;
-  document.getElementById('pend-email').textContent = email;
+  window._pendingReg = null;
+  document.getElementById('pend-email').textContent = reg.email;
   goTo('s-pending');
 }
 function getDueDate() {
@@ -1701,8 +1782,6 @@ function setDeliveryType(type){
   deliveryType=type;
   document.getElementById('dt-delivery').classList.toggle('active',type==='delivery');
   document.getElementById('dt-pickup').classList.toggle('active',type==='pickup');
-  document.getElementById('del-runner').textContent=type==='delivery'?'🛵':'🏃';
-  document.getElementById('del-anim').className='del-anim-wrap '+(type==='delivery'?'anim-delivery':'anim-pickup');
   document.getElementById('address-block').style.display=type==='delivery'?'block':'none';
 }
 
@@ -1712,8 +1791,6 @@ function renderCheckout(){
   list.innerHTML=cart.map((it,i)=>`<div class="cir"><div class="ce">${it.emoji}</div><div class="cn">${it.name}</div><div class="qc"><button class="qb" onclick="changeQty(${i},-1)">−</button><span class="qn">${it.qty}</span><button class="qb" onclick="changeQty(${i},1)">+</button></div><div class="cprice">R$ ${(it.qty*it.price).toFixed(2).replace('.',',')}</div></div>`).join('');
   const total=cart.reduce((s,c)=>s+c.qty*c.price,0);
   document.getElementById('co-total').textContent='R$ '+total.toFixed(2).replace('.',',');
-  // Init delivery animation
-  document.getElementById('del-anim').className='del-anim-wrap anim-delivery';
 }
 function changeQty(i,d){cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);renderCheckout();updateCartUI();}
 function selPayment(el,m){document.querySelectorAll('.po').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');selectedPayment=m;}
@@ -1748,23 +1825,26 @@ function spawnParticles(){
 
 // ─── MINI GAME ────────────────────────────────────────────────────────────
 function startGame(){
-  gameActive=true; gameScore=0; bx=80; by=80;
-  const speed=4+Math.random()*2;
+  gameActive=true; gameScore=0; bx=100; by=80;
+  // Velocidade inicial bem baixa — muito mais fácil
+  const speed=1.8+Math.random()*0.8;
   bvx=speed*(Math.random()>.5?1:-1); bvy=speed*(Math.random()>.5?1:-1);
   document.getElementById('g-score').textContent='0';
-  document.getElementById('g-timer').textContent='20';
+  document.getElementById('g-timer').textContent='30';
   document.getElementById('game-start-msg').style.display='none';
   document.getElementById('game-over').style.display='none';
-  document.getElementById('game-burger').style.display='block';
+  const b=document.getElementById('game-burger');
+  b.style.display='block';
+  b.style.fontSize='2.6rem'; // burger maior, mais fácil de tocar
   moveBurger();
-  let t=20;
+  let t=30; // 30 segundos em vez de 20
   clearInterval(gTimer);
   gTimer=setInterval(()=>{t--;document.getElementById('g-timer').textContent=t;if(t<=0)endGame();},1000);
 }
 function moveBurger(){
   if(!gameActive) return;
   const area=document.getElementById('game-area');
-  const w=area.clientWidth-50, h=area.clientHeight-50;
+  const w=area.clientWidth-56, h=area.clientHeight-56;
   bx+=bvx; by+=bvy;
   if(bx<=0||bx>=w) bvx*=-1;
   if(by<=0||by>=h) bvy*=-1;
@@ -1778,9 +1858,14 @@ function clickBurger(){
   document.getElementById('g-score').textContent=gameScore;
   const b=document.getElementById('game-burger');
   if(b) b.textContent=foodEmojis[gameScore%foodEmojis.length];
-  const spd=Math.min(0.4,0.2);
+  // Aceleração muito leve — não fica impossível
+  const spd=0.08;
   bvx+=bvx>0?spd:-spd; bvy+=bvy>0?spd:-spd;
-  b.style.transform='scale(1.3)'; setTimeout(()=>{if(b) b.style.transform='';},150);
+  // Trava a velocidade máxima em 3.5
+  const maxSpd=3.5;
+  if(Math.abs(bvx)>maxSpd) bvx=maxSpd*(bvx>0?1:-1);
+  if(Math.abs(bvy)>maxSpd) bvy=maxSpd*(bvy>0?1:-1);
+  b.style.transform='scale(1.4)'; setTimeout(()=>{if(b) b.style.transform='';},120);
 }
 function endGame(){
   gameActive=false; clearInterval(gTimer); cancelAnimationFrame(gAnimFrame);
@@ -1792,12 +1877,14 @@ function endGame(){
 // ─── CLIENT STATUS ────────────────────────────────────────────────────────
 function showCSNotif(status){
   const bar=document.getElementById('client-status-bar'); if(!bar) return;
+  const waiting=document.getElementById('status-waiting');
+  if(waiting) waiting.style.display='none';
   if(status==='preparing'){
     bar.className='csb vis csb-prep';
-    bar.innerHTML=`<span class="spinning" style="font-size:1.2rem">🍳</span><div><div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.84rem;color:#3730A3">Pedido sendo preparado!</div><div style="font-size:.72rem;color:var(--ink3)">O chef já está na cozinha 👨‍🍳</div></div>`;
+    bar.innerHTML=`<span class="spinning" style="font-size:1.3rem">🍳</span><div><div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.86rem;color:#3730A3">Preparando seu pedido!</div><div style="font-size:.72rem;color:var(--ink3);margin-top:.1rem">O chef já está na cozinha 👨‍🍳</div></div>`;
   } else {
     bar.className='csb vis csb-ready';
-    bar.innerHTML=`<span style="font-size:1.2rem">✅</span><div><div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.84rem;color:var(--success)">Pedido pronto!</div><div style="font-size:.72rem;color:var(--ink3)">A caminho! 🛵</div></div>`;
+    bar.innerHTML=`<span style="font-size:1.3rem">✅</span><div><div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.86rem;color:var(--success)">Pedido pronto!</div><div style="font-size:.72rem;color:var(--ink3);margin-top:.1rem">${status==='pickup'?'Pode vir buscar 🏃':'A caminho! 🛵'}</div></div>`;
   }
   showNotif(status==='preparing'?'🍳 Preparando!':'✅ Pronto!',status==='preparing'?'O chef está na cozinha.':'Seu pedido está a caminho!');
 }
@@ -1807,8 +1894,17 @@ function doCeoLogin(){
   const e=document.getElementById('ceo-email').value.trim();
   const p=document.getElementById('ceo-pass').value;
   const err=document.getElementById('ceo-err');
-  if(e==='ceo@pediway.com.br'&&p==='35585201'){err.style.display='none';goTo('s-ceo');renderCeo();}
-  else{err.style.display='block';}
+  // Credenciais CEO — acesso exclusivo do proprietário da plataforma
+  if(e==='admin@pediway.com.br'&&p==='Pdw@Master2025!'){
+    err.style.display='none';
+    goTo('s-ceo');
+    renderCeo();
+  } else {
+    err.style.display='block';
+    // Shake animation
+    const lc=document.querySelector('.ceo-lc');
+    if(lc){lc.style.animation='none';lc.offsetHeight;lc.style.animation='shake .4s ease';}
+  }
 }
 
 function switchCeoTab(id){
@@ -1816,6 +1912,25 @@ function switchCeoTab(id){
   document.querySelectorAll('[id^="ceo-"]:not(#s-ceo):not(.ceo-card):not(#ceo-store-detail)').forEach(el=>{if(el.classList.contains('tp')) el.classList.remove('active');});
   document.querySelector(`.ct2[onclick="switchCeoTab('${id}')"]`)?.classList.add('active');
   const panel=document.getElementById(id); if(panel) panel.classList.add('active');
+}
+
+// ─── CEO HELPERS ─────────────────────────────────────────────────────────────
+function togglePw(i) {
+  const mask = document.getElementById('pw-mask-'+i);
+  const show = document.getElementById('pw-show-'+i);
+  if (!mask || !show) return;
+  const visible = show.style.display !== 'none';
+  mask.style.display = visible ? 'inline' : 'none';
+  show.style.display = visible ? 'none' : 'inline';
+}
+
+function filterCeoStores(query) {
+  const q = (query||'').toLowerCase().trim();
+  const rows = document.querySelectorAll('#ceo-all-body tr');
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = (!q || text.includes(q)) ? '' : 'none';
+  });
 }
 
 function renderCeo(){
@@ -1845,13 +1960,17 @@ function renderCeo(){
   // All stores table
   const ab=document.getElementById('ceo-all-body');
   if(ab) ab.innerHTML=users.map((u,i)=>`<tr>
-    <td style="cursor:pointer;color:#fff;font-weight:600" onclick="viewCeoStore(${i})">${u.name}</td>
-    <td>${u.doc||'—'}</td><td>${u.email}</td>
-    <td style="color:rgba(255,255,255,.35);font-size:.68rem">••••••</td>
+    <td style="cursor:pointer;color:#fff;font-weight:600;white-space:nowrap" onclick="viewCeoStore(${i})">${u.name}</td>
+    <td style="font-size:.7rem;color:rgba(255,255,255,.6)">${u.email}</td>
+    <td>
+      <span id="pw-mask-${i}" style="letter-spacing:.08em;font-size:.72rem;color:rgba(255,255,255,.4)">••••••</span>
+      <span id="pw-show-${i}" style="display:none;font-size:.72rem;color:#fbbf24;font-weight:700">${u.pass||'—'}</span>
+      <button onclick="togglePw(${i})" style="background:none;border:none;cursor:pointer;font-size:.75rem;margin-left:.3rem;color:rgba(255,255,255,.35);padding:0" title="Mostrar/ocultar senha">👁</button>
+    </td>
     <td><span style="background:${u.plan==='ultra'?'rgba(124,58,237,.2)':'rgba(232,65,10,.15)'};color:${u.plan==='ultra'?'#a78bfa':'var(--brand)'};padding:.1rem .4rem;border-radius:4px;font-size:.65rem;font-weight:700">${u.plan==='ultra'?'Ultra':'Básico'}</span></td>
-    <td>${u.dueDate||'—'}</td>
+    <td style="font-size:.7rem;color:rgba(255,255,255,.5)">${u.dueDate||'—'}</td>
     <td>${u.status==='active'?'<span class="b-act">Ativo</span>':u.status==='pending'?'<span class="b-pend">Pendente</span>':'<span class="b-inact">Inativo</span>'}</td>
-    <td><button onclick="ceoToggleStoreByIdx(${i})" style="background:${u.status==='active'?'rgba(239,68,68,.1)':'rgba(74,222,128,.1)'};color:${u.status==='active'?'#f87171':'#4ade80'};border:1px solid ${u.status==='active'?'rgba(239,68,68,.2)':'rgba(74,222,128,.2)'};border-radius:6px;padding:.18rem .5rem;font-size:.68rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif">${u.status==='active'?'Desativar':'Ativar'} <span class="ai-badge">🤖</span></button></td>
+    <td style="white-space:nowrap"><button onclick="ceoToggleStoreByIdx(${i})" style="background:${u.status==='active'?'rgba(239,68,68,.1)':'rgba(74,222,128,.1)'};color:${u.status==='active'?'#f87171':'#4ade80'};border:1px solid ${u.status==='active'?'rgba(239,68,68,.2)':'rgba(74,222,128,.2)'};border-radius:6px;padding:.18rem .5rem;font-size:.68rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif">${u.status==='active'?'Desativar':'Ativar'} <span class="ai-badge">🤖</span></button></td>
   </tr>`).join('');
 
   // Solicitations
@@ -2040,35 +2159,35 @@ function confirmAndSendOrder() {
 function updateCartFab() { updateCartUI(); }
 
 function buildConfirmation(order) {
-  // Define ícone baseado no tipo de entrega
-  const icon = order.delivery==='pickup' ? '🏃' : '🛵';
+  // Ícone animado — moto (entrega) ou corrida (retirada)
+  const icon = order.delivery === 'pickup' ? '🏃' : '🛵';
   const iconEl = document.getElementById('conf-icon');
-  if (iconEl) { iconEl.textContent = icon; iconEl.style.animation = 'pulse 1s ease-in-out 3'; }
+  if (iconEl) iconEl.textContent = icon;
   const orderIdEl = document.getElementById('conf-order-id');
   if (orderIdEl) orderIdEl.textContent = order.id;
-  // Personaliza a arte com a cor da loja
+  // Cor da loja na arte
   const art = document.getElementById('conf-art');
   if (art && currentUser?.color) {
-    const c = currentUser.color;
-    const cd = currentUser.colorDark || '#B83208';
-    art.style.background = `linear-gradient(135deg, ${c} 0%, ${cd} 100%)`;
+    art.style.background = `linear-gradient(150deg, ${currentUser.color} 0%, ${currentUser.colorDark||'#B83208'} 100%)`;
   }
   // Partículas de confetti
   spawnParticles();
-  // Reseta barra de status
+  // Status bar — volta para aguardando
   const bar = document.getElementById('client-status-bar');
-  if (bar) { bar.className='csb'; bar.innerHTML=''; }
-  // Reseta jogo para mostrar botão de iniciar
+  if (bar) { bar.className = 'csb'; bar.innerHTML = ''; }
+  const waiting = document.getElementById('status-waiting');
+  if (waiting) waiting.style.display = 'flex';
+  // Jogo — reset para tela inicial
   const gmsg = document.getElementById('game-start-msg');
   const gover = document.getElementById('game-over');
   const gburger = document.getElementById('game-burger');
-  if (gmsg) gmsg.style.display='flex';
-  if (gover) gover.style.display='none';
-  if (gburger) gburger.style.display='none';
-  gameActive=false; clearInterval(gTimer); cancelAnimationFrame(gAnimFrame);
-  gameScore=0;
-  const scoreEl = document.getElementById('g-score'); if(scoreEl) scoreEl.textContent='0';
-  const timerEl = document.getElementById('g-timer'); if(timerEl) timerEl.textContent='20';
+  if (gmsg) gmsg.style.display = 'flex';
+  if (gover) gover.style.display = 'none';
+  if (gburger) gburger.style.display = 'none';
+  gameActive = false; clearInterval(gTimer); cancelAnimationFrame(gAnimFrame);
+  gameScore = 0;
+  const scoreEl = document.getElementById('g-score'); if (scoreEl) scoreEl.textContent = '0';
+  const timerEl = document.getElementById('g-timer'); if (timerEl) timerEl.textContent = '20';
 }
 
 function buildConfirmData() {
