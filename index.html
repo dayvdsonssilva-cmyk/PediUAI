@@ -1259,17 +1259,57 @@ async function carregarLojaSupa(slug) {
   } catch(e) { console.warn('Supa erro:', e); return null; }
 }
 async function salvarPedidoSupa(lojaId, pedido) {
-  const db = getSupa(); if (!db) return;
+  const db = getSupa(); if (!db) return null;
   try {
-    await db.from('orders').insert({
+    const { data, error } = await db.from('orders').insert({
       establishment_id: lojaId, client_name: pedido.client,
       client_phone: pedido.phone, address: pedido.address,
       delivery_type: pedido.delivery,
       items: JSON.stringify(pedido.items),
       payment_method: pedido.payment, total: pedido.total,
       status: 'new', created_at: new Date().toISOString()
+    }).select().single();
+    if (error) throw error;
+    return data?.id || null; // retorna ID para assinar o Realtime
+  } catch(e) { console.warn('Pedido supa erro:', e); return null; }
+}
+
+// ─── REALTIME — notificação de status do pedido ───────────────────────────
+let realtimeChannel = null;
+
+async function assinarStatusPedido(orderId) {
+  const db = getSupa(); if (!db || !orderId) return;
+  // Cancela canal anterior se houver
+  if (realtimeChannel) { db.removeChannel(realtimeChannel); realtimeChannel = null; }
+  realtimeChannel = db
+    .channel('order-status-' + orderId)
+    .on('postgres_changes', {
+      event: 'UPDATE', schema: 'public', table: 'orders',
+      filter: `id=eq.${orderId}`
+    }, (payload) => {
+      const novoStatus = payload.new?.status;
+      if (novoStatus === 'preparing') {
+        mostrarNotifCliente('🍳 Pedido aceito!', 'O estabelecimento está preparando seu pedido.');
+        showCSNotif('preparing');
+      } else if (novoStatus === 'ready') {
+        mostrarNotifCliente('✅ Pedido pronto!', pedido.delivery === 'pickup' ? 'Pode vir buscar!' : 'Saiu para entrega! 🛵');
+        showCSNotif('ready');
+      }
+    })
+    .subscribe();
+}
+
+function mostrarNotifCliente(titulo, corpo) {
+  // Notificação visual na tela (sempre funciona)
+  showNotif(titulo, corpo);
+  // Notificação do sistema (se o usuário permitiu)
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(titulo, { body: corpo, icon: '/favicon.ico' });
+  } else if ('Notification' in window && Notification.permission !== 'denied') {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') new Notification(titulo, { body: corpo, icon: '/favicon.ico' });
     });
-  } catch(e) { console.warn('Pedido supa erro:', e); }
+  }
 }
 
 // Gera slug limpo a partir do nome — sem timestamp
@@ -1692,8 +1732,23 @@ function renderMenuGrid() {
       </div>
     </div>`).join('');
 }
-function toggleAvail(i) { if(!currentUser) return; currentUser.menuItems[i].available=!currentUser.menuItems[i].available; saveCurrentUser(); renderMenuGrid(); }
-function delItem(i) { if(!currentUser||!confirm('Remover?')) return; currentUser.menuItems.splice(i,1); saveCurrentUser(); renderMenuGrid(); }
+function toggleAvail(i) {
+  if(!currentUser) return;
+  currentUser.menuItems[i].available=!currentUser.menuItems[i].available;
+  saveCurrentUser(); renderMenuGrid();
+  // Sync Supabase
+  const it = currentUser.menuItems[i];
+  const db = getSupa();
+  if (db && it.supaId) db.from('menu_items').update({available:it.available}).eq('id',it.supaId).then(()=>{});
+}
+function delItem(i) {
+  if(!currentUser||!confirm('Remover?')) return;
+  const it = currentUser.menuItems[i];
+  currentUser.menuItems.splice(i,1); saveCurrentUser(); renderMenuGrid();
+  // Sync Supabase
+  const db = getSupa();
+  if (db && it.supaId) db.from('menu_items').delete().eq('id',it.supaId).then(()=>{});
+}
 
 const allEmojis = ['🍔','🍕','🌮','🌯','🍜','🍣','🍗','🥩','🧆','🥗','🍰','🧁','🍦','🥤','🧃','☕','🍟','🥪','🫕','🥘'];
 
@@ -1737,14 +1792,41 @@ function prevPhoto(input) {
   };
   r.readAsDataURL(file);
 }
-function saveItem() {
+async function saveItem() {
   const name=document.getElementById('i-name').value.trim();
   const price=parseFloat(document.getElementById('i-price').value);
   if(!name||!price){alert('Preencha nome e preço');return;}
-  const it={id:Date.now(),emoji:selectedEmoji,photo:selectedPhoto,name,desc:document.getElementById('i-desc').value,cat:document.getElementById('i-cat').value||'Geral',price,available:true};
+  const it={id:Date.now(),emoji:selectedEmoji,photo:selectedPhoto,name,
+    desc:document.getElementById('i-desc').value,
+    cat:document.getElementById('i-cat').value||'Geral',price,available:true};
   if(!currentUser.menuItems) currentUser.menuItems=[];
-  if(editingItemIdx!==null) currentUser.menuItems[editingItemIdx]=it; else currentUser.menuItems.push(it);
+  if(editingItemIdx!==null) currentUser.menuItems[editingItemIdx]=it;
+  else currentUser.menuItems.push(it);
   saveCurrentUser(); closeModal('modal-add'); renderMenuGrid();
+
+  // Salva no Supabase — essencial para o link funcionar em outros celulares
+  const db = getSupa();
+  if (db && currentUser.id && currentUser.id.includes('-')) {
+    try {
+      const supaItem = {
+        establishment_id: currentUser.id,
+        name: it.name, desc: it.desc||'', price: it.price,
+        category: it.cat, emoji: it.emoji,
+        photo_url: it.photo||null, available: true
+      };
+      if (editingItemIdx !== null && currentUser.menuItems[editingItemIdx]?.supaId) {
+        await db.from('menu_items').update(supaItem).eq('id', currentUser.menuItems[editingItemIdx].supaId);
+      } else {
+        const { data } = await db.from('menu_items').insert(supaItem).select().single();
+        // Guarda o ID do Supabase no item local
+        if (data) {
+          const idx = currentUser.menuItems.length - 1;
+          currentUser.menuItems[idx].supaId = data.id;
+          saveCurrentUser();
+        }
+      }
+    } catch(e) { console.warn('Erro ao salvar item no Supabase:', e); }
+  }
 }
 
 // ─── FLASH ───────────────────────────────────────────────────────────────
@@ -1798,8 +1880,30 @@ function renderOverviewOrders(){
     <div style="padding-top:.55rem;border-top:1px solid var(--border);margin-top:.45rem;font-family:'Poppins',sans-serif;font-weight:700">R$ ${o.total.toFixed(2).replace('.',',')}</div>
   </div>`).join('');
 }
-function markPreparing(i){if(!currentUser)return;currentUser.orders[i].status='preparing';saveCurrentUser();renderOrdersList();renderOverviewOrders();showCSNotif('preparing');}
-function markReady(i){if(!currentUser)return;currentUser.orders[i].status='ready';saveCurrentUser();renderOrdersList();renderOverviewOrders();showCSNotif('ready');}
+async function markPreparing(i){
+  if(!currentUser) return;
+  currentUser.orders[i].status='preparing';
+  saveCurrentUser(); renderOrdersList(); renderOverviewOrders();
+  showCSNotif('preparing');
+  // Atualiza no Supabase — cliente recebe em tempo real
+  const db = getSupa();
+  const o = currentUser.orders[i];
+  if (db && o.supaId) {
+    await db.from('orders').update({status:'preparing'}).eq('id', o.supaId);
+  }
+}
+async function markReady(i){
+  if(!currentUser) return;
+  currentUser.orders[i].status='ready';
+  saveCurrentUser(); renderOrdersList(); renderOverviewOrders();
+  showCSNotif('ready');
+  // Atualiza no Supabase — cliente recebe em tempo real
+  const db = getSupa();
+  const o = currentUser.orders[i];
+  if (db && o.supaId) {
+    await db.from('orders').update({status:'ready'}).eq('id', o.supaId);
+  }
+}
 
 function viewReceipt(i) {
   const o=currentUser?.orders[i]; if(!o) return;
@@ -2499,7 +2603,19 @@ function confirmAndSendOrder() {
   saveCurrentUser();
   showNotif('🎉 Pedido '+order.id,'Cliente: '+name);
   // Salva no Supabase se loja veio do banco
-  if (u.id && u.id.includes('-')) salvarPedidoSupa(u.id, order);
+  // Salva no Supabase e assina Realtime para notificar o cliente
+  if (u.id && u.id.includes('-')) {
+    salvarPedidoSupa(u.id, order).then(orderId => {
+      if (orderId) {
+        order.supaId = orderId;
+        // Guarda no histórico local com ID do Supabase
+        u.orders[0].supaId = orderId;
+        saveCurrentUser();
+        // Inicia escuta de mudanças de status em tempo real
+        assinarStatusPedido(orderId);
+      }
+    });
+  }
   cart=[];
   updateCartUI(); // alias
   buildConfirmation(order);
