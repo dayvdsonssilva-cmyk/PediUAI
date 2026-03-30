@@ -482,6 +482,12 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   #s-ceo-login{display:none;align-items:center;justify-content:center;}
   #s-ceo-login.active{display:flex;}
 }
+
+/* Eye icon for password fields */
+.pw-wrap{position:relative;}
+.pw-wrap input{padding-right:2.4rem !important;}
+.pw-eye{position:absolute;right:.7rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--ink3);padding:0;line-height:1;-webkit-tap-highlight-color:transparent;}
+.pw-eye-ceo{position:absolute;right:.7rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:rgba(255,255,255,.35);padding:0;line-height:1;}
 </style>
 </head>
 <body>
@@ -583,7 +589,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     </div>
     <div class="auth-sub">Acesse o painel do seu estabelecimento</div>
     <div class="fg"><label>E-mail</label><input type="email" id="le" placeholder="seu@email.com" autocomplete="email"><div class="ferr" id="lerr">E-mail inválido</div></div>
-    <div class="fg"><label>Senha</label><input type="password" id="lp" placeholder="••••••••" autocomplete="current-password"></div>
+    <div class="fg"><label>Senha</label><div class="pw-wrap"><input type="password" id="lp" placeholder="••••••••" autocomplete="current-password"><button type="button" class="pw-eye" onclick="togglePwVis('lp',this)">👁</button></div></div>
     <button class="btn btn-brand btn-full" style="margin-top:.4rem" onclick="doLogin()">Entrar no painel</button>
     <div style="margin-top:.85rem;padding:.85rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs)">
       <div style="font-size:.66rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem">🔑 Acesso de teste</div>
@@ -619,7 +625,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <div class="fg"><label>CPF ou CNPJ *</label><input type="text" id="rdoc" placeholder="000.000.000-00 ou 00.000.000/0001-00" oninput="maskDoc(this)" inputmode="numeric"><div class="ferr" id="rdocerr">CPF ou CNPJ inválido</div></div>
     <div class="fg"><label>E-mail *</label><input type="email" id="remail" placeholder="seu@email.com" autocomplete="email"><div class="ferr" id="remailerr">E-mail inválido</div></div>
     <div class="fg"><label>WhatsApp (DDI+DDD+número)</label><input type="text" id="rwpp" placeholder="5535999999999" inputmode="numeric"></div>
-    <div class="fg"><label>Senha * (mínimo 6 caracteres)</label><input type="password" id="rpass" placeholder="••••••••" autocomplete="new-password"><div class="ferr" id="rpasserr">Mínimo 6 caracteres</div></div>
+    <div class="fg"><label>Senha * (mínimo 6 caracteres)</label><div class="pw-wrap"><input type="password" id="rpass" placeholder="••••••••" autocomplete="new-password"><button type="button" class="pw-eye" onclick="togglePwVis('rpass',this)">👁</button></div><div class="ferr" id="rpasserr">Mínimo 6 caracteres</div></div>
     <button class="btn btn-brand btn-full" style="margin-top:.4rem" onclick="doRegister()">Cadastrar →</button>
     <div class="auth-sw">Já tem conta? <a onclick="goTo('s-login')">Entrar</a></div>
   </div>
@@ -708,7 +714,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <div class="dash-logo">PEDI<span>WAY</span></div>
     <div style="display:flex;align-items:center;gap:.75rem">
       <span style="font-size:.78rem;color:var(--ink3);font-weight:500" id="dash-sname"></span>
-      <button class="btn" style="background:var(--surface);color:var(--ink2);border:1px solid var(--border);padding:.35rem .75rem;font-size:.74rem" onclick="goTo('sl')">Sair</button>
+      <button class="btn" style="background:var(--surface);color:var(--ink2);border:1px solid var(--border);padding:.35rem .75rem;font-size:.74rem" onclick="fazerLogout()">Sair</button>
     </div>
   </nav>
   <div class="dash-tabs">
@@ -834,7 +840,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.2rem;color:#fff;margin-bottom:.2rem">PEDI<span style="color:var(--brand)">WAY</span></div>
     <div style="font-size:.74rem;color:rgba(255,255,255,.35);margin-bottom:1.3rem">Área restrita — somente o proprietário da plataforma</div>
     <div class="fg"><label style="color:rgba(255,255,255,.5)">Login</label><input type="email" id="ceo-email" placeholder="Login" autocomplete="off" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:#fff"></div>
-    <div class="fg"><label style="color:rgba(255,255,255,.5)">Senha</label><input type="password" id="ceo-pass" placeholder="••••••••" autocomplete="off" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:#fff"></div>
+    <div class="fg"><label style="color:rgba(255,255,255,.5)">Senha</label><div class="pw-wrap"><input type="password" id="ceo-pass" placeholder="••••••••" autocomplete="off" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:#fff;"><button type="button" class="pw-eye-ceo" onclick="togglePwVis('ceo-pass',this)">👁</button></div></div>
     <div class="ferr" id="ceo-err" style="color:#f87171;margin-bottom:.4rem">Credenciais inválidas</div>
     <button class="btn btn-brand btn-full" onclick="doCeoLogin()">Acessar painel</button>
     <div style="text-align:center;margin-top:.9rem"><a onclick="goTo('sl')" style="color:rgba(255,255,255,.3);font-size:.74rem;cursor:pointer">← Voltar</a></div>
@@ -1403,6 +1409,7 @@ function doLogin() {
   if (user.status === 'inactive') { alert('Sua conta está inativa. Entre em contato com o suporte.'); return; }
   currentUser = user;
   currentStoreSlug = user.slug;
+  SESSION.save(user); // persiste sessão no refresh
   goTo('s-dash');
 }
 
@@ -2256,17 +2263,44 @@ function ceoEditStore(){
   goTo('s-dash'); switchTab('t-menu');
 }
 
-function approveSolic(i){
+async function approveSolic(i){
   const solics=getSolicitations(); const s=solics.splice(i,1)[0];
   const users=getUsers();
   s.status='active';
-  s.plan='ultra'; // plano completo para todos
+  s.plan='ultra';
   s.id=s.id||Date.now().toString();
   s.dueDate=new Date(Date.now()+30*24*60*60*1000).toLocaleDateString('pt-BR');
   if(!users.find(u=>u.email===s.email)) users.push(s);
   else { const idx=users.findIndex(u=>u.email===s.email); users[idx]=s; }
   setUsers(users); setSolicitations(solics);
-  showNotif('✅ Aprovado!',s.name+' agora está ativo — plano completo.');
+
+  // Salva no Supabase para que o link funcione em qualquer celular
+  const db = getSupa();
+  if (db) {
+    try {
+      const slug = gerarSlug(s.name);
+      // Verifica se já existe
+      const { data: existing } = await db.from('estabelecimentos').select('id').eq('email', s.email).single();
+      if (existing) {
+        await db.from('estabelecimentos').update({ status: 'active', slug }).eq('email', s.email);
+      } else {
+        await db.from('estabelecimentos').insert({
+          name: s.name, doc: s.doc||'', email: s.email,
+          pass: s.pass, password_plain: s.pass,
+          whatsapp: s.whatsapp||'', desc: s.desc||'',
+          slug, emoji: s.emoji||'🍔', color: s.color||'#E8410A',
+          plan_type: 'ultra', status: 'active',
+          logo_url: s.logo||null, created_at: new Date().toISOString()
+        });
+      }
+      showNotif('✅ Aprovado!', s.name+' está ativo — link funcionando!');
+    } catch(e) {
+      console.warn('Erro ao salvar no Supabase:', e);
+      showNotif('✅ Aprovado!', s.name+' ativo localmente.');
+    }
+  } else {
+    showNotif('✅ Aprovado!', s.name+' agora está ativo — plano completo.');
+  }
   renderCeo();
 }
 
@@ -2277,15 +2311,37 @@ function rejectSolic(i){
 }
 
 // ─── PERSIST ──────────────────────────────────────────────────────────────
+const SESSION = {
+  save: (user) => { try { sessionStorage.setItem('pw_session', JSON.stringify({id:user.id,email:user.email,slug:user.slug})); } catch(e){} },
+  get: () => { try { return JSON.parse(sessionStorage.getItem('pw_session')); } catch(e){ return null; } },
+  clear: () => { try { sessionStorage.removeItem('pw_session'); } catch(e){} }
+};
+
 function saveCurrentUser(){
   if(!currentUser) return;
   const users=getUsers();
   const idx=users.findIndex(u=>u.id===currentUser.id);
   if(idx>=0) users[idx]=currentUser; else users.push(currentUser);
   setUsers(users);
+  SESSION.save(currentUser); // persiste sessão
 }
 
 // ─── UTILS ────────────────────────────────────────────────────────────────
+function fazerLogout() {
+  SESSION.clear();
+  currentUser = null;
+  currentStoreSlug = null;
+  goTo('sl');
+}
+
+function togglePwVis(id, btn) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  btn.textContent = isHidden ? '🙈' : '👁';
+}
+
 function openModal(id){document.getElementById(id)?.classList.add('open');}
 function closeModal(id){document.getElementById(id)?.classList.remove('open');}
 function copyLink(){
@@ -2350,11 +2406,28 @@ function showNotif(title,body){
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Inicializa demo ANTES do routing (garante que o slug 'demo' existe)
+  // 1. Inicializa demo
   initDemoData();
-  // 2. Roteamento — agora async para aguardar Supabase se necessário
+  // 2. Verifica se há sessão ativa (persiste no refresh)
+  const path = window.location.pathname;
+  const isStorePath = /\/restaurante\/[\w-]+/.test(path);
+  if (!isStorePath) {
+    const sess = SESSION.get();
+    if (sess) {
+      const users = getUsers();
+      const user = users.find(u => u.id === sess.id || u.email === sess.email);
+      if (user && user.status === 'active') {
+        currentUser = user;
+        currentStoreSlug = user.slug;
+        goTo('s-dash');
+        return;
+      } else {
+        SESSION.clear(); // sessão inválida
+      }
+    }
+  }
+  // 3. Roteamento normal
   initRoutingAsync();
-  // 3. Animação de entrega padrão
   setDeliveryType('delivery');
 });
 
