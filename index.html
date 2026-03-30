@@ -718,16 +718,16 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     </div>
   </nav>
   <div class="dash-tabs">
-    <button class="tb active" onclick="switchTab('t-ov')">Visão geral</button>
+    <button class="tb active" onclick="switchTab('t-orders')">🔔 Pedidos</button>
+    <button class="tb" onclick="switchTab('t-ov')">Visão geral</button>
     <button class="tb" onclick="switchTab('t-menu')">Cardápio</button>
     <button class="tb" onclick="switchTab('t-flash')">🔥 Fresquinho</button>
-    <button class="tb" onclick="switchTab('t-orders')">Pedidos</button>
     <button class="tb" id="tb-fin" onclick="switchTabFin()">💰 Financeiro</button>
     <button class="tb" onclick="switchTab('t-settings')">Configurações</button>
   </div>
   <div class="dash-content">
-    <!-- OVERVIEW -->
-    <div class="tp active" id="t-ov">
+    <!-- VISÃO GERAL -->
+    <div class="tp" id="t-ov">
       <div class="lb"><div><div style="font-size:.66rem;color:var(--brand);font-weight:700;margin-bottom:.15rem;text-transform:uppercase;letter-spacing:.05em">Link do seu cardápio</div><div class="lu" id="dash-link">pediway.com.br/restaurante/demo</div></div><button class="cb" onclick="copyLink()">Copiar</button></div>
       <div class="sg">
         <div class="sc"><div class="sc-lbl">Pedidos hoje</div><div class="sc-val o" id="st-today">0</div></div>
@@ -758,8 +758,8 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
       <input type="file" id="fc-file" accept="video/*,image/*" onchange="addFlash(this)" style="display:none">
       <input type="file" id="fc-cam" accept="video/*" capture="environment" onchange="addFlash(this)" style="display:none">
     </div>
-    <!-- PEDIDOS -->
-    <div class="tp" id="t-orders">
+    <!-- PEDIDOS — aba principal, aparece primeiro -->
+    <div class="tp active" id="t-orders">
       <div class="sh"><span class="st">Pedidos</span><span style="font-size:.76rem;color:var(--ink3)" id="orders-count"></span></div>
       <div class="ol" id="orders-list"></div>
     </div>
@@ -1274,8 +1274,68 @@ async function salvarPedidoSupa(lojaId, pedido) {
   } catch(e) { console.warn('Pedido supa erro:', e); return null; }
 }
 
-// ─── REALTIME — notificação de status do pedido ───────────────────────────
-let realtimeChannel = null;
+// ─── REALTIME ESTABELECIMENTO — novos pedidos em tempo real ──────────────
+let realtimeEstabChannel = null;
+
+function iniciarRealtimePedidos() {
+  const db = getSupa();
+  if (!db || !currentUser?.id || !currentUser.id.includes('-')) return;
+  // Cancela canal anterior
+  if (realtimeEstabChannel) { db.removeChannel(realtimeEstabChannel); realtimeEstabChannel = null; }
+
+  realtimeEstabChannel = db
+    .channel('pedidos-estab-' + currentUser.id)
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'orders',
+      filter: `establishment_id=eq.${currentUser.id}`
+    }, (payload) => {
+      // Novo pedido chegou — toca som e atualiza lista
+      tocarSomNovoPedido();
+      const p = payload.new;
+      const novoPedido = {
+        supaId: p.id,
+        id: '#' + p.id.slice(-6).toUpperCase(),
+        client: p.client_name, phone: p.client_phone,
+        address: p.address, delivery: p.delivery_type,
+        items: typeof p.items === 'string' ? JSON.parse(p.items) : (p.items||[]),
+        payment: p.payment_method, total: Number(p.total),
+        status: p.status, time: 'agora', ts: Date.now()
+      };
+      if (!currentUser.orders) currentUser.orders = [];
+      currentUser.orders.unshift(novoPedido);
+      saveCurrentUser();
+      // Atualiza UI sem recarregar tudo
+      renderOrdersList();
+      renderOverviewOrders();
+      showNotif('🔔 Novo pedido!', 'Cliente: ' + p.client_name + ' — R$ ' + Number(p.total).toFixed(2).replace('.',','));
+      // Atualiza contador
+      const st = document.getElementById('st-today');
+      if (st) st.textContent = String(Number(st.textContent||0) + 1);
+    })
+    .subscribe();
+}
+
+function tocarSomNovoPedido() {
+  try {
+    // Cria som de bip via Web Audio API — sem arquivo externo
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const beep = (freq, start, dur) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = freq;
+      o.type = 'sine';
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(0.4, start + 0.01);
+      g.gain.linearRampToValueAtTime(0, start + dur);
+      o.start(start); o.stop(start + dur + 0.05);
+    };
+    // Três bips ascendentes
+    beep(880, ctx.currentTime, 0.12);
+    beep(1100, ctx.currentTime + 0.15, 0.12);
+    beep(1320, ctx.currentTime + 0.30, 0.18);
+  } catch(e) { console.warn('Som não disponível:', e); }
+}
 
 async function assinarStatusPedido(orderId) {
   const db = getSupa(); if (!db || !orderId) return;
@@ -1385,7 +1445,7 @@ function goTo(id) {
   const el = document.getElementById(id);
   if (el) el.classList.add('active');
   currentScreen = id;
-  if (id === 's-dash') renderDashboard();
+  if (id === 's-dash') renderDashboard(); // async — ok chamar sem await
   if (id === 's-store') renderStore();
   if (id === 's-checkout') renderCheckout();
   if (id === 's-ceo') renderCeo();
@@ -1663,7 +1723,7 @@ function getDueDate() {
 }
 
 // ─── DASHBOARD ──────────────────────────────────────────────────────────
-function renderDashboard() {
+async function renderDashboard() {
   if (!currentUser) return;
   const u = currentUser;
   document.getElementById('dash-sname').textContent = u.name;
@@ -1671,20 +1731,59 @@ function renderDashboard() {
   document.getElementById('dash-link').textContent = 'pediway.com.br/restaurante/' + slug;
   document.getElementById('st-items').textContent = (u.menuItems||[]).filter(i=>i.available).length;
   document.getElementById('st-plan').textContent = u.plan === 'ultra' ? 'Ultra 🚀' : 'Básico';
-  // Plan feature lock
   const isUltra = u.plan === 'ultra';
   const tbFin = document.getElementById('tb-fin');
   if (!isUltra) tbFin.classList.add('locked'); else tbFin.classList.remove('locked');
   document.getElementById('fin-lock-banner').style.display = isUltra ? 'none' : 'flex';
   document.getElementById('fin-content').style.display = isUltra ? 'block' : 'none';
+
+  // Carrega pedidos do Supabase se a loja tem ID real
+  const db = getSupa();
+  if (db && u.id && u.id.includes('-')) {
+    try {
+      const { data: pedidosSupa } = await db
+        .from('orders').select('*')
+        .eq('establishment_id', u.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (pedidosSupa && pedidosSupa.length > 0) {
+        u.orders = pedidosSupa.map(p => ({
+          supaId: p.id,
+          id: '#' + p.id.slice(-6).toUpperCase(),
+          client: p.client_name, phone: p.client_phone,
+          address: p.address, delivery: p.delivery_type,
+          items: typeof p.items === 'string' ? JSON.parse(p.items) : (p.items || []),
+          payment: p.payment_method, total: Number(p.total),
+          status: p.status,
+          time: formatarTempo(p.created_at), ts: new Date(p.created_at).getTime()
+        }));
+        saveCurrentUser();
+      }
+    } catch(e) { console.warn('Erro ao carregar pedidos:', e); }
+  }
+
   const orders = u.orders || [];
-  const todayOrders = orders.filter(o => o.time === 'agora' || o.time.includes('min'));
+  const todayOrders = orders.filter(o => o.status !== 'done');
   document.getElementById('st-today').textContent = todayOrders.length;
-  const rev = todayOrders.reduce((s,o)=>s+o.total,0);
+  const rev = orders.reduce((s,o)=>s+o.total, 0);
   document.getElementById('st-rev').textContent = 'R$ ' + rev.toFixed(2).replace('.',',');
+
+  // Abre na aba Pedidos por padrão
+  switchTab('t-orders');
   renderMenuGrid(); renderOrdersList(); renderOverviewOrders(); renderFlashAdmin();
   updateStoreEmojiPicker();
   if (isUltra) renderFinanceiro('hoje');
+
+  // Inicia escuta de novos pedidos em tempo real (para o estabelecimento)
+  iniciarRealtimePedidos();
+}
+
+function formatarTempo(isoStr) {
+  if (!isoStr) return 'agora';
+  const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 60000);
+  if (diff < 1) return 'agora';
+  if (diff < 60) return `há ${diff} min`;
+  return `há ${Math.floor(diff/60)}h`;
 }
 
 function switchTab(id) {
@@ -1692,8 +1791,7 @@ function switchTab(id) {
   document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
   const panel = document.getElementById(id);
   if (panel) panel.classList.add('active');
-  // find the button
-  const tabs = ['t-ov','t-menu','t-flash','t-orders','t-financeiro','t-settings'];
+  const tabs = ['t-orders','t-ov','t-menu','t-flash','t-financeiro','t-settings'];
   const btns = document.querySelectorAll('.tb');
   tabs.forEach((t,i)=>{if(btns[i]) btns[i].classList.toggle('active', t===id);});
 }
