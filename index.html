@@ -2405,14 +2405,14 @@ function renderClientMenu(cat){
   const avail=(currentUser?.menuItems||[]).filter(i=>i.available);
   const filtered=cat==='Todos'?avail:avail.filter(i=>i.cat===cat);
   if(!filtered.length){list.innerHTML='<div class="es"><div class="ei">🍽️</div><p>Nenhum item nesta categoria</p></div>';return;}
-  list.innerHTML=filtered.map(it=>`<div class="ci">
+  list.innerHTML=filtered.map((it,idx)=>`<div class="ci">
     <div class="ci-in">
       <div class="ci-med">${it.photo?`<img src="${it.photo}" alt="">`:''}<span class="ef" style="${it.photo?'opacity:0':''}">${it.emoji}</span></div>
       <div class="ci-body">
         <div class="ci-name">${it.name}</div>
-        <div class="ci-desc">${it.desc}</div>
-        <div class="ci-foot"><div class="ci-price">R$ ${it.price.toFixed(2).replace('.',',')}</div>
-          <div class="ci-acts"><button class="smb" onclick="openProductModal(${it.id})">Ver mais</button><button class="ab" onclick="addToCart(${it.id},this)">+</button></div>
+        <div class="ci-desc">${it.desc||''}</div>
+        <div class="ci-foot"><div class="ci-price">R$ ${Number(it.price).toFixed(2).replace('.',',')}</div>
+          <div class="ci-acts"><button class="smb" onclick="openProductModal(${idx})">Ver mais</button><button class="ab" onclick="addToCart(${idx},this)">+</button></div>
         </div>
       </div>
     </div>
@@ -2420,8 +2420,10 @@ function renderClientMenu(cat){
 }
 function filterCat(cat,btn){document.querySelectorAll('.cp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderClientMenu(cat);}
 
-function openProductModal(id){
-  const it=(currentUser?.menuItems||[]).find(i=>i.id===id); if(!it) return;
+function openProductModal(idx){
+  const avail=(currentUser?.menuItems||[]).filter(i=>i.available);
+  const it=avail[idx]; if(!it) return;
+  const id=it.id;
   const img=document.getElementById('pm-img');
   document.getElementById('pm-emoji').textContent=it.emoji;
   if(it.photo){let i=img.querySelector('img');if(!i){i=document.createElement('img');img.appendChild(i);}i.src=it.photo;i.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0';document.getElementById('pm-emoji').style.opacity='0';}
@@ -2430,10 +2432,15 @@ function openProductModal(id){
   document.getElementById('pm-name').textContent=it.name;
   document.getElementById('pm-desc').textContent=it.desc;
   document.getElementById('pm-price').textContent='R$ '+it.price.toFixed(2).replace('.',',');
-  document.getElementById('pm-add').onclick=()=>{addToCart(id,null);closeModal('modal-product');};
+  document.getElementById('pm-add').onclick=()=>{addToCartById(id,null);closeModal('modal-product');};
   openModal('modal-product');
 }
-function addToCart(id,btn){
+function addToCart(idx,btn){
+  const avail=(currentUser?.menuItems||[]).filter(i=>i.available);
+  const it=avail[idx]; if(!it) return;
+  addToCartById(it.id, btn);
+}
+function addToCartById(id,btn){
   const it=(currentUser?.menuItems||[]).find(i=>i.id===id); if(!it) return;
   const ex=cart.find(c=>c.id===id);
   if(ex) ex.qty++; else cart.push({...it,qty:1});
@@ -2459,7 +2466,7 @@ function setDeliveryType(type){
 // ─── CHECKOUT ─────────────────────────────────────────────────────────────
 function renderCheckout(){
   const list=document.getElementById('cart-items'); if(!cart.length){list.innerHTML='<div class="es"><p>Carrinho vazio</p></div>';return;}
-  list.innerHTML=cart.map((it,i)=>`<div class="cir"><div class="ce">${it.emoji}</div><div class="cn">${it.name}</div><div class="qc"><button class="qb" onclick="changeQty(${i},-1)">−</button><span class="qn">${it.qty}</span><button class="qb" onclick="changeQty(${i},1)">+</button></div><div class="cprice">R$ ${(it.qty*it.price).toFixed(2).replace('.',',')}</div></div>`).join('');
+  list.innerHTML=cart.map((it,i)=>`<div class="cir"><div class="ce">${it.emoji}</div><div class="cn">${it.name}</div><div class="qc"><button class="qb" onclick="changeQty(${i},-1)">−</button><span class="qn">${it.qty}</span><button class="qb" onclick="changeQty(${i},1)">+</button></div><div class="cprice">R$ ${(it.qty*Number(it.price)).toFixed(2).replace('.',',')}</div></div>`).join('');
   const total=cart.reduce((s,c)=>s+c.qty*c.price,0);
   document.getElementById('co-total').textContent='R$ '+total.toFixed(2).replace('.',',');
 }
