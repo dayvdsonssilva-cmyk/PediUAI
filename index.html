@@ -14,15 +14,16 @@
 :root{color-scheme:light only;}
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{overscroll-behavior:none;touch-action:pan-y;-webkit-overflow-scrolling:touch;overflow-x:hidden;}
-body{font-family:'Poppins',sans-serif;background:var(--surface);color:var(--ink);min-height:100vh;}
+html{height:100%;height:-webkit-fill-available;}
+body{font-family:'Poppins',sans-serif;background:var(--surface);color:var(--ink);min-height:100vh;min-height:-webkit-fill-available;}
 /* Forçar cores independente do tema do sistema */
 @media(prefers-color-scheme:dark){
   :root{--brand:#E8410A;--brand-dark:#B83208;--brand-light:#FDF1EC;--ink:#1A1208;--ink2:#4A3F35;--ink3:#8C7F74;--surface:#FFF9F6;--white:#FFFFFF;--border:#EDE5DF;--success:#1A8A5A;--success-bg:#EAF7F0;}
   body{background:#FFF9F6 !important;color:#1A1208 !important;}
 }
 input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
-.screen{display:none;min-height:100vh;}
-.screen.active{display:block;}
+.screen{display:none;min-height:100vh;min-height:-webkit-fill-available;}
+.screen.active{display:block;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 /* LANDING */
 #sl{background:var(--ink);color:#fff;display:none;flex-direction:column;min-height:100vh;}
 #sl.active{display:flex;}
@@ -488,6 +489,18 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 .pw-wrap input{padding-right:2.4rem !important;}
 .pw-eye{position:absolute;right:.7rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--ink3);padding:0;line-height:1;-webkit-tap-highlight-color:transparent;}
 .pw-eye-ceo{position:absolute;right:.7rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:rgba(255,255,255,.35);padding:0;line-height:1;}
+
+/* MEUS PEDIDOS — aba do cliente no cardápio */
+.mp-tab-bar{display:flex;background:var(--white);border-bottom:2px solid var(--border);position:sticky;top:0;z-index:10;}
+.mp-tab{flex:1;padding:.75rem .5rem;text-align:center;font-size:.78rem;font-weight:700;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;}
+.mp-tab.active{color:var(--brand);border-bottom-color:var(--brand);}
+.mp-panel{display:none;padding:1rem 1.3rem;}
+.mp-panel.active{display:block;}
+/* Notificação de pedido */
+.pedido-status-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:.75rem;}
+.pedido-status-card.novo{border-color:var(--brand);}
+.pedido-status-card.preparando{border-color:#6366f1;background:#eef2ff;}
+.pedido-status-card.pronto{border-color:var(--success);background:var(--success-bg);}
 </style>
 </head>
 <body>
@@ -786,6 +799,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
         <div class="fg"><label>Descrição</label><input type="text" id="s-desc"></div>
         <div class="fg"><label>Mensagem de boas-vindas</label><textarea rows="2" id="s-wel"></textarea></div>
         <div class="fg"><label>WhatsApp (DDI+DDD+número)</label><input type="text" id="s-wp" inputmode="numeric"></div>
+        <div class="fg"><label>Endereço do estabelecimento</label><input type="text" id="s-addr" placeholder="Rua, número, bairro, cidade"></div>
         <button class="btn btn-brand" onclick="saveSettings()">Salvar alterações</button>
       </div>
       <div class="ss">
@@ -993,9 +1007,21 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <div class="fs-lbl"><span></span>Fresquinho de hoje</div>
     <div class="fr" id="flash-client-row"></div>
   </div>
-  <div class="sc-wrap">
-    <div class="ct" id="cat-tabs"></div>
-    <div class="cml" id="client-menu"></div>
+  <!-- Abas Cardápio / Meus Pedidos -->
+  <div class="mp-tab-bar">
+    <div class="mp-tab active" id="tab-cardapio" onclick="switchClientTab('cardapio')">🍔 Cardápio</div>
+    <div class="mp-tab" id="tab-meus-pedidos" onclick="switchClientTab('meus-pedidos')">📋 Meus Pedidos</div>
+  </div>
+  <!-- Painel Cardápio -->
+  <div class="mp-panel active" id="panel-cardapio">
+    <div class="sc-wrap" style="padding:0">
+      <div style="padding:.75rem 1.3rem 0"><div class="ct" id="cat-tabs"></div></div>
+      <div class="cml" id="client-menu" style="padding:0 1.3rem"></div>
+    </div>
+  </div>
+  <!-- Painel Meus Pedidos -->
+  <div class="mp-panel" id="panel-meus-pedidos">
+    <div id="meus-pedidos-lista" style="padding:.5rem 0"></div>
   </div>
   <button class="cf" id="cart-fab" onclick="goTo('s-checkout')">
     <span id="cart-cnt" class="cc">0</span>
@@ -1012,6 +1038,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <div id="cart-items"></div>
     <!-- DELIVERY TYPE -->
     <div class="sl-label">Tipo de entrega</div>
+    <div id="pickup-address-block" style="display:none"></div>
     <div class="del-type-row">
       <div class="del-type-card active" id="dt-delivery" onclick="setDeliveryType('delivery')">
         <div style="font-size:1.6rem;margin-bottom:.3rem">🛵</div>
@@ -1475,6 +1502,43 @@ function tocarSomNovoPedido() {
   } catch(e) { console.warn('Som não disponível:', e); }
 }
 
+
+// ─── ABAS CLIENTE ─────────────────────────────────────────────────────────────
+function switchClientTab(tab) {
+  document.getElementById('tab-cardapio')?.classList.toggle('active', tab === 'cardapio');
+  document.getElementById('tab-meus-pedidos')?.classList.toggle('active', tab === 'meus-pedidos');
+  document.getElementById('panel-cardapio')?.classList.toggle('active', tab === 'cardapio');
+  document.getElementById('panel-meus-pedidos')?.classList.toggle('active', tab === 'meus-pedidos');
+  if (tab === 'meus-pedidos') renderMeusPedidos();
+}
+function salvarPedidoCliente(pedido) {
+  try { const l=JSON.parse(sessionStorage.getItem('pw_meus_pedidos')||'[]'); l.unshift(pedido); sessionStorage.setItem('pw_meus_pedidos',JSON.stringify(l.slice(0,20))); } catch(e) {}
+}
+function carregarPedidosCliente() {
+  try { return JSON.parse(sessionStorage.getItem('pw_meus_pedidos')||'[]'); } catch(e) { return []; }
+}
+function renderMeusPedidos() {
+  const lista = document.getElementById('meus-pedidos-lista'); if (!lista) return;
+  const pedidos = carregarPedidosCliente();
+  if (!pedidos.length) { lista.innerHTML='<div style="text-align:center;padding:3rem 1rem"><div style="font-size:2.5rem;margin-bottom:.75rem">📭</div><div style="font-weight:700">Nenhum pedido ainda</div><div style="font-size:.8rem;color:var(--ink3);margin-top:.3rem">Faça seu primeiro pedido!</div></div>'; return; }
+  lista.innerHTML = pedidos.map(p => {
+    const st = p.status==='preparing'?'🍳 Preparando':p.status==='ready'?(p.delivery==='pickup'?'✅ Pronto — pode retirar!':'✅ Saiu para entrega!'):p.status==='done'?'🏁 Entregue':'⏳ Aguardando';
+    const bg = p.status==='preparing'?'#eef2ff':p.status==='ready'?'var(--success-bg)':'var(--brand-light)';
+    const cor = p.status==='preparing'?'#6366f1':p.status==='ready'?'var(--success)':'var(--brand)';
+    const itens = (p.items||[]).map(i=>`${i.qty}x ${i.name}`).join(', ');
+    const endAddr = p.status==='ready'&&p.delivery==='pickup'&&p.lojaAddress?`<div style="margin-top:.5rem;padding:.5rem .75rem;background:rgba(0,0,0,.05);border-radius:8px;font-size:.75rem">📍 ${p.lojaAddress}</div>`:'';
+    return `<div style="background:var(--white);border:1.5px solid ${cor};border-radius:var(--r);padding:1rem;margin-bottom:.75rem">
+      <div style="display:flex;justify-content:space-between;margin-bottom:.4rem">
+        <div style="font-weight:800">${p.id||'#—'}</div>
+        <span style="font-size:.7rem;font-weight:700;background:${bg};color:${cor};padding:.2rem .55rem;border-radius:100px">${st}</span>
+      </div>
+      <div style="font-size:.8rem;color:var(--ink2);margin-bottom:.3rem">${itens}</div>
+      <div style="font-weight:700;color:var(--brand)">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
+      ${endAddr}
+    </div>`;
+  }).join('');
+}
+
 // ─── REALTIME CLIENTE — escuta mudanças do SEU pedido ────────────────────
 // Esta função roda SOMENTE no celular do cliente, após fazer um pedido
 let realtimeChannel = null;
@@ -1492,12 +1556,14 @@ async function assinarStatusPedido(orderId, tipoEntrega) {
       filter: `id=eq.${orderId}`
     }, (payload) => {
       const novoStatus = payload.new?.status;
-      // Notifica SOMENTE o cliente (esta função só é chamada do fluxo do cliente)
       if (novoStatus === 'preparing') {
+        // Atualiza histórico do cliente
+        atualizarStatusPedidoCliente(orderId, 'preparing');
         notifCliente('🍳 Pedido confirmado!', 'Estamos preparando agora. Aguarde!');
         showCSNotif('preparing');
       } else if (novoStatus === 'ready') {
         const msg = _pedidoEntrega === 'pickup' ? 'Pode vir buscar! 🏃' : 'Saiu para entrega! 🛵';
+        atualizarStatusPedidoCliente(orderId, 'ready');
         notifCliente('✅ Pedido pronto!', msg);
         showCSNotif('ready');
       }
@@ -1507,18 +1573,54 @@ async function assinarStatusPedido(orderId, tipoEntrega) {
     });
 }
 
+
+function atualizarStatusPedidoCliente(orderId, novoStatus) {
+  try {
+    const lista = JSON.parse(sessionStorage.getItem('pw_meus_pedidos') || '[]');
+    const idx = lista.findIndex(p => p.supaId === orderId);
+    if (idx >= 0) {
+      lista[idx].status = novoStatus;
+      sessionStorage.setItem('pw_meus_pedidos', JSON.stringify(lista));
+      // Se estiver na aba meus pedidos, re-renderiza
+      if (document.getElementById('panel-meus-pedidos')?.classList.contains('active')) {
+        renderMeusPedidos();
+      }
+    }
+  } catch(e) {}
+}
 function notifCliente(titulo, corpo) {
   // Banner na tela (sempre funciona)
   showNotif(titulo, corpo);
-  // Notificação do sistema se permitido
+  // Notificação do sistema (segundo plano) se permitido
   if ('Notification' in window) {
     if (Notification.permission === 'granted') {
-      new Notification(titulo, { body: corpo });
+      try {
+        new Notification('🍔 PEDIWAY — ' + titulo, {
+          body: corpo,
+          icon: 'https://pediway.vercel.app/icon-192.png',
+          badge: 'https://pediway.vercel.app/icon-192.png',
+          vibrate: [200, 100, 200],
+          requireInteraction: false,
+          silent: false
+        });
+      } catch(e) { new Notification(titulo, { body: corpo }); }
     } else if (Notification.permission !== 'denied') {
       Notification.requestPermission().then(p => {
-        if (p === 'granted') new Notification(titulo, { body: corpo });
+        if (p === 'granted') notifCliente(titulo, corpo); // tenta de novo
       });
     }
+  }
+}
+
+// Pede permissão de notificação ao abrir o cardápio da loja
+function pedirPermissaoNotificacao() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    // Só pede depois que o usuário interagir (evita bloqueio automático)
+    setTimeout(() => {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }, 5000);
   }
 }
 
@@ -2354,6 +2456,7 @@ async function saveSettings() {
   currentUser.desc = document.getElementById('s-desc').value;
   currentUser.welcome = document.getElementById('s-wel').value;
   currentUser.whatsapp = digits(document.getElementById('s-wp').value);
+  currentUser.address = document.getElementById('s-addr')?.value || '';
   // Atualiza slug se o nome mudou
   if (novoSlug && novoSlug !== currentUser.slug) {
     currentUser.slug = novoSlug;
@@ -2374,7 +2477,8 @@ async function saveSettings() {
         slug: currentUser.slug,
         emoji: currentUser.emoji || '🍔',
         color: currentUser.color || '#E8410A',
-        logo_url: currentUser.logo || null
+        logo_url: currentUser.logo || null,
+        address: currentUser.address || ''
       }).eq('id', currentUser.id);
       showNotif('✅ Salvo!', 'Configurações atualizadas no cardápio!');
     } catch(e) {
@@ -2405,6 +2509,8 @@ function updateStoreEmojiPicker(){
     document.getElementById('s-desc').value=currentUser.desc||'';
     document.getElementById('s-wel').value=currentUser.welcome||'';
     document.getElementById('s-wp').value=currentUser.whatsapp||'';
+    const saddrEl = document.getElementById('s-addr');
+    if (saddrEl) saddrEl.value = currentUser.address || '';
     // Load logo preview in settings
     const img = document.getElementById('settings-logo-img');
     const emoji = document.getElementById('settings-logo-emoji');
@@ -2448,6 +2554,7 @@ function renderStore() {
   document.getElementById('sn').textContent = u.name;
   document.getElementById('sd').textContent = u.desc || '';
   renderFlashClient();
+  pedirPermissaoNotificacao(); // pede permissão de notificação
   const avail = (u.menuItems||[]).filter(i=>i.available);
   const cats = ['Todos',...new Set(avail.map(i=>i.cat))];
   document.getElementById('cat-tabs').innerHTML = cats.map((c,i)=>`<button class="cp ${i===0?'active':''}" onclick="filterCat('${c}',this)">${c}</button>`).join('');
@@ -2455,13 +2562,32 @@ function renderStore() {
   updateCartUI();
 }
 
-function renderFlashClient(){
+async function renderFlashClient(){
+  // Carrega fresquinhos do Supabase se disponível
+  if (!currentUser?.flashItems?.length && currentUser?.id?.includes('-')) {
+    try {
+      const db = getSupa();
+      if (db) {
+        const { data } = await db.from('flash_items')
+          .select('*').eq('establishment_id', currentUser.id)
+          .gt('expires_at', new Date().toISOString())
+          .order('created_at', { ascending: false });
+        if (data?.length) {
+          currentUser.flashItems = data.map(f => ({
+            id: f.id, type: f.type || 'image',
+            emoji: f.emoji || '🔥', title: f.title || '',
+            url: f.url || null
+          }));
+        }
+      }
+    } catch(e) {}
+  }
   const items=currentUser?.flashItems||[];
   const sec=document.getElementById('flash-client-sec');
   if(!items.length){sec.style.display='none';return;}
   sec.style.display='block';
   document.getElementById('flash-client-row').innerHTML=items.map((f,i)=>`<div class="fc" onclick="openFlash(${i})">
-    ${f.url?(f.type==='video'?`<video src="${f.url}" class="fc-th" muted playsinline></video>`:`<img src="${f.url}" class="fc-th">`): `<div class="fc-ph">${f.emoji}</div>`}
+    ${f.url?(f.type==='video'?`<video src="${f.url}" class="fc-th" playsinline preload="metadata"></video>`:`<img src="${f.url}" class="fc-th">`): `<div class="fc-ph">${f.emoji}</div>`}
     <div class="fc-pl">▶</div><div class="fc-ov"><div class="fc-tt">${f.title}</div></div>
   </div>`).join('');
 }
@@ -2478,7 +2604,7 @@ function renderFlashSlide(){
   const items=currentUser?.flashItems||[];
   const f=items[flashIdx]; if(!f){closeFlash();return;}
   const slides=document.getElementById('flash-slides');
-  slides.innerHTML=f.url?(f.type==='video'?`<video src="${f.url}" autoplay muted playsinline loop style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"></video>`:`<img src="${f.url}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0">`): `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:8rem">${f.emoji}</div>`;
+  slides.innerHTML=f.url?(f.type==='video'?`<video src="${f.url}" autoplay playsinline loop controls style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"></video>`:`<img src="${f.url}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0">`): `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:8rem">${f.emoji}</div>`;
   document.getElementById('fs-title').textContent=f.title;
   const prog=document.getElementById('fp-prog');
   prog.innerHTML=items.map((_,i)=>`<div class="fp-track"><div class="fp-fill" id="fp-${i}" style="width:${i<flashIdx?'100%':'0%'}"></div></div>`).join('');
@@ -2551,6 +2677,18 @@ function setDeliveryType(type){
   document.getElementById('dt-delivery').classList.toggle('active',type==='delivery');
   document.getElementById('dt-pickup').classList.toggle('active',type==='pickup');
   document.getElementById('address-block').style.display=type==='delivery'?'block':'none';
+  const pickupBlock = document.getElementById('pickup-address-block');
+  if (pickupBlock) {
+    if (type === 'pickup' && currentUser?.address) {
+      pickupBlock.style.display = 'block';
+      pickupBlock.innerHTML = `<div style="background:var(--brand-light);border:1.5px solid rgba(232,65,10,.2);border-radius:var(--rs);padding:.75rem 1rem;margin-bottom:.85rem;font-size:.82rem;color:var(--ink2)">
+        <div style="font-weight:700;margin-bottom:.25rem">📍 Endereço para retirada:</div>
+        <div>${currentUser.address}</div>
+      </div>`;
+    } else {
+      pickupBlock.style.display = 'none';
+    }
+  }
 }
 
 // ─── CHECKOUT ─────────────────────────────────────────────────────────────
@@ -3075,13 +3213,25 @@ function confirmAndSendOrder() {
         // Atualiza ID na tela de confirmação
         const cidEl = document.getElementById('conf-order-id');
         if (cidEl) cidEl.textContent = displayId;
+        // Atualiza o pedido no histórico com o supaId real
+        try {
+          const lista = JSON.parse(sessionStorage.getItem('pw_meus_pedidos') || '[]');
+          if (lista[0]) { lista[0].supaId = orderId; lista[0].id = '#' + orderId.slice(-6).toUpperCase(); }
+          sessionStorage.setItem('pw_meus_pedidos', JSON.stringify(lista));
+        } catch(e) {}
         // Inicia escuta de status — SOMENTE no celular do cliente
         assinarStatusPedido(orderId, deliveryType);
       }
     });
   }
+  // Salva no histórico do cliente (sessão)
+  salvarPedidoCliente({
+    ...order,
+    lojaAddress: u.address || '',
+    time: 'agora'
+  });
   cart=[];
-  updateCartUI(); // alias
+  updateCartUI();
   buildConfirmation(order);
   goTo('s-confirm');
   // Jogo só inicia APÓS pedido enviado, com pequeno delay para animação
