@@ -1297,7 +1297,7 @@ function iniciarRealtimePedidos() {
         id: '#' + p.id.slice(-6).toUpperCase(),
         client: p.client_name, phone: p.client_phone,
         address: p.address, delivery: p.delivery_type,
-        items: typeof p.items === 'string' ? JSON.parse(p.items) : (p.items||[]),
+        items: (() => { try { return typeof p.items === 'string' ? JSON.parse(p.items) : (Array.isArray(p.items) ? p.items : []); } catch(e) { return []; } })(),
         payment: p.payment_method, total: Number(p.total),
         status: p.status, time: 'agora', ts: Date.now()
       };
@@ -1307,7 +1307,8 @@ function iniciarRealtimePedidos() {
       // Atualiza UI sem recarregar tudo
       renderOrdersList();
       renderOverviewOrders();
-      showNotif('🔔 Novo pedido!', 'Cliente: ' + p.client_name + ' — R$ ' + Number(p.total).toFixed(2).replace('.',','));
+      // Notif SOMENTE para o estabelecimento — diferente da notif do cliente
+      showNotif('🔔 Novo pedido!', p.client_name + ' · R$ ' + Number(p.total).toFixed(2).replace('.',','));
       // Atualiza contador
       const st = document.getElementById('st-today');
       if (st) st.textContent = String(Number(st.textContent||0) + 1);
@@ -1337,38 +1338,50 @@ function tocarSomNovoPedido() {
   } catch(e) { console.warn('Som não disponível:', e); }
 }
 
-async function assinarStatusPedido(orderId) {
+// ─── REALTIME CLIENTE — escuta mudanças do SEU pedido ────────────────────
+// Esta função roda SOMENTE no celular do cliente, após fazer um pedido
+let realtimeChannel = null;
+let _pedidoEntrega = 'pickup'; // guarda tipo de entrega para usar na notif
+
+async function assinarStatusPedido(orderId, tipoEntrega) {
   const db = getSupa(); if (!db || !orderId) return;
-  // Cancela canal anterior se houver
-  if (realtimeChannel) { db.removeChannel(realtimeChannel); realtimeChannel = null; }
+  _pedidoEntrega = tipoEntrega || 'pickup';
+  // Cancela canal anterior
+  if (realtimeChannel) { try { db.removeChannel(realtimeChannel); } catch(e){} realtimeChannel = null; }
   realtimeChannel = db
-    .channel('order-status-' + orderId)
+    .channel('cliente-pedido-' + orderId)
     .on('postgres_changes', {
       event: 'UPDATE', schema: 'public', table: 'orders',
       filter: `id=eq.${orderId}`
     }, (payload) => {
       const novoStatus = payload.new?.status;
+      // Notifica SOMENTE o cliente (esta função só é chamada do fluxo do cliente)
       if (novoStatus === 'preparing') {
-        mostrarNotifCliente('🍳 Pedido aceito!', 'O estabelecimento está preparando seu pedido.');
+        notifCliente('🍳 Pedido confirmado!', 'Estamos preparando agora. Aguarde!');
         showCSNotif('preparing');
       } else if (novoStatus === 'ready') {
-        mostrarNotifCliente('✅ Pedido pronto!', pedido.delivery === 'pickup' ? 'Pode vir buscar!' : 'Saiu para entrega! 🛵');
+        const msg = _pedidoEntrega === 'pickup' ? 'Pode vir buscar! 🏃' : 'Saiu para entrega! 🛵';
+        notifCliente('✅ Pedido pronto!', msg);
         showCSNotif('ready');
       }
     })
-    .subscribe();
+    .subscribe((status) => {
+      console.log('Realtime cliente:', status);
+    });
 }
 
-function mostrarNotifCliente(titulo, corpo) {
-  // Notificação visual na tela (sempre funciona)
+function notifCliente(titulo, corpo) {
+  // Banner na tela (sempre funciona)
   showNotif(titulo, corpo);
-  // Notificação do sistema (se o usuário permitiu)
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(titulo, { body: corpo, icon: '/favicon.ico' });
-  } else if ('Notification' in window && Notification.permission !== 'denied') {
-    Notification.requestPermission().then(p => {
-      if (p === 'granted') new Notification(titulo, { body: corpo, icon: '/favicon.ico' });
-    });
+  // Notificação do sistema se permitido
+  if ('Notification' in window) {
+    if (Notification.permission === 'granted') {
+      new Notification(titulo, { body: corpo });
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then(p => {
+        if (p === 'granted') new Notification(titulo, { body: corpo });
+      });
+    }
   }
 }
 
@@ -1477,9 +1490,12 @@ function openDemo() {
 }
 
 function goBackFromStore() {
-  // Cliente não volta para o site principal — fica no cardápio
-  // (o link do cardápio é independente, não tem navegação de volta)
-  window.scrollTo(0, 0);
+  // Volta para o cardápio da loja atual
+  if (currentUser && currentStoreSlug) {
+    goTo('s-store');
+  } else {
+    goTo('sl');
+  }
 }
 
 // ─── SECRET CEO CODE (desktop + landing only) ─────────────────────────────
@@ -2693,24 +2709,30 @@ function confirmAndSendOrder() {
   const total=cart.reduce((s,c)=>s+c.qty*c.price,0);
   orderCounter++;
   const order={
-    id:'#'+orderCounter,client:name,phone,address:addr,delivery:deliveryType,
-    items:cart.map(c=>({name:c.name,qty:c.qty,price:c.price})),
-    payment:selectedPayment,total,status:'new',time:'agora',ts:Date.now()
+    id:'#' + (++orderCounter), client:name, phone, address:addr, delivery:deliveryType,
+    items: cart.map(c=>({name:c.name, qty:c.qty, price:c.price})),
+    payment:selectedPayment, total, status:'new', time:'agora', ts:Date.now()
   };
   u.orders=[order,...(u.orders||[])];
   saveCurrentUser();
-  showNotif('🎉 Pedido '+order.id,'Cliente: '+name);
+  // Não mostra notif aqui — isso é do lado do cliente, não do estabelecimento
   // Salva no Supabase se loja veio do banco
   // Salva no Supabase e assina Realtime para notificar o cliente
   if (u.id && u.id.includes('-')) {
     salvarPedidoSupa(u.id, order).then(orderId => {
       if (orderId) {
+        // Atualiza o ID exibido ao cliente com o ID real do Supabase
+        const displayId = '#' + orderId.slice(-6).toUpperCase();
         order.supaId = orderId;
-        // Guarda no histórico local com ID do Supabase
+        order.id = displayId;
         u.orders[0].supaId = orderId;
+        u.orders[0].id = displayId;
         saveCurrentUser();
-        // Inicia escuta de mudanças de status em tempo real
-        assinarStatusPedido(orderId);
+        // Atualiza ID na tela de confirmação
+        const cidEl = document.getElementById('conf-order-id');
+        if (cidEl) cidEl.textContent = displayId;
+        // Inicia escuta de status — SOMENTE no celular do cliente
+        assinarStatusPedido(orderId, deliveryType);
       }
     });
   }
