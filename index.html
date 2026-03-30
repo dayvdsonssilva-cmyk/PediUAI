@@ -3,13 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#FFF9F6">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <title>PEDIWAY — Seu delivery, do seu jeito</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--brand:#E8410A;--brand-dark:#B83208;--brand-light:#FDF1EC;--ink:#1A1208;--ink2:#4A3F35;--ink3:#8C7F74;--surface:#FFF9F6;--white:#FFFFFF;--border:#EDE5DF;--success:#1A8A5A;--success-bg:#EAF7F0;--r:14px;--rs:8px;}
+/* Bloquear dark mode do navegador — layout sempre igual */
+:root{color-scheme:light only;}
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{overscroll-behavior:none;touch-action:pan-y;-webkit-overflow-scrolling:touch;overflow-x:hidden;}
 body{font-family:'Poppins',sans-serif;background:var(--surface);color:var(--ink);min-height:100vh;}
+/* Forçar cores independente do tema do sistema */
+@media(prefers-color-scheme:dark){
+  :root{--brand:#E8410A;--brand-dark:#B83208;--brand-light:#FDF1EC;--ink:#1A1208;--ink2:#4A3F35;--ink3:#8C7F74;--surface:#FFF9F6;--white:#FFFFFF;--border:#EDE5DF;--success:#1A8A5A;--success-bg:#EAF7F0;}
+  body{background:#FFF9F6 !important;color:#1A1208 !important;}
+}
 input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 .screen{display:none;min-height:100vh;}
 .screen.active{display:block;}
@@ -180,7 +190,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 .csb-prep{background:#EEF2FF;border-color:#C7D2FE;}
 .csb-ready{background:var(--success-bg);border-color:#A7F3D0;}
 /* STORE - CLIENT */
-#s-store{background:var(--surface);min-height:100vh;max-width:480px;margin:0 auto;}
+#s-store{background:var(--surface);min-height:100vh;max-width:480px;margin:0 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .s-hero{background:var(--ink);color:#fff;padding:1.6rem 1.3rem 1.2rem;position:relative;overflow:hidden;}
 .s-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:150px;height:150px;border-radius:50%;background:rgba(232,65,10,.15);}
 .s-back{position:absolute;top:.9rem;left:.9rem;background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;-webkit-tap-highlight-color:transparent;}
@@ -468,7 +478,6 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   #s-ceo-login.active{display:flex;}
 }
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -774,6 +783,20 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
         <div class="fg"><label>Mensagem de boas-vindas</label><textarea rows="2" id="s-wel"></textarea></div>
         <div class="fg"><label>WhatsApp (DDI+DDD+número)</label><input type="text" id="s-wp" inputmode="numeric"></div>
         <button class="btn btn-brand" onclick="saveSettings()">Salvar alterações</button>
+      </div>
+      <div class="ss">
+        <h3>Logo da loja</h3>
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.75rem">
+          <div id="settings-logo-preview" style="width:72px;height:72px;border-radius:50%;background:var(--brand-light);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;flex-shrink:0">
+            <img id="settings-logo-img" style="display:none;width:100%;height:100%;object-fit:cover" alt="logo">
+            <span id="settings-logo-emoji">🏪</span>
+          </div>
+          <div>
+            <button class="btn btn-outline" onclick="document.getElementById('settings-logo-file').click()" style="font-size:.78rem;padding:.42rem .9rem">📷 Alterar logo</button>
+            <input type="file" id="settings-logo-file" accept="image/*" style="display:none" onchange="updateSettingsLogo(this)">
+            <div style="font-size:.7rem;color:var(--ink3);margin-top:.3rem">Aparece no cardápio do cliente</div>
+          </div>
+        </div>
       </div>
       <div class="ss">
         <h3>Aparência</h3>
@@ -1107,6 +1130,29 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   </div>
 </div>
 
+<!-- MODAL CROP DE IMAGEM -->
+<div class="mb" id="modal-crop">
+  <div class="mo" style="max-height:95vh">
+    <div class="mo-h"></div>
+    <div class="mo-hdr">
+      <span class="mo-title" id="crop-title">Ajustar imagem</span>
+      <button class="clo" onclick="cancelCrop()">×</button>
+    </div>
+    <div style="font-size:.76rem;color:var(--ink3);margin-bottom:.75rem">Arraste para mover · Pinça para zoom</div>
+    <div id="crop-container" style="width:100%;aspect-ratio:1;background:#111;border-radius:var(--r);overflow:hidden;position:relative;touch-action:none;cursor:grab">
+      <img id="crop-img" style="position:absolute;transform-origin:center;user-select:none;-webkit-user-select:none;max-width:none" draggable="false">
+    </div>
+    <div style="display:flex;align-items:center;gap:.75rem;margin-top:.85rem">
+      <span style="font-size:.76rem;color:var(--ink3)">Zoom</span>
+      <input type="range" id="crop-zoom" min="0.5" max="3" step="0.05" value="1" style="flex:1;accent-color:var(--brand)" oninput="applyCropTransform()">
+    </div>
+    <div style="display:flex;gap:.6rem;margin-top:.85rem;padding-bottom:.9rem">
+      <button class="btn btn-outline" style="flex:1" onclick="cancelCrop()">Cancelar</button>
+      <button class="btn btn-brand" style="flex:1" onclick="confirmCrop()">✓ Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- FRESQUINHO PLAYER -->
 <div id="modal-flash" style="display:none;position:fixed;inset:0;z-index:400;background:#000;">
   <div class="fp-top">
@@ -1157,7 +1203,7 @@ function setUsers(u) { LS.set('users', u); }
 function getSolicitations() { return LS.get('solics') || []; }
 function setSolicitations(s) { LS.set('solics', s); }
 
-// ─── SUPABASE ────────────────────────────────────────────────────────────
+// ─── SUPABASE ─────────────────────────────────────────────────────────────
 const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
 let _supa = null;
@@ -1168,23 +1214,21 @@ function getSupa() {
 async function carregarLojaSupa(slug) {
   const db = getSupa(); if (!db) return null;
   try {
-    const { data: loja } = await db.from('estabelecimentos').select('*').eq('slug', slug).eq('status', 'active').single();
+    const { data: loja } = await db.from('estabelecimentos').select('*').eq('slug', slug).eq('status','active').single();
     if (!loja) return null;
     const { data: itens } = await db.from('menu_items').select('*').eq('establishment_id', loja.id).eq('available', true).order('category');
     return {
-      id: loja.id, name: loja.name,
-      desc: loja.desc || '', emoji: loja.emoji || '🍔',
-      color: loja.color || '#E8410A', slug: loja.slug,
-      logo: loja.logo_url || null, email: loja.email,
-      pass: loja.pass || loja.password_plain || '',
-      whatsapp: loja.whatsapp || '', plan: loja.plan_type || 'basico',
-      status: 'active', dueDate: loja.due_date || '',
-      menuItems: (itens || []).map(i => ({
+      id: loja.id, name: loja.name, desc: loja.desc || '',
+      emoji: loja.emoji || '🍔', color: loja.color || '#E8410A',
+      slug: loja.slug, logo: loja.logo_url || null,
+      email: loja.email, pass: loja.pass || loja.password_plain || '',
+      whatsapp: loja.whatsapp || '', plan: 'ultra', status: 'active',
+      dueDate: loja.due_date || '', orders: [], flashItems: [], welcome: 'Seja bem-vindo!',
+      menuItems: (itens||[]).map(i => ({
         id: i.id, name: i.name, desc: i.desc || '',
         price: Number(i.price), cat: i.category || 'Geral',
         emoji: i.emoji || '🍔', photo: i.photo_url || null, available: i.available
-      })),
-      orders: [], flashItems: [], welcome: 'Seja bem-vindo!'
+      }))
     };
   } catch(e) { console.warn('Supa erro:', e); return null; }
 }
@@ -1199,56 +1243,33 @@ async function salvarPedidoSupa(lojaId, pedido) {
       payment_method: pedido.payment, total: pedido.total,
       status: 'new', created_at: new Date().toISOString()
     });
-  } catch(e) { console.warn('Erro pedido supa:', e); }
+  } catch(e) { console.warn('Pedido supa erro:', e); }
 }
 
-
-
-// Initialize demo store data if not set
+// initDemoData removida — sistema em produção, dados reais
 function initDemoData() {
+  // Demo disponível apenas pelo botão "Ver demo" na landing
+  // Não inicializa automaticamente para manter CEO zerado
   if (!LS.get('demo_init')) {
     const demoUser = {
-      id: 'demo',
-      name: 'Burguer do Zé',
-      desc: 'Os melhores burguers da cidade!',
-      emoji: '🍔',
-      color: '#E8410A',
-      slug: 'demo',
-      logo: null,
-      email: 'demo@pediway.com.br',
-      pass: '123456',
-      whatsapp: '5511999999999',
-      plan: 'ultra',
-      status: 'active',
-      dueDate: '2025-12-31',
-      payMethod: 'Cartão',
-      since: '2025-01-01',
-      doc: '12.345.678/0001-90',
-      orders: [],
+      id: 'demo', name: 'Burguer do Zé', desc: 'Os melhores burguers da cidade!',
+      emoji: '🍔', color: '#E8410A', slug: 'demo', logo: null,
+      email: 'demo@pediway.com.br', pass: '123456', whatsapp: '5511999999999',
+      plan: 'ultra', status: 'active', dueDate: '', payMethod: '',
+      since: new Date().toISOString().slice(0,10), doc: '12.345.678/0001-90',
+      orders: [], flashItems: [], welcome: 'Seja bem-vindo! 🍔',
       menuItems: [
-        {id:1,emoji:'🍔',photo:null,name:'X-Burguer Especial',desc:'Pão brioche, carne 180g, queijo cheddar, alface, tomate e molho especial.',cat:'Lanches',price:28.90,available:true},
-        {id:2,emoji:'🍔',photo:null,name:'X-Bacon Duplo',desc:'Duplo de carne, bacon crocante, queijo prato, picles e molho barbecue.',cat:'Lanches',price:36.90,available:true},
-        {id:3,emoji:'🍟',photo:null,name:'Batata Frita Grande',desc:'Porção generosa com sal grosso e molho especial.',cat:'Acompanhamentos',price:14.90,available:true},
-        {id:4,emoji:'🥤',photo:null,name:'Refrigerante 350ml',desc:'Coca-Cola, Guaraná ou Fanta.',cat:'Bebidas',price:7.90,available:true},
-        {id:5,emoji:'🧃',photo:null,name:'Suco Natural',desc:'Laranja, maracujá ou limão, feito na hora.',cat:'Bebidas',price:12.90,available:true},
-        {id:6,emoji:'🧁',photo:null,name:'Sundae de Chocolate',desc:'Sorvete de baunilha com calda quente de chocolate belga.',cat:'Sobremesas',price:11.90,available:true},
+        {id:1,emoji:'🍔',photo:null,name:'X-Burguer Especial',desc:'Pão brioche, carne 180g, queijo cheddar, alface e molho especial.',cat:'Lanches',price:28.90,available:true},
+        {id:2,emoji:'🍟',photo:null,name:'Batata Frita Grande',desc:'Porção generosa com sal grosso.',cat:'Acompanhamentos',price:14.90,available:true},
+        {id:3,emoji:'🥤',photo:null,name:'Refrigerante 350ml',desc:'Coca-Cola, Guaraná ou Fanta.',cat:'Bebidas',price:7.90,available:true},
       ],
-      flashItems: [
-        {id:1,type:'image',emoji:'🔥',title:'Promoção: 2x1 no X-Burguer hoje!',url:null},
-        {id:2,type:'image',emoji:'🎉',title:'Novo! Sundae de Nutella chegou',url:null},
-      ],
-      welcome: 'Seja bem-vindo! Escolha seu lanche com carinho 🍔',
     };
-    demoUser.orders = [
-      {id:'#1003',client:'Ana Silva',phone:'(11) 98765-4321',address:'Rua das Flores, 123',delivery:'delivery',items:[{name:'X-Burguer Especial',qty:2,price:28.90},{name:'Refrigerante 350ml',qty:2,price:7.90}],payment:'Pix',total:73.60,status:'new',time:'há 5 min',ts:Date.now()-300000},
-      {id:'#1002',client:'Carlos Souza',phone:'(11) 91234-5678',address:'Av. Central, 456',delivery:'delivery',items:[{name:'X-Bacon Duplo',qty:1,price:36.90},{name:'Batata Frita Grande',qty:1,price:14.90}],payment:'Cartão',total:51.80,status:'preparing',time:'há 18 min',ts:Date.now()-1080000},
-      {id:'#1001',client:'Fernanda Lima',phone:'(11) 97654-3210',address:'Rua do Bosque, 78',delivery:'pickup',items:[{name:'X-Burguer Especial',qty:1,price:28.90},{name:'Suco Natural',qty:1,price:12.90},{name:'Sundae de Chocolate',qty:1,price:11.90}],payment:'Dinheiro',total:53.70,status:'done',time:'há 1h',ts:Date.now()-3600000},
-    ];
     let users = getUsers();
-    if (!users.find(u => u.id === 'demo')) {
-      users.push(demoUser);
-      setUsers(users);
-    }
+    // Demo NÃO aparece no CEO — separado da lista de clientes reais
+    const demoIdx = users.findIndex(u => u.id === 'demo');
+    if (demoIdx === -1) users.push(demoUser);
+    else users[demoIdx] = demoUser;
+    setUsers(users);
     LS.set('demo_init', true);
   }
 }
@@ -1301,7 +1322,7 @@ function initRouting() {
   if (pathMatch) {
     const slug = pathMatch[1];
     if (slug === 'demo') { openDemo(); return true; }
-    // 1. Tenta localStorage (rápido)
+    // 1. Tenta localStorage (instantâneo)
     const users = getUsers();
     const localUser = users.find(u => u.slug === slug && u.status === 'active')
       || users.find(u => u.slug.startsWith(slug.replace(/-[a-z0-9]+$/, '')) && u.status === 'active');
@@ -1309,13 +1330,18 @@ function initRouting() {
       currentUser = localUser; currentStoreSlug = slug;
       goTo('s-store'); return true;
     }
-    // 2. Busca no Supabase (funciona em qualquer celular)
+    // 2. Busca no Supabase — funciona em qualquer celular do mundo
     goTo('s-store');
     document.getElementById('sn').textContent = 'Carregando...';
     document.getElementById('sd').textContent = '';
     carregarLojaSupa(slug).then(loja => {
-      if (loja) { currentUser = loja; currentStoreSlug = slug; renderStore(); }
-      else { document.getElementById('sn').textContent = 'Loja não encontrada'; }
+      if (loja) {
+        currentUser = loja; currentStoreSlug = slug;
+        renderStore();
+      } else {
+        document.getElementById('sn').textContent = 'Loja não encontrada';
+        document.getElementById('sd').textContent = 'Verifique o link e tente novamente.';
+      }
     });
     return true;
   }
@@ -1413,17 +1439,117 @@ function doRegister() {
     desc: document.getElementById('rdesc').value,
     logo: logoData && logoData.startsWith('data:') ? logoData : null,
   };
-  // Avança para escolha do plano
-  goTo('s-payment');
+  // Salva como pendente e vai direto para tela de aguardo
+  const slug = window._pendingReg.name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') + '-' + Date.now().toString(36);
+  const reg = window._pendingReg;
+  const newUser = {
+    id: Date.now().toString(), name: reg.name,
+    desc: reg.desc||'', emoji: '🍔', color: '#E8410A',
+    slug, logo: reg.logo||null, email: reg.email, pass: reg.pass,
+    whatsapp: digits(reg.wp||'5511999999999'),
+    plan: 'ultra', // plano completo desde o início
+    status: 'pending', dueDate: '', payMethod: '',
+    since: new Date().toISOString().slice(0,10),
+    doc: reg.doc||'', orders: [], menuItems: [], flashItems: [], welcome: 'Seja bem-vindo!'
+  };
+  const solics = getSolicitations();
+  solics.push({...newUser, submittedAt: new Date().toLocaleDateString('pt-BR')});
+  setSolicitations(solics);
+  window._pendingReg = null;
+  document.getElementById('pend-email').textContent = reg.email;
+  goTo('s-pending');
 }
+
+// ─── CROP ENGINE ──────────────────────────────────────────────────────────
+let cropCallback = null;
+let cropX = 0, cropY = 0, cropScale = 1;
+let cropDragStart = null, cropImgNatW = 0, cropImgNatH = 0;
+let cropIsCircle = false;
+
+function openCropModal(dataUrl, title, isCircle, onConfirm) {
+  cropCallback = onConfirm;
+  cropIsCircle = isCircle;
+  cropX = 0; cropY = 0; cropScale = 1;
+  document.getElementById('crop-title').textContent = title;
+  document.getElementById('crop-zoom').value = 1;
+  const img = document.getElementById('crop-img');
+  img.src = dataUrl;
+  img.onload = () => {
+    cropImgNatW = img.naturalWidth;
+    cropImgNatH = img.naturalHeight;
+    const cont = document.getElementById('crop-container');
+    const cw = cont.clientWidth;
+    // Fit image to container
+    cropScale = cw / Math.min(cropImgNatW, cropImgNatH);
+    document.getElementById('crop-zoom').value = cropScale;
+    document.getElementById('crop-zoom').min = cropScale * 0.5;
+    document.getElementById('crop-zoom').max = cropScale * 4;
+    document.getElementById('crop-zoom').step = cropScale * 0.05;
+    applyCropTransform();
+  };
+  // Border radius para logo circular
+  const cont = document.getElementById('crop-container');
+  cont.style.borderRadius = isCircle ? '50%' : 'var(--r)';
+  setupCropDrag();
+  openModal('modal-crop');
+}
+
+function applyCropTransform() {
+  cropScale = parseFloat(document.getElementById('crop-zoom').value);
+  const img = document.getElementById('crop-img');
+  img.style.width = (cropImgNatW * cropScale) + 'px';
+  img.style.height = (cropImgNatH * cropScale) + 'px';
+  img.style.left = cropX + 'px';
+  img.style.top = cropY + 'px';
+}
+
+function setupCropDrag() {
+  const cont = document.getElementById('crop-container');
+  cont.onpointerdown = e => {
+    cont.setPointerCapture(e.pointerId);
+    cropDragStart = { x: e.clientX - cropX, y: e.clientY - cropY };
+    cont.style.cursor = 'grabbing';
+  };
+  cont.onpointermove = e => {
+    if (!cropDragStart) return;
+    cropX = e.clientX - cropDragStart.x;
+    cropY = e.clientY - cropDragStart.y;
+    applyCropTransform();
+  };
+  cont.onpointerup = () => { cropDragStart = null; cont.style.cursor = 'grab'; };
+}
+
+function confirmCrop() {
+  const cont = document.getElementById('crop-container');
+  const img = document.getElementById('crop-img');
+  const cw = cont.clientWidth;
+  const ch = cont.clientHeight;
+  const canvas = document.createElement('canvas');
+  const size = Math.min(cw, ch);
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (cropIsCircle) {
+    ctx.beginPath(); ctx.arc(size/2, size/2, size/2, 0, Math.PI*2); ctx.clip();
+  }
+  const imgW = cropImgNatW * cropScale;
+  const imgH = cropImgNatH * cropScale;
+  ctx.drawImage(img, cropX, cropY, imgW, imgH);
+  const result = canvas.toDataURL('image/jpeg', 0.88);
+  closeModal('modal-crop');
+  if (cropCallback) cropCallback(result);
+}
+
+function cancelCrop() { closeModal('modal-crop'); }
 
 function previewLogo(input) {
   const file = input.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    document.getElementById('logo-preview').src = e.target.result;
-    document.getElementById('logo-preview').style.display = 'block';
-    document.getElementById('logo-ph').style.display = 'none';
+    openCropModal(e.target.result, 'Ajustar logo', true, (cropped) => {
+      document.getElementById('logo-preview').src = cropped;
+      document.getElementById('logo-preview').style.display = 'block';
+      document.getElementById('logo-ph').style.display = 'none';
+    });
   };
   reader.readAsDataURL(file);
 }
@@ -1591,7 +1717,16 @@ function selEmoji(e,btn,pickerId) {
 }
 function prevPhoto(input) {
   const file=input.files[0]; if(!file) return;
-  const r=new FileReader(); r.onload=e=>{ selectedPhoto=e.target.result; document.getElementById('ph-preview').src=e.target.result; document.getElementById('ph-preview').style.display='block'; document.getElementById('ph-placeholder').style.display='none'; }; r.readAsDataURL(file);
+  const r=new FileReader();
+  r.onload=e=>{
+    openCropModal(e.target.result, 'Ajustar foto do produto', false, (cropped) => {
+      selectedPhoto=cropped;
+      document.getElementById('ph-preview').src=cropped;
+      document.getElementById('ph-preview').style.display='block';
+      document.getElementById('ph-placeholder').style.display='none';
+    });
+  };
+  r.readAsDataURL(file);
 }
 function saveItem() {
   const name=document.getElementById('i-name').value.trim();
@@ -1700,6 +1835,22 @@ function renderFinanceiro(period) {
 }
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────
+function updateSettingsLogo(input) {
+  const file = input.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    openCropModal(e.target.result, 'Ajustar logo da loja', true, (cropped) => {
+      if (currentUser) { currentUser.logo = cropped; saveCurrentUser(); }
+      const img = document.getElementById('settings-logo-img');
+      const emoji = document.getElementById('settings-logo-emoji');
+      if (img) { img.src = cropped; img.style.display = 'block'; }
+      if (emoji) emoji.style.display = 'none';
+      showNotif('✅ Logo atualizada!', 'Aparece no cardápio dos seus clientes.');
+    });
+  };
+  r.readAsDataURL(file);
+}
+
 function saveSettings() {
   if(!currentUser) return;
   currentUser.name=document.getElementById('s-name').value;
@@ -1718,7 +1869,22 @@ const storeEmojis=['🍔','🍕','🌮','🍜','🍣','🍗','🥩','🧆','🥗
 function updateStoreEmojiPicker(){
   const ep=document.getElementById('store-ep'); if(!ep) return;
   ep.innerHTML=storeEmojis.map(e=>`<button class="epb ${e===(currentUser?.emoji||'🍔')?'sel':''}" onclick="selStoreEmoji('${e}',this)">${e}</button>`).join('');
-  if(currentUser){document.getElementById('s-name').value=currentUser.name||'';document.getElementById('s-desc').value=currentUser.desc||'';document.getElementById('s-wel').value=currentUser.welcome||'';document.getElementById('s-wp').value=currentUser.whatsapp||'';}
+  if(currentUser){
+    document.getElementById('s-name').value=currentUser.name||'';
+    document.getElementById('s-desc').value=currentUser.desc||'';
+    document.getElementById('s-wel').value=currentUser.welcome||'';
+    document.getElementById('s-wp').value=currentUser.whatsapp||'';
+    // Load logo preview in settings
+    const img = document.getElementById('settings-logo-img');
+    const emoji = document.getElementById('settings-logo-emoji');
+    if (currentUser.logo && img) {
+      img.src = currentUser.logo; img.style.display = 'block';
+      if (emoji) emoji.style.display = 'none';
+    } else {
+      if (img) img.style.display = 'none';
+      if (emoji) { emoji.style.display = 'block'; emoji.textContent = currentUser.emoji || '🏪'; }
+    }
+  }
 }
 function selStoreEmoji(e,btn){document.querySelectorAll('#store-ep .epb').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');if(currentUser){currentUser.emoji=e;saveCurrentUser();}}
 
@@ -1726,7 +1892,13 @@ function selStoreEmoji(e,btn){document.querySelectorAll('#store-ep .epb').forEac
 function renderStore() {
   const u = currentUser; if(!u) return;
   document.documentElement.style.setProperty('--brand', u.color||'#E8410A');
-  document.getElementById('se').textContent = u.emoji||'🍔';
+  // Logo ou emoji no hero
+  const seEl = document.getElementById('se');
+  if (u.logo) {
+    seEl.innerHTML = `<img src="${u.logo}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.3);display:block;margin:0 auto .5rem" alt="logo">`;
+  } else {
+    seEl.textContent = u.emoji||'🍔';
+  }
   document.getElementById('sn').textContent = u.name;
   document.getElementById('sd').textContent = u.desc||'';
   renderFlashClient();
@@ -1977,7 +2149,8 @@ function filterCeoStores(query) {
 }
 
 function renderCeo(){
-  const users=getUsers();
+  const todos=getUsers();
+  const users=todos.filter(u=>u.id!=='demo'); // demo não aparece como cliente real
   const solics=getSolicitations();
   const active=users.filter(u=>u.status==='active').length;
   const pending=solics.length;
@@ -2031,8 +2204,10 @@ function renderCeo(){
 
   // Financeiro CEO
   const ch=document.getElementById('ceo-hist');
-  const months=['Mar 2025','Fev 2025','Jan 2025','Dez 2024'];
-  if(ch) ch.innerHTML=months.map((m,i)=>`<tr><td>${m}</td><td>${Math.max(0,active-i)}</td><td>${Math.max(0,users.filter(u=>u.plan==='ultra').length-i)}</td><td style="color:#4ade80;font-weight:700">R$ ${(mrr*(1-i*0.05)).toFixed(2).replace('.',',')}</td></tr>`).join('');
+  const mesAtual=new Date().toLocaleString('pt-BR',{month:'long',year:'numeric'});
+  if(ch) ch.innerHTML=mrr>0
+    ?`<tr><td style="text-transform:capitalize">${mesAtual}</td><td>${users.filter(u=>u.status==='active'&&u.plan!=='ultra').length}</td><td>${users.filter(u=>u.status==='active'&&u.plan==='ultra').length}</td><td style="color:#4ade80;font-weight:700">R$ ${mrr.toFixed(2).replace('.',',')}</td></tr>`
+    :'<tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,.3);padding:.9rem">Nenhuma receita ainda</td></tr>';
 }
 
 function viewCeoStore(i){
@@ -2078,11 +2253,14 @@ function ceoEditStore(){
 function approveSolic(i){
   const solics=getSolicitations(); const s=solics.splice(i,1)[0];
   const users=getUsers();
-  s.status='active'; s.id=s.id||Date.now().toString();
+  s.status='active';
+  s.plan='ultra'; // plano completo para todos
+  s.id=s.id||Date.now().toString();
+  s.dueDate=new Date(Date.now()+30*24*60*60*1000).toLocaleDateString('pt-BR');
   if(!users.find(u=>u.email===s.email)) users.push(s);
   else { const idx=users.findIndex(u=>u.email===s.email); users[idx]=s; }
   setUsers(users); setSolicitations(solics);
-  showNotif('✅ Aprovado!',s.name+' agora está ativo.');
+  showNotif('✅ Aprovado!',s.name+' agora está ativo — plano completo.');
   renderCeo();
 }
 
@@ -2190,7 +2368,8 @@ function confirmAndSendOrder() {
   u.orders=[order,...(u.orders||[])];
   saveCurrentUser();
   showNotif('🎉 Pedido '+order.id,'Cliente: '+name);
-  if (u.id && typeof u.id === 'string' && u.id.length > 10) salvarPedidoSupa(u.id, order);
+  // Salva no Supabase se loja veio do banco
+  if (u.id && u.id.includes('-')) salvarPedidoSupa(u.id, order);
   cart=[];
   updateCartUI(); // alias
   buildConfirmation(order);
