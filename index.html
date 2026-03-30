@@ -1238,25 +1238,84 @@ function getSupa() {
   return null;
 }
 async function carregarLojaSupa(slug) {
-  const db = getSupa(); if (!db) return null;
+  const db = getSupa();
+  if (!db) {
+    console.warn('Supabase não inicializado ainda');
+    return null;
+  }
   try {
-    const { data: loja } = await db.from('estabelecimentos').select('*').eq('slug', slug).eq('status','active').single();
-    if (!loja) return null;
-    const { data: itens } = await db.from('menu_items').select('*').eq('establishment_id', loja.id).eq('available', true).order('category');
-    return {
-      id: loja.id, name: loja.name, desc: loja.desc || '',
-      emoji: loja.emoji || '🍔', color: loja.color || '#E8410A',
-      slug: loja.slug, logo: loja.logo_url || null,
-      email: loja.email, pass: loja.pass || loja.password_plain || '',
-      whatsapp: loja.whatsapp || '', plan: 'ultra', status: 'active',
-      dueDate: loja.due_date || '', orders: [], flashItems: [], welcome: 'Seja bem-vindo!',
-      menuItems: (itens||[]).map(i => ({
-        id: i.id, name: i.name, desc: i.desc || '',
-        price: Number(i.price), cat: i.category || 'Geral',
-        emoji: i.emoji || '🍔', photo: i.photo_url || null, available: i.available
-      }))
-    };
-  } catch(e) { console.warn('Supa erro:', e); return null; }
+    // Tenta buscar sem filtro de status primeiro (RLS já protege)
+    // Usa select explícito para evitar problema com coluna "desc" reservada
+    const { data: loja, error: lojaErr } = await db
+      .from('estabelecimentos')
+      .select('id, name, email, slug, emoji, color, logo_url, whatsapp, plan_type, status, pass, password_plain, "desc"')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (lojaErr) {
+      console.warn('Erro Supabase loja:', lojaErr.message);
+      // Tenta sem o campo desc (compatibilidade)
+      const { data: loja2, error: err2 } = await db
+        .from('estabelecimentos')
+        .select('id, name, email, slug, emoji, color, logo_url, whatsapp, plan_type, status, pass, password_plain')
+        .eq('slug', slug)
+        .maybeSingle();
+      if (err2 || !loja2) { console.warn('Fallback erro:', err2?.message); return null; }
+      return await montarLojaObj(db, loja2, null);
+    }
+
+    if (!loja) {
+      console.warn('Loja não encontrada no Supabase para slug:', slug);
+      return null;
+    }
+
+    if (loja.status !== 'active') {
+      console.warn('Loja inativa:', loja.status);
+      return null;
+    }
+
+    return await montarLojaObj(db, loja, loja.desc || '');
+
+  } catch(e) {
+    console.warn('Erro carregarLojaSupa:', e.message || e);
+    return null;
+  }
+}
+
+async function montarLojaObj(db, loja, descVal) {
+  // Busca itens do cardápio
+  const { data: itens } = await db
+    .from('menu_items')
+    .select('*')
+    .eq('establishment_id', loja.id)
+    .eq('available', true)
+    .order('category');
+
+  return {
+    id: loja.id,
+    name: loja.name || 'Loja',
+    desc: descVal !== null ? descVal : (loja.desc || ''),
+    emoji: loja.emoji || '🍔',
+    color: loja.color || '#E8410A',
+    slug: loja.slug,
+    logo: loja.logo_url || null,
+    email: loja.email || '',
+    pass: loja.pass || loja.password_plain || '',
+    whatsapp: loja.whatsapp || '',
+    plan: 'ultra',
+    status: 'active',
+    orders: [], flashItems: [], welcome: 'Seja bem-vindo!',
+    menuItems: (itens || []).map(i => ({
+      id: i.id, name: i.name,
+      desc: i.desc || '',
+      price: Number(i.price),
+      cat: i.category || 'Geral',
+      emoji: i.emoji || '🍔',
+      photo: i.photo_url || null,
+      available: i.available,
+      supaId: i.id
+    }))
+  };
 }
 async function salvarPedidoSupa(lojaId, pedido) {
   const db = getSupa(); if (!db) return null;
