@@ -468,6 +468,8 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   #s-ceo-login.active{display:flex;}
 }
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js" defer></script>
 </head>
 <body>
 
@@ -573,7 +575,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <div style="margin-top:.85rem;padding:.85rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs)">
       <div style="font-size:.66rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem">🔑 Acesso de teste</div>
       <div style="font-size:.75rem;color:var(--ink2);margin-bottom:.55rem;line-height:1.5">
-        <strong>E-mail:</strong> demo@pediway.com.br<br>
+        <strong>E-mail:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d1b5b4bcbe91a1b4b5b8a6b0a8ffb2bebcffb3a3">[email&#160;protected]</a><br>
         <strong>Senha:</strong> 123456
       </div>
       <button class="btn btn-outline btn-full" style="font-size:.78rem;padding:.48rem" onclick="loginDemo()">Entrar como loja de teste →</button>
@@ -1119,7 +1121,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   <div onclick="flashNext()" style="position:absolute;right:0;top:0;width:35%;height:100%;z-index:5;cursor:pointer;"></div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 function el(id) { return document.getElementById(id); }
 // ─── STATE ────────────────────────────────────────────────────────────────
 const LS = {
@@ -2202,10 +2204,4 @@ function buildConfirmData() {
   const cdPay=document.getElementById('confirm-data-payment');
   if(cdItems) cdItems.innerHTML=items.join('<br>');
   if(cdTotal) cdTotal.textContent='R$ '+total.toFixed(2).replace('.',',');
-  if(cdDel) cdDel.innerHTML=`<strong>Nome:</strong> ${name}<br><strong>Telefone:</strong> ${phone}<br><strong>Tipo:</strong> ${deliveryType==='pickup'?'🏃 Retirada no local':'🛵 Entrega'}${deliveryType==='delivery'?'<br><strong>Endereço:</strong> '+addr:''}`;
-  if(cdPay) cdPay.textContent=selectedPayment;
-}
-
-</script>
-</body>
-</html>
+  if(cdDel) cdDel.innerHTML=`<strong>Nome:</strong> ${name}<br><strong>Telefone:</strong> ${phone}<br><strong>Tipo:</s
