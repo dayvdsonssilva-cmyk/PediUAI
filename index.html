@@ -1387,7 +1387,6 @@ function iniciarRealtimePedidos() {
       event: 'INSERT', schema: 'public', table: 'orders',
       filter: `establishment_id=eq.${currentUser.id}`
     }, (payload) => {
-      // Novo pedido chegou — toca som e atualiza lista
       tocarSomNovoPedido();
       const p = payload.new;
       const novoPedido = {
@@ -1402,16 +1401,56 @@ function iniciarRealtimePedidos() {
       if (!currentUser.orders) currentUser.orders = [];
       currentUser.orders.unshift(novoPedido);
       saveCurrentUser();
-      // Atualiza UI sem recarregar tudo
       renderOrdersList();
       renderOverviewOrders();
-      // Notif SOMENTE para o estabelecimento — diferente da notif do cliente
       showNotif('🔔 Novo pedido!', p.client_name + ' · R$ ' + Number(p.total).toFixed(2).replace('.',','));
-      // Atualiza contador
       const st = document.getElementById('st-today');
       if (st) st.textContent = String(Number(st.textContent||0) + 1);
     })
-    .subscribe();
+    .subscribe((status, err) => {
+      console.log('Realtime estab status:', status);
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        // Tenta reconectar após 3 segundos
+        setTimeout(() => iniciarRealtimePedidos(), 3000);
+      }
+    });
+
+  // Polling de segurança — verifica novos pedidos a cada 30s como fallback
+  if (window._pollPedidos) clearInterval(window._pollPedidos);
+  window._pollPedidos = setInterval(async () => {
+    if (!currentUser?.id?.includes('-')) return;
+    const db2 = getSupa(); if (!db2) return;
+    try {
+      const ultimoTs = currentUser.orders?.[0]?.ts || 0;
+      const { data: novos } = await db2
+        .from('orders').select('*')
+        .eq('establishment_id', currentUser.id)
+        .eq('status', 'new')
+        .gt('created_at', new Date(ultimoTs || Date.now() - 60000).toISOString())
+        .order('created_at', { ascending: false });
+      if (novos && novos.length > 0) {
+        const jaTem = new Set((currentUser.orders||[]).map(o => o.supaId));
+        novos.forEach(p => {
+          if (!jaTem.has(p.id)) {
+            tocarSomNovoPedido();
+            const np = {
+              supaId: p.id, id: '#' + p.id.slice(-6).toUpperCase(),
+              client: p.client_name, phone: p.client_phone,
+              address: p.address, delivery: p.delivery_type,
+              items: (() => { try { return typeof p.items==='string'?JSON.parse(p.items):(p.items||[]); } catch(e){return[];} })(),
+              payment: p.payment_method, total: Number(p.total),
+              status: p.status, time: 'agora', ts: new Date(p.created_at).getTime()
+            };
+            currentUser.orders.unshift(np);
+            showNotif('🔔 Novo pedido!', p.client_name + ' · R$ ' + Number(p.total).toFixed(2).replace('.',','));
+          }
+        });
+        saveCurrentUser();
+        renderOrdersList();
+        renderOverviewOrders();
+      }
+    } catch(e) {}
+  }, 30000); // a cada 30 segundos
 }
 
 function tocarSomNovoPedido() {
@@ -2289,7 +2328,14 @@ function updateSettingsLogo(input) {
   const r = new FileReader();
   r.onload = e => {
     openCropModal(e.target.result, 'Ajustar logo da loja', true, (cropped) => {
-      if (currentUser) { currentUser.logo = cropped; saveCurrentUser(); }
+      if (currentUser) {
+        currentUser.logo = cropped; saveCurrentUser();
+        // Salva no Supabase (base64 — funciona para logos pequenas)
+        const db=getSupa();
+        if(db && currentUser.id?.includes('-')) {
+          db.from('estabelecimentos').update({logo_url: cropped}).eq('id',currentUser.id).then(()=>{});
+        }
+      }
       const img = document.getElementById('settings-logo-img');
       const emoji = document.getElementById('settings-logo-emoji');
       if (img) { img.src = cropped; img.style.display = 'block'; }
@@ -2300,19 +2346,55 @@ function updateSettingsLogo(input) {
   r.readAsDataURL(file);
 }
 
-function saveSettings() {
+async function saveSettings() {
   if(!currentUser) return;
-  currentUser.name=document.getElementById('s-name').value;
-  currentUser.desc=document.getElementById('s-desc').value;
-  currentUser.welcome=document.getElementById('s-wel').value;
-  currentUser.whatsapp=digits(document.getElementById('s-wp').value);
-  saveCurrentUser(); showNotif('✅ Salvo!','Configurações atualizadas.');
+  const novoNome = document.getElementById('s-name').value.trim();
+  const novoSlug = gerarSlug(novoNome);
+  currentUser.name = novoNome;
+  currentUser.desc = document.getElementById('s-desc').value;
+  currentUser.welcome = document.getElementById('s-wel').value;
+  currentUser.whatsapp = digits(document.getElementById('s-wp').value);
+  // Atualiza slug se o nome mudou
+  if (novoSlug && novoSlug !== currentUser.slug) {
+    currentUser.slug = novoSlug;
+    // Atualiza link exibido
+    const linkEl = document.getElementById('dash-link');
+    if (linkEl) linkEl.textContent = 'pediway.com.br/restaurante/' + novoSlug;
+  }
+  saveCurrentUser();
+
+  // Sincroniza com Supabase
+  const db = getSupa();
+  if (db && currentUser.id?.includes('-')) {
+    try {
+      await db.from('estabelecimentos').update({
+        name: currentUser.name,
+        descricao: currentUser.desc || '',
+        whatsapp: currentUser.whatsapp || '',
+        slug: currentUser.slug,
+        emoji: currentUser.emoji || '🍔',
+        color: currentUser.color || '#E8410A',
+        logo_url: currentUser.logo || null
+      }).eq('id', currentUser.id);
+      showNotif('✅ Salvo!', 'Configurações atualizadas no cardápio!');
+    } catch(e) {
+      console.warn('Erro ao salvar settings:', e);
+      showNotif('✅ Salvo localmente', 'Erro ao sincronizar — tente novamente.');
+    }
+  } else {
+    showNotif('✅ Salvo!', 'Configurações atualizadas.');
+  }
 }
 function selColor(c,cd,el){
   document.querySelectorAll('.csw').forEach(s=>s.classList.remove('selected')); el.classList.add('selected');
   document.documentElement.style.setProperty('--brand',c);
   document.documentElement.style.setProperty('--brand-dark',cd);
-  if(currentUser){currentUser.color=c;saveCurrentUser();}
+  if(currentUser){
+    currentUser.color=c; saveCurrentUser();
+    // Sincroniza cor no Supabase
+    const db=getSupa();
+    if(db && currentUser.id?.includes('-')) db.from('estabelecimentos').update({color:c}).eq('id',currentUser.id).then(()=>{});
+  }
 }
 const storeEmojis=['🍔','🍕','🌮','🍜','🍣','🍗','🥩','🧆','🥗','🍰','🧁','🍦','🍩','🥐','☕','🍺','🥘','🍱','🎂','🏪','⭐','🌶'];
 function updateStoreEmojiPicker(){
@@ -2335,7 +2417,15 @@ function updateStoreEmojiPicker(){
     }
   }
 }
-function selStoreEmoji(e,btn){document.querySelectorAll('#store-ep .epb').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');if(currentUser){currentUser.emoji=e;saveCurrentUser();}}
+function selStoreEmoji(e,btn){
+  document.querySelectorAll('#store-ep .epb').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  if(currentUser){
+    currentUser.emoji=e; saveCurrentUser();
+    const db=getSupa();
+    if(db && currentUser.id?.includes('-')) db.from('estabelecimentos').update({emoji:e}).eq('id',currentUser.id).then(()=>{});
+  }
+}
 
 // ─── STORE (CLIENT) ───────────────────────────────────────────────────────
 function renderStore() {
@@ -2793,6 +2883,10 @@ function saveCurrentUser(){
 // ─── UTILS ────────────────────────────────────────────────────────────────
 function fazerLogout() {
   SESSION.clear();
+  // Cancela polling e Realtime
+  if (window._pollPedidos) { clearInterval(window._pollPedidos); window._pollPedidos = null; }
+  if (realtimeEstabChannel) { try { getSupa()?.removeChannel(realtimeEstabChannel); } catch(e){} realtimeEstabChannel = null; }
+  if (realtimeChannel) { try { getSupa()?.removeChannel(realtimeChannel); } catch(e){} realtimeChannel = null; }
   currentUser = null;
   currentStoreSlug = null;
   goTo('sl');
