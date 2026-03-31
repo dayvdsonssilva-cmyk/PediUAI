@@ -532,6 +532,9 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 .pedido-status-card.novo{border-color:var(--brand);}
 .pedido-status-card.preparando{border-color:#6366f1;background:#eef2ff;}
 .pedido-status-card.pronto{border-color:var(--success);background:var(--success-bg);}
+
+.tempo-btn{padding:.4rem .9rem;border:1.5px solid var(--border);border-radius:100px;background:var(--white);font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:600;color:var(--ink2);cursor:pointer;transition:all .15s;}
+.tempo-btn.active{background:var(--brand);border-color:var(--brand);color:#fff;}
 </style>
 </head>
 <body>
@@ -778,42 +781,6 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
         <div class="sc"><div class="sc-lbl">Itens no cardápio</div><div class="sc-val" id="st-items">0</div></div>
         <div class="sc"><div class="sc-lbl">Plano ativo</div><div class="sc-val" style="font-size:1rem" id="st-plan">Básico</div><div style="font-size:.7rem;color:var(--success);margin-top:.2rem">✓ Ativo</div></div>
       </div>
-      <!-- Opções de entrega na Visão Geral -->
-      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:1.1rem">
-        <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.92rem;margin-bottom:.85rem">Opções de entrega</div>
-        <div style="display:flex;flex-direction:column;gap:.65rem">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <div style="font-weight:600;font-size:.85rem">Entrega</div>
-              <div style="font-size:.72rem;color:var(--ink3)">Entregar no endereço do cliente</div>
-            </div>
-            <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0">
-              <input type="checkbox" id="toggle-delivery" onchange="salvarOpcaoEntrega()" checked style="opacity:0;width:0;height:0">
-              <span id="thumb-delivery" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:.2s;"></span>
-              <span id="ball-delivery" style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;"></span>
-            </label>
-          </div>
-          <div id="taxa-entrega-block" style="padding:.65rem .75rem;background:var(--brand-light);border:1px solid rgba(232,65,10,.15);border-radius:var(--rs)">
-            <div style="display:flex;align-items:center;gap:.5rem">
-              <span style="font-size:.78rem;font-weight:600;color:var(--ink2);white-space:nowrap">Taxa R$</span>
-              <input type="number" id="taxa-entrega" placeholder="0 = grátis" min="0" step="0.50" inputmode="decimal"
-                style="flex:1;padding:.4rem .65rem;border:1.5px solid var(--border);border-radius:var(--rs);font-size:.85rem;font-family:'Poppins',sans-serif"
-                onchange="salvarOpcaoEntrega()">
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding-top:.5rem;border-top:1px solid var(--border)">
-            <div>
-              <div style="font-weight:600;font-size:.85rem">Retirada no local</div>
-              <div style="font-size:.72rem;color:var(--ink3)">Cliente busca no estabelecimento</div>
-            </div>
-            <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0">
-              <input type="checkbox" id="toggle-pickup" onchange="salvarOpcaoEntrega()" checked style="opacity:0;width:0;height:0">
-              <span id="thumb-pickup" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:.2s;"></span>
-              <span id="ball-pickup" style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;"></span>
-            </label>
-          </div>
-        </div>
-      </div>
       <div class="sh"><span class="st">Últimos pedidos</span><button class="btn btn-outline" style="font-size:.74rem;padding:.35rem .75rem" onclick="switchTab('t-orders')">Ver todos</button></div>
       <div id="ov-orders"></div>
     </div>
@@ -866,6 +833,60 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     </div>
     <!-- SETTINGS -->
     <div class="tp" id="t-settings">
+      <div class="ss">
+        <h3>Entrega e tempo de preparo</h3>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+
+          <!-- Entrega -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs)">
+            <div>
+              <div style="font-weight:700;font-size:.88rem">Entrega</div>
+              <div style="font-size:.72rem;color:var(--ink3)">Entregar no endereço do cliente</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0">
+              <input type="checkbox" id="toggle-delivery" onchange="salvarOpcaoEntrega()" checked style="opacity:0;width:0;height:0">
+              <span id="thumb-delivery" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:.3s;"></span>
+              <span id="ball-delivery" style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2);"></span>
+            </label>
+          </div>
+
+          <!-- Taxa de entrega -->
+          <div id="taxa-entrega-block" style="padding:.75rem 1rem;background:var(--brand-light);border:1.5px solid rgba(232,65,10,.2);border-radius:var(--rs)">
+            <label style="font-size:.78rem;font-weight:700;color:var(--ink2);display:block;margin-bottom:.4rem">Taxa de entrega (R$)</label>
+            <input type="number" id="taxa-entrega" placeholder="0,00 = grátis" min="0" step="0.50" inputmode="decimal"
+              style="width:100%;padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:var(--rs);font-size:.88rem;font-family:'Poppins',sans-serif;background:var(--white)"
+              onchange="salvarOpcaoEntrega()">
+            <div style="font-size:.7rem;color:var(--ink3);margin-top:.3rem">Deixe 0 ou vazio para entrega grátis</div>
+          </div>
+
+          <!-- Retirada -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs)">
+            <div>
+              <div style="font-weight:700;font-size:.88rem">Retirada no local</div>
+              <div style="font-size:.72rem;color:var(--ink3)">Cliente busca no estabelecimento</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0">
+              <input type="checkbox" id="toggle-pickup" onchange="salvarOpcaoEntrega()" checked style="opacity:0;width:0;height:0">
+              <span id="thumb-pickup" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:.3s;"></span>
+              <span id="ball-pickup" style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2);"></span>
+            </label>
+          </div>
+
+          <!-- Tempo de preparo -->
+          <div style="padding:.8rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs)">
+            <label style="font-size:.82rem;font-weight:700;color:var(--ink2);display:block;margin-bottom:.6rem">Tempo de preparo</label>
+            <div style="display:flex;flex-wrap:wrap;gap:.45rem" id="tempo-options">
+              <button type="button" class="tempo-btn" data-val="15" onclick="selecionarTempo(this)">15 min</button>
+              <button type="button" class="tempo-btn" data-val="20" onclick="selecionarTempo(this)">20 min</button>
+              <button type="button" class="tempo-btn" data-val="30" onclick="selecionarTempo(this)">30 min</button>
+              <button type="button" class="tempo-btn" data-val="45" onclick="selecionarTempo(this)">45 min</button>
+              <button type="button" class="tempo-btn" data-val="60" onclick="selecionarTempo(this)">60 min</button>
+            </div>
+            <div style="font-size:.7rem;color:var(--ink3);margin-top:.5rem">Exibido no cardápio do cliente</div>
+          </div>
+
+        </div>
+      </div>
       <div class="ss">
         <h3>Informações básicas</h3>
         <div class="fg"><label>Nome da loja</label><input type="text" id="s-name"></div>
@@ -2353,7 +2374,7 @@ async function renderDashboard() {
     try {
       const { data: dadosSupa } = await db
         .from('estabelecimentos')
-        .select('name, descricao, slug, emoji, color, logo_url, whatsapp, address, flash_items')
+        .select('name, descricao, slug, emoji, color, logo_url, whatsapp, address, flash_items, prep_time, delivery_enabled, pickup_enabled, delivery_fee')
         .eq('id', currentUser.id)
         .single();
       if (dadosSupa) {
@@ -2366,6 +2387,7 @@ async function renderDashboard() {
         currentUser.logo = dadosSupa.logo_url || currentUser.logo;
         currentUser.whatsapp = dadosSupa.whatsapp || currentUser.whatsapp;
         currentUser.address = dadosSupa.address || currentUser.address;
+        currentUser.prepTime = dadosSupa.prep_time || currentUser.prepTime || '30';
         saveCurrentUser(); // persiste localmente
       }
     } catch(e) { console.warn('Sync Supabase erro:', e); }
@@ -2434,7 +2456,8 @@ async function renderDashboard() {
 
   // Abre na aba Pedidos por padrão
   switchTab('t-orders');
-  carregarOpcoesEntrega(); // carrega toggles na visão geral
+  carregarOpcoesEntrega();
+  carregarTempo();
   renderMenuGrid(); renderOrdersList(); renderOverviewOrders(); renderFlashAdmin();
   updateStoreEmojiPicker();
   if (isUltra) renderFinanceiro('hoje');
@@ -2873,6 +2896,31 @@ function updateSettingsLogo(input) {
 
 
 // ─── OPÇÕES DE ENTREGA ────────────────────────────────────────────────────────
+
+function selecionarTempo(btn) {
+  document.querySelectorAll('.tempo-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const val = btn.dataset.val;
+  if (!currentUser) return;
+  currentUser.prepTime = val;
+  saveCurrentUser();
+  // Salva no Supabase
+  const db = getSupa();
+  if (db && currentUser.id?.includes('-')) {
+    db.from('estabelecimentos').update({ prep_time: val }).eq('id', currentUser.id).then(()=>{});
+  }
+  // Atualiza pill no cardápio se estiver aberto
+  const pill = document.getElementById('pill-tempo');
+  if (pill) pill.textContent = '⏱ ' + val + ' min';
+}
+
+function carregarTempo() {
+  const val = currentUser?.prepTime || '30';
+  document.querySelectorAll('.tempo-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === String(val));
+  });
+}
+
 function salvarOpcaoEntrega() {
   const temEntrega = document.getElementById('toggle-delivery')?.checked ?? true;
   const temRetirada = document.getElementById('toggle-pickup')?.checked ?? true;
@@ -2993,7 +3041,8 @@ function updateStoreEmojiPicker(){
       : wpDigits.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
     document.getElementById('s-wp').value = wpFmt;
     const saddrEl = document.getElementById('s-addr');
-    carregarOpcoesEntrega(); // carrega toggles de entrega/retirada
+    carregarOpcoesEntrega();
+    carregarTempo();
     if (saddrEl) saddrEl.value = currentUser.address || '';
     // Load logo preview in settings
     const img = document.getElementById('settings-logo-img');
@@ -3038,6 +3087,9 @@ function renderStore() {
   document.getElementById('sn').textContent = u.name;
   document.getElementById('sd').textContent = u.desc || '';
   // Pills dinâmicas baseadas nas opções do estabelecimento
+  // Pill de tempo dinâmico
+  const pillTempo = document.getElementById('pill-tempo');
+  if (pillTempo) pillTempo.textContent = '⏱ ' + (u.prepTime || '30') + ' min';
   const pillEntrega = document.getElementById('pill-entrega');
   if (pillEntrega) {
     const temDel = u.deliveryEnabled !== false;
