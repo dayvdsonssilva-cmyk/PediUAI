@@ -268,7 +268,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 #s-checkout{background:var(--surface);min-height:100%;max-width:480px;margin:0 auto;padding-bottom:7rem;}
 .co-content{padding:1.3rem;}
 .cir{display:flex;align-items:center;gap:.85rem;padding:.6rem 0;border-bottom:1px solid var(--border);}
-.ce{font-size:1.3rem;width:34px;text-align:center;}
+.ce{font-size:.6rem;width:20px;text-align:center;display:flex;align-items:center;justify-content:center;color:var(--brand);}
 .cn{flex:1;font-size:.82rem;font-weight:600;}
 .qc{display:flex;align-items:center;gap:.42rem;}
 .qb{width:24px;height:24px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;}
@@ -1445,13 +1445,19 @@ async function salvarPedidoSupa(lojaId, pedido) {
 // ─── REALTIME ESTABELECIMENTO — novos pedidos em tempo real ──────────────
 let realtimeEstabChannel = null;
 
+let _realtimeReady = false; // flag: canal pronto para receber
+
 function iniciarRealtimePedidos() {
   const db = getSupa();
-  if (!db || !currentUser?.id || !currentUser.id.includes('-')) return;
+  if (!db || !currentUser?.id || !currentUser.id.includes('-')) {
+    // Supabase ainda não pronto — tenta novamente em 1s
+    setTimeout(iniciarRealtimePedidos, 1000);
+    return;
+  }
   // Cancela canal anterior
-  if (realtimeEstabChannel) { db.removeChannel(realtimeEstabChannel); realtimeEstabChannel = null; }
+  if (realtimeEstabChannel) { try { db.removeChannel(realtimeEstabChannel); } catch(e){} realtimeEstabChannel = null; }
 
-  // Canal de pedidos (INSERT de novos pedidos)
+  // Canal de pedidos
   realtimeEstabChannel = db
     .channel('pedidos-estab-' + currentUser.id)
     .on('postgres_changes', {
@@ -1460,6 +1466,8 @@ function iniciarRealtimePedidos() {
     }, (payload) => {
       tocarSomNovoPedido();
       const p = payload.new;
+      // Evita duplicar pedido que já está na lista
+      if (currentUser.orders?.some(o => o.supaId === p.id)) return;
       const novoPedido = {
         supaId: p.id,
         id: '#' + String(++orderCounter).padStart(4,'0'),
@@ -1479,7 +1487,12 @@ function iniciarRealtimePedidos() {
       if (st) st.textContent = String(Number(st.textContent||0) + 1);
     })
     .subscribe((status) => {
-      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+      if (status === 'SUBSCRIBED') {
+        _realtimeReady = true;
+        // Busca pedidos perdidos durante a conexão (primeiros segundos)
+        verificarPedidosPerdidos();
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        _realtimeReady = false;
         setTimeout(() => iniciarRealtimePedidos(), 3000);
       }
     });
@@ -1508,6 +1521,40 @@ function iniciarRealtimePedidos() {
       }
     })
     .subscribe();
+
+// Busca pedidos salvos nos últimos 2 minutos que possam ter chegado
+// antes do Realtime estar pronto (resolve o problema do primeiro pedido)
+async function verificarPedidosPerdidos() {
+  const db = getSupa();
+  if (!db || !currentUser?.id?.includes('-')) return;
+  try {
+    const doisMinAtras = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const { data: novos } = await db
+      .from('orders').select('*')
+      .eq('establishment_id', currentUser.id)
+      .gte('created_at', doisMinAtras)
+      .order('created_at', { ascending: false });
+    if (!novos?.length) return;
+    const existentes = new Set((currentUser.orders||[]).map(o => o.supaId));
+    let temNovo = false;
+    novos.forEach(p => {
+      if (!existentes.has(p.id)) {
+        tocarSomNovoPedido();
+        currentUser.orders = currentUser.orders || [];
+        currentUser.orders.unshift({
+          supaId: p.id, id: '#' + String(++orderCounter).padStart(4,'0'),
+          client: p.client_name, phone: p.client_phone,
+          address: p.address, delivery: p.delivery_type,
+          items: (() => { try { return typeof p.items === 'string' ? JSON.parse(p.items) : (p.items||[]); } catch(e){return[];} })(),
+          payment: p.payment_method, total: Number(p.total),
+          status: p.status, time: 'agora', ts: Date.now()
+        });
+        temNovo = true;
+      }
+    });
+    if (temNovo) { saveCurrentUser(); renderOrdersList(); renderOverviewOrders(); }
+  } catch(e) {}
+}
 
   // Polling de segurança — verifica novos pedidos a cada 30s como fallback
   if (window._pollPedidos) clearInterval(window._pollPedidos);
@@ -1745,6 +1792,39 @@ function notifCliente(titulo, corpo) {
 }
 
 // Pede permissão de notificação ao abrir o cardápio da loja
+
+// Restaura assinatura Realtime do cliente após reabrir browser
+async function restaurarAssinaturaCliente() {
+  try {
+    const pedidos = carregarPedidosCliente(false);
+    if (!pedidos.length) return;
+    // Pega o pedido mais recente que ainda não foi entregue
+    const ativo = pedidos.find(p => p.status !== 'done' && p.supaId);
+    if (!ativo?.supaId) return;
+    // Verifica status atual no Supabase
+    const db = getSupa();
+    if (!db) return;
+    const { data: pedidoSupa } = await db
+      .from('orders').select('status').eq('id', ativo.supaId).single();
+    if (!pedidoSupa) return;
+    // Atualiza status se mudou enquanto browser estava fechado
+    if (pedidoSupa.status !== ativo.status) {
+      atualizarStatusPedidoCliente(ativo.supaId, pedidoSupa.status);
+      _pedidoEntrega = ativo.delivery || 'delivery';
+      showCSNotif(pedidoSupa.status);
+      // Mostra banner de status na tela de confirmação se estiver aberta
+      const bar = document.getElementById('client-status-bar');
+      const waiting = document.getElementById('status-waiting');
+      if (bar && waiting) {
+        waiting.style.display = 'none';
+        showCSNotif(pedidoSupa.status);
+      }
+    }
+    // Re-assina Realtime para futuras mudanças
+    assinarStatusPedido(ativo.supaId, ativo.delivery || 'delivery');
+  } catch(e) { console.warn('Erro restaurar assinatura:', e); }
+}
+
 function pedirPermissaoNotificacao() {
   if ('Notification' in window && Notification.permission === 'default') {
     // Só pede depois que o usuário interagir (evita bloqueio automático)
@@ -2289,8 +2369,8 @@ async function renderDashboard() {
   updateStoreEmojiPicker();
   if (isUltra) renderFinanceiro('hoje');
 
-  // Inicia escuta de novos pedidos em tempo real (para o estabelecimento)
-  iniciarRealtimePedidos();
+  // Inicia escuta de novos pedidos — pequeno delay garante que Supabase está pronto
+  setTimeout(iniciarRealtimePedidos, 500);
 }
 
 function formatarTempo(isoStr) {
@@ -2829,7 +2909,11 @@ function renderStore() {
   document.getElementById('sn').textContent = u.name;
   document.getElementById('sd').textContent = u.desc || '';
   renderFlashClient();
-  pedirPermissaoNotificacao(); // pede permissão de notificação
+  pedirPermissaoNotificacao();
+  // Restaura status do pedido pendente quando cliente volta ao cardápio
+  setTimeout(restaurarAssinaturaCliente, 1200);
+  // Restaura assinatura Realtime para pedido ativo (quando cliente reabre o browser)
+  restaurarAssinaturaCliente();
   const avail = (u.menuItems||[]).filter(i=>i.available);
   const cats = ['Todos',...new Set(avail.map(i=>i.cat))];
   document.getElementById('cat-tabs').innerHTML = cats.map((c,i)=>`<button class="cp ${i===0?'active':''}" onclick="filterCat('${c}',this)">${c}</button>`).join('');
@@ -2985,7 +3069,7 @@ function setDeliveryType(type){
 // ─── CHECKOUT ─────────────────────────────────────────────────────────────
 function renderCheckout(){
   const list=document.getElementById('cart-items'); if(!cart.length){list.innerHTML='<div class="es"><p>Carrinho vazio</p></div>';return;}
-  list.innerHTML=cart.map((it,i)=>`<div class="cir"><div class="ce">${it.emoji}</div><div class="cn">${it.name}</div><div class="qc"><button class="qb" onclick="changeQty(${i},-1)">−</button><span class="qn">${it.qty}</span><button class="qb" onclick="changeQty(${i},1)">+</button></div><div class="cprice">R$ ${(it.qty*Number(it.price)).toFixed(2).replace('.',',')}</div></div>`).join('');
+  list.innerHTML=cart.map((it,i)=>`<div class="cir"><div class="ce" style="font-size:.5rem;color:var(--brand)">●</div><div class="cn">${it.name}</div><div class="qc"><button class="qb" onclick="changeQty(${i},-1)">−</button><span class="qn">${it.qty}</span><button class="qb" onclick="changeQty(${i},1)">+</button></div><div class="cprice">R$ ${(it.qty*Number(it.price)).toFixed(2).replace('.',',')}</div></div>`).join('');
   const total=cart.reduce((s,c)=>s+c.qty*c.price,0);
   document.getElementById('co-total').textContent='R$ '+total.toFixed(2).replace('.',',');
 }
