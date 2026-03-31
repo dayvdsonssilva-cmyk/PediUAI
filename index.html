@@ -196,8 +196,8 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 .ss{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem;margin-bottom:1.1rem;}
 .ss h3{font-family:'Poppins',sans-serif;font-weight:700;margin-bottom:.9rem;font-size:.92rem;}
 .cr{display:flex;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;}
-.csw{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:border-color .15s;}
-.csw.selected{border-color:var(--ink);}
+.csw{width:36px;height:36px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:border-color .15s;flex-shrink:0;}
+.csw.selected{border-color:var(--ink);box-shadow:0 0 0 2px var(--white),0 0 0 4px var(--brand);}
 /* LINK BOX */
 .lb{background:var(--brand-light);border:1.5px solid rgba(232,65,10,.2);border-radius:var(--r);padding:.85rem 1rem;display:flex;align-items:center;gap:.85rem;margin-bottom:1.1rem;}
 .lu{flex:1;font-size:.75rem;color:var(--brand-dark);font-weight:700;word-break:break-all;}
@@ -214,9 +214,9 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 #s-store{background:var(--surface);min-height:100%;max-width:480px;margin:0 auto;padding-bottom:5rem;}
 .s-hero{background:var(--ink);color:#fff;padding:1.6rem 1.3rem 1.4rem;position:relative;overflow:hidden;min-height:160px;}
 /* Logo posicionada no canto superior direito */
-.s-hero-logo{position:absolute;top:.9rem;right:.9rem;width:100px;height:100px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:2.8rem;overflow:hidden;flex-shrink:0;z-index:2;box-shadow:0 4px 20px rgba(0,0,0,.25);}
+.s-hero-logo{position:absolute;top:.85rem;right:.85rem;width:115px;height:115px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:3.2rem;overflow:hidden;flex-shrink:0;z-index:2;box-shadow:0 4px 24px rgba(0,0,0,.3);}
 .s-hero-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
-.s-hero-content{padding-right:115px;/* espaço para logo maior */}
+.s-hero-content{padding-right:130px;}
 .sn{font-family:'Poppins',sans-serif;font-weight:900;font-size:1.7rem;margin-bottom:.3rem;letter-spacing:-.02em;text-shadow:0 1px 8px rgba(0,0,0,.2);}
 .sd{font-size:.78rem;color:rgba(255,255,255,.9);text-transform:uppercase;letter-spacing:.08em;font-weight:600;}
 .si{display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap;}
@@ -925,6 +925,15 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
           <div class="csw" style="background:#7C3AED" onclick="selColor('#7C3AED','#6D28D9',this)"></div>
           <div class="csw" style="background:#DB2777" onclick="selColor('#DB2777','#BE185D',this)"></div>
           <div class="csw" style="background:#1A1208" onclick="selColor('#1A1208','#000',this)"></div>
+          <div class="csw" style="background:#D97706" onclick="selColor('#D97706','#B45309',this)"></div>
+          <div class="csw" style="background:#DC2626" onclick="selColor('#DC2626','#B91C1C',this)"></div>
+          <div class="csw" style="background:#0F766E" onclick="selColor('#0F766E','#0D6B63',this)"></div>
+          <div class="csw" style="background:linear-gradient(135deg,#E8410A,#DB2777)" onclick="selColor('#E8410A','#B83208',this,&quot;linear-gradient(135deg,#E8410A,#DB2777)&quot;)"></div>
+          <div class="csw" style="background:linear-gradient(135deg,#7C3AED,#2563EB)" onclick="selColor('#7C3AED','#6D28D9',this,&quot;linear-gradient(135deg,#7C3AED,#2563EB)&quot;)"></div>
+          <div class="csw" style="background:linear-gradient(135deg,#1A8A5A,#2563EB)" onclick="selColor('#2563EB','#1D4ED8',this,&quot;linear-gradient(135deg,#1A8A5A,#2563EB)&quot;)"></div>
+          <div class="csw" style="background:linear-gradient(135deg,#D97706,#DC2626)" onclick="selColor('#D97706','#B45309',this,&quot;linear-gradient(135deg,#D97706,#DC2626)&quot;)"></div>
+          <div class="csw" style="background:linear-gradient(135deg,#1A1208,#4A2C1A)" onclick="selColor('#1A1208','#000',this,&quot;linear-gradient(135deg,#1A1208,#4A2C1A)&quot;)"></div>
+          <div class="csw" style="background:linear-gradient(135deg,#DB2777,#7C3AED)" onclick="selColor('#DB2777','#BE185D',this,&quot;linear-gradient(135deg,#DB2777,#7C3AED)&quot;)"></div>
         </div></div>
         <div class="fg" style="margin-top:.8rem"><label>Emoji da loja</label><div class="ep" id="store-ep"></div></div>
       </div>
@@ -3039,13 +3048,18 @@ async function saveSettings() {
     showNotif('✅ Salvo!', 'Configurações atualizadas.');
   }
 }
-function selColor(c,cd,el){
+function selColor(c,cd,el,grad){
   document.querySelectorAll('.csw').forEach(s=>s.classList.remove('selected')); el.classList.add('selected');
-  document.documentElement.style.setProperty('--brand',c);
-  document.documentElement.style.setProperty('--brand-dark',cd);
+  const corFinal = grad || c;
+  document.documentElement.style.setProperty('--brand', c);
+  document.documentElement.style.setProperty('--brand-dark', cd);
+  // Aplica gradiente no hero do cardápio
+  const heroBg = document.getElementById('s-hero-bg');
+  if (heroBg) heroBg.style.background = corFinal;
   if(currentUser){
-    currentUser.color=c; saveCurrentUser();
-    // Sincroniza cor no Supabase
+    currentUser.color = c;
+    currentUser.colorGrad = corFinal;
+    saveCurrentUser();
     const db=getSupa();
     if(db && currentUser.id?.includes('-')) db.from('estabelecimentos').update({color:c}).eq('id',currentUser.id).then(()=>{});
   }
@@ -3088,6 +3102,12 @@ function selStoreEmoji(e,btn){
     currentUser.emoji=e; saveCurrentUser();
     const db=getSupa();
     if(db && currentUser.id?.includes('-')) db.from('estabelecimentos').update({emoji:e}).eq('id',currentUser.id).then(()=>{});
+    // Atualiza emoji no hero do cardápio se estiver aberto
+    const seEl = document.getElementById('se');
+    if (seEl && !currentUser.logo) seEl.textContent = e;
+    // Atualiza o emoji exibido no nome do estabelecimento no carrinho
+    const storeEmojiSpan = document.getElementById('cart-store-emoji');
+    if (storeEmojiSpan) storeEmojiSpan.textContent = e;
   }
 }
 
@@ -3099,7 +3119,7 @@ function renderStore() {
   if (backBtn) backBtn.style.display = (u.id === 'demo' && window._fromLanding) ? 'flex' : 'none';
   // Cor da marca no hero
   const heroBg = document.getElementById('s-hero-bg');
-  if (heroBg) heroBg.style.background = u.color || '#1A1208';
+  if (heroBg) heroBg.style.background = u.colorGrad || u.color || '#1A1208';
   document.documentElement.style.setProperty('--brand', u.color||'#E8410A');
   // Logo no canto superior direito
   const logoEl = document.getElementById('store-logo-el');
