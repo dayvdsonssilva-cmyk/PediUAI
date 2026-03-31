@@ -302,18 +302,21 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 .conf-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
 .particle{position:absolute;font-size:1.1rem;animation:fall linear infinite;}
 @keyframes fall{0%{opacity:1;transform:translateY(-20px) rotate(0deg);}100%{opacity:0;transform:translateY(100vh) rotate(360deg);}}
-.conf-check{font-size:3.8rem;margin-bottom:.75rem;display:block;animation:popIn .5s cubic-bezier(.34,1.56,.64,1) forwards;position:relative;z-index:1;}
+.conf-check{font-size:3rem;margin-bottom:.5rem;display:block;animation:popIn .5s cubic-bezier(.34,1.56,.64,1) forwards;position:relative;z-index:1;}
 @keyframes popIn{0%{transform:scale(0) rotate(-10deg)}80%{transform:scale(1.1) rotate(3deg)}100%{transform:scale(1) rotate(0deg)}}
-.conf-title{font-family:'Poppins',sans-serif;font-weight:900;font-size:1.7rem;color:#fff;margin-bottom:.3rem;letter-spacing:-.02em;position:relative;z-index:1;}
-.conf-sub{font-size:.86rem;color:rgba(255,255,255,.8);margin-bottom:1.4rem;position:relative;z-index:1;line-height:1.5;}
+.conf-title{font-family:'Poppins',sans-serif;font-weight:900;font-size:1.5rem;color:#fff;margin-bottom:.2rem;letter-spacing:-.02em;position:relative;z-index:1;}
+.conf-sub{font-size:.8rem;color:rgba(255,255,255,.8);margin-bottom:1rem;position:relative;z-index:1;line-height:1.4;}
 .conf-order-badge{
-  background:rgba(255,255,255,.18);backdrop-filter:blur(12px);
-  border:1px solid rgba(255,255,255,.25);
-  border-radius:12px;padding:.85rem 1.6rem;
+  background:rgba(255,255,255,.15);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1.5px solid rgba(255,255,255,.3);
+  border-radius:16px;
+  padding:.7rem 2rem;
   text-align:center;position:relative;z-index:1;
+  display:inline-block; /* não estica a largura toda */
 }
-.conf-order-lbl{font-size:.65rem;color:rgba(255,255,255,.7);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.18rem;}
-.conf-order-num{font-family:'Poppins',sans-serif;font-size:1.3rem;font-weight:900;color:#fff;}
+.conf-order-lbl{font-size:.6rem;color:rgba(255,255,255,.65);font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.1rem;}
+.conf-order-num{font-family:'Poppins',sans-serif;font-size:2rem;font-weight:900;color:#fff;letter-spacing:.05em;line-height:1;}
 
 /* Seção de status do pedido */
 .conf-status-section{
@@ -1135,9 +1138,11 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <span class="conf-check" id="conf-icon">🛵</span>
     <div class="conf-title">PEDIDO ENVIADO!</div>
     <div class="conf-sub">Recebemos seu pedido e já avisamos o estabelecimento 🎉</div>
-    <div class="conf-order-badge">
-      <div class="conf-order-lbl">Número do pedido</div>
-      <div class="conf-order-num" id="conf-order-id">#—</div>
+    <div style="display:flex;justify-content:center;width:100%;position:relative;z-index:1">
+      <div class="conf-order-badge">
+        <div class="conf-order-lbl">Nº do pedido</div>
+        <div class="conf-order-num" id="conf-order-id">#—</div>
+      </div>
     </div>
   </div>
 
@@ -1432,7 +1437,10 @@ async function salvarPedidoSupa(lojaId, pedido) {
     }).select().single();
     if (error) throw error;
     return data?.id || null; // retorna ID para assinar o Realtime
-  } catch(e) { console.warn('Pedido supa erro:', e); return null; }
+  } catch(e) { 
+    console.error('Pedido supa erro:', e?.message || e);
+    return null;
+  }
 }
 
 // ─── REALTIME ESTABELECIMENTO — novos pedidos em tempo real ──────────────
@@ -3467,8 +3475,11 @@ function confirmAndSendOrder() {
   // Não mostra notif aqui — isso é do lado do cliente, não do estabelecimento
   // Salva no Supabase se loja veio do banco
   // Salva no Supabase e assina Realtime para notificar o cliente
-  if (u.id && u.id.includes('-')) {
-    salvarPedidoSupa(u.id, order).then(orderId => {
+  // Garante que temos UUID real antes de salvar
+  const lojaIdParaSalvar = (u.id && u.id.includes('-')) ? u.id : null;
+  if (lojaIdParaSalvar) {
+    console.log('Salvando pedido no Supabase para loja:', lojaIdParaSalvar);
+    salvarPedidoSupa(lojaIdParaSalvar, order).then(orderId => {
       if (orderId) {
         // Atualiza o ID exibido ao cliente com o ID real do Supabase
         // Mantém o ID sequencial, salva apenas o supaId para rastreamento
