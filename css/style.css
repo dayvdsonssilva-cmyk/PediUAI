@@ -165,6 +165,14 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 .of{display:flex;align-items:center;justify-content:space-between;padding-top:.65rem;border-top:1px solid var(--border);flex-wrap:wrap;gap:.4rem;}
 .ot{font-family:'Poppins',sans-serif;font-weight:700;font-size:1rem;}
 .oacts{display:flex;gap:.35rem;flex-wrap:wrap;}
+/* NOVOS PEDIDOS AREA */
+.new-orders-area{scrollbar-width:thin;scrollbar-color:rgba(232,65,10,.3) transparent;}
+.new-orders-area::-webkit-scrollbar{width:6px;}
+.new-orders-area::-webkit-scrollbar-track{background:transparent;}
+.new-orders-area::-webkit-scrollbar-thumb{background:rgba(232,65,10,.3);border-radius:3px;}
+.new-orders-area::-webkit-scrollbar-thumb:hover{background:rgba(232,65,10,.5);}
+@keyframes slideInOrder{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.new-orders-area .oc{animation:slideInOrder .3s ease-out;}
 /* PLAN LOCK BANNER */
 .plan-lock{background:linear-gradient(135deg,#7C3AED,#4F46E5);color:#fff;border-radius:var(--r);padding:1.2rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:1rem;}
 .plan-lock-text{flex:1;}
