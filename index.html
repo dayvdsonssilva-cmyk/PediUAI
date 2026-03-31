@@ -1418,7 +1418,7 @@ async function carregarLojaSupa(slug) {
     // Usa select explícito para evitar problema com coluna descricao reservada
     const { data: loja, error: lojaErr } = await db
       .from('estabelecimentos')
-      .select('id, name, email, slug, emoji, color, logo_url, whatsapp, plan_type, status, pass, password_plain, descricao, address, flash_items')
+      .select('id, name, email, slug, emoji, color, logo_url, whatsapp, plan_type, status, pass, password_plain, descricao, address, flash_items, prep_time, delivery_enabled, pickup_enabled, delivery_fee')
       .eq('slug', slug)
       .maybeSingle();
 
