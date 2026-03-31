@@ -13,11 +13,12 @@
 /* Bloquear dark mode do navegador — layout sempre igual */
 :root{color-scheme:light only;}
 *{box-sizing:border-box;margin:0;padding:0;}
-html{height:100%;overflow:hidden;}
+html,body{height:100%;margin:0;padding:0;}
 body{
-  font-family:'Poppins',sans-serif;background:var(--surface);color:var(--ink);
-  height:100%;overflow:hidden;
-  /* Sem overflow-x em nível de body — causa travamento em iOS */
+  font-family:'Poppins',sans-serif;
+  color:var(--ink);
+  background:#1A1208; /* dark — esconde espaço vazio atrás das telas fixas */
+  overflow:hidden;
 }
 /* Forçar cores independente do tema do sistema */
 @media(prefers-color-scheme:dark){
@@ -27,15 +28,17 @@ body{
 input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 .screen{
   display:none;
-  position:fixed; /* Ocupa a tela toda, sem interferir no body */
-  inset:0; /* top:0;right:0;bottom:0;left:0 */
-  overflow-y:scroll; /* scroll sempre visível — evita recalc de layout */
-  -webkit-overflow-scrolling:touch; /* momentum scroll iOS */
-  overscroll-behavior-y:contain; /* evita scroll "vazar" para o body */
+  position:fixed;
+  top:0;right:0;bottom:0;left:0;
+  overflow-y:scroll;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  background:var(--surface); /* cada tela tem seu próprio fundo */
 }
 .screen.active{display:block;}
 /* LANDING */
-#sl{background:var(--ink);color:#fff;display:none;flex-direction:column;min-height:100%;}
+#sl{background:var(--ink) !important;color:#fff;display:none;flex-direction:column;min-height:100%;}
 #sl.active{display:flex;}
 .lh{padding:1.2rem 1.8rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.08);}
 .logo{font-family:'Poppins',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.02em;}
@@ -487,9 +490,9 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   .plan-grid{grid-template-columns:1fr;}
 }
 @media(min-width:768px){
-  .screen{position:relative;inset:auto;overflow-y:auto;}
-  body{overflow-y:auto;height:auto;}
-  html{overflow:auto;height:auto;}
+  html,body{height:auto;overflow:auto;}
+  .screen{position:static;overflow:visible;background:var(--surface);}
+  .screen.active{display:block;}
   #s-store,#s-checkout,#s-confirm,#s-confirm-data{box-shadow:0 0 0 1px var(--border),0 20px 60px rgba(26,18,8,.08);border-radius:18px;margin-top:1.5rem;margin-bottom:1.5rem;min-height:auto;}
   .mb{align-items:center;padding:1rem;}
   .mo{border-radius:22px;max-width:480px;margin:0 auto;}
@@ -1383,7 +1386,15 @@ async function montarLojaObj(db, loja, descVal) {
     whatsapp: loja.whatsapp || '',
     plan: 'ultra',
     status: 'active',
-    orders: [], flashItems: [], welcome: 'Seja bem-vindo!',
+    orders: [],
+    flashItems: (() => {
+      try {
+        const fi = loja.flash_items;
+        const lista = typeof fi === 'string' ? JSON.parse(fi) : (Array.isArray(fi) ? fi : []);
+        return lista.filter(f => !f.expiresAt || f.expiresAt > Date.now());
+      } catch(e) { return []; }
+    })(),
+    welcome: 'Seja bem-vindo!',
     menuItems: (itens || []).map(i => ({
       id: i.id, name: i.name,
       desc: i.descricao || '',
@@ -2423,27 +2434,61 @@ function renderFlashAdmin() {
     <div style="padding:.5rem"><button onclick="delFlash(${i})" style="float:right;background:none;border:none;cursor:pointer;font-size:.8rem;color:var(--ink3)">🗑</button><div style="font-size:.72rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.title}</div><div style="font-size:.66rem;color:var(--ink3)">⏱ 4h restantes</div></div>
   </div>`).join('');
 }
-function addFlash(input) {
-  const file=input.files[0]; if(!file) return;
-  const isVid=file.type.startsWith('video');
-  const r=new FileReader();
-  r.onload=e=>{
-    const url = e.target.result;
-    // Pergunta título (opcional)
+async function addFlash(input) {
+  const file = input.files[0]; if(!file) return;
+  const isVid = file.type.startsWith('video');
+  const r = new FileReader();
+  r.onload = async (e) => {
+    let url = e.target.result;
+    // Comprime imagem para caber no Supabase
+    if (!isVid && url.startsWith('data:')) {
+      url = await comprimirImagem(url, 1200, 0.80);
+    }
     const titulo = prompt('Título da promoção (opcional — deixe vazio para exibir limpo):', '') || '';
-    if(!currentUser.flashItems) currentUser.flashItems=[];
-    currentUser.flashItems.push({
+    const item = {
       id: Date.now(),
-      type: isVid?'video':'image',
-      emoji:'✨',
-      title: titulo.trim(), // string vazia = sem título
-      url
-    });
-    saveCurrentUser(); renderFlashAdmin();
+      type: isVid ? 'video' : 'image',
+      emoji: '✨',
+      title: titulo.trim(),
+      url,
+      expiresAt: Date.now() + 4 * 60 * 60 * 1000 // expira em 4h
+    };
+    if(!currentUser.flashItems) currentUser.flashItems = [];
+    currentUser.flashItems.push(item);
+    saveCurrentUser();
+    renderFlashAdmin();
+    // Salva no Supabase para aparecer em outros celulares
+    await salvarFlashNoSupabase();
   };
   r.readAsDataURL(file);
 }
-function delFlash(i){if(!currentUser)return;currentUser.flashItems.splice(i,1);saveCurrentUser();renderFlashAdmin();}
+
+function delFlash(i) {
+  if(!currentUser) return;
+  currentUser.flashItems.splice(i,1);
+  saveCurrentUser();
+  renderFlashAdmin();
+  salvarFlashNoSupabase();
+}
+
+async function salvarFlashNoSupabase() {
+  const db = getSupa();
+  if (!db || !currentUser?.id?.includes('-')) return;
+  try {
+    // Filtra apenas os não expirados
+    const ativos = (currentUser.flashItems||[]).filter(f => !f.expiresAt || f.expiresAt > Date.now());
+    // Salva sem o campo url para vídeos (muito grande) — só imagens
+    const paraSubir = ativos.map(f => ({
+      id: f.id, type: f.type, emoji: f.emoji,
+      title: f.title, expiresAt: f.expiresAt,
+      url: f.type === 'image' ? f.url : null // vídeos ficam só localmente
+    }));
+    await db.from('estabelecimentos')
+      .update({ flash_items: JSON.stringify(paraSubir) })
+      .eq('id', currentUser.id);
+  } catch(e) { console.warn('Erro ao salvar fresquinho:', e); }
+}
+
 
 // ─── ORDERS ──────────────────────────────────────────────────────────────
 function sLabel(s){return s==='new'?'Novo':s==='preparing'?'Preparando':s==='ready'?'Pronto':'Entregue';}
