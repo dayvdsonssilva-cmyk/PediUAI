@@ -1752,7 +1752,7 @@ function renderMeusPedidos() {
       p.status==='done' ? '🏁 Entregue' : '⏳ Aguardando confirmação';
     const stBg = isPreparing?'#eef2ff':isReady?'var(--success-bg)':'var(--brand-light)';
     const stCor = isPreparing?'#6366f1':isReady?'var(--success)':'var(--brand)';
-    const itens = (p.items||[]).map(i=>`${i.qty}x ${i.name}`).join(', ');
+    const itens = (p.items||[]).map(i=>`${i.emoji?i.emoji+' ':''}${i.qty}x ${i.name}`).join('  ');
     // Endereço da loja só aparece quando for retirada E estiver pronto
     const endAddr = isReady && isPickup && p.lojaAddress
       ? `<div style="margin-top:.5rem;padding:.6rem .75rem;background:rgba(26,138,90,.08);border:1px solid rgba(26,138,90,.2);border-radius:8px;font-size:.78rem;color:var(--success)">
@@ -2918,8 +2918,7 @@ function selecionarTempo(btn) {
     db.from('estabelecimentos').update({ prep_time: val }).eq('id', currentUser.id).then(()=>{});
   }
   // Atualiza pill no cardápio se estiver aberto
-  const pill = document.getElementById('pill-tempo');
-  if (pill) pill.textContent = '⏱ ' + val + ' min';
+  atualizarPillsCardapio();
 }
 
 function carregarTempo() {
@@ -2952,6 +2951,24 @@ function salvarOpcaoEntrega() {
       if (!error) showNotif('✅ Salvo!', 'Opções de entrega atualizadas no cardápio.');
     });
   }
+  // Atualiza pills imediatamente no cardápio (se estiver aberto)
+  atualizarPillsCardapio();
+}
+
+function atualizarPillsCardapio() {
+  if (!currentUser) return;
+  const temDel = currentUser.deliveryEnabled !== false;
+  const temPick = currentUser.pickupEnabled !== false;
+  const pillEntrega = document.getElementById('pill-entrega');
+  if (pillEntrega) {
+    if (temDel && temPick) pillEntrega.textContent = '📍 Entrega e Retirada';
+    else if (temDel) pillEntrega.textContent = '📍 Entrega';
+    else if (temPick) pillEntrega.textContent = '📍 Retirada no local';
+    else pillEntrega.style.display = 'none';
+  }
+  // Atualiza pill de tempo
+  const pillTempo = document.getElementById('pill-tempo');
+  if (pillTempo) pillTempo.textContent = '⏱ ' + (currentUser.prepTime || '30') + ' min';
 }
 
 function atualizarToggle(checkId, thumbId, ballId) {
@@ -3188,7 +3205,7 @@ function renderClientMenu(cat){
     <div class="ci-in">
       <div class="ci-med" onclick="openProductModal(${idx})">
         ${it.photo ? `<img src="${it.photo}" alt="${it.name}" onerror="this.style.display='none';this.nextElementSibling.style.opacity='1'">` : ''}
-        <span class="ef" style="${it.photo?'opacity:0':''}; transition:.2s">${it.emoji}</span>
+        <span class="ef" style="${it.photo?'opacity:0':''}; transition:.2s">${it.emoji||'🍽️'}</span>
       </div>
       <div class="ci-body">
         <div class="ci-name">${it.name}</div>
@@ -3287,7 +3304,7 @@ function renderCheckout(){
   if (temDel && !temPick) setDeliveryType('delivery');
   const taxaLabel = document.getElementById('taxa-label-checkout');
   if (taxaLabel) taxaLabel.textContent = taxaFee > 0 ? `Taxa: R$ ${taxaFee.toFixed(2).replace('.',',')}` : 'Entrega grátis';
-  list.innerHTML=cart.map((it,i)=>`<div class="cir"><div class="ce" style="font-size:.5rem;color:var(--brand)">●</div><div class="cn">${it.name}</div><div class="qc"><button class="qb" onclick="changeQty(${i},-1)">−</button><span class="qn">${it.qty}</span><button class="qb" onclick="changeQty(${i},1)">+</button></div><div class="cprice">R$ ${(it.qty*Number(it.price)).toFixed(2).replace('.',',')}</div></div>`).join('');
+  list.innerHTML=cart.map((it,i)=>`<div class="cir"><div class="ce">${it.emoji||'🍽️'}</div><div class="cn">${it.name}</div><div class="qc"><button class="qb" onclick="changeQty(${i},-1)">−</button><span class="qn">${it.qty}</span><button class="qb" onclick="changeQty(${i},1)">+</button></div><div class="cprice">R$ ${(it.qty*Number(it.price)).toFixed(2).replace('.',',')}</div></div>`).join('');
   const subtotal = cart.reduce((s,c)=>s+c.qty*c.price,0);
   const taxa = (deliveryType === 'delivery') ? taxaFee : 0;
   const total = subtotal + taxa;
