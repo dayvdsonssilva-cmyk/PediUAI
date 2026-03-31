@@ -459,3 +459,47 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   #s-ceo-login{display:none;align-items:center;justify-content:center;}
   #s-ceo-login.active{display:flex;}
 }
+
+/* ── NOVOS ESTILOS ─────────────────────────────────────────── */
+
+/* Toggle switch */
+.tog-wrap { position:relative; display:inline-block; width:44px; height:24px; flex-shrink:0; }
+.tog-wrap input { opacity:0; width:0; height:0; }
+.tog-slider { position:absolute; cursor:pointer; inset:0; background:var(--border); border-radius:24px; transition:.2s; }
+.tog-slider:before { content:''; position:absolute; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.2s; }
+.tog-wrap input:checked + .tog-slider { background:var(--success); }
+.tog-wrap input:checked + .tog-slider:before { transform:translateX(20px); }
+
+/* Horário rows */
+.hour-row { display:flex; align-items:center; gap:.5rem; }
+.hour-day-lbl { font-size:.8rem; font-weight:700; color:var(--ink2); min-width:52px; display:flex; align-items:center; gap:.35rem; cursor:pointer; }
+.hour-row input[type="time"] { border:1.5px solid var(--border); border-radius:var(--rs); padding:.3rem .5rem; font-family:'Poppins',sans-serif; font-size:.78rem; color:var(--ink); background:#fff; outline:none; }
+.hour-row input[type="time"]:focus { border-color:var(--brand); }
+
+/* Client tabs */
+.client-tab { padding:.6rem 1.1rem; font-family:'Poppins',sans-serif; font-size:.8rem; font-weight:600; color:var(--ink3); background:none; border:none; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:all .2s; }
+.client-tab.active { color:var(--brand); border-bottom-color:var(--brand); }
+
+/* My orders */
+.my-order-card { background:var(--white); border:1px solid var(--border); border-radius:var(--r); padding:.9rem; margin-bottom:.7rem; }
+.my-order-id { font-family:'Poppins',sans-serif; font-weight:700; font-size:.88rem; margin-bottom:.3rem; }
+.my-order-items { font-size:.78rem; color:var(--ink2); margin-bottom:.55rem; line-height:1.5; }
+.my-order-foot { display:flex; align-items:center; justify-content:space-between; padding-top:.55rem; border-top:1px solid var(--border); }
+.my-order-total { font-family:'Poppins',sans-serif; font-weight:800; font-size:.95rem; color:var(--brand); }
+.my-order-detail-btn { font-size:.72rem; color:var(--ink3); font-weight:700; background:var(--surface); border:1px solid var(--border); border-radius:100px; padding:.2rem .65rem; cursor:pointer; }
+
+/* Photo grid in modal */
+.photo-thumb { position:relative; border-radius:var(--rs); overflow:hidden; aspect-ratio:1; background:var(--surface); }
+.photo-thumb img { width:100%; height:100%; object-fit:cover; }
+.photo-thumb .del-ph { position:absolute; top:3px; right:3px; background:rgba(0,0,0,.55); color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:.7rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+
+/* Product photo carousel */
+.pm-carousel { position:relative; width:100%; height:190px; border-radius:var(--r); overflow:hidden; background:var(--brand-light); margin-bottom:.85rem; }
+.pm-carousel img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; transition:opacity .3s; opacity:0; }
+.pm-carousel img.active { opacity:1; }
+.pm-carousel .car-dots { position:absolute; bottom:.5rem; left:0; right:0; display:flex; justify-content:center; gap:.3rem; }
+.pm-carousel .car-dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.5); cursor:pointer; }
+.pm-carousel .car-dot.active { background:#fff; }
+.pm-carousel .car-arrow { position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,.35); color:#fff; border:none; border-radius:50%; width:28px; height:28px; font-size:.9rem; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:2; }
+.pm-carousel .car-prev { left:.5rem; }
+.pm-carousel .car-next { right:.5rem; }
