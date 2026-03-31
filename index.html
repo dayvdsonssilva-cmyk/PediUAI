@@ -1280,7 +1280,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   <div onclick="flashNext()" style="position:absolute;right:0;top:0;width:35%;height:100%;z-index:5;cursor:pointer;"></div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>/* PEDIWAY v2025 */
 function el(id) { return document.getElementById(id); }
 // ─── STATE ────────────────────────────────────────────────────────────────
 const LS = {
@@ -1346,7 +1346,7 @@ async function carregarLojaSupa(slug) {
     // Usa select explícito para evitar problema com coluna descricao reservada
     const { data: loja, error: lojaErr } = await db
       .from('estabelecimentos')
-      .select('id, name, email, slug, emoji, color, logo_url, whatsapp, plan_type, status, pass, password_plain, descricao')
+      .select('id, name, email, slug, emoji, color, logo_url, whatsapp, plan_type, status, pass, password_plain, descricao, address, flash_items')
       .eq('slug', slug)
       .maybeSingle();
 
@@ -2234,8 +2234,7 @@ async function renderDashboard() {
   document.getElementById('fin-lock-banner').style.display = isUltra ? 'none' : 'flex';
   document.getElementById('fin-content').style.display = isUltra ? 'block' : 'none';
 
-  // Carrega pedidos do Supabase se a loja tem ID real
-  const db = getSupa();
+  // Carrega pedidos do Supabase se a loja tem ID real (db já declarado acima)
   if (db && u.id && u.id.includes('-')) {
     try {
       const { data: pedidosSupa } = await db
@@ -2958,9 +2957,10 @@ function updateCartUI(){
 // ─── DELIVERY TYPE ────────────────────────────────────────────────────────
 function setDeliveryType(type){
   deliveryType=type;
-  document.getElementById('dt-delivery').classList.toggle('active',type==='delivery');
-  document.getElementById('dt-pickup').classList.toggle('active',type==='pickup');
-  document.getElementById('address-block').style.display=type==='delivery'?'block':'none';
+  document.getElementById('dt-delivery')?.classList.toggle('active',type==='delivery');
+  document.getElementById('dt-pickup')?.classList.toggle('active',type==='pickup');
+  const ab = document.getElementById('address-block');
+  if (ab) ab.style.display=type==='delivery'?'block':'none';
   const pickupBlock = document.getElementById('pickup-address-block');
   if (pickupBlock) {
     if (type === 'pickup') {
@@ -3414,7 +3414,7 @@ function showNotif(title,body){
 })();
 
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // 1. Inicializa demo
   initDemoData();
   // 2. Verifica se há sessão ativa (persiste no refresh)
@@ -3435,8 +3435,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }
-  // 3. Roteamento normal
-  initRoutingAsync();
+  // 3. Roteamento normal — await garante que o store carrega antes de qualquer outra coisa
+  await initRoutingAsync();
   setDeliveryType('delivery');
 });
 
