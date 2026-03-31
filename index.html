@@ -778,6 +778,42 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
         <div class="sc"><div class="sc-lbl">Itens no cardápio</div><div class="sc-val" id="st-items">0</div></div>
         <div class="sc"><div class="sc-lbl">Plano ativo</div><div class="sc-val" style="font-size:1rem" id="st-plan">Básico</div><div style="font-size:.7rem;color:var(--success);margin-top:.2rem">✓ Ativo</div></div>
       </div>
+      <!-- Opções de entrega na Visão Geral -->
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:1.1rem">
+        <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.92rem;margin-bottom:.85rem">Opções de entrega</div>
+        <div style="display:flex;flex-direction:column;gap:.65rem">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-weight:600;font-size:.85rem">Entrega</div>
+              <div style="font-size:.72rem;color:var(--ink3)">Entregar no endereço do cliente</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0">
+              <input type="checkbox" id="toggle-delivery" onchange="salvarOpcaoEntrega()" checked style="opacity:0;width:0;height:0">
+              <span id="thumb-delivery" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:.2s;"></span>
+              <span id="ball-delivery" style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;"></span>
+            </label>
+          </div>
+          <div id="taxa-entrega-block" style="padding:.65rem .75rem;background:var(--brand-light);border:1px solid rgba(232,65,10,.15);border-radius:var(--rs)">
+            <div style="display:flex;align-items:center;gap:.5rem">
+              <span style="font-size:.78rem;font-weight:600;color:var(--ink2);white-space:nowrap">Taxa R$</span>
+              <input type="number" id="taxa-entrega" placeholder="0 = grátis" min="0" step="0.50" inputmode="decimal"
+                style="flex:1;padding:.4rem .65rem;border:1.5px solid var(--border);border-radius:var(--rs);font-size:.85rem;font-family:'Poppins',sans-serif"
+                onchange="salvarOpcaoEntrega()">
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding-top:.5rem;border-top:1px solid var(--border)">
+            <div>
+              <div style="font-weight:600;font-size:.85rem">Retirada no local</div>
+              <div style="font-size:.72rem;color:var(--ink3)">Cliente busca no estabelecimento</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0">
+              <input type="checkbox" id="toggle-pickup" onchange="salvarOpcaoEntrega()" checked style="opacity:0;width:0;height:0">
+              <span id="thumb-pickup" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:.2s;"></span>
+              <span id="ball-pickup" style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;"></span>
+            </label>
+          </div>
+        </div>
+      </div>
       <div class="sh"><span class="st">Últimos pedidos</span><button class="btn btn-outline" style="font-size:.74rem;padding:.35rem .75rem" onclick="switchTab('t-orders')">Ver todos</button></div>
       <div id="ov-orders"></div>
     </div>
@@ -844,7 +880,6 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   <div style="font-size:.7rem;color:var(--ink3);margin-top:.3rem">Número que receberá os pedidos via WhatsApp</div>
 </div>
         <div class="fg"><label>Endereço do estabelecimento</label><input type="text" id="s-addr" placeholder="Rua, número, bairro, cidade"></div>
-        <button class="btn btn-brand" onclick="saveSettings()">Salvar alterações</button>
       </div>
       <div class="ss">
         <h3>Logo da loja</h3>
@@ -872,43 +907,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
         </div></div>
         <div class="fg" style="margin-top:.8rem"><label>Emoji da loja</label><div class="ep" id="store-ep"></div></div>
       </div>
-      <div class="ss">
-        <h3>Opções de entrega</h3>
-        <div style="display:flex;flex-direction:column;gap:.85rem">
-          <!-- Entrega -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs)">
-            <div>
-              <div style="font-weight:700;font-size:.88rem">Entrega</div>
-              <div style="font-size:.73rem;color:var(--ink3)">Entregar no endereço do cliente</div>
-            </div>
-            <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
-              <input type="checkbox" id="toggle-delivery" onchange="salvarOpcaoEntrega()" checked style="opacity:0;width:0;height:0">
-              <span id="thumb-delivery" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:.2s;"></span>
-              <span style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;transform:var(--tx,translateX(0))"></span>
-            </label>
-          </div>
-          <!-- Taxa de entrega -->
-          <div id="taxa-entrega-block" style="margin-top:-.5rem;padding:.75rem 1rem;background:var(--brand-light);border:1.5px solid rgba(232,65,10,.2);border-radius:var(--rs)">
-            <label style="font-size:.78rem;font-weight:700;color:var(--ink2);display:block;margin-bottom:.35rem">Taxa de entrega (R$)</label>
-            <input type="number" id="taxa-entrega" placeholder="0,00 = grátis" min="0" step="0.50" inputmode="decimal"
-              style="width:100%;padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:var(--rs);font-size:.88rem;font-family:'Poppins',sans-serif"
-              onchange="salvarOpcaoEntrega()">
-            <div style="font-size:.7rem;color:var(--ink3);margin-top:.3rem">Deixe 0 ou vazio para entrega grátis</div>
-          </div>
-          <!-- Retirada -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs)">
-            <div>
-              <div style="font-weight:700;font-size:.88rem">Retirada no local</div>
-              <div style="font-size:.73rem;color:var(--ink3)">Cliente busca no estabelecimento</div>
-            </div>
-            <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
-              <input type="checkbox" id="toggle-pickup" onchange="salvarOpcaoEntrega()" checked style="opacity:0;width:0;height:0">
-              <span id="thumb-pickup" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:.2s;"></span>
-              <span style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;transform:var(--tx2,translateX(0))"></span>
-            </label>
-          </div>
-        </div>
-      </div>
+
       <div class="ss">
         <h3>Pagamentos aceitos</h3>
         <div style="display:flex;flex-direction:column;gap:.5rem">
@@ -917,6 +916,10 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
           <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer"><input type="checkbox" checked> Cartão</label>
           <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer"><input type="checkbox"> Vale Refeição</label>
         </div>
+      </div>
+      <!-- Botão salvar abaixo de tudo -->
+      <div style="padding:.5rem 0 1rem">
+        <button class="btn btn-brand btn-full" style="padding:1rem;font-size:.95rem;font-weight:800;border-radius:14px" onclick="saveSettings()">Salvar alterações</button>
       </div>
     </div>
   </div>
@@ -1145,6 +1148,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     <div class="fg" style="margin-top:.9rem"><label>Observações</label><textarea rows="2" id="cl-obs" placeholder="Ex: sem cebola..."></textarea></div>
   </div>
   <div class="co-footer">
+    <div id="co-taxa-row" style="display:none;justify-content:space-between;margin-bottom:.4rem;font-size:.8rem;color:var(--ink3)"><span>Taxa de entrega</span><span id="co-taxa">R$ 0,00</span></div>
     <div class="co-sum"><span>Total</span><span class="co-total" id="co-total">R$ 0,00</span></div>
     <button class="btn btn-brand btn-full" style="font-size:.9rem;padding:.85rem" onclick="placeOrder()">Confirmar pedido 🎉</button>
   </div>
@@ -2430,6 +2434,7 @@ async function renderDashboard() {
 
   // Abre na aba Pedidos por padrão
   switchTab('t-orders');
+  carregarOpcoesEntrega(); // carrega toggles na visão geral
   renderMenuGrid(); renderOrdersList(); renderOverviewOrders(); renderFlashAdmin();
   updateStoreEmojiPicker();
   if (isUltra) renderFinanceiro('hoje');
@@ -2872,10 +2877,8 @@ function salvarOpcaoEntrega() {
   const temEntrega = document.getElementById('toggle-delivery')?.checked ?? true;
   const temRetirada = document.getElementById('toggle-pickup')?.checked ?? true;
   const taxa = parseFloat(document.getElementById('taxa-entrega')?.value || 0) || 0;
-  // Atualiza estilo do toggle
-  atualizarToggle('toggle-delivery', 'thumb-delivery', '--tx');
-  atualizarToggle('toggle-pickup', 'thumb-pickup', '--tx2');
-  // Mostra/esconde bloco de taxa
+  atualizarToggle('toggle-delivery', 'thumb-delivery', 'ball-delivery');
+  atualizarToggle('toggle-pickup', 'thumb-pickup', 'ball-pickup');
   const taxaBlock = document.getElementById('taxa-entrega-block');
   if (taxaBlock) taxaBlock.style.display = temEntrega ? 'block' : 'none';
   if (!currentUser) return;
@@ -2883,26 +2886,26 @@ function salvarOpcaoEntrega() {
   currentUser.pickupEnabled = temRetirada;
   currentUser.deliveryFee = taxa;
   saveCurrentUser();
-  // Salva no Supabase
   const db = getSupa();
   if (db && currentUser.id?.includes('-')) {
     db.from('estabelecimentos').update({
       delivery_enabled: temEntrega,
       pickup_enabled: temRetirada,
       delivery_fee: taxa
-    }).eq('id', currentUser.id).then(()=>{});
+    }).eq('id', currentUser.id).then(({ error }) => {
+      if (!error) showNotif('✅ Salvo!', 'Opções de entrega atualizadas no cardápio.');
+    });
   }
 }
 
-function atualizarToggle(checkId, thumbId, cssVar) {
+function atualizarToggle(checkId, thumbId, ballId) {
   const chk = document.getElementById(checkId);
   const thumb = document.getElementById(thumbId);
+  const ball = document.getElementById(ballId);
   if (!chk || !thumb) return;
   const on = chk.checked;
   thumb.style.background = on ? 'var(--brand)' : '#ccc';
-  // Move o bolão do toggle
-  const label = chk.closest('label');
-  if (label) label.style.setProperty(cssVar, on ? 'translateX(20px)' : 'translateX(0)');
+  if (ball) ball.style.transform = on ? 'translateX(20px)' : 'translateX(0)';
 }
 
 function carregarOpcoesEntrega() {
@@ -2914,8 +2917,8 @@ function carregarOpcoesEntrega() {
   if (chkDel) chkDel.checked = u.deliveryEnabled !== false;
   if (chkPick) chkPick.checked = u.pickupEnabled !== false;
   if (taxaEl) taxaEl.value = u.deliveryFee || '';
-  atualizarToggle('toggle-delivery', 'thumb-delivery', '--tx');
-  atualizarToggle('toggle-pickup', 'thumb-pickup', '--tx2');
+  atualizarToggle('toggle-delivery', 'thumb-delivery', 'ball-delivery');
+  atualizarToggle('toggle-pickup', 'thumb-pickup', 'ball-pickup');
   const taxaBlock = document.getElementById('taxa-entrega-block');
   if (taxaBlock) taxaBlock.style.display = (u.deliveryEnabled !== false) ? 'block' : 'none';
 }
@@ -3181,6 +3184,15 @@ function setDeliveryType(type){
   document.getElementById('dt-pickup')?.classList.toggle('active',type==='pickup');
   const ab = document.getElementById('address-block');
   if (ab) ab.style.display=type==='delivery'?'block':'none';
+  // Recalcula total com/sem taxa ao trocar tipo de entrega
+  const subtotal = cart.reduce((s,c)=>s+c.qty*c.price,0);
+  const taxa = type==='delivery' ? (currentUser?.deliveryFee||0) : 0;
+  const taxaRow = document.getElementById('co-taxa-row');
+  const taxaEl = document.getElementById('co-taxa');
+  if (taxaRow) taxaRow.style.display = taxa>0 ? 'flex' : 'none';
+  if (taxaEl) taxaEl.textContent = 'R$ '+taxa.toFixed(2).replace('.',',');
+  const totalEl = document.getElementById('co-total');
+  if (totalEl) totalEl.textContent = 'R$ '+(subtotal+taxa).toFixed(2).replace('.',',');
   const pickupBlock = document.getElementById('pickup-address-block');
   if (pickupBlock) {
     if (type === 'pickup') {
@@ -3208,17 +3220,21 @@ function renderCheckout(){
   // Mostra/oculta opções de acordo com configuração do estabelecimento
   const temDel = currentUser?.deliveryEnabled !== false;
   const temPick = currentUser?.pickupEnabled !== false;
-  const taxa = currentUser?.deliveryFee || 0;
+  const taxaFee = currentUser?.deliveryFee || 0;
   document.getElementById('dt-delivery').style.display = temDel ? '' : 'none';
   document.getElementById('dt-pickup').style.display = temPick ? '' : 'none';
-  // Se só tem uma opção, seleciona automaticamente
   if (!temDel && temPick) setDeliveryType('pickup');
   if (temDel && !temPick) setDeliveryType('delivery');
-  // Mostra taxa de entrega
   const taxaLabel = document.getElementById('taxa-label-checkout');
-  if (taxaLabel) taxaLabel.textContent = taxa > 0 ? `Taxa: R$ ${taxa.toFixed(2).replace('.',',')}` : 'Entrega grátis';
+  if (taxaLabel) taxaLabel.textContent = taxaFee > 0 ? `Taxa: R$ ${taxaFee.toFixed(2).replace('.',',')}` : 'Entrega grátis';
   list.innerHTML=cart.map((it,i)=>`<div class="cir"><div class="ce" style="font-size:.5rem;color:var(--brand)">●</div><div class="cn">${it.name}</div><div class="qc"><button class="qb" onclick="changeQty(${i},-1)">−</button><span class="qn">${it.qty}</span><button class="qb" onclick="changeQty(${i},1)">+</button></div><div class="cprice">R$ ${(it.qty*Number(it.price)).toFixed(2).replace('.',',')}</div></div>`).join('');
-  const total=cart.reduce((s,c)=>s+c.qty*c.price,0);
+  const subtotal = cart.reduce((s,c)=>s+c.qty*c.price,0);
+  const taxa = (deliveryType === 'delivery') ? taxaFee : 0;
+  const total = subtotal + taxa;
+  const taxaEl = document.getElementById('co-taxa');
+  const taxaRow = document.getElementById('co-taxa-row');
+  if (taxaRow) taxaRow.style.display = taxa > 0 ? 'flex' : 'none';
+  if (taxaEl) taxaEl.textContent = 'R$ ' + taxa.toFixed(2).replace('.',',');
   document.getElementById('co-total').textContent='R$ '+total.toFixed(2).replace('.',',');
 }
 function changeQty(i,d){cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);renderCheckout();updateCartUI();}
@@ -3733,7 +3749,9 @@ function confirmAndSendOrder() {
   const name=document.getElementById('cl-name').value.trim();
   const phone=document.getElementById('cl-phone').value.trim();
   const addr=deliveryType==='delivery'?document.getElementById('cl-addr').value.trim():'Retirada no local';
-  const total=cart.reduce((s,c)=>s+c.qty*c.price,0);
+  const subtotal=cart.reduce((s,c)=>s+c.qty*c.price,0);
+  const taxaEntrega = deliveryType==='delivery' ? (u.deliveryFee||0) : 0;
+  const total = subtotal + taxaEntrega;
   orderCounter++;
   localStorage.setItem('pw_order_counter', String(orderCounter));
   const order={
