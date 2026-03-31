@@ -1474,6 +1474,11 @@ async function montarLojaObj(db, loja, descVal) {
     whatsapp: loja.whatsapp || '',
     plan: 'ultra',
     status: 'active',
+    address: loja.address || '',
+    deliveryEnabled: loja.delivery_enabled !== false,
+    pickupEnabled: loja.pickup_enabled !== false,
+    deliveryFee: Number(loja.delivery_fee || 0),
+    prepTime: loja.prep_time || '30',
     orders: [],
     flashItems: (() => {
       try {
@@ -2388,6 +2393,9 @@ async function renderDashboard() {
         currentUser.whatsapp = dadosSupa.whatsapp || currentUser.whatsapp;
         currentUser.address = dadosSupa.address || currentUser.address;
         currentUser.prepTime = dadosSupa.prep_time || currentUser.prepTime || '30';
+        if (dadosSupa.delivery_enabled !== undefined) currentUser.deliveryEnabled = dadosSupa.delivery_enabled;
+        if (dadosSupa.pickup_enabled !== undefined) currentUser.pickupEnabled = dadosSupa.pickup_enabled;
+        currentUser.deliveryFee = Number(dadosSupa.delivery_fee || 0);
         saveCurrentUser(); // persiste localmente
       }
     } catch(e) { console.warn('Sync Supabase erro:', e); }
