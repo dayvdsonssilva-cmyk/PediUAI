@@ -1693,9 +1693,10 @@ async function assinarStatusPedido(orderId, tipoEntrega) {
         notifCliente('🍳 Pedido confirmado!', 'Estamos preparando agora. Aguarde!');
         showCSNotif('preparing');
       } else if (novoStatus === 'ready') {
-        const msg = _pedidoEntrega === 'pickup' ? 'Pode vir buscar! 🏃' : 'Saiu para entrega! 🛵';
+        const msg = _pedidoEntrega === 'pickup' ? 'Pode vir retirar no estabelecimento.' : 'Seu pedido saiu para entrega.';
+        const titulo = _pedidoEntrega === 'pickup' ? 'Pronto para retirada!' : 'Pedido a caminho!';
         atualizarStatusPedidoCliente(orderId, 'ready');
-        notifCliente('✅ Pedido pronto!', msg);
+        notifCliente(titulo, msg);
         showCSNotif('ready');
       }
     })
@@ -2196,12 +2197,37 @@ function getDueDate() {
 // ─── DASHBOARD ──────────────────────────────────────────────────────────
 async function renderDashboard() {
   if (!currentUser) return;
+
+  // Sincroniza dados do estabelecimento do Supabase (pega sempre a versão mais recente)
+  const db = getSupa();
+  if (db && currentUser.id?.includes('-')) {
+    try {
+      const { data: dadosSupa } = await db
+        .from('estabelecimentos')
+        .select('name, descricao, slug, emoji, color, logo_url, whatsapp, address, flash_items')
+        .eq('id', currentUser.id)
+        .single();
+      if (dadosSupa) {
+        // Atualiza dados locais com o que está no banco (respeita edições de outros dispositivos)
+        currentUser.name = dadosSupa.name || currentUser.name;
+        currentUser.desc = dadosSupa.descricao || currentUser.desc;
+        currentUser.slug = dadosSupa.slug || currentUser.slug;
+        currentUser.emoji = dadosSupa.emoji || currentUser.emoji;
+        currentUser.color = dadosSupa.color || currentUser.color;
+        currentUser.logo = dadosSupa.logo_url || currentUser.logo;
+        currentUser.whatsapp = dadosSupa.whatsapp || currentUser.whatsapp;
+        currentUser.address = dadosSupa.address || currentUser.address;
+        saveCurrentUser(); // persiste localmente
+      }
+    } catch(e) { console.warn('Sync Supabase erro:', e); }
+  }
+
   const u = currentUser;
   document.getElementById('dash-sname').textContent = u.name;
   const slug = u.slug || 'demo';
   document.getElementById('dash-link').textContent = 'pediway.com.br/restaurante/' + slug;
   document.getElementById('st-items').textContent = (u.menuItems||[]).filter(i=>i.available).length;
-  document.getElementById('st-plan').textContent = u.plan === 'ultra' ? 'Ultra 🚀' : 'Básico';
+  document.getElementById('st-plan').textContent = u.plan === 'ultra' ? 'Ultra' : 'Básico';
   const isUltra = u.plan === 'ultra';
   const tbFin = document.getElementById('tb-fin');
   if (!isUltra) tbFin.classList.add('locked'); else tbFin.classList.remove('locked');
@@ -3066,14 +3092,19 @@ function showCSNotif(status){
   const bar=document.getElementById('client-status-bar'); if(!bar) return;
   const waiting=document.getElementById('status-waiting');
   if(waiting) waiting.style.display='none';
+  // Detecta se é retirada pelo tipo de entrega do pedido atual
+  const isPickup = _pedidoEntrega === 'pickup';
   if(status==='preparing'){
     bar.className='csb vis csb-prep';
-    bar.innerHTML=`<span class="spinning" style="font-size:1.3rem">🍳</span><div><div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.86rem;color:#3730A3">Preparando seu pedido!</div><div style="font-size:.72rem;color:var(--ink3);margin-top:.1rem">O chef já está na cozinha 👨‍🍳</div></div>`;
+    bar.innerHTML=`<span class="spinning" style="font-size:1.1rem">⏳</span><div><div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.86rem;color:#3730A3">Pedido confirmado!</div><div style="font-size:.72rem;color:var(--ink3);margin-top:.1rem">Estamos preparando agora.</div></div>`;
+    showNotif('Pedido confirmado!', 'Estamos preparando agora.');
   } else {
     bar.className='csb vis csb-ready';
-    bar.innerHTML=`<span style="font-size:1.3rem">✅</span><div><div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.86rem;color:var(--success)">Pedido pronto!</div><div style="font-size:.72rem;color:var(--ink3);margin-top:.1rem">${status==='pickup'?'Pode vir buscar 🏃':'A caminho! 🛵'}</div></div>`;
+    const readyMsg = isPickup ? 'Pode vir retirar no estabelecimento.' : 'Seu pedido saiu para entrega.';
+    const readyTitle = isPickup ? 'Pronto para retirada!' : 'Pedido a caminho!';
+    bar.innerHTML=`<span style="font-size:1.1rem">✅</span><div><div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.86rem;color:var(--success)">${readyTitle}</div><div style="font-size:.72rem;color:var(--ink3);margin-top:.1rem">${readyMsg}</div></div>`;
+    showNotif(readyTitle, readyMsg);
   }
-  showNotif(status==='preparing'?'🍳 Preparando!':'✅ Pronto!',status==='preparing'?'O chef está na cozinha.':'Seu pedido está a caminho!');
 }
 
 // ─── CEO ──────────────────────────────────────────────────────────────────
