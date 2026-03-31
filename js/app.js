@@ -12,6 +12,7 @@ let deliveryType = 'delivery';
 let editingItemIdx = null;
 let selectedEmoji = '🍔';
 let selectedPhoto = null;
+let selectedPhotos = []; // até 5 fotos por item
 let cart = [];
 let orderCounter = parseInt(localStorage.getItem('pw_order_counter') || '1000');
 let flashItems = [];
@@ -205,6 +206,12 @@ function iniciarRealtimePedidos() {
       renderOrdersList();
       renderOverviewOrders();
       showNotif('🔔 Novo pedido!', p.client_name + ' · R$ ' + Number(p.total).toFixed(2).replace('.',','));
+      // Anima a área de novos pedidos
+      const newContainer = document.getElementById('new-orders-container');
+      if(newContainer) {
+        newContainer.style.animation = 'none';
+        setTimeout(() => { newContainer.style.animation = 'pulse 0.5s ease-out'; }, 10);
+      }
       const st = document.getElementById('st-today');
       if (st) st.textContent = String(Number(st.textContent||0) + 1);
     })
@@ -1352,23 +1359,23 @@ function delItem(i) {
 const allEmojis = ['🍔','🍕','🌮','🌯','🍜','🍣','🍗','🥩','🧆','🥗','🍰','🧁','🍦','🥤','🧃','☕','🍟','🥪','🫕','🥘'];
 
 function openAddItem() {
-  editingItemIdx = null; selectedPhoto = null; selectedEmoji = '🍔';
+  editingItemIdx = null; selectedPhoto = null; selectedPhotos = []; selectedEmoji = '🍔';
   document.getElementById('modal-title').textContent = 'Adicionar item';
   ['i-name','i-desc','i-cat','i-price'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('ph-preview').style.display='none';
-  document.getElementById('ph-placeholder').style.display='flex';
+  renderPhotosGrid();
   buildItemEmojis(); openModal('modal-add');
 }
 function editItem(i) {
   editingItemIdx = i; const it = currentUser.menuItems[i];
-  selectedPhoto = it.photo; selectedEmoji = it.emoji;
+  selectedPhoto = it.photo || null;
+  selectedPhotos = Array.isArray(it.photos) && it.photos.length ? [...it.photos] : (it.photo ? [it.photo] : []);
+  selectedEmoji = it.emoji;
   document.getElementById('modal-title').textContent = 'Editar item';
   document.getElementById('i-name').value = it.name;
   document.getElementById('i-desc').value = it.desc;
   document.getElementById('i-cat').value = it.cat;
   document.getElementById('i-price').value = it.price;
-  if (it.photo) { document.getElementById('ph-preview').src=it.photo; document.getElementById('ph-preview').style.display='block'; document.getElementById('ph-placeholder').style.display='none'; }
-  else { document.getElementById('ph-preview').style.display='none'; document.getElementById('ph-placeholder').style.display='flex'; }
+  renderPhotosGrid();
   buildItemEmojis(); openModal('modal-add');
 }
 function buildItemEmojis() {
@@ -1378,29 +1385,64 @@ function selEmoji(e,btn,pickerId) {
   document.querySelectorAll(`#${pickerId} .epb`).forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel'); selectedEmoji = e;
 }
+// ─── MÚLTIPLAS FOTOS ──────────────────────────────────────────────────────
+function addPhotos(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const restante = 5 - selectedPhotos.length;
+  if (restante <= 0) { showNotif('Limite atingido','Máximo de 5 fotos por item.'); return; }
+  files.slice(0, restante).forEach(file => {
+    const r = new FileReader();
+    r.onload = async e => {
+      // Comprime cada foto antes de adicionar
+      const compressed = await comprimirImagem(e.target.result, 800, 0.78);
+      selectedPhotos.push(compressed);
+      if (selectedPhotos.length === 1) selectedPhoto = compressed; // mantém compat
+      renderPhotosGrid();
+    };
+    r.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function removePhoto(idx) {
+  selectedPhotos.splice(idx, 1);
+  selectedPhoto = selectedPhotos[0] || null;
+  renderPhotosGrid();
+}
+
+function renderPhotosGrid() {
+  const grid = document.getElementById('photos-grid');
+  const addBtn = document.getElementById('ph-add-btn');
+  const count = document.getElementById('ph-count');
+  if (!grid) return;
+
+  grid.innerHTML = selectedPhotos.map((src, i) => `
+    <div style="position:relative;border-radius:var(--rs);overflow:hidden;aspect-ratio:1;background:var(--surface);">
+      <img src="${src}" style="width:100%;height:100%;object-fit:cover;display:block;">
+      <button onclick="removePhoto(${i})" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">×</button>
+      ${i === 0 ? '<div style="position:absolute;bottom:3px;left:3px;background:var(--brand);color:#fff;font-size:.55rem;font-weight:700;padding:.1rem .3rem;border-radius:3px;">CAPA</div>' : ''}
+    </div>`).join('');
+
+  // Mostra/esconde botão de adicionar
+  if (addBtn) addBtn.style.display = selectedPhotos.length >= 5 ? 'none' : '';
+  if (count) {
+    count.style.display = selectedPhotos.length > 0 ? '' : 'none';
+    count.textContent = `${selectedPhotos.length}/5 foto${selectedPhotos.length !== 1 ? 's' : ''}`;
+  }
+}
+
 function prevPhoto(input) {
-  const file=input.files[0]; if(!file) return;
-  const r=new FileReader();
-  r.onload=e=>{
-    openCropModal(e.target.result, 'Ajustar foto do produto', false, (cropped) => {
-      selectedPhoto=cropped;
-      document.getElementById('ph-preview').src=cropped;
-      document.getElementById('ph-preview').style.display='block';
-      document.getElementById('ph-placeholder').style.display='none';
-    });
-  };
-  r.readAsDataURL(file);
+  // legado — redireciona para addPhotos
+  addPhotos(input);
 }
 async function saveItem() {
   const name = document.getElementById('i-name').value.trim();
   const price = parseFloat(document.getElementById('i-price').value);
   if(!name || !price) { alert('Preencha nome e preço'); return; }
 
-  // Comprime a foto antes de salvar (reduz de vários MB para ~80KB)
-  let fotoFinal = selectedPhoto;
-  if (fotoFinal && fotoFinal.startsWith('data:')) {
-    fotoFinal = await comprimirImagem(fotoFinal, 800, 0.75);
-  }
+  // Usa o array de fotos; primeira é a capa
+  const fotoFinal = selectedPhotos[0] || null;
 
   // Preserva o supaId do item sendo editado ANTES de substituir
   const supaIdAntigo = editingItemIdx !== null
@@ -1412,6 +1454,7 @@ async function saveItem() {
     supaId: supaIdAntigo || null,
     emoji: selectedEmoji,
     photo: fotoFinal,
+    photos: [...selectedPhotos],
     name,
     desc: document.getElementById('i-desc').value,
     cat: document.getElementById('i-cat').value || 'Geral',
@@ -1443,28 +1486,22 @@ async function saveItem() {
         category: it.cat,
         emoji: it.emoji,
         photo_url: fotoFinal || null,
+        photos: selectedPhotos.length ? JSON.stringify(selectedPhotos) : '[]',
         available: true,
         descricao: it.desc || ''
       };
 
       if (supaIdAntigo && String(supaIdAntigo).includes('-')) {
-        // EDITAR — atualiza o item existente pelo UUID
         const { error } = await db.from('menu_items').update(supaItem).eq('id', supaIdAntigo);
         if (error) console.warn('Erro ao editar item:', error.message);
         else showNotif('✅ Item atualizado!', it.name + ' foi atualizado no cardápio.');
       } else {
-        // NOVO — insere e salva o UUID retornado
         const { data, error } = await db.from('menu_items').insert(supaItem).select().single();
         if (error) console.warn('Erro ao inserir item:', error.message);
         else if (data) {
-          const idx = currentUser.menuItems.length - 1;
-          if (editingItemIdx !== null) {
-            currentUser.menuItems[editingItemIdx].supaId = data.id;
-            currentUser.menuItems[editingItemIdx].id = data.id;
-          } else {
-            currentUser.menuItems[idx].supaId = data.id;
-            currentUser.menuItems[idx].id = data.id;
-          }
+          const idx = editingItemIdx !== null ? editingItemIdx : currentUser.menuItems.length - 1;
+          currentUser.menuItems[idx].supaId = data.id;
+          currentUser.menuItems[idx].id = data.id;
           saveCurrentUser();
           showNotif('✅ Item adicionado!', it.name + ' está no cardápio.');
         }
@@ -1561,24 +1598,61 @@ async function salvarFlashNoSupabase() {
 function sLabel(s){return s==='new'?'Novo':s==='preparing'?'Preparando':s==='ready'?'Pronto':s==='rejected'?'Recusado':'Entregue';}
 function renderOrdersList() {
   const orders=currentUser?.orders||[];
-  document.getElementById('orders-count').textContent=orders.length+' pedido(s)';
+  const newOrders = orders.filter(o => o.status === 'new');
+  const otherOrders = orders.filter(o => o.status !== 'new');
+  
+  // Atualiza count de novos pedidos
+  const newCount = document.getElementById('new-orders-count');
+  if(newCount) newCount.textContent = newOrders.length > 0 ? ` (${newOrders.length})` : '';
+  
+  // Renderiza novos pedidos (área grande)
+  const newOrdersContainer = document.getElementById('new-orders-container');
+  if(newOrdersContainer) {
+    if(!newOrders.length) {
+      newOrdersContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--ink3);font-weight:500">✅ Nenhum novo pedido</div>';
+    } else {
+      newOrdersContainer.innerHTML = newOrders.map((o,i)=>{
+        const realIdx = orders.indexOf(o);
+        return `<div class="oc" style="background:var(--white);border:2px solid var(--brand);margin-bottom:1rem;padding:1.1rem;border-radius:var(--r);transition:all .2s" onmouseover="this.style.boxShadow='0 4px 12px rgba(232,65,10,.15)'" onmouseout="this.style.boxShadow='none'">
+    <div class="oh"><div>
+      <div class="oid" style="font-size:1rem;font-weight:800;color:var(--brand)">${o.id} — ${o.client}</div>
+      <div class="ometa">${o.time} · ${o.delivery==='pickup'?'🏃 Retirada':'🛵 '+o.address} · 📞 ${o.phone||'—'}</div>
+    </div></div>
+    <div class="oi" style="margin:0.7rem 0;font-size:.95rem;font-weight:600">${o.items.map(it=>`${it.qty}x ${it.name}`).join(' • ')}</div>
+    <div class="of" style="border-top:1px solid var(--border);padding-top:.8rem;margin-top:.8rem">
+      <div class="ot" style="font-size:1.4rem;font-weight:800;color:var(--brand)">R$ ${o.total.toFixed(2).replace('.',',')}</div>
+      <div class="oacts" style="display:flex;gap:.5rem;margin-top:.8rem;flex-wrap:wrap">
+        <button class="btn btn-brand" style="flex:1;font-size:.76rem;padding:.5rem .8rem;font-weight:700" onclick="markPreparing(${realIdx})">✅ ACEITAR</button>
+        <button class="btn" style="flex:1;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;font-size:.76rem;padding:.5rem .8rem;font-weight:700" onclick="recusarPedido(${realIdx})">✕ RECUSAR</button>
+        <button class="btn" style="border:1px solid var(--border);color:var(--ink2);font-size:.7rem;padding:.35rem .7rem;flex:1" onclick="viewReceipt(${realIdx})">📄 Notinha</button>
+      </div>
+    </div>
+  </div>`;
+      }).join('');
+    }
+  }
+  
+  // Renderiza histórico (pedidos em preparo, pronto, recusado)
+  document.getElementById('orders-count').textContent = otherOrders.length + ' pedido(s)';
   const list=document.getElementById('orders-list');
-  if(!orders.length){list.innerHTML='<div class="es"><div class="ei">📭</div><p>Nenhum pedido ainda hoje</p></div>';return;}
-  list.innerHTML=orders.map((o,i)=>`<div class="oc">
+  if(!otherOrders.length){
+    list.innerHTML='<div class="es"><div class="ei">📭</div><p>Nenhum pedido no histórico</p></div>';
+    return;
+  }
+  list.innerHTML=otherOrders.map((o,i)=>{
+    const realIdx = orders.indexOf(o);
+    return `<div class="oc">
     <div class="oh"><div><div class="oid">${o.id} — ${o.client}</div><div class="ometa">${o.time} · ${o.delivery==='pickup'?'🏃 Retirada':'🛵 '+o.address} · 📞 ${o.phone||'—'}</div></div>
     <span class="sb s-${o.status}">${sLabel(o.status)}</span></div>
     <div class="oi">${o.items.map(it=>`${it.qty}x ${it.name}`).join(' • ')}</div>
     <div class="of"><div class="ot">R$ ${o.total.toFixed(2).replace('.',',')}</div>
     <div class="oacts">
-      <button class="btn" style="border:1px solid var(--border);color:var(--ink2);font-size:.7rem;padding:.35rem .7rem" onclick="viewReceipt(${i})">📄 Notinha</button>
-      ${o.status==='new'?`
-        <button class="btn btn-brand" style="font-size:.72rem;padding:.38rem .8rem;font-weight:700" onclick="markPreparing(${i})">✅ Aceitar</button>
-        <button class="btn" style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;font-size:.72rem;padding:.38rem .8rem;font-weight:700" onclick="recusarPedido(${i})">✕ Recusar</button>
-      `:''}
-      ${o.status==='preparing'?`<button class="btn btn-brand" style="font-size:.7rem;padding:.35rem .7rem" onclick="markReady(${i})">✅ Pronto</button>`:''}
+      <button class="btn" style="border:1px solid var(--border);color:var(--ink2);font-size:.7rem;padding:.35rem .7rem" onclick="viewReceipt(${realIdx})">📄 Notinha</button>
+      ${o.status==='preparing'?`<button class="btn btn-brand" style="font-size:.7rem;padding:.35rem .7rem" onclick="markReady(${realIdx})">✅ Pronto</button>`:''}
       ${o.status==='rejected'?`<span style="font-size:.72rem;color:#DC2626;font-weight:700">Pedido recusado</span>`:''}
     </div></div>
-  </div>`).join('');
+  </div>`;
+  }).join('');
 }
 function renderOverviewOrders(){
   const orders=currentUser?.orders||[];
