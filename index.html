@@ -288,13 +288,14 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 /* ── CONFIRM SCREEN ─────────────────────────────────────────────────────── */
 #s-confirm{min-height:100%;max-width:480px;margin:0 auto;display:none;flex-direction:column;background:var(--surface);}
 #s-confirm.active{display:flex;}
+/* Garante que conteúdo do confirm seja scrollável */
 
 /* Topo — arte colorida */
 .conf-art{
   background:linear-gradient(150deg,var(--brand) 0%,var(--brand-dark) 100%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:2.8rem 1.5rem 2.2rem;text-align:center;position:relative;overflow:hidden;
-  min-height:52vh;
+  padding:2rem 1.5rem 1.8rem;text-align:center;position:relative;overflow:hidden;
+  min-height:42vh; /* reduzido para caber o jogo abaixo */
 }
 .conf-art::before{content:'';position:absolute;top:-70px;right:-70px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.08);}
 .conf-art::after{content:'';position:absolute;bottom:-80px;left:-60px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.05);}
@@ -344,8 +345,8 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 .game-stat span{font-weight:800;color:var(--brand);}
 .game-area{
   width:100%;
-  height:200px;
-  min-height:180px;
+  height:180px;
+  min-height:160px;
   background:linear-gradient(135deg,#1a0f05,#2a160a);
   position:relative;overflow:hidden;cursor:pointer;
   touch-action:none;
@@ -1567,7 +1568,12 @@ function switchClientTab(tab) {
   document.getElementById('tab-meus-pedidos')?.classList.toggle('active', tab === 'meus-pedidos');
   document.getElementById('panel-cardapio')?.classList.toggle('active', tab === 'cardapio');
   document.getElementById('panel-meus-pedidos')?.classList.toggle('active', tab === 'meus-pedidos');
-  if (tab === 'meus-pedidos') renderMeusPedidos();
+  if (tab === 'meus-pedidos') {
+    renderMeusPedidos();
+    // Debug: mostra quantos pedidos tem no localStorage
+    const qtd = carregarPedidosCliente().length;
+    console.log('Meus pedidos:', qtd, 'pedido(s) no localStorage');
+  }
 }
 function salvarPedidoCliente(pedido) {
   try {
@@ -1612,13 +1618,19 @@ function renderMeusPedidos() {
       ? `<div style="margin-top:.5rem;padding:.6rem .75rem;background:rgba(26,138,90,.08);border:1px solid rgba(26,138,90,.2);border-radius:8px;font-size:.78rem;color:var(--success)">
            <strong>📍 Endereço para retirada:</strong><br>${p.lojaAddress}
          </div>` : '';
-    return `<div style="background:var(--white);border:1.5px solid ${cor};border-radius:var(--r);padding:1rem;margin-bottom:.75rem">
-      <div style="display:flex;justify-content:space-between;margin-bottom:.4rem">
-        <div style="font-weight:800">${p.id||'#—'}</div>
-        <span style="font-size:.7rem;font-weight:700;background:${stBg};color:${stCor};padding:.2rem .55rem;border-radius:100px">${stLabel}</span>
+    return `<div style="background:var(--white);border:1.5px solid ${stCor};border-radius:var(--r);padding:1rem;margin-bottom:.75rem;box-shadow:0 1px 6px rgba(0,0,0,.06)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem">
+        <div>
+          <div style="font-weight:800;font-size:.9rem">${p.id||'#—'}</div>
+          <div style="font-size:.7rem;color:var(--ink3);margin-top:.1rem">${p.lojaName||''} · ${p.time||'agora'}</div>
+        </div>
+        <span style="font-size:.7rem;font-weight:700;background:${stBg};color:${stCor};padding:.2rem .6rem;border-radius:100px;white-space:nowrap;flex-shrink:0">${stLabel}</span>
       </div>
-      <div style="font-size:.8rem;color:var(--ink2);margin-bottom:.3rem">${itens}</div>
-      <div style="font-weight:700;color:var(--brand)">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
+      <div style="font-size:.82rem;color:var(--ink2);margin-bottom:.4rem;line-height:1.5">${itens}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:800;color:var(--brand);font-size:.95rem">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
+        <div style="font-size:.72rem;color:var(--ink3)">${p.payment||''}</div>
+      </div>
       ${endAddr}
     </div>`;
   }).join('');
