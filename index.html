@@ -1243,7 +1243,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   </div>
   <div class="fp-prog" id="fp-prog"></div>
   <div id="flash-slides" style="width:100%;height:100%;position:relative;overflow:hidden;"></div>
-  <div class="fp-bot"><div id="fs-title" style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.9rem;color:#fff;margin-bottom:.2rem"></div><div style="font-size:.7rem;color:rgba(255,255,255,.5)">⏱ Expira em 4 horas</div></div>
+  <div class="fp-bot"><div id="fs-title" style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;color:#fff;margin-bottom:.2rem;text-shadow:0 1px 8px rgba(0,0,0,.5)"></div></div>
   <div onclick="flashPrev()" style="position:absolute;left:0;top:0;width:35%;height:100%;z-index:5;cursor:pointer;"></div>
   <div onclick="flashNext()" style="position:absolute;right:0;top:0;width:35%;height:100%;z-index:5;cursor:pointer;"></div>
 </div>
@@ -1512,25 +1512,48 @@ function switchClientTab(tab) {
   if (tab === 'meus-pedidos') renderMeusPedidos();
 }
 function salvarPedidoCliente(pedido) {
-  try { const l=JSON.parse(sessionStorage.getItem('pw_meus_pedidos')||'[]'); l.unshift(pedido); sessionStorage.setItem('pw_meus_pedidos',JSON.stringify(l.slice(0,20))); } catch(e) {}
+  try {
+    const raw = localStorage.getItem('pw_hist_pedidos');
+    const hist = raw ? JSON.parse(raw) : [];
+    // Remove pedidos com mais de 1 dia
+    const umDia = 24 * 60 * 60 * 1000;
+    const recentes = hist.filter(p => (Date.now() - (p.savedAt||0)) < umDia);
+    pedido.savedAt = Date.now();
+    recentes.unshift(pedido);
+    localStorage.setItem('pw_hist_pedidos', JSON.stringify(recentes.slice(0, 30)));
+  } catch(e) {}
 }
 function carregarPedidosCliente() {
-  try { return JSON.parse(sessionStorage.getItem('pw_meus_pedidos')||'[]'); } catch(e) { return []; }
+  try {
+    const raw = localStorage.getItem('pw_hist_pedidos');
+    if (!raw) return [];
+    const umDia = 24 * 60 * 60 * 1000;
+    return JSON.parse(raw).filter(p => (Date.now() - (p.savedAt||0)) < umDia);
+  } catch(e) { return []; }
 }
 function renderMeusPedidos() {
   const lista = document.getElementById('meus-pedidos-lista'); if (!lista) return;
   const pedidos = carregarPedidosCliente();
   if (!pedidos.length) { lista.innerHTML='<div style="text-align:center;padding:3rem 1rem"><div style="font-size:2.5rem;margin-bottom:.75rem">📭</div><div style="font-weight:700">Nenhum pedido ainda</div><div style="font-size:.8rem;color:var(--ink3);margin-top:.3rem">Faça seu primeiro pedido!</div></div>'; return; }
   lista.innerHTML = pedidos.map(p => {
-    const st = p.status==='preparing'?'🍳 Preparando':p.status==='ready'?(p.delivery==='pickup'?'✅ Pronto — pode retirar!':'✅ Saiu para entrega!'):p.status==='done'?'🏁 Entregue':'⏳ Aguardando';
-    const bg = p.status==='preparing'?'#eef2ff':p.status==='ready'?'var(--success-bg)':'var(--brand-light)';
-    const cor = p.status==='preparing'?'#6366f1':p.status==='ready'?'var(--success)':'var(--brand)';
+    const isPickup = p.delivery==='pickup';
+    const isReady = p.status==='ready';
+    const isPreparing = p.status==='preparing';
+    const stLabel = isPreparing ? '🍳 Preparando...' :
+      isReady ? (isPickup ? '✅ Pronto para retirada!' : '🛵 Saiu para entrega!') :
+      p.status==='done' ? '🏁 Entregue' : '⏳ Aguardando confirmação';
+    const stBg = isPreparing?'#eef2ff':isReady?'var(--success-bg)':'var(--brand-light)';
+    const stCor = isPreparing?'#6366f1':isReady?'var(--success)':'var(--brand)';
     const itens = (p.items||[]).map(i=>`${i.qty}x ${i.name}`).join(', ');
-    const endAddr = p.status==='ready'&&p.delivery==='pickup'&&p.lojaAddress?`<div style="margin-top:.5rem;padding:.5rem .75rem;background:rgba(0,0,0,.05);border-radius:8px;font-size:.75rem">📍 ${p.lojaAddress}</div>`:'';
+    // Endereço da loja só aparece quando for retirada E estiver pronto
+    const endAddr = isReady && isPickup && p.lojaAddress
+      ? `<div style="margin-top:.5rem;padding:.6rem .75rem;background:rgba(26,138,90,.08);border:1px solid rgba(26,138,90,.2);border-radius:8px;font-size:.78rem;color:var(--success)">
+           <strong>📍 Endereço para retirada:</strong><br>${p.lojaAddress}
+         </div>` : '';
     return `<div style="background:var(--white);border:1.5px solid ${cor};border-radius:var(--r);padding:1rem;margin-bottom:.75rem">
       <div style="display:flex;justify-content:space-between;margin-bottom:.4rem">
         <div style="font-weight:800">${p.id||'#—'}</div>
-        <span style="font-size:.7rem;font-weight:700;background:${bg};color:${cor};padding:.2rem .55rem;border-radius:100px">${st}</span>
+        <span style="font-size:.7rem;font-weight:700;background:${stBg};color:${stCor};padding:.2rem .55rem;border-radius:100px">${stLabel}</span>
       </div>
       <div style="font-size:.8rem;color:var(--ink2);margin-bottom:.3rem">${itens}</div>
       <div style="font-weight:700;color:var(--brand)">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
@@ -1576,11 +1599,11 @@ async function assinarStatusPedido(orderId, tipoEntrega) {
 
 function atualizarStatusPedidoCliente(orderId, novoStatus) {
   try {
-    const lista = JSON.parse(sessionStorage.getItem('pw_meus_pedidos') || '[]');
+    const lista = carregarPedidosCliente();
     const idx = lista.findIndex(p => p.supaId === orderId);
     if (idx >= 0) {
       lista[idx].status = novoStatus;
-      sessionStorage.setItem('pw_meus_pedidos', JSON.stringify(lista));
+      localStorage.setItem('pw_hist_pedidos', JSON.stringify(lista.map((p,i)=>i===0?{...p,savedAt:Date.now()}:p)));
       // Se estiver na aba meus pedidos, re-renderiza
       if (document.getElementById('panel-meus-pedidos')?.classList.contains('active')) {
         renderMeusPedidos();
@@ -2319,11 +2342,22 @@ function renderFlashAdmin() {
 function addFlash(input) {
   const file=input.files[0]; if(!file) return;
   const isVid=file.type.startsWith('video');
-  const r=new FileReader(); r.onload=e=>{
+  const r=new FileReader();
+  r.onload=e=>{
+    const url = e.target.result;
+    // Pergunta título (opcional)
+    const titulo = prompt('Título da promoção (opcional — deixe vazio para exibir limpo):', '') || '';
     if(!currentUser.flashItems) currentUser.flashItems=[];
-    currentUser.flashItems.push({id:Date.now(),type:isVid?'video':'image',emoji:'✨',title:file.name.replace(/\.[^.]+$/,''),url:e.target.result});
+    currentUser.flashItems.push({
+      id: Date.now(),
+      type: isVid?'video':'image',
+      emoji:'✨',
+      title: titulo.trim(), // string vazia = sem título
+      url
+    });
     saveCurrentUser(); renderFlashAdmin();
-  }; r.readAsDataURL(file);
+  };
+  r.readAsDataURL(file);
 }
 function delFlash(i){if(!currentUser)return;currentUser.flashItems.splice(i,1);saveCurrentUser();renderFlashAdmin();}
 
@@ -2584,11 +2618,11 @@ async function renderFlashClient(){
   }
   const items=currentUser?.flashItems||[];
   const sec=document.getElementById('flash-client-sec');
-  if(!items.length){sec.style.display='none';return;}
-  sec.style.display='block';
+  if(!items.length){if(sec)sec.style.display='none';return;}
+  if(sec)sec.style.display='block';
   document.getElementById('flash-client-row').innerHTML=items.map((f,i)=>`<div class="fc" onclick="openFlash(${i})">
     ${f.url?(f.type==='video'?`<video src="${f.url}" class="fc-th" playsinline preload="metadata"></video>`:`<img src="${f.url}" class="fc-th">`): `<div class="fc-ph">${f.emoji}</div>`}
-    <div class="fc-pl">▶</div><div class="fc-ov"><div class="fc-tt">${f.title}</div></div>
+    <div class="fc-pl">▶</div>${f.title?`<div class="fc-ov"><div class="fc-tt">${f.title}</div></div>`:''}
   </div>`).join('');
 }
 
@@ -2605,7 +2639,11 @@ function renderFlashSlide(){
   const f=items[flashIdx]; if(!f){closeFlash();return;}
   const slides=document.getElementById('flash-slides');
   slides.innerHTML=f.url?(f.type==='video'?`<video src="${f.url}" autoplay playsinline loop controls style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"></video>`:`<img src="${f.url}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0">`): `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:8rem">${f.emoji}</div>`;
-  document.getElementById('fs-title').textContent=f.title;
+  const fsTitleEl = document.getElementById('fs-title');
+  if (fsTitleEl) {
+    fsTitleEl.textContent = f.title || '';
+    fsTitleEl.style.display = f.title ? 'block' : 'none';
+  }
   const prog=document.getElementById('fp-prog');
   prog.innerHTML=items.map((_,i)=>`<div class="fp-track"><div class="fp-fill" id="fp-${i}" style="width:${i<flashIdx?'100%':'0%'}"></div></div>`).join('');
   const fill=document.getElementById('fp-'+flashIdx);
@@ -3101,6 +3139,16 @@ function showNotif(title,body){
   });
 })();
 
+
+// ─── SCROLL DO MOUSE NO PC ────────────────────────────────────────────────────
+// Garante que scroll por roda do mouse funcione em todas as telas
+document.addEventListener('wheel', (e) => {
+  const target = e.target.closest('.screen.active, .mo, #s-store, .dash-content, .ceo-content, .co-content');
+  if (target) {
+    target.scrollTop += e.deltaY;
+  }
+}, { passive: true });
+
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Inicializa demo
   initDemoData();
@@ -3215,9 +3263,9 @@ function confirmAndSendOrder() {
         if (cidEl) cidEl.textContent = displayId;
         // Atualiza o pedido no histórico com o supaId real
         try {
-          const lista = JSON.parse(sessionStorage.getItem('pw_meus_pedidos') || '[]');
+          const lista = carregarPedidosCliente();
           if (lista[0]) { lista[0].supaId = orderId; lista[0].id = '#' + orderId.slice(-6).toUpperCase(); }
-          sessionStorage.setItem('pw_meus_pedidos', JSON.stringify(lista));
+          localStorage.setItem('pw_hist_pedidos', JSON.stringify(lista.map((p,i)=>i===0?{...p,savedAt:Date.now()}:p)));
         } catch(e) {}
         // Inicia escuta de status — SOMENTE no celular do cliente
         assinarStatusPedido(orderId, deliveryType);
