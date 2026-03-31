@@ -291,7 +291,16 @@
     </div>
     <!-- PEDIDOS — aba principal, aparece primeiro -->
     <div class="tp active" id="t-orders">
-      <div class="sh"><span class="st">Pedidos</span><span style="font-size:.76rem;color:var(--ink3)" id="orders-count"></span></div>
+      <!-- SEÇÃO DE NOVOS PEDIDOS (GRANDE) -->
+      <div class="sh" style="margin-bottom:.5rem"><span class="st" style="color:var(--brand);font-weight:800">🔔 NOVOS PEDIDOS</span><span style="font-size:.76rem;color:var(--brand)" id="new-orders-count"></span></div>
+      <div class="new-orders-area" id="new-orders-container" style="background:linear-gradient(135deg,rgba(232,65,10,.08),rgba(232,65,10,.02));border:2px solid var(--brand);border-radius:var(--r);padding:1rem;margin-bottom:1.5rem;min-height:200px;max-height:600px;overflow-y:auto"></div>
+      
+      <!-- SEPARADOR -->
+      <div style="border-top:2px solid var(--border);margin:1.5rem 0;padding:1rem 0">
+        <div class="sh"><span class="st">📋 HISTÓRICO</span><span style="font-size:.76rem;color:var(--ink3)" id="orders-count"></span></div>
+      </div>
+      
+      <!-- SEÇÃO DE HISTÓRICO (Preparando, Pronto, Recusado) -->
       <div class="ol" id="orders-list"></div>
     </div>
     <!-- FINANCEIRO -->
@@ -824,13 +833,25 @@
   <div class="mo">
     <div class="mo-h"></div>
     <div class="mo-hdr"><span class="mo-title" id="modal-title">Adicionar item</span><button class="clo" onclick="closeModal('modal-add')">×</button></div>
-    <div class="fg"><label>Foto do produto</label>
-      <div class="ua" onclick="document.getElementById('item-photo').click()">
-        <input type="file" id="item-photo" accept="image/*" onchange="prevPhoto(this)">
-        <div id="ph-placeholder"><span style="font-size:1.5rem">📸</span><div style="font-size:.78rem;font-weight:700;margin-top:.3rem">Adicionar foto</div><div style="font-size:.68rem;color:var(--ink3)">JPG, PNG · Opcional</div></div>
-        <img id="ph-preview" class="up" alt="">
+
+    <!-- FOTOS (até 5) -->
+    <div class="fg">
+      <label>Fotos do produto <span style="font-weight:400;color:var(--ink3)">— até 5 fotos</span></label>
+
+      <!-- Grid de previews -->
+      <div id="photos-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.5rem;"></div>
+
+      <!-- Botão adicionar (some quando tiver 5) -->
+      <div id="ph-add-btn" onclick="document.getElementById('item-photo').click()"
+        style="border:2px dashed var(--border);border-radius:var(--rs);padding:.9rem;text-align:center;cursor:pointer;transition:all .2s;">
+        <input type="file" id="item-photo" accept="image/*" multiple onchange="addPhotos(this)" style="display:none">
+        <div style="font-size:1.5rem">📸</div>
+        <div style="font-size:.76rem;font-weight:700;margin-top:.3rem">Adicionar fotos</div>
+        <div style="font-size:.68rem;color:var(--ink3)">JPG, PNG · Opcional</div>
       </div>
+      <div id="ph-count" style="font-size:.7rem;color:var(--ink3);margin-top:.3rem;text-align:right;display:none"></div>
     </div>
+
     <div class="fg"><label>Emoji (sem foto)</label><div class="ep" id="item-ep"></div></div>
     <div class="fg"><label>Nome *</label><input type="text" id="i-name" placeholder="Ex: X-Burguer Especial"></div>
     <div class="fg"><label>Descrição</label><textarea id="i-desc" rows="2" placeholder="Ex: Pão brioche, carne 180g..."></textarea></div>
