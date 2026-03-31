@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#FFF9F6">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -12,6 +12,11 @@
 :root{--brand:#E8410A;--brand-dark:#B83208;--brand-light:#FDF1EC;--ink:#1A1208;--ink2:#4A3F35;--ink3:#8C7F74;--surface:#FFF9F6;--white:#FFFFFF;--border:#EDE5DF;--success:#1A8A5A;--success-bg:#EAF7F0;--r:14px;--rs:8px;}
 /* Bloquear dark mode do navegador — layout sempre igual */
 :root{color-scheme:light only;}
+/* Desabilitar zoom em toque duplo e pinça — iOS e Android */
+* { touch-action: pan-x pan-y; }
+input, textarea, select, button { touch-action: manipulation; font-size: 16px; }
+/* imgs que não são botão não capturam eventos */ .ci-med img, .s-hero-logo img, .mc-img img { touch-action: pan-x pan-y; }
+button, a, .btn, .ab, .smb, .cp, .epb, .fc { touch-action: manipulation; }
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;margin:0;padding:0;}
 body{
@@ -340,9 +345,11 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 .game-area{
   width:100%;height:190px;
   background:linear-gradient(135deg,#1a0f05,#2a160a);
-  position:relative;overflow:hidden;cursor:pointer;touch-action:manipulation;
+  position:relative;overflow:hidden;cursor:pointer;
+  touch-action:none; /* para o jogo capturar cliques sem interferência */
+  -webkit-user-select:none;user-select:none;
 }
-.game-burger{position:absolute;font-size:2.6rem;cursor:pointer;transition:transform .08s;user-select:none;-webkit-user-select:none;line-height:1;touch-action:manipulation;}
+.game-burger{position:absolute;font-size:2.6rem;cursor:pointer;transition:transform .08s;user-select:none;-webkit-user-select:none;line-height:1;touch-action:manipulation;-webkit-tap-highlight-color:transparent;z-index:2;}
 .game-start-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:1rem;}
 .game-start-msg h3{font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;margin-bottom:.3rem;}
 .game-start-msg p{font-size:.75rem;opacity:.6;line-height:1.4;}
@@ -1432,6 +1439,7 @@ function iniciarRealtimePedidos() {
   // Cancela canal anterior
   if (realtimeEstabChannel) { db.removeChannel(realtimeEstabChannel); realtimeEstabChannel = null; }
 
+  // Canal de pedidos (INSERT de novos pedidos)
   realtimeEstabChannel = db
     .channel('pedidos-estab-' + currentUser.id)
     .on('postgres_changes', {
@@ -1458,13 +1466,36 @@ function iniciarRealtimePedidos() {
       const st = document.getElementById('st-today');
       if (st) st.textContent = String(Number(st.textContent||0) + 1);
     })
-    .subscribe((status, err) => {
-      console.log('Realtime estab status:', status);
+    .subscribe((status) => {
       if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        // Tenta reconectar após 3 segundos
         setTimeout(() => iniciarRealtimePedidos(), 3000);
       }
     });
+
+  // Canal de cardápio — atualiza em tempo real quando itens mudam
+  db.channel('menu-estab-' + currentUser.id)
+    .on('postgres_changes', {
+      event: '*', schema: 'public', table: 'menu_items',
+      filter: `establishment_id=eq.${currentUser.id}`
+    }, async () => {
+      // Recarrega itens do banco
+      const { data: itensSupa } = await db
+        .from('menu_items').select('*')
+        .eq('establishment_id', currentUser.id)
+        .order('category');
+      if (itensSupa) {
+        currentUser.menuItems = itensSupa.map(i => ({
+          supaId: i.id, id: i.id, name: i.name,
+          desc: i.descricao || '', price: Number(i.price),
+          cat: i.category || 'Geral', emoji: i.emoji || '🍔',
+          photo: i.photo_url || null, available: i.available
+        }));
+        saveCurrentUser();
+        renderMenuGrid(); // painel admin
+        renderClientMenu('Todos'); // cardápio cliente se estiver aberto
+      }
+    })
+    .subscribe();
 
   // Polling de segurança — verifica novos pedidos a cada 30s como fallback
   if (window._pollPedidos) clearInterval(window._pollPedidos);
@@ -2457,6 +2488,10 @@ async function addFlash(input) {
     currentUser.flashItems.push(item);
     saveCurrentUser();
     renderFlashAdmin();
+    // Se cliente estiver vendo a vitrine, atualiza o fresquinho lá também
+    if (document.getElementById('s-store')?.classList.contains('active')) {
+      renderFlashClient();
+    }
     // Salva no Supabase para aparecer em outros celulares
     await salvarFlashNoSupabase();
   };
@@ -2726,24 +2761,25 @@ function renderStore() {
 }
 
 async function renderFlashClient(){
-  // Carrega fresquinhos do Supabase se disponível
-  if (!currentUser?.flashItems?.length && currentUser?.id?.includes('-')) {
+  // Carrega fresquinhos da coluna flash_items do estabelecimento
+  if (currentUser?.id?.includes('-')) {
     try {
       const db = getSupa();
       if (db) {
-        const { data } = await db.from('flash_items')
-          .select('*').eq('establishment_id', currentUser.id)
-          .gt('expires_at', new Date().toISOString())
-          .order('created_at', { ascending: false });
-        if (data?.length) {
-          currentUser.flashItems = data.map(f => ({
-            id: f.id, type: f.type || 'image',
-            emoji: f.emoji || '🔥', title: f.title || '',
-            url: f.url || null
-          }));
+        const { data: estab } = await db
+          .from('estabelecimentos')
+          .select('flash_items')
+          .eq('id', currentUser.id)
+          .single();
+        if (estab?.flash_items) {
+          const lista = typeof estab.flash_items === 'string'
+            ? JSON.parse(estab.flash_items) : (estab.flash_items || []);
+          // Filtra apenas não expirados
+          currentUser.flashItems = lista.filter(f => !f.expiresAt || f.expiresAt > Date.now());
+          saveCurrentUser();
         }
       }
-    } catch(e) {}
+    } catch(e) { console.warn('Erro fresquinho:', e); }
   }
   const items=currentUser?.flashItems||[];
   const sec=document.getElementById('flash-client-sec');
