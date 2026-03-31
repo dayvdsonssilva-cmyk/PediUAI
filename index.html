@@ -246,6 +246,28 @@
     <!-- OVERVIEW -->
     <div class="tp active" id="t-ov">
       <div class="lb"><div><div style="font-size:.66rem;color:var(--brand);font-weight:700;margin-bottom:.15rem;text-transform:uppercase;letter-spacing:.05em">Link do seu cardápio</div><div class="lu" id="dash-link">pediway.com.br/restaurante/demo</div></div><button class="cb" onclick="copyLink()">Copiar</button></div>
+
+      <!-- BOTÃO ABRIR/FECHAR LOJA -->
+      <div id="store-status-card" style="background:var(--white);border:2px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+        <div>
+          <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:.2rem">Status da loja</div>
+          <div id="store-open-label" style="font-size:.78rem;color:var(--success);font-weight:700">🟢 Aberta — aceitando pedidos</div>
+        </div>
+        <button id="btn-toggle-store" onclick="toggleStoreOpen()" style="border:none;border-radius:var(--rs);padding:.55rem 1.1rem;font-family:'Poppins',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;background:#FEE2E2;color:#DC2626;">Fechar loja</button>
+      </div>
+
+      <!-- ENTREGA / RETIRADA STATUS -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:1rem;">
+        <div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:.85rem;display:flex;align-items:center;justify-content:space-between;">
+          <div><div style="font-size:.72rem;font-weight:700;color:var(--ink2)">🛵 Entrega</div></div>
+          <div id="delivery-badge" style="font-size:.66rem;font-weight:700;padding:.18rem .5rem;border-radius:100px;background:var(--success-bg);color:var(--success)">ON</div>
+        </div>
+        <div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:.85rem;display:flex;align-items:center;justify-content:space-between;">
+          <div><div style="font-size:.72rem;font-weight:700;color:var(--ink2)">🏃 Retirada</div></div>
+          <div id="pickup-badge" style="font-size:.66rem;font-weight:700;padding:.18rem .5rem;border-radius:100px;background:var(--success-bg);color:var(--success)">ON</div>
+        </div>
+      </div>
+
       <div class="sg">
         <div class="sc"><div class="sc-lbl">Pedidos hoje</div><div class="sc-val o" id="st-today">0</div></div>
         <div class="sc"><div class="sc-lbl">Faturamento hoje</div><div class="sc-val g" id="st-rev">R$ 0,00</div></div>
@@ -265,15 +287,11 @@
       <div class="sh"><span class="st">🔥 Fresquinho</span></div>
       <div style="background:var(--brand-light);border:1.5px solid rgba(232,65,10,.2);border-radius:var(--r);padding:.85rem 1rem;margin-bottom:1.1rem;">
         <div style="font-size:.84rem;font-weight:700;margin-bottom:.2rem;">O que é o Fresquinho?</div>
-        <div style="font-size:.76rem;color:var(--ink2);line-height:1.6;">Grave ou suba vídeos da sua cozinha, promoções e novidades. Ficam visíveis por <strong>4 horas</strong> e somem sozinhos! 🔥</div>
+        <div style="font-size:.76rem;color:var(--ink2);line-height:1.6;">Suba fotos da sua cozinha, promoções e novidades. Ficam visíveis por <strong>4 horas</strong> e somem sozinhos! 🔥</div>
       </div>
       <div id="flash-admin-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.8rem;margin-bottom:.9rem;"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
-        <button class="btn btn-outline btn-full" onclick="document.getElementById('fc-cam').click()" style="flex-direction:column;gap:.3rem;padding:.9rem"><span style="font-size:1.6rem">📷</span><span style="font-size:.76rem">Gravar agora</span></button>
-        <button class="btn btn-outline btn-full" onclick="document.getElementById('fc-file').click()" style="flex-direction:column;gap:.3rem;padding:.9rem"><span style="font-size:1.6rem">🎞</span><span style="font-size:.76rem">Enviar arquivo</span></button>
-      </div>
-      <input type="file" id="fc-file" accept="video/*,image/*" onchange="addFlash(this)" style="display:none">
-      <input type="file" id="fc-cam" accept="video/*" capture="environment" onchange="addFlash(this)" style="display:none">
+      <button class="btn btn-outline btn-full" onclick="document.getElementById('fc-file').click()" style="gap:.5rem;padding:.9rem"><span style="font-size:1.4rem">📸</span><span style="font-size:.82rem">Adicionar foto</span></button>
+      <input type="file" id="fc-file" accept="image/*" onchange="addFlash(this)" style="display:none" multiple>
     </div>
     <!-- PEDIDOS -->
     <div class="tp" id="t-orders">
@@ -331,6 +349,35 @@
           <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer"><input type="checkbox" checked> Dinheiro</label>
           <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer"><input type="checkbox" checked> Cartão</label>
           <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer"><input type="checkbox"> Vale Refeição</label>
+        </div>
+      </div>
+
+      <!-- ENTREGA / RETIRADA -->
+      <div class="ss">
+        <h3>Tipos de entrega</h3>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+            <div><div style="font-size:.84rem;font-weight:700">🛵 Entrega</div><div style="font-size:.72rem;color:var(--ink3)">Cliente recebe em casa</div></div>
+            <div class="tog-wrap"><input type="checkbox" id="s-delivery" onchange="saveDeliverySettings()" checked><span class="tog-slider"></span></div>
+          </label>
+          <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+            <div><div style="font-size:.84rem;font-weight:700">🏃 Retirada no local</div><div style="font-size:.72rem;color:var(--ink3)">Cliente busca na loja</div></div>
+            <div class="tog-wrap"><input type="checkbox" id="s-pickup" onchange="saveDeliverySettings()" checked><span class="tog-slider"></span></div>
+          </label>
+        </div>
+      </div>
+
+      <!-- HORÁRIO DE FUNCIONAMENTO -->
+      <div class="ss">
+        <h3>Horário de funcionamento</h3>
+        <div style="display:flex;flex-direction:column;gap:.6rem" id="hours-grid">
+          <div class="hour-row" data-day="seg"><label class="hour-day-lbl"><input type="checkbox" class="hour-chk" checked onchange="saveHours()"> Seg</label><input type="time" class="hour-open" value="08:00" onchange="saveHours()"><span style="font-size:.78rem;color:var(--ink3)">às</span><input type="time" class="hour-close" value="22:00" onchange="saveHours()"></div>
+          <div class="hour-row" data-day="ter"><label class="hour-day-lbl"><input type="checkbox" class="hour-chk" checked onchange="saveHours()"> Ter</label><input type="time" class="hour-open" value="08:00" onchange="saveHours()"><span style="font-size:.78rem;color:var(--ink3)">às</span><input type="time" class="hour-close" value="22:00" onchange="saveHours()"></div>
+          <div class="hour-row" data-day="qua"><label class="hour-day-lbl"><input type="checkbox" class="hour-chk" checked onchange="saveHours()"> Qua</label><input type="time" class="hour-open" value="08:00" onchange="saveHours()"><span style="font-size:.78rem;color:var(--ink3)">às</span><input type="time" class="hour-close" value="22:00" onchange="saveHours()"></div>
+          <div class="hour-row" data-day="qui"><label class="hour-day-lbl"><input type="checkbox" class="hour-chk" checked onchange="saveHours()"> Qui</label><input type="time" class="hour-open" value="08:00" onchange="saveHours()"><span style="font-size:.78rem;color:var(--ink3)">às</span><input type="time" class="hour-close" value="22:00" onchange="saveHours()"></div>
+          <div class="hour-row" data-day="sex"><label class="hour-day-lbl"><input type="checkbox" class="hour-chk" checked onchange="saveHours()"> Sex</label><input type="time" class="hour-open" value="08:00" onchange="saveHours()"><span style="font-size:.78rem;color:var(--ink3)">às</span><input type="time" class="hour-close" value="22:00" onchange="saveHours()"></div>
+          <div class="hour-row" data-day="sab"><label class="hour-day-lbl"><input type="checkbox" class="hour-chk" checked onchange="saveHours()"> Sáb</label><input type="time" class="hour-open" value="10:00" onchange="saveHours()"><span style="font-size:.78rem;color:var(--ink3)">às</span><input type="time" class="hour-close" value="20:00" onchange="saveHours()"></div>
+          <div class="hour-row" data-day="dom"><label class="hour-day-lbl"><input type="checkbox" class="hour-chk" onchange="saveHours()"> Dom</label><input type="time" class="hour-open" value="10:00" onchange="saveHours()"><span style="font-size:.78rem;color:var(--ink3)">às</span><input type="time" class="hour-close" value="18:00" onchange="saveHours()"></div>
         </div>
       </div>
     </div>
@@ -443,19 +490,41 @@
     <div class="sn" id="sn">Carregando...</div>
     <div class="sd" id="sd"></div>
     <div class="si">
-      <span class="sii">⏱ 30-45 min</span>
+      <span class="sii" id="store-time-info">⏱ 30-45 min</span>
       <span class="sii">⭐ 4.8</span>
-      <span class="sii">📍 Entrega disponível</span>
+      <span class="sii" id="store-delivery-info">📍 Entrega disponível</span>
     </div>
   </div>
-  <div class="fs-sec" id="flash-client-sec" style="display:none">
-    <div class="fs-lbl"><span></span>Fresquinho de hoje</div>
-    <div class="fr" id="flash-client-row"></div>
+
+  <!-- LOJA FECHADA BANNER -->
+  <div id="store-closed-banner" style="display:none;background:#1A1208;color:#fff;padding:.85rem 1.3rem;display:none;align-items:center;gap:.75rem;">
+    <span style="font-size:1.4rem">🔒</span>
+    <div><div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.88rem">Loja fechada no momento</div><div style="font-size:.74rem;color:rgba(255,255,255,.55);margin-top:.1rem" id="store-hours-info">Volte em breve</div></div>
   </div>
-  <div class="sc-wrap">
-    <div class="ct" id="cat-tabs"></div>
-    <div class="cml" id="client-menu"></div>
+
+  <!-- TABS CLIENTE -->
+  <div style="display:flex;background:var(--white);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;">
+    <button class="client-tab active" onclick="switchClientTab('tab-menu',this)">Cardápio</button>
+    <button class="client-tab" onclick="switchClientTab('tab-orders',this)">Meus pedidos</button>
   </div>
+
+  <!-- TAB CARDÁPIO -->
+  <div id="tab-menu">
+    <div class="fs-sec" id="flash-client-sec" style="display:none">
+      <div class="fs-lbl"><span></span>Fresquinho de hoje</div>
+      <div class="fr" id="flash-client-row"></div>
+    </div>
+    <div class="sc-wrap">
+      <div class="ct" id="cat-tabs"></div>
+      <div class="cml" id="client-menu"></div>
+    </div>
+  </div>
+
+  <!-- TAB MEUS PEDIDOS -->
+  <div id="tab-orders" style="display:none;padding:1rem 1.3rem;">
+    <div id="my-orders-list"></div>
+  </div>
+
   <button class="cf" id="cart-fab" onclick="goTo('s-checkout')">
     <span id="cart-cnt" class="cc">0</span>
     Ver carrinho
@@ -536,9 +605,8 @@
   <!-- BLOCO 1 · Arte principal com confetti -->
   <div class="conf-art" id="conf-art">
     <div class="conf-particles" id="conf-particles"></div>
-    <span class="conf-check" id="conf-icon">🛵</span>
-    <div class="conf-title">PEDIDO ENVIADO!</div>
-    <div class="conf-sub">Recebemos seu pedido e já avisamos o estabelecimento 🎉</div>
+    <div class="conf-title" style="margin-top:0">PEDIDO ENVIADO!</div>
+    <div class="conf-sub">Recebemos seu pedido e já avisamos o estabelecimento</div>
     <div class="conf-order-badge">
       <div class="conf-order-lbl">Número do pedido</div>
       <div class="conf-order-num" id="conf-order-id">#—</div>
@@ -596,11 +664,15 @@
   <div class="mo">
     <div class="mo-h"></div>
     <div class="mo-hdr"><span class="mo-title" id="modal-title">Adicionar item</span><button class="clo" onclick="closeModal('modal-add')">×</button></div>
-    <div class="fg"><label>Foto do produto</label>
-      <div class="ua" onclick="document.getElementById('item-photo').click()">
-        <input type="file" id="item-photo" accept="image/*" onchange="prevPhoto(this)">
-        <div id="ph-placeholder"><span style="font-size:1.5rem">📸</span><div style="font-size:.78rem;font-weight:700;margin-top:.3rem">Adicionar foto</div><div style="font-size:.68rem;color:var(--ink3)">JPG, PNG · Opcional</div></div>
-        <img id="ph-preview" class="up" alt="">
+
+    <!-- MÚLTIPLAS FOTOS -->
+    <div class="fg"><label>Fotos do produto</label>
+      <div id="photos-preview-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-bottom:.5rem;"></div>
+      <div class="ua" onclick="document.getElementById('item-photo').click()" id="ph-placeholder">
+        <input type="file" id="item-photo" accept="image/*" onchange="addPhotos(this)" multiple>
+        <span style="font-size:1.5rem">📸</span>
+        <div style="font-size:.78rem;font-weight:700;margin-top:.3rem">Adicionar fotos</div>
+        <div style="font-size:.68rem;color:var(--ink3)">JPG, PNG · Até 5 fotos</div>
       </div>
     </div>
     <div class="fg"><label>Emoji (sem foto)</label><div class="ep" id="item-ep"></div></div>
