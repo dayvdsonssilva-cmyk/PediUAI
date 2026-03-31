@@ -50,6 +50,15 @@ function initDemoData() {
       whatsapp: '5511999999999',
       plan: 'ultra',
       status: 'active',
+      isOpen: true,
+      deliveryEnabled: true,
+      pickupEnabled: true,
+      hours: {
+        seg:{open:true,from:'08:00',to:'22:00'},ter:{open:true,from:'08:00',to:'22:00'},
+        qua:{open:true,from:'08:00',to:'22:00'},qui:{open:true,from:'08:00',to:'22:00'},
+        sex:{open:true,from:'08:00',to:'22:00'},sab:{open:true,from:'10:00',to:'20:00'},
+        dom:{open:false,from:'10:00',to:'18:00'}
+      },
       dueDate: '2025-12-31',
       payMethod: 'Cartão',
       since: '2025-01-01',
@@ -331,6 +340,21 @@ function renderDashboard() {
   document.getElementById('dash-link').textContent = 'pediway.com.br/restaurante/' + slug;
   document.getElementById('st-items').textContent = (u.menuItems||[]).filter(i=>i.available).length;
   document.getElementById('st-plan').textContent = u.plan === 'ultra' ? 'Ultra 🚀' : 'Básico';
+
+  // Open/close button
+  const isOpen = u.isOpen !== false;
+  const openLabel = document.getElementById('store-open-label');
+  const toggleBtn = document.getElementById('btn-toggle-store');
+  if (openLabel) openLabel.innerHTML = isOpen ? '🟢 Aberta — aceitando pedidos' : '🔴 Fechada — não aceita pedidos';
+  if (openLabel) openLabel.style.color = isOpen ? 'var(--success)' : '#DC2626';
+  if (toggleBtn) { toggleBtn.textContent = isOpen ? 'Fechar loja' : 'Abrir loja'; toggleBtn.style.background = isOpen ? '#FEE2E2' : '#DCFCE7'; toggleBtn.style.color = isOpen ? '#DC2626' : '#16A34A'; }
+
+  // Delivery/pickup badges
+  const db = document.getElementById('delivery-badge');
+  const pb = document.getElementById('pickup-badge');
+  if (db) { db.textContent = u.deliveryEnabled !== false ? 'ON' : 'OFF'; db.style.background = u.deliveryEnabled !== false ? 'var(--success-bg)' : '#FEE2E2'; db.style.color = u.deliveryEnabled !== false ? 'var(--success)' : '#DC2626'; }
+  if (pb) { pb.textContent = u.pickupEnabled !== false ? 'ON' : 'OFF'; pb.style.background = u.pickupEnabled !== false ? 'var(--success-bg)' : '#FEE2E2'; pb.style.color = u.pickupEnabled !== false ? 'var(--success)' : '#DC2626'; }
+
   // Plan feature lock
   const isUltra = u.plan === 'ultra';
   const tbFin = document.getElementById('tb-fin');
@@ -343,7 +367,7 @@ function renderDashboard() {
   const rev = todayOrders.reduce((s,o)=>s+o.total,0);
   document.getElementById('st-rev').textContent = 'R$ ' + rev.toFixed(2).replace('.',',');
   renderMenuGrid(); renderOrdersList(); renderOverviewOrders(); renderFlashAdmin();
-  updateStoreEmojiPicker();
+  updateStoreEmojiPicker(); loadSettingsForm();
   if (isUltra) renderFinanceiro('hoje');
 }
 
@@ -398,23 +422,22 @@ function delItem(i) { if(!currentUser||!confirm('Remover?')) return; currentUser
 const allEmojis = ['🍔','🍕','🌮','🌯','🍜','🍣','🍗','🥩','🧆','🥗','🍰','🧁','🍦','🥤','🧃','☕','🍟','🥪','🫕','🥘'];
 
 function openAddItem() {
-  editingItemIdx = null; selectedPhoto = null; selectedEmoji = '🍔';
+  editingItemIdx = null; selectedPhotos = []; selectedEmoji = '🍔';
   document.getElementById('modal-title').textContent = 'Adicionar item';
   ['i-name','i-desc','i-cat','i-price'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('ph-preview').style.display='none';
-  document.getElementById('ph-placeholder').style.display='flex';
+  renderPhotoPreviews();
   buildItemEmojis(); openModal('modal-add');
 }
 function editItem(i) {
   editingItemIdx = i; const it = currentUser.menuItems[i];
-  selectedPhoto = it.photo; selectedEmoji = it.emoji;
+  selectedPhotos = Array.isArray(it.photos) ? [...it.photos] : (it.photo ? [it.photo] : []);
+  selectedEmoji = it.emoji;
   document.getElementById('modal-title').textContent = 'Editar item';
   document.getElementById('i-name').value = it.name;
   document.getElementById('i-desc').value = it.desc;
   document.getElementById('i-cat').value = it.cat;
   document.getElementById('i-price').value = it.price;
-  if (it.photo) { document.getElementById('ph-preview').src=it.photo; document.getElementById('ph-preview').style.display='block'; document.getElementById('ph-placeholder').style.display='none'; }
-  else { document.getElementById('ph-preview').style.display='none'; document.getElementById('ph-placeholder').style.display='flex'; }
+  renderPhotoPreviews();
   buildItemEmojis(); openModal('modal-add');
 }
 function buildItemEmojis() {
@@ -424,6 +447,41 @@ function selEmoji(e,btn,pickerId) {
   document.querySelectorAll(`#${pickerId} .epb`).forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel'); selectedEmoji = e;
 }
+// ─── MULTI-PHOTO SUPPORT ─────────────────────────────────────────────────
+let selectedPhotos = []; // array of base64
+
+function addPhotos(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const remaining = 5 - selectedPhotos.length;
+  files.slice(0, remaining).forEach(file => {
+    const r = new FileReader();
+    r.onload = e => {
+      selectedPhotos.push(e.target.result);
+      renderPhotoPreviews();
+    };
+    r.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function renderPhotoPreviews() {
+  const grid = document.getElementById('photos-preview-grid');
+  if (!grid) return;
+  grid.innerHTML = selectedPhotos.map((src, i) => `
+    <div class="photo-thumb">
+      <img src="${src}" alt="">
+      <button class="del-ph" onclick="removePhoto(${i})">×</button>
+    </div>`).join('');
+  const ph = document.getElementById('ph-placeholder');
+  if (ph) ph.style.display = selectedPhotos.length >= 5 ? 'none' : '';
+}
+
+function removePhoto(i) {
+  selectedPhotos.splice(i, 1);
+  renderPhotoPreviews();
+}
+
 function prevPhoto(input) {
   const file=input.files[0]; if(!file) return;
   const r=new FileReader(); r.onload=e=>{ selectedPhoto=e.target.result; document.getElementById('ph-preview').src=e.target.result; document.getElementById('ph-preview').style.display='block'; document.getElementById('ph-placeholder').style.display='none'; }; r.readAsDataURL(file);
@@ -432,7 +490,7 @@ function saveItem() {
   const name=document.getElementById('i-name').value.trim();
   const price=parseFloat(document.getElementById('i-price').value);
   if(!name||!price){alert('Preencha nome e preço');return;}
-  const it={id:Date.now(),emoji:selectedEmoji,photo:selectedPhoto,name,desc:document.getElementById('i-desc').value,cat:document.getElementById('i-cat').value||'Geral',price,available:true};
+  const it={id:Date.now(),emoji:selectedEmoji,photos:selectedPhotos,photo:selectedPhotos[0]||null,name,desc:document.getElementById('i-desc').value,cat:document.getElementById('i-cat').value||'Geral',price,available:true};
   if(!currentUser.menuItems) currentUser.menuItems=[];
   if(editingItemIdx!==null) currentUser.menuItems[editingItemIdx]=it; else currentUser.menuItems.push(it);
   saveCurrentUser(); closeModal('modal-add'); renderMenuGrid();
@@ -543,6 +601,52 @@ function saveSettings() {
   currentUser.whatsapp=digits(document.getElementById('s-wp').value);
   saveCurrentUser(); showNotif('✅ Salvo!','Configurações atualizadas.');
 }
+
+function saveDeliverySettings() {
+  if(!currentUser) return;
+  currentUser.deliveryEnabled = document.getElementById('s-delivery').checked;
+  currentUser.pickupEnabled = document.getElementById('s-pickup').checked;
+  saveCurrentUser();
+  renderDashboard();
+  showNotif('✅ Salvo!','Configurações de entrega atualizadas.');
+}
+
+function saveHours() {
+  if(!currentUser) return;
+  const days = ['seg','ter','qua','qui','sex','sab','dom'];
+  const rows = document.querySelectorAll('.hour-row');
+  const hours = {};
+  rows.forEach((row, i) => {
+    const day = days[i];
+    hours[day] = {
+      open: row.querySelector('.hour-chk').checked,
+      from: row.querySelector('.hour-open').value,
+      to:   row.querySelector('.hour-close').value,
+    };
+  });
+  currentUser.hours = hours;
+  saveCurrentUser();
+}
+
+function loadSettingsForm() {
+  if(!currentUser) return;
+  const u = currentUser;
+  const sd = document.getElementById('s-delivery');
+  const sp = document.getElementById('s-pickup');
+  if(sd) sd.checked = u.deliveryEnabled !== false;
+  if(sp) sp.checked = u.pickupEnabled !== false;
+  // Load hours
+  const days = ['seg','ter','qua','qui','sex','sab','dom'];
+  const rows = document.querySelectorAll('.hour-row');
+  rows.forEach((row, i) => {
+    const day = days[i];
+    const h = u.hours?.[day];
+    if(!h) return;
+    row.querySelector('.hour-chk').checked = h.open;
+    row.querySelector('.hour-open').value = h.from;
+    row.querySelector('.hour-close').value = h.to;
+  });
+}
 function selColor(c,cd,el){
   document.querySelectorAll('.csw').forEach(s=>s.classList.remove('selected')); el.classList.add('selected');
   document.documentElement.style.setProperty('--brand',c);
@@ -564,12 +668,40 @@ function renderStore() {
   document.getElementById('se').textContent = u.emoji||'🍔';
   document.getElementById('sn').textContent = u.name;
   document.getElementById('sd').textContent = u.desc||'';
+
+  // Store open/closed
+  const isOpen = u.isOpen !== false;
+  const closedBanner = document.getElementById('store-closed-banner');
+  if (closedBanner) { closedBanner.style.display = isOpen ? 'none' : 'flex'; }
+
+  // Delivery/pickup info
+  const d = u.deliveryEnabled !== false, p = u.pickupEnabled !== false;
+  const info = d && p ? '📍 Entrega e Retirada' : d ? '📍 Entrega disponível' : p ? '🏃 Somente Retirada' : '⚠️ Sem entrega';
+  const infoEl = document.getElementById('store-delivery-info');
+  if (infoEl) infoEl.textContent = info;
+
+  // Hours info
+  const days = ['dom','seg','ter','qua','qui','sex','sab'];
+  const dayNow = days[new Date().getDay()];
+  const todayHours = u.hours?.[dayNow];
+  const timeEl = document.getElementById('store-time-info');
+  if (timeEl && todayHours) timeEl.textContent = todayHours.open ? `🕐 ${todayHours.from} – ${todayHours.to}` : '🔒 Fechado hoje';
+
+  // Checkout delivery options
+  const deliveryCard = document.getElementById('dt-delivery');
+  const pickupCard = document.getElementById('dt-pickup');
+  if (deliveryCard) deliveryCard.style.display = d ? '' : 'none';
+  if (pickupCard) pickupCard.style.display = p ? '' : 'none';
+  if (!d && p) setDeliveryType('pickup');
+  else setDeliveryType('delivery');
+
   renderFlashClient();
   const avail = (u.menuItems||[]).filter(i=>i.available);
   const cats = ['Todos',...new Set(avail.map(i=>i.cat))];
   document.getElementById('cat-tabs').innerHTML = cats.map((c,i)=>`<button class="cp ${i===0?'active':''}" onclick="filterCat('${c}',this)">${c}</button>`).join('');
   renderClientMenu('Todos');
   updateCartUI();
+  renderMyOrders();
 }
 
 function renderFlashClient(){
@@ -629,16 +761,41 @@ function filterCat(cat,btn){document.querySelectorAll('.cp').forEach(b=>b.classL
 
 function openProductModal(id){
   const it=(currentUser?.menuItems||[]).find(i=>i.id===id); if(!it) return;
-  const img=document.getElementById('pm-img');
-  document.getElementById('pm-emoji').textContent=it.emoji;
-  if(it.photo){let i=img.querySelector('img');if(!i){i=document.createElement('img');img.appendChild(i);}i.src=it.photo;i.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0';document.getElementById('pm-emoji').style.opacity='0';}
-  else{const i=img.querySelector('img');if(i)i.remove();document.getElementById('pm-emoji').style.opacity='1';}
+  const photos = Array.isArray(it.photos) && it.photos.length ? it.photos : (it.photo ? [it.photo] : []);
+  const imgArea = document.getElementById('pm-img');
+
+  if(photos.length > 0){
+    imgArea.innerHTML = `
+      <div class="pm-carousel" id="pm-car">
+        ${photos.map((p,i)=>`<img src="${p}" class="${i===0?'active':''}" data-idx="${i}">`).join('')}
+        ${photos.length>1?`
+          <button class="car-arrow car-prev" onclick="carMove(-1)">‹</button>
+          <button class="car-arrow car-next" onclick="carMove(1)">›</button>
+          <div class="car-dots">${photos.map((_,i)=>`<div class="car-dot ${i===0?'active':''}" onclick="carGo(${i})"></div>`).join('')}</div>
+        `:''}
+      </div>`;
+    window._carIdx = 0; window._carPhotos = photos;
+  } else {
+    imgArea.innerHTML = `<div class="ef" id="pm-emoji" style="font-size:5rem">${it.emoji}</div>`;
+  }
+
   document.getElementById('pm-cat').textContent=it.cat;
   document.getElementById('pm-name').textContent=it.name;
   document.getElementById('pm-desc').textContent=it.desc;
   document.getElementById('pm-price').textContent='R$ '+it.price.toFixed(2).replace('.',',');
   document.getElementById('pm-add').onclick=()=>{addToCart(id,null);closeModal('modal-product');};
   openModal('modal-product');
+}
+
+function carMove(d) {
+  const photos = window._carPhotos||[]; let idx = (window._carIdx||0)+d;
+  if(idx<0) idx=photos.length-1; if(idx>=photos.length) idx=0;
+  carGo(idx);
+}
+function carGo(idx) {
+  window._carIdx=idx;
+  document.querySelectorAll('#pm-car img').forEach((img,i)=>img.classList.toggle('active',i===idx));
+  document.querySelectorAll('#pm-car .car-dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
 }
 function addToCart(id,btn){
   const it=(currentUser?.menuItems||[]).find(i=>i.id===id); if(!it) return;
@@ -936,6 +1093,85 @@ function saveCurrentUser(){
   setUsers(users);
 }
 
+// ─── ABRIR / FECHAR LOJA ─────────────────────────────────────────────────
+function toggleStoreOpen() {
+  if(!currentUser) return;
+  currentUser.isOpen = currentUser.isOpen === false ? true : false;
+  saveCurrentUser();
+  renderDashboard();
+  showNotif(currentUser.isOpen ? '🟢 Loja aberta!' : '🔴 Loja fechada!', currentUser.isOpen ? 'Seu cardápio está aceitando pedidos.' : 'Seu cardápio está pausado.');
+}
+
+// ─── CLIENT TABS ──────────────────────────────────────────────────────────
+function switchClientTab(id, btn) {
+  document.querySelectorAll('.client-tab').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('tab-menu').style.display = id === 'tab-menu' ? '' : 'none';
+  document.getElementById('tab-orders').style.display = id === 'tab-orders' ? '' : 'none';
+  if(id === 'tab-orders') renderMyOrders();
+}
+
+// ─── MEUS PEDIDOS (cliente) ───────────────────────────────────────────────
+function getMyOrders() {
+  const slug = currentStoreSlug || 'demo';
+  const key = 'my_orders_' + slug;
+  try {
+    const raw = localStorage.getItem(key);
+    if(!raw) return [];
+    const orders = JSON.parse(raw);
+    // Remove pedidos com mais de 24h
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    return orders.filter(o => o.ts > cutoff);
+  } catch(e) { return []; }
+}
+
+function saveMyOrder(order) {
+  const slug = currentStoreSlug || 'demo';
+  const key = 'my_orders_' + slug;
+  const orders = getMyOrders();
+  orders.unshift({ ...order, ts: Date.now() });
+  localStorage.setItem(key, JSON.stringify(orders.slice(0, 20)));
+}
+
+function renderMyOrders() {
+  const list = document.getElementById('my-orders-list');
+  if(!list) return;
+  const orders = getMyOrders();
+  if(!orders.length) {
+    list.innerHTML = '<div class="es"><div class="ei">📭</div><p>Você ainda não fez nenhum pedido aqui hoje.</p></div>';
+    return;
+  }
+  list.innerHTML = orders.map((o, i) => `
+    <div class="my-order-card">
+      <div class="my-order-id">${o.id} <span class="sb s-${o.status||'new'}" style="margin-left:.4rem">${sLabel(o.status||'new')}</span></div>
+      <div class="my-order-items">${o.items.map(it=>`${it.qty}x ${it.name}`).join(' • ')}</div>
+      <div class="my-order-foot">
+        <div class="my-order-total">R$ ${o.total.toFixed(2).replace('.',',')}</div>
+        <button class="my-order-detail-btn" onclick="showMyOrderDetail(${i})">Ver detalhes</button>
+      </div>
+    </div>`).join('');
+}
+
+function showMyOrderDetail(i) {
+  const o = getMyOrders()[i]; if(!o) return;
+  const items = o.items.map(it=>`<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:.3rem 0"><span>${it.qty}x ${it.name}</span><span>R$ ${(it.qty*it.price).toFixed(2).replace('.',',')}</span></div>`).join('');
+  document.getElementById('receipt-content').innerHTML = `
+    <div style="background:var(--white);border-radius:16px;padding:1.2rem;border:1px solid var(--border)">
+      <div style="text-align:center;padding-bottom:.85rem;border-bottom:1px dashed var(--border);margin-bottom:.85rem">
+        <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.1rem">Detalhes do Pedido</div>
+        <div style="font-size:.72rem;color:var(--ink3);margin-top:.2rem">${o.id}</div>
+      </div>
+      <div style="font-size:.82rem;padding:.3rem 0;display:flex;justify-content:space-between"><span style="color:var(--ink3);font-weight:600">Nome</span><span style="font-weight:700">${o.client}</span></div>
+      <div style="font-size:.82rem;padding:.3rem 0;display:flex;justify-content:space-between"><span style="color:var(--ink3);font-weight:600">Entrega</span><span>${o.delivery==='pickup'?'🏃 Retirada':'🛵 '+o.address}</span></div>
+      <hr style="border:none;border-top:1px dashed var(--border);margin:.7rem 0">
+      ${items}
+      <hr style="border:none;border-top:1px dashed var(--border);margin:.7rem 0">
+      <div style="display:flex;justify-content:space-between;font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem"><span>Total</span><span style="color:var(--brand)">R$ ${o.total.toFixed(2).replace('.',',')}</span></div>
+      <div style="font-size:.82rem;margin-top:.3rem;display:flex;justify-content:space-between"><span style="color:var(--ink3);font-weight:600">Pagamento</span><span>${o.payment}</span></div>
+    </div>`;
+  openModal('modal-receipt');
+}
+
 // ─── UTILS ────────────────────────────────────────────────────────────────
 function openModal(id){document.getElementById(id)?.classList.add('open');}
 function closeModal(id){document.getElementById(id)?.classList.remove('open');}
@@ -1024,12 +1260,13 @@ function confirmAndSendOrder() {
   };
   u.orders=[order,...(u.orders||[])];
   saveCurrentUser();
+  // Salva também nos pedidos do cliente (24h)
+  saveMyOrder(order);
   showNotif('🎉 Pedido '+order.id,'Cliente: '+name);
   cart=[];
-  updateCartUI(); // alias
+  updateCartUI();
   buildConfirmation(order);
   goTo('s-confirm');
-  // Jogo só inicia APÓS pedido enviado, com pequeno delay para animação
   setTimeout(()=>startGame(), 1000);
 }
 
@@ -1037,25 +1274,17 @@ function confirmAndSendOrder() {
 function updateCartFab() { updateCartUI(); }
 
 function buildConfirmation(order) {
-  // Ícone animado — moto (entrega) ou corrida (retirada)
-  const icon = order.delivery === 'pickup' ? '🏃' : '🛵';
-  const iconEl = document.getElementById('conf-icon');
-  if (iconEl) iconEl.textContent = icon;
   const orderIdEl = document.getElementById('conf-order-id');
   if (orderIdEl) orderIdEl.textContent = order.id;
-  // Cor da loja na arte
   const art = document.getElementById('conf-art');
   if (art && currentUser?.color) {
     art.style.background = `linear-gradient(150deg, ${currentUser.color} 0%, ${currentUser.colorDark||'#B83208'} 100%)`;
   }
-  // Partículas de confetti
   spawnParticles();
-  // Status bar — volta para aguardando
   const bar = document.getElementById('client-status-bar');
   if (bar) { bar.className = 'csb'; bar.innerHTML = ''; }
   const waiting = document.getElementById('status-waiting');
   if (waiting) waiting.style.display = 'flex';
-  // Jogo — reset para tela inicial
   const gmsg = document.getElementById('game-start-msg');
   const gover = document.getElementById('game-over');
   const gburger = document.getElementById('game-burger');
