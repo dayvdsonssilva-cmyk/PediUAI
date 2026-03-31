@@ -230,13 +230,13 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 .fr{display:flex;gap:.65rem;overflow-x:auto;padding-bottom:.35rem;scrollbar-width:none;}
 .fr::-webkit-scrollbar{display:none;}
-.fc{flex-shrink:0;width:100px;border-radius:9px;overflow:hidden;position:relative;cursor:pointer;background:var(--ink);border:2px solid transparent;transition:border-color .2s;}
-.fc:hover{border-color:var(--brand);}
-.fc-th{width:100px;height:150px;object-fit:cover;display:block;}
-.fc-ph{width:100px;height:150px;background:linear-gradient(160deg,#2a1f18,#4a2c1a);display:flex;align-items:center;justify-content:center;font-size:2rem;}
-.fc-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 50%);display:flex;align-items:flex-end;padding:.5rem;}
-.fc-tt{font-family:'Poppins',sans-serif;font-weight:700;font-size:.65rem;color:#fff;line-height:1.3;}
-.fc-pl{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);width:26px;height:26px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;}
+.fc{flex-shrink:0;width:110px;border-radius:14px;overflow:hidden;position:relative;cursor:pointer;background:#111;box-shadow:0 2px 12px rgba(0,0,0,.15);transition:transform .18s,box-shadow .18s;}
+.fc:hover,.fc:active{transform:scale(1.03);box-shadow:0 4px 20px rgba(0,0,0,.22);}
+.fc-th{width:110px;height:160px;object-fit:cover;display:block;}
+.fc-ph{width:110px;height:160px;background:linear-gradient(160deg,var(--brand-dark),var(--brand));display:flex;align-items:center;justify-content:center;font-size:2.5rem;}
+.fc-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.6) 0%,transparent 60%);}
+.fc-tt{display:none;} /* títulos desativados — layout limpo */
+.fc-pl{display:none;} /* sem emoji de play */
 /* STORE CONTENT */
 .sc-wrap{padding:1rem 1.3rem;}
 .ct{display:flex;gap:.32rem;overflow-x:auto;padding-bottom:.32rem;margin-bottom:1.1rem;scrollbar-width:none;}
@@ -328,9 +328,9 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 /* Seção do jogo */
 .conf-game-section{
   background:var(--white);
-  margin:.65rem .9rem 0;
-  border-radius:var(--r);
-  border:1px solid var(--border);
+  margin:.65rem 0 0; /* sem margin lateral — não corta */
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
   overflow:hidden;
 }
 .conf-game-hdr{
@@ -343,11 +343,14 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 .game-stat{font-size:.76rem;color:var(--ink3);}
 .game-stat span{font-weight:800;color:var(--brand);}
 .game-area{
-  width:100%;height:190px;
+  width:100%;
+  height:200px;
+  min-height:180px;
   background:linear-gradient(135deg,#1a0f05,#2a160a);
   position:relative;overflow:hidden;cursor:pointer;
-  touch-action:none; /* para o jogo capturar cliques sem interferência */
+  touch-action:none;
   -webkit-user-select:none;user-select:none;
+  box-sizing:border-box;
 }
 .game-burger{position:absolute;font-size:2.6rem;cursor:pointer;transition:transform .08s;user-select:none;-webkit-user-select:none;line-height:1;touch-action:manipulation;-webkit-tap-highlight-color:transparent;z-index:2;}
 .game-start-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:1rem;}
@@ -781,11 +784,11 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
       </div>
       <div id="flash-admin-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.8rem;margin-bottom:.9rem;"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
-        <button class="btn btn-outline btn-full" onclick="document.getElementById('fc-cam').click()" style="flex-direction:column;gap:.3rem;padding:.9rem"><span style="font-size:1.6rem">📷</span><span style="font-size:.76rem">Gravar agora</span></button>
-        <button class="btn btn-outline btn-full" onclick="document.getElementById('fc-file').click()" style="flex-direction:column;gap:.3rem;padding:.9rem"><span style="font-size:1.6rem">🎞</span><span style="font-size:.76rem">Enviar arquivo</span></button>
+        <button class="btn btn-outline btn-full" onclick="document.getElementById('fc-cam').click()" style="flex-direction:column;gap:.3rem;padding:.9rem"><span style="font-size:1.6rem">📸</span><span style="font-size:.76rem">Tirar foto</span></button>
+        <button class="btn btn-outline btn-full" onclick="document.getElementById('fc-file').click()" style="flex-direction:column;gap:.3rem;padding:.9rem"><span style="font-size:1.6rem">🖼️</span><span style="font-size:.76rem">Enviar imagem</span></button>
       </div>
-      <input type="file" id="fc-file" accept="video/*,image/*" onchange="addFlash(this)" style="display:none">
-      <input type="file" id="fc-cam" accept="video/*" capture="environment" onchange="addFlash(this)" style="display:none">
+      <input type="file" id="fc-file" accept="image/*" onchange="addFlash(this)" style="display:none">
+      <input type="file" id="fc-cam" accept="image/*" capture="environment" onchange="addFlash(this)" style="display:none">
     </div>
     <!-- PEDIDOS — aba principal, aparece primeiro -->
     <div class="tp active" id="t-orders">
@@ -1027,7 +1030,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
     </div>
   </div>
   <div class="fs-sec" id="flash-client-sec" style="display:none">
-    <div class="fs-lbl"><span></span>Fresquinho de hoje</div>
+    <div class="fs-lbl"><span></span>🔥 Fresquinho de hoje</div>
     <div class="fr" id="flash-client-row"></div>
   </div>
   <!-- Abas Cardápio / Meus Pedidos -->
@@ -1568,22 +1571,26 @@ function switchClientTab(tab) {
 }
 function salvarPedidoCliente(pedido) {
   try {
-    const raw = localStorage.getItem('pw_hist_pedidos');
-    const hist = raw ? JSON.parse(raw) : [];
-    // Remove pedidos com mais de 1 dia
-    const umDia = 24 * 60 * 60 * 1000;
-    const recentes = hist.filter(p => (Date.now() - (p.savedAt||0)) < umDia);
-    pedido.savedAt = Date.now();
-    recentes.unshift(pedido);
-    localStorage.setItem('pw_hist_pedidos', JSON.stringify(recentes.slice(0, 30)));
-  } catch(e) {}
+    if (!pedido || !pedido.id) return;
+    const hist = carregarPedidosCliente(false); // sem filtro de expiração
+    // Não duplicar o mesmo pedido
+    const jaExiste = hist.find(p => p.id === pedido.id || p.supaId === pedido.supaId);
+    if (!jaExiste) {
+      pedido.savedAt = pedido.savedAt || Date.now();
+      hist.unshift(pedido);
+    }
+    localStorage.setItem('pw_hist_pedidos', JSON.stringify(hist.slice(0, 30)));
+    console.log('Pedido salvo no histórico:', pedido.id, 'Total:', hist.length);
+  } catch(e) { console.warn('Erro salvar pedido cliente:', e); }
 }
-function carregarPedidosCliente() {
+function carregarPedidosCliente(filtrarExpirados = true) {
   try {
     const raw = localStorage.getItem('pw_hist_pedidos');
     if (!raw) return [];
-    const umDia = 24 * 60 * 60 * 1000;
-    return JSON.parse(raw).filter(p => (Date.now() - (p.savedAt||0)) < umDia);
+    const todos = JSON.parse(raw);
+    if (!filtrarExpirados) return todos;
+    const umDia = 25 * 60 * 60 * 1000; // 25h para ter margem
+    return todos.filter(p => (Date.now() - (p.savedAt||Date.now())) < umDia);
   } catch(e) { return []; }
 }
 function renderMeusPedidos() {
@@ -1654,11 +1661,11 @@ async function assinarStatusPedido(orderId, tipoEntrega) {
 
 function atualizarStatusPedidoCliente(orderId, novoStatus) {
   try {
-    const lista = carregarPedidosCliente();
-    const idx = lista.findIndex(p => p.supaId === orderId);
+    const lista = carregarPedidosCliente(false); // busca todos, sem filtrar
+    const idx = lista.findIndex(p => p.supaId === orderId || p.id === orderId);
     if (idx >= 0) {
       lista[idx].status = novoStatus;
-      localStorage.setItem('pw_hist_pedidos', JSON.stringify(lista.map((p,i)=>i===0?{...p,savedAt:Date.now()}:p)));
+      localStorage.setItem('pw_hist_pedidos', JSON.stringify(lista));
       // Se estiver na aba meus pedidos, re-renderiza
       if (document.getElementById('panel-meus-pedidos')?.classList.contains('active')) {
         renderMeusPedidos();
@@ -2467,22 +2474,19 @@ function renderFlashAdmin() {
 }
 async function addFlash(input) {
   const file = input.files[0]; if(!file) return;
-  const isVid = file.type.startsWith('video');
+  if (!file.type.startsWith('image/')) { alert('Apenas imagens são suportadas.'); return; }
   const r = new FileReader();
   r.onload = async (e) => {
     let url = e.target.result;
-    // Comprime imagem para caber no Supabase
-    if (!isVid && url.startsWith('data:')) {
-      url = await comprimirImagem(url, 1200, 0.80);
-    }
-    const titulo = prompt('Título da promoção (opcional — deixe vazio para exibir limpo):', '') || '';
+    // Comprime imagem
+    url = await comprimirImagem(url, 1200, 0.82);
     const item = {
       id: Date.now(),
-      type: isVid ? 'video' : 'image',
+      type: 'image',
       emoji: '✨',
-      title: titulo.trim(),
+      title: '', // sem título — layout limpo
       url,
-      expiresAt: Date.now() + 4 * 60 * 60 * 1000 // expira em 4h
+      expiresAt: Date.now() + 4 * 60 * 60 * 1000
     };
     if(!currentUser.flashItems) currentUser.flashItems = [];
     currentUser.flashItems.push(item);
@@ -2786,8 +2790,8 @@ async function renderFlashClient(){
   if(!items.length){if(sec)sec.style.display='none';return;}
   if(sec)sec.style.display='block';
   document.getElementById('flash-client-row').innerHTML=items.map((f,i)=>`<div class="fc" onclick="openFlash(${i})">
-    ${f.url?(f.type==='video'?`<video src="${f.url}" class="fc-th" playsinline preload="metadata"></video>`:`<img src="${f.url}" class="fc-th">`): `<div class="fc-ph">${f.emoji}</div>`}
-    <div class="fc-pl">▶</div>${f.title?`<div class="fc-ov"><div class="fc-tt">${f.title}</div></div>`:''}
+    ${f.url?`<img src="${f.url}" class="fc-th" onerror="this.style.display='none'">`: `<div class="fc-ph">${f.emoji}</div>`}
+    <div class="fc-ov"></div>
   </div>`).join('');
 }
 
@@ -3431,12 +3435,15 @@ function confirmAndSendOrder() {
       }
     });
   }
-  // Salva no histórico do cliente (sessão)
-  salvarPedidoCliente({
+  // Salva no histórico do cliente ANTES de limpar carrinho
+  const pedidoParaSalvar = {
     ...order,
     lojaAddress: u.address || '',
-    time: 'agora'
-  });
+    lojaName: u.name || '',
+    time: 'agora',
+    savedAt: Date.now()
+  };
+  salvarPedidoCliente(pedidoParaSalvar);
   cart=[];
   updateCartUI();
   buildConfirmation(order);
