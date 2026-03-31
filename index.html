@@ -295,7 +295,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
   background:linear-gradient(150deg,var(--brand) 0%,var(--brand-dark) 100%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:2rem 1.5rem 1.8rem;text-align:center;position:relative;overflow:hidden;
-  min-height:42vh; /* reduzido para caber o jogo abaixo */
+  min-height:38vh; /* reduzido para caber o jogo abaixo */
 }
 .conf-art::before{content:'';position:absolute;top:-70px;right:-70px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.08);}
 .conf-art::after{content:'';position:absolute;bottom:-80px;left:-60px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.05);}
@@ -329,10 +329,11 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 /* Seção do jogo */
 .conf-game-section{
   background:var(--white);
-  margin:.65rem 0 0; /* sem margin lateral — não corta */
+  margin:.5rem 0 0;
   border-top:1px solid var(--border);
   border-bottom:1px solid var(--border);
   overflow:hidden;
+  flex-shrink:0; /* não comprime o jogo */
 }
 .conf-game-hdr{
   display:flex;align-items:center;justify-content:space-between;
@@ -345,8 +346,8 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
 .game-stat span{font-weight:800;color:var(--brand);}
 .game-area{
   width:100%;
-  height:180px;
-  min-height:160px;
+  height:200px;
+  min-height:180px;
   background:linear-gradient(135deg,#1a0f05,#2a160a);
   position:relative;overflow:hidden;cursor:pointer;
   touch-action:none;
@@ -1164,7 +1165,7 @@ input,textarea,select{-webkit-user-select:auto;user-select:auto;touch-action:man
         <p>Toque no lanche antes<br>que ele escape!</p>
         <button class="game-start-btn" onclick="startGame()">Jogar agora →</button>
       </div>
-      <div class="game-burger" id="game-burger" style="display:none" onclick="clickBurger()">🍔</div>
+      <div class="game-burger" id="game-burger" style="display:none" onclick="clickBurger(event)" ontouchstart="clickBurger(event)">🍔</div>
       <div class="game-over-msg" id="game-over" style="display:none">
         <div style="font-size:2rem;margin-bottom:.35rem">🏆</div>
         <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:.95rem;margin-bottom:.2rem">Fim de jogo!</div>
@@ -1291,7 +1292,7 @@ let editingItemIdx = null;
 let selectedEmoji = '🍔';
 let selectedPhoto = null;
 let cart = [];
-let orderCounter = 1000;
+let orderCounter = parseInt(localStorage.getItem('pw_order_counter') || '1000');
 let flashItems = [];
 let flashIdx = 0, flashTimer = null;
 const FLASH_DUR = 5000;
@@ -1454,7 +1455,7 @@ function iniciarRealtimePedidos() {
       const p = payload.new;
       const novoPedido = {
         supaId: p.id,
-        id: '#' + p.id.slice(-6).toUpperCase(),
+        id: '#' + String(++orderCounter).padStart(4,'0'),
         client: p.client_name, phone: p.client_phone,
         address: p.address, delivery: p.delivery_type,
         items: (() => { try { return typeof p.items === 'string' ? JSON.parse(p.items) : (Array.isArray(p.items) ? p.items : []); } catch(e) { return []; } })(),
@@ -1520,7 +1521,7 @@ function iniciarRealtimePedidos() {
           if (!jaTem.has(p.id)) {
             tocarSomNovoPedido();
             const np = {
-              supaId: p.id, id: '#' + p.id.slice(-6).toUpperCase(),
+              supaId: p.id, id: '#' + String(++orderCounter).padStart(4,'0'),
               client: p.client_name, phone: p.client_phone,
               address: p.address, delivery: p.delivery_type,
               items: (() => { try { return typeof p.items==='string'?JSON.parse(p.items):(p.items||[]); } catch(e){return[];} })(),
@@ -1563,6 +1564,14 @@ function tocarSomNovoPedido() {
 
 
 // ─── ABAS CLIENTE ─────────────────────────────────────────────────────────────
+
+function togglePedidoDetalhe(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+}
+
 function switchClientTab(tab) {
   document.getElementById('tab-cardapio')?.classList.toggle('active', tab === 'cardapio');
   document.getElementById('tab-meus-pedidos')?.classList.toggle('active', tab === 'meus-pedidos');
@@ -1618,20 +1627,38 @@ function renderMeusPedidos() {
       ? `<div style="margin-top:.5rem;padding:.6rem .75rem;background:rgba(26,138,90,.08);border:1px solid rgba(26,138,90,.2);border-radius:8px;font-size:.78rem;color:var(--success)">
            <strong>📍 Endereço para retirada:</strong><br>${p.lojaAddress}
          </div>` : '';
-    return `<div style="background:var(--white);border:1.5px solid ${stCor};border-radius:var(--r);padding:1rem;margin-bottom:.75rem;box-shadow:0 1px 6px rgba(0,0,0,.06)">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem">
-        <div>
-          <div style="font-weight:800;font-size:.9rem">${p.id||'#—'}</div>
-          <div style="font-size:.7rem;color:var(--ink3);margin-top:.1rem">${p.lojaName||''} · ${p.time||'agora'}</div>
+    const pidx = pedidos.indexOf(p);
+    const detailId = 'pedido-detail-' + pidx;
+    return `<div style="background:var(--white);border:1.5px solid ${stCor};border-radius:var(--r);margin-bottom:.75rem;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden">
+      <!-- Cabeçalho clicável -->
+      <div onclick="togglePedidoDetalhe('${detailId}')" style="padding:1rem;cursor:pointer">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem">
+          <div>
+            <div style="font-weight:800;font-size:.9rem">${p.id||'#—'}</div>
+            <div style="font-size:.7rem;color:var(--ink3);margin-top:.1rem">${p.lojaName||''} · ${p.time||'agora'}</div>
+          </div>
+          <span style="font-size:.7rem;font-weight:700;background:${stBg};color:${stCor};padding:.2rem .6rem;border-radius:100px;white-space:nowrap;flex-shrink:0">${stLabel}</span>
         </div>
-        <span style="font-size:.7rem;font-weight:700;background:${stBg};color:${stCor};padding:.2rem .6rem;border-radius:100px;white-space:nowrap;flex-shrink:0">${stLabel}</span>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:800;color:var(--brand);font-size:.95rem">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
+          <div style="font-size:.8rem;color:var(--ink3)">Toque para ver detalhes ▼</div>
+        </div>
       </div>
-      <div style="font-size:.82rem;color:var(--ink2);margin-bottom:.4rem;line-height:1.5">${itens}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-weight:800;color:var(--brand);font-size:.95rem">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
-        <div style="font-size:.72rem;color:var(--ink3)">${p.payment||''}</div>
+      <!-- Detalhes expandíveis -->
+      <div id="${detailId}" style="display:none;border-top:1px solid var(--border);padding:.85rem 1rem;background:var(--surface)">
+        <div style="font-size:.75rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem">Itens do pedido</div>
+        ${(p.items||[]).map(i=>`<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:.25rem 0;border-bottom:1px solid var(--border)">
+          <span>${i.qty}x ${i.name}</span>
+          <span style="color:var(--brand);font-weight:700">R$ ${(Number(i.price||0)*i.qty).toFixed(2).replace('.',',')}</span>
+        </div>`).join('')}
+        <div style="display:flex;justify-content:space-between;margin-top:.6rem;font-weight:800;font-size:.9rem">
+          <span>Total</span><span style="color:var(--brand)">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</span>
+        </div>
+        <div style="margin-top:.5rem;font-size:.78rem;color:var(--ink3)">
+          💳 ${p.payment||'—'} &nbsp;·&nbsp; ${p.delivery==='pickup'?'🏃 Retirada':'🛵 Entrega'}
+        </div>
+        ${endAddr}
       </div>
-      ${endAddr}
     </div>`;
   }).join('');
 }
@@ -2186,7 +2213,7 @@ async function renderDashboard() {
       if (pedidosSupa && pedidosSupa.length > 0) {
         u.orders = pedidosSupa.map(p => ({
           supaId: p.id,
-          id: '#' + p.id.slice(-6).toUpperCase(),
+          id: '#' + String(++orderCounter).padStart(4,'0'),
           client: p.client_name, phone: p.client_phone,
           address: p.address, delivery: p.delivery_type,
           items: typeof p.items === 'string' ? JSON.parse(p.items) : (p.items || []),
@@ -2952,48 +2979,64 @@ function spawnParticles(){
 }
 
 // ─── MINI GAME ────────────────────────────────────────────────────────────
+// ─── JOGO: configuração de velocidade ─────────────────────────────────────
+const GAME_SPEED_INICIAL = 0.8;  // muito devagar no começo
+const GAME_SPEED_MAX = 4.5;      // velocidade máxima
+const GAME_ACELERACAO = 0.15;    // quanto acelera por clique
+
 function startGame(){
-  gameActive=true; gameScore=0; bx=100; by=80;
-  // Velocidade inicial bem baixa — muito mais fácil
-  const speed=1.8+Math.random()*0.8;
-  bvx=speed*(Math.random()>.5?1:-1); bvy=speed*(Math.random()>.5?1:-1);
+  gameActive=true; gameScore=0;
+  const area=document.getElementById('game-area');
+  // Posição inicial no centro da área
+  bx = (area.clientWidth||300)/2 - 25;
+  by = (area.clientHeight||180)/2 - 25;
+  // Velocidade inicial super baixa — 1 ponto é fácil
+  const ang = Math.random() * Math.PI * 2;
+  bvx = Math.cos(ang) * GAME_SPEED_INICIAL;
+  bvy = Math.sin(ang) * GAME_SPEED_INICIAL;
   document.getElementById('g-score').textContent='0';
   document.getElementById('g-timer').textContent='30';
   document.getElementById('game-start-msg').style.display='none';
   document.getElementById('game-over').style.display='none';
   const b=document.getElementById('game-burger');
   b.style.display='block';
-  b.style.fontSize='2.6rem'; // burger maior, mais fácil de tocar
+  b.style.fontSize='3rem'; // bem grande — fácil de tocar
+  b.style.transform='';
   moveBurger();
-  let t=30; // 30 segundos em vez de 20
+  let t=30;
   clearInterval(gTimer);
   gTimer=setInterval(()=>{t--;document.getElementById('g-timer').textContent=t;if(t<=0)endGame();},1000);
 }
+
 function moveBurger(){
   if(!gameActive) return;
   const area=document.getElementById('game-area');
-  const w=area.clientWidth-56, h=area.clientHeight-56;
+  const w=area.clientWidth-52, h=area.clientHeight-52;
   bx+=bvx; by+=bvy;
-  if(bx<=0||bx>=w) bvx*=-1;
-  if(by<=0||by>=h) bvy*=-1;
+  if(bx<=0){bx=0;bvx=Math.abs(bvx);}
+  if(bx>=w){bx=w;bvx=-Math.abs(bvx);}
+  if(by<=0){by=0;bvy=Math.abs(bvy);}
+  if(by>=h){by=h;bvy=-Math.abs(bvy);}
   const b=document.getElementById('game-burger');
-  if(b){b.style.left=Math.max(0,Math.min(w,bx))+'px';b.style.top=Math.max(0,Math.min(h,by))+'px';}
+  if(b){b.style.left=bx+'px';b.style.top=by+'px';}
   gAnimFrame=requestAnimationFrame(moveBurger);
 }
-function clickBurger(){
+
+function clickBurger(e){
   if(!gameActive) return;
+  if(e) { e.stopPropagation(); e.preventDefault(); }
   gameScore++;
   document.getElementById('g-score').textContent=gameScore;
   const b=document.getElementById('game-burger');
   if(b) b.textContent=foodEmojis[gameScore%foodEmojis.length];
-  // Aceleração muito leve — não fica impossível
-  const spd=0.08;
-  bvx+=bvx>0?spd:-spd; bvy+=bvy>0?spd:-spd;
-  // Trava a velocidade máxima em 3.5
-  const maxSpd=3.5;
-  if(Math.abs(bvx)>maxSpd) bvx=maxSpd*(bvx>0?1:-1);
-  if(Math.abs(bvy)>maxSpd) bvy=maxSpd*(bvy>0?1:-1);
-  b.style.transform='scale(1.4)'; setTimeout(()=>{if(b) b.style.transform='';},120);
+  // Acelera progressivamente a cada clique
+  const velAtual = Math.sqrt(bvx*bvx + bvy*bvy);
+  const novaVel = Math.min(velAtual + GAME_ACELERACAO, GAME_SPEED_MAX);
+  const ratio = novaVel / velAtual;
+  bvx *= ratio; bvy *= ratio;
+  // Feedback visual
+  b.style.transform='scale(1.5)';
+  setTimeout(()=>{ if(b) b.style.transform='scale(1)'; },100);
 }
 function endGame(){
   gameActive=false; clearInterval(gTimer); cancelAnimationFrame(gAnimFrame);
@@ -3413,8 +3456,9 @@ function confirmAndSendOrder() {
   const addr=deliveryType==='delivery'?document.getElementById('cl-addr').value.trim():'Retirada no local';
   const total=cart.reduce((s,c)=>s+c.qty*c.price,0);
   orderCounter++;
+  localStorage.setItem('pw_order_counter', String(orderCounter));
   const order={
-    id:'#' + (++orderCounter), client:name, phone, address:addr, delivery:deliveryType,
+    id:'#' + String(orderCounter).padStart(4,'0'), client:name, phone, address:addr, delivery:deliveryType,
     items: cart.map(c=>({name:c.name, qty:c.qty, price:c.price})),
     payment:selectedPayment, total, status:'new', time:'agora', ts:Date.now()
   };
@@ -3427,20 +3471,15 @@ function confirmAndSendOrder() {
     salvarPedidoSupa(u.id, order).then(orderId => {
       if (orderId) {
         // Atualiza o ID exibido ao cliente com o ID real do Supabase
-        const displayId = '#' + orderId.slice(-6).toUpperCase();
+        // Mantém o ID sequencial, salva apenas o supaId para rastreamento
         order.supaId = orderId;
-        order.id = displayId;
         u.orders[0].supaId = orderId;
-        u.orders[0].id = displayId;
         saveCurrentUser();
-        // Atualiza ID na tela de confirmação
-        const cidEl = document.getElementById('conf-order-id');
-        if (cidEl) cidEl.textContent = displayId;
-        // Atualiza o pedido no histórico com o supaId real
+        // Atualiza o pedido no histórico com o supaId real (sem mudar o ID visível)
         try {
-          const lista = carregarPedidosCliente();
-          if (lista[0]) { lista[0].supaId = orderId; lista[0].id = '#' + orderId.slice(-6).toUpperCase(); }
-          localStorage.setItem('pw_hist_pedidos', JSON.stringify(lista.map((p,i)=>i===0?{...p,savedAt:Date.now()}:p)));
+          const lista = carregarPedidosCliente(false);
+          if (lista[0]) { lista[0].supaId = orderId; }
+          localStorage.setItem('pw_hist_pedidos', JSON.stringify(lista));
         } catch(e) {}
         // Inicia escuta de status — SOMENTE no celular do cliente
         assinarStatusPedido(orderId, deliveryType);
