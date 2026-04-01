@@ -1,29 +1,3 @@
-let _notifAudio  = null;
-let _notifTimer  = null;
-let _notifAtivo  = false;
-
-function _tocarUmaVez() {
-  if (!_notifAtivo) return;
-  _notifAudio = new Audio('NOTIFICAlCAO_PEDIWAY.mp3');
-  _notifAudio.volume = 0.85;
-  _notifAudio.addEventListener('ended', () => {
-    if (!_notifAtivo) return;
-    _notifTimer = setTimeout(_tocarUmaVez, 5000);
-  }, { once: true });
-  _notifAudio.play().catch(err => console.warn('[Notif] Áudio bloqueado:', err));
-}
-
-function tocarSomNovoPedido() {
-  if (_notifAtivo) return;
-  _notifAtivo = true;
-  _tocarUmaVez();
-}
-
-function pararSomNovoPedido() {
-  _notifAtivo = false;
-  if (_notifTimer) { clearTimeout(_notifTimer); _notifTimer = null; }
-  if (_notifAudio) { _notifAudio.pause(); _notifAudio.src = ''; _notifAudio = null; }
-}
 function el(id) { return document.getElementById(id); }
 // ─── STATE ────────────────────────────────────────────────────────────────
 const LS = {
