@@ -11,7 +11,6 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets'
   },
-  // ✅ Correção principal para emojis e caracteres especiais
   esbuild: {
     charset: 'utf8'
   }
