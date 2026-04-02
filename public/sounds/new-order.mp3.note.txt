@@ -1,3 +1,0 @@
-PLACEHOLDER NOTE:
-The original sound file is named "NOTIFICAlCAO PEDIWAY.mp3" and should be placed here as "new-order.mp3".
-Copy the original file from the source project and rename it to new-order.mp3.
