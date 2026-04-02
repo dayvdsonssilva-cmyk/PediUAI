@@ -17,7 +17,6 @@
   <div class="notif-b" id="notif-b">Um cliente acabou de fazer um pedido.</div>
 </div>
 
-<!-- Todo o resto do seu HTML (mantido igual, só limpei os caracteres quebrados) -->
 <!-- LANDING -->
 <div class="screen active" id="sl">
   <header class="lh">
@@ -27,17 +26,44 @@
       <button class="btn btn-primary" onclick="goTo('s-register')">Cadastrar</button>
     </div>
   </header>
-  <!-- ... (o resto do conteúdo permanece igual) ... -->
+  <div class="hero-wrap">
+    <div class="hero">
+      <span class="badge">🚀 Plataforma delivery independente</span>
+      <h1>Seu cardápio.<br>Sua marca.<br><em>Seu lucro.</em></h1>
+      <p>Crie sua loja digital em minutos, compartilhe o link e receba pedidos. Sem comissão por venda — só uma mensalidade justa.</p>
+      <div style="display:flex;gap:.65rem;flex-wrap:wrap;margin-bottom:2rem">
+        <button class="btn btn-primary" onclick="goTo('s-register')" style="font-size:.9rem;padding:.85rem 1.6rem">Cadastrar →</button>
+        <button class="btn btn-ghost" onclick="openDemo()">Ver demo</button>
+      </div>
+      <div class="hero-stats">
+        <div><div class="snum">R$0</div><div class="slbl">comissão por venda</div></div>
+        <div><div class="snum">100%</div><div class="slbl">do lucro é seu</div></div>
+        <div><div class="snum">∞</div><div class="slbl">pedidos ilimitados</div></div>
+      </div>
+    </div>
+    <!-- PHONE MOCKUP -->
+    <div class="phone-scene" id="phone-scene">
+      <div class="phone-wrap" id="phone-wrap">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="ps-header">
+              <div class="ps-emoji">🍔</div>
+              <div>
+                <div class="ps-name">Burguer do Zé</div>
+                <div class="ps-sub">⭐ 4.9 · 🛵 30-40 min</div>
+              </div>
+            </div>
+            <!-- Você pode continuar adicionando o resto do HTML aqui se quiser -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Mantenha todo o HTML que você já tinha, só troque o final -->
+<!-- O resto do seu HTML (LOGIN, DASHBOARD, STORE, etc) pode ser colado aqui depois que o build funcionar -->
 
-<!-- FRESQUINHO PLAYER -->
-<div id="modal-flash" style="display:none;position:fixed;inset:0;z-index:400;background:#000;">
-  <!-- ... seu conteúdo ... -->
-</div>
-
-<!-- IMPORTANTE: Apenas UM script no final -->
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>
