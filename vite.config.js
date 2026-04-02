@@ -12,6 +12,6 @@ export default defineConfig({
     assetsDir: 'assets'
   },
   esbuild: {
-    charset: 'utf8'
+    charset: 'utf8'   //
   }
 });
