@@ -1,0 +1,159 @@
+// src/modules/settings.js
+import { supabase } from '../lib/supabase.js'
+
+const DAYS = ['seg','ter','qua','qui','sex','sab','dom']
+
+// ── Carrega settings da loja nos campos ───────────────────────────────────
+export function loadSettings(store) {
+  setValue('s-name', store.name)
+  setValue('s-desc', store.description)
+  setValue('s-wel',  store.welcome_msg)
+  setValue('s-wp',   store.whatsapp)
+  setValue('s-addr', store.address)
+  setValue('taxa-entrega', store.delivery_fee ?? '')
+
+  // Checkboxes de entrega/retirada
+  setChecked('toggle-delivery', store.delivery_enabled !== false)
+  setChecked('toggle-pickup',   store.pickup_enabled   !== false)
+  syncEntregaUI()
+
+  // Horários
+  const h = store.hours || {}
+  DAYS.forEach(d => {
+    setValue(`h-${d}-a`, h[d]?.open  || '08:00')
+    setValue(`h-${d}-f`, h[d]?.close || '22:00')
+    setChecked(`h-${d}-on`, h[d]?.open !== undefined ? true : d !== 'dom')
+  })
+
+  // Tempo de preparo
+  const tempo = store.prep_time || 30
+  document.querySelectorAll('.tempo-btn').forEach(btn => {
+    btn.classList.toggle('active', +btn.dataset.val === tempo)
+  })
+
+  // Cor
+  if (store.brand_color) {
+    document.documentElement.style.setProperty('--brand', store.brand_color)
+  }
+
+  // Logo
+  if (store.logo_url) {
+    const img   = document.getElementById('settings-logo-img')
+    const emoji = document.getElementById('settings-logo-emoji')
+    if (img)   { img.src = store.logo_url; img.style.display = 'block' }
+    if (emoji) emoji.style.display = 'none'
+  }
+}
+
+// ── Salva configurações ────────────────────────────────────────────────────
+export async function saveSettings() {
+  const store = window.__store
+  if (!store) return
+
+  const hours = {}
+  DAYS.forEach(d => {
+    hours[d] = {
+      open:   document.getElementById(`h-${d}-a`)?.value,
+      close:  document.getElementById(`h-${d}-f`)?.value,
+      enabled: document.getElementById(`h-${d}-on`)?.checked ?? true,
+    }
+  })
+
+  const updates = {
+    name:              getValue('s-name'),
+    description:       getValue('s-desc'),
+    welcome_msg:       getValue('s-wel'),
+    whatsapp:          getValue('s-wp').replace(/\D/g, ''),
+    address:           getValue('s-addr'),
+    delivery_enabled:  isChecked('toggle-delivery'),
+    pickup_enabled:    isChecked('toggle-pickup'),
+    delivery_fee:      parseFloat(getValue('taxa-entrega')) || 0,
+    hours,
+  }
+
+  const btn = document.querySelector('#t-settings .btn-brand')
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando...' }
+
+  const { error } = await supabase
+    .from('stores')
+    .update(updates)
+    .eq('id', store.id)
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Salvar alterações' }
+
+  if (!error) {
+    window.__store = { ...store, ...updates }
+    showSaveFeedback(btn)
+  }
+}
+
+export function salvarOpcaoEntrega() {
+  const delivery = isChecked('toggle-delivery')
+  const pickup   = isChecked('toggle-pickup')
+  const taxaBlock = document.getElementById('taxa-entrega-block')
+
+  if (taxaBlock) taxaBlock.style.display = delivery ? 'block' : 'none'
+
+  const delivThumb = document.getElementById('thumb-delivery')
+  const delivBall  = document.getElementById('ball-delivery')
+  const pickThumb  = document.getElementById('thumb-pickup')
+  const pickBall   = document.getElementById('ball-pickup')
+
+  applyToggleStyle(delivThumb, delivBall, delivery)
+  applyToggleStyle(pickThumb,  pickBall,  pickup)
+}
+
+export function salvarHorarios() {
+  // Debounce automático — só salva quando o usuário clicar em "Salvar alterações"
+}
+
+export function selecionarTempo(btn) {
+  document.querySelectorAll('.tempo-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+}
+
+export function selColor(brandColor, darkColor, el, gradient) {
+  document.querySelectorAll('.csw').forEach(c => c.classList.remove('selected'))
+  el.classList.add('selected')
+  document.documentElement.style.setProperty('--brand', brandColor)
+  document.documentElement.style.setProperty('--brand-dark', darkColor)
+  if (window.__store) window.__store._pendingColor = brandColor
+}
+
+export async function updateSettingsLogo(input) {
+  const file = input.files[0]
+  if (!file || !window.__store) return
+
+  const path = `stores/${window.__store.id}/logo.${file.name.split('.').pop()}`
+  const { error } = await supabase.storage.from('logos').upload(path, file, { upsert: true })
+  if (error) return console.error('[Settings] Logo upload error:', error)
+
+  const { data } = supabase.storage.from('logos').getPublicUrl(path)
+
+  const img   = document.getElementById('settings-logo-img')
+  const emoji = document.getElementById('settings-logo-emoji')
+  if (img)   { img.src = data.publicUrl; img.style.display = 'block' }
+  if (emoji) emoji.style.display = 'none'
+
+  await supabase.from('stores').update({ logo_url: data.publicUrl }).eq('id', window.__store.id)
+  window.__store.logo_url = data.publicUrl
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function getValue(id) { return document.getElementById(id)?.value?.trim() ?? '' }
+function setValue(id, val) { const el = document.getElementById(id); if (el) el.value = val ?? '' }
+function isChecked(id) { return document.getElementById(id)?.checked ?? false }
+function setChecked(id, val) { const el = document.getElementById(id); if (el) el.checked = val }
+function syncEntregaUI() { salvarOpcaoEntrega() }
+
+function applyToggleStyle(thumb, ball, active) {
+  if (thumb) thumb.style.background = active ? 'var(--brand)' : '#ccc'
+  if (ball)  ball.style.transform   = active ? 'translateX(20px)' : 'translateX(0)'
+}
+
+function showSaveFeedback(btn) {
+  if (!btn) return
+  const orig = btn.textContent
+  btn.textContent = '✓ Salvo!'
+  setTimeout(() => (btn.textContent = orig), 2000)
+}
