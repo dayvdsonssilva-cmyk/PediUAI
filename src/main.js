@@ -1,4 +1,4 @@
-// ==================== src/main.js - VERSÃO LIMPA E FUNCIONANDO ====================
+// ==================== src/main.js - VERSÃO FUNCIONAL ====================
 
 import './config.js';
 import './utils.js';
@@ -12,60 +12,30 @@ import './dashboard.js';
 import './payment.js';
 import './game.js';
 
-console.log('🚀 PEDIWAY - Sistema carregado com sucesso!');
+console.log('🚀 PEDIWAY carregado completamente!');
 
-// ====================== INICIALIZAÇÃO ======================
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('📌 Página carregada');
+// Tornar funções globais para os onclicks do HTML funcionarem
+window.goTo = window.goTo || function(screen) {
+    if (typeof window.switchScreen === 'function') window.switchScreen(screen);
+    else console.warn('goTo não encontrado');
+};
 
-    // Inicializa dados de demonstração
-    if (typeof initDemoData === 'function') {
-        initDemoData();
-    }
+window.openDemo = window.openDemo || function() {
+    console.log('Demo aberto');
+    if (typeof window.openDemo === 'function') window.openDemo();
+};
 
-    const path = window.location.pathname;
+// Inicialização principal
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('📱 DOM carregado - inicializando app');
 
-    // Se for acesso a uma loja (/restaurante/...)
-    if (path.includes('/restaurante/')) {
-        await initRoutingAsync();
-    } else {
-        // Tela inicial (landing)
+    if (typeof initDemoData === 'function') initDemoData();
+    if (typeof initApp === 'function') initApp();
+
+    // Tela inicial
+    setTimeout(() => {
         if (typeof goTo === 'function') goTo('sl');
-    }
-
-    console.log('✅ Aplicação inicializada');
+    }, 300);
 });
 
-// Função de roteamento (mantida do seu código original)
-async function initRoutingAsync() {
-    const path = window.location.pathname;
-    const match = path.match(/\/restaurante\/([\w-]+)/);
-    
-    if (!match) return;
-    
-    const slug = match[1];
-
-    if (slug === 'demo') {
-        if (typeof openDemo === 'function') openDemo();
-        return;
-    }
-
-    // Tenta carregar a loja
-    goTo('s-store');
-    document.getElementById('sn').textContent = 'Carregando...';
-
-    let loja = null;
-    for (let i = 0; i < 3; i++) {
-        loja = await carregarLojaSupa(slug);
-        if (loja) break;
-        await new Promise(r => setTimeout(r, 800));
-    }
-
-    if (loja) {
-        currentUser = loja;
-        currentStoreSlug = slug;
-        if (typeof renderStore === 'function') renderStore();
-    } else {
-        document.getElementById('sn').textContent = 'Loja não encontrada';
-    }
-};
+console.log('✅ Todas as funções carregadas');
