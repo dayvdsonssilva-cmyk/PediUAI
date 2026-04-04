@@ -1,4 +1,4 @@
-// ==================== src/main.js - VERSÃO FUNCIONAL ====================
+// ==================== src/main.js - VERSÃO PARA BOTÕES FUNCIONAREM ====================
 
 import './config.js';
 import './utils.js';
@@ -12,30 +12,33 @@ import './dashboard.js';
 import './payment.js';
 import './game.js';
 
-console.log('🚀 PEDIWAY carregado completamente!');
+console.log('🚀 PEDIWAY carregado - Modo Botões Ativado');
 
-// Tornar funções globais para os onclicks do HTML funcionarem
-window.goTo = window.goTo || function(screen) {
-    if (typeof window.switchScreen === 'function') window.switchScreen(screen);
-    else console.warn('goTo não encontrado');
+// === TORNA TODAS AS FUNÇÕES GLOBAIS PARA OS BOTÕES HTML FUNCIONAREM ===
+window.goTo = function(screen) {
+    console.log('goTo chamado:', screen);
+    if (typeof window.switchScreen === 'function') {
+        window.switchScreen(screen);
+    } else if (typeof window.goTo === 'function') {
+        window.goTo(screen);
+    }
 };
 
-window.openDemo = window.openDemo || function() {
+window.openDemo = function() {
     console.log('Demo aberto');
     if (typeof window.openDemo === 'function') window.openDemo();
 };
 
-// Inicialização principal
+// Inicialização
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('📱 DOM carregado - inicializando app');
+    console.log('📱 DOM pronto - inicializando funções');
 
     if (typeof initDemoData === 'function') initDemoData();
-    if (typeof initApp === 'function') initApp();
-
-    // Tela inicial
+    
+    // Força tela inicial
     setTimeout(() => {
         if (typeof goTo === 'function') goTo('sl');
-    }, 300);
+    }, 500);
 });
 
-console.log('✅ Todas as funções carregadas');
+console.log('✅ Todas funções globais carregadas');
