@@ -1,9 +1,6 @@
 {
-  "buildCommand": null,
-  "outputDirectory": ".",
-  "framework": null,
   "rewrites": [
-    { "source": "/restaurante/:slug", "destination": "/index.html" },
-    { "source": "/((?!api|src|public|css|js|assets).*)", "destination": "/index.html" }
+    { "source": "/restaurante/:slug*", "destination": "/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
