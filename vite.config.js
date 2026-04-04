@@ -8,6 +8,10 @@ export default defineConfig({
     open: true
   },
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
+    assetsDir: 'assets'
+  },
+  esbuild: {
+    charset: 'utf8'   // ← ESSA LINHA RESOLVE O ERRO DOS EMOJIS
   }
 });
