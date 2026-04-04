@@ -12,6 +12,6 @@ export default defineConfig({
     assetsDir: 'assets'
   },
   esbuild: {
-    charset: 'utf8'   // ← ESSA LINHA RESOLVE O ERRO DOS EMOJIS
+    charset: 'utf8'
   }
 });
