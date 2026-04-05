@@ -1,87 +1,926 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PEDIWAY - Seu delivery, do seu jeito</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#FFF9F6">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>PEDIWAY — Seu delivery, do seu jeito</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
-<div class="landing">
-  <!-- HEADER -->
-  <header>
-    <div class="logo">PEDI<span>WAY</span></div>
-    <div class="header-buttons">
-      <button class="btn-ghost" onclick="goTo('s-login')">Entrar</button>
-      <button class="btn-primary" onclick="goTo('s-register')">Cadastrar grátis</button>
-    </div>
-  </header>
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-content">
-      <span class="badge">🚀 Plataforma delivery independente</span>
-      <h1>Seu cardápio.<br>Sua marca.<br><span class="highlight">Seu lucro.</span></h1>
-      <p>Crie sua loja em minutos, compartilhe o link e receba pedidos direto no seu celular.<br>Sem comissão por venda — só uma mensalidade justa.</p>
-      
-      <div class="hero-actions">
-        <button class="btn-primary big" onclick="goTo('s-register')">Cadastrar agora →</button>
-        <button class="btn-ghost big" onclick="openDemo()">Ver demo</button>
-      </div>
-
-      <div class="stats">
-        <div>
-          <strong>R$ 0</strong>
-          <span>comissão por venda</span>
-        </div>
-        <div>
-          <strong>100%</strong>
-          <span>do lucro é seu</span>
-        </div>
-        <div>
-          <strong>∞</strong>
-          <span>pedidos ilimitados</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- PHONE MOCKUP -->
-    <div class="phone-mockup">
-      <div class="phone-frame">
-        <div class="phone-screen">
-          <div class="store-header">
-            <div class="store-info">
-              <div class="store-emoji">🍔</div>
-              <div>
-                <div class="store-name">Burguer do Zé</div>
-                <div class="store-rating">⭐ 4.9 • 30-40 min</div>
-              </div>
-            </div>
-          </div>
-          <div class="menu-preview">
-            <div class="menu-item">
-              <div class="item-emoji">🍔</div>
-              <div class="item-info">
-                <div>X-Burguer Especial</div>
-                <div class="price">R$ 28,90</div>
-              </div>
-            </div>
-            <div class="menu-item">
-              <div class="item-emoji">🍟</div>
-              <div class="item-info">
-                <div>Batata Frita Grande</div>
-                <div class="price">R$ 14,90</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+<!-- NOTIF -->
+<div class="notif" id="notif">
+  <div class="notif-t"><span class="ndot"></span><span id="notif-t">Novo pedido!</span></div>
+  <div class="notif-b" id="notif-b">Um cliente acabou de fazer um pedido.</div>
 </div>
 
-<script type="module" src="/src/main.js"></script>
+<!-- LANDING -->
+<div class="screen active" id="sl">
+  <header class="lh">
+    <div class="logo">PEDI<span>WAY</span></div>
+    <div class="lh-btns">
+      <button class="btn btn-ghost" onclick="goTo('s-login')">Entrar</button>
+      <button class="btn btn-primary" onclick="goTo('s-register')">Cadastrar</button>
+    </div>
+  </header>
+  <div class="hero-wrap">
+    <div class="hero">
+      <span class="badge">🚀 Plataforma delivery independente</span>
+      <h1>Seu cardápio.<br>Sua marca.<br><em>Seu lucro.</em></h1>
+      <p>Crie sua loja digital em minutos, compartilhe o link e receba pedidos. Sem comissão por venda — só uma mensalidade justa.</p>
+      <div style="display:flex;gap:.65rem;flex-wrap:wrap;margin-bottom:2rem">
+        <button class="btn btn-primary" onclick="goTo('s-register')" style="font-size:.9rem;padding:.85rem 1.6rem">Cadastrar →</button>
+        <button class="btn btn-ghost" onclick="openDemo()">Ver demo</button>
+      </div>
+      <div class="hero-stats">
+        <div><div class="snum">R$0</div><div class="slbl">comissão por venda</div></div>
+        <div><div class="snum">100%</div><div class="slbl">do lucro é seu</div></div>
+        <div><div class="snum">∞</div><div class="slbl">pedidos ilimitados</div></div>
+      </div>
+    </div>
+    <!-- PHONE MOCKUP 3D -->
+    <div class="phone-scene" id="phone-scene">
+      <div class="phone-wrap" id="phone-wrap">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="ps-header">
+              <div class="ps-emoji">🍔</div>
+              <div>
+                <div class="ps-name">Burguer do Zé</div>
+                <div class="ps-sub">⭐ 4.9 · 🛵 30-40 min</div>
+              </div>
+            </div>
+            <div class="ps-items">
+              <div class="ps-item">
+                <div class="ps-item-img" style="background:#FDF1EC;font-size:1.4rem">🍔</div>
+                <div class="ps-item-info">
+                  <div class="ps-item-name">X-Burguer Especial</div>
+                  <div class="ps-item-price">R$ 28,90</div>
+                </div>
+                <div class="ps-add">+</div>
+              </div>
+              <div class="ps-item">
+                <div class="ps-item-img" style="background:#EAF7F0;font-size:1.4rem">🍟</div>
+                <div class="ps-item-info">
+                  <div class="ps-item-name">Batata Frita Grande</div>
+                  <div class="ps-item-price">R$ 14,90</div>
+                </div>
+                <div class="ps-add">+</div>
+              </div>
+              <div class="ps-item">
+                <div class="ps-item-img" style="background:#F5F3FF;font-size:1.4rem">🥤</div>
+                <div class="ps-item-info">
+                  <div class="ps-item-name">Refrigerante 350ml</div>
+                  <div class="ps-item-price">R$ 7,90</div>
+                </div>
+                <div class="ps-add">+</div>
+              </div>
+              <div class="ps-item">
+                <div class="ps-item-img" style="background:#FDF1EC;font-size:1.4rem">🧁</div>
+                <div class="ps-item-info">
+                  <div class="ps-item-name">Sundae de Chocolate</div>
+                  <div class="ps-item-price">R$ 11,90</div>
+                </div>
+                <div class="ps-add">+</div>
+              </div>
+            </div>
+            <div class="ps-cart">
+              <span>🛒 2 itens</span>
+              <span style="font-weight:800">R$ 43,80</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="auth-wrap screen" id="s-login">
+  <div class="auth-card">
+    <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1.2rem">
+      <button class="back-ico" onclick="goTo('sl')">←</button>
+      <div class="auth-logo">PEDI<span>WAY</span></div>
+    </div>
+    <div class="auth-sub">Acesse o painel do seu estabelecimento</div>
+    <div class="fg"><label>E-mail</label><input type="email" id="le" placeholder="seu@email.com" autocomplete="email"><div class="ferr" id="lerr">E-mail inválido</div></div>
+    <div class="fg"><label>Senha</label><div class="pw-wrap"><input type="password" id="lp" placeholder="••••••••" autocomplete="current-password"><button type="button" class="pw-eye" onclick="togglePwVis('lp',this)">👁</button></div></div>
+    <button class="btn btn-brand btn-full" style="margin-top:.4rem" onclick="doLogin()">Entrar no painel</button>
+    <div style="margin-top:.85rem;padding:.75rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs)"><button class="btn btn-outline btn-full" style="font-size:.82rem;padding:.6rem" onclick="loginDemo()">🧪 Testar a plataforma →</button></div>
+    <div class="auth-sw">Não tem conta? <a onclick="goTo('s-register')">Cadastrar</a></div>
+    <div class="auth-sw" style="margin-top:.4rem"><a onclick="openDemo()" style="color:var(--ink3)">Ver demo →</a></div>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div class="auth-wrap screen" id="s-register">
+  <div class="auth-card" style="max-width:460px">
+    <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1.2rem">
+      <button class="back-ico" onclick="goTo('sl')">←</button>
+      <div class="auth-logo">PEDI<span>WAY</span></div>
+    </div>
+    <div class="auth-sub">Crie sua conta gratuitamente</div>
+    <div class="fg">
+      <label>Logo do estabelecimento</label>
+      <div class="logo-upload" id="logo-upload-area" onclick="document.getElementById('logo-file').click()">
+        <input type="file" id="logo-file" accept="image/*" onchange="previewLogo(this)">
+        <span id="logo-ph" style="display:flex;flex-direction:column;align-items:center;gap:.3rem"><span style="font-size:1.6rem">🏪</span><span style="font-size:.75rem;color:var(--ink3);font-weight:600">Adicionar logo (opcional)</span></span>
+        <img id="logo-preview" alt="" style="display:none;width:100%;height:100%;object-fit:contain;border-radius:var(--rs)">
+      </div>
+    </div>
+    <div class="fg"><label>Nome do estabelecimento *</label><input type="text" id="rn" placeholder="Ex: Burguer do Zé"><div class="ferr" id="rnerr">Preencha o nome</div></div>
+    <div class="fg"><label>Descrição</label><input type="text" id="rdesc" placeholder="Ex: Os melhores burguers da cidade!"></div>
+    <div class="fg"><label>CPF ou CNPJ *</label><input type="text" id="rdoc" placeholder="000.000.000-00 ou 00.000.000/0001-00" oninput="maskDoc(this)" inputmode="numeric"><div class="ferr" id="rdocerr">CPF ou CNPJ inválido</div></div>
+    <div class="fg"><label>E-mail *</label><input type="email" id="remail" placeholder="seu@email.com" autocomplete="email"><div class="ferr" id="remailerr">E-mail inválido</div></div>
+    <div class="fg">
+  <label>WhatsApp</label>
+  <div style="display:flex;align-items:center;gap:.5rem">
+    <span style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs);padding:.65rem .75rem;font-size:.88rem;color:var(--ink2);white-space:nowrap;font-weight:700">+55</span>
+    <input type="text" id="rwpp" placeholder="(35) 99999-9999" inputmode="tel" oninput="maskWpp(this)" style="flex:1">
+  </div>
+</div>
+    <div class="fg"><label>Senha * (mínimo 6 caracteres)</label><div class="pw-wrap"><input type="password" id="rpass" placeholder="••••••••" autocomplete="new-password"><button type="button" class="pw-eye" onclick="togglePwVis('rpass',this)">👁</button></div><div class="ferr" id="rpasserr">Mínimo 6 caracteres</div></div>
+    <button class="btn btn-brand btn-full" style="margin-top:.4rem" onclick="doRegister()">Cadastrar →</button>
+    <div class="auth-sw">Já tem conta? <a onclick="goTo('s-login')">Entrar</a></div>
+  </div>
+</div>
+
+<!-- PAYMENT -->
+<div class="screen" id="s-payment">
+  <div class="back-bar"><button class="back-ico" onclick="goTo('s-register')">←</button><span class="back-title">Escolha seu plano</span></div>
+  <div style="max-width:520px;margin:0 auto;padding:1.4rem">
+    <div style="text-align:center;margin-bottom:1.4rem">
+      <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.2rem;margin-bottom:.3rem">Qual plano combina com você?</div>
+      <div style="font-size:.82rem;color:var(--ink3)">Plano básico ou ultra — escolha o que combina com você.</div>
+    </div>
+    <div class="billing-toggle">
+      <div class="billing-opt active" onclick="setBilling('monthly',this)">Mensal</div>
+      <div class="billing-opt" onclick="setBilling('annual',this)">Anual <span style="color:var(--success);font-size:.7rem;font-weight:700">-25%</span></div>
+    </div>
+    <div class="plan-grid">
+      <div class="plan-card" id="plan-basico" onclick="selectPlan('basico')">
+        <div class="plan-name">Básico</div>
+        <div class="plan-price" id="price-basico">R$ 39,90</div>
+        <div class="plan-mo">/mês</div>
+        <div class="plan-annual" id="annual-basico" style="display:none">cobrado anualmente: R$ 358,80</div>
+        <div class="plan-features">
+          <div class="plan-feat">✅ Cardápio digital</div>
+          <div class="plan-feat">✅ Pedidos ilimitados</div>
+          <div class="plan-feat">✅ Link do cliente</div>
+          <div class="plan-feat">✅ 🔥 Fresquinho</div>
+          <div class="plan-feat off">❌ Financeiro</div>
+          <div class="plan-feat off">❌ Relatórios</div>
+        </div>
+      </div>
+      <div class="plan-card ultra" id="plan-ultra" onclick="selectPlan('ultra')">
+        <div class="plan-badge ultra">POPULAR</div>
+        <div class="plan-name">Ultra</div>
+        <div class="plan-price ultra" id="price-ultra">R$ 99,90</div>
+        <div class="plan-mo">/mês</div>
+        <div class="plan-annual" id="annual-ultra" style="display:none">cobrado anualmente: R$ 958,80</div>
+        <div class="plan-features">
+          <div class="plan-feat">✅ Cardápio digital</div>
+          <div class="plan-feat">✅ Pedidos ilimitados</div>
+          <div class="plan-feat">✅ Link do cliente</div>
+          <div class="plan-feat">✅ 🔥 Fresquinho (stories)</div>
+          <div class="plan-feat">✅ Financeiro completo</div>
+          <div class="plan-feat">✅ Relatórios 90 dias</div>
+          <div class="plan-feat">✅ Fechamento de caixa diário</div>
+          <div class="plan-feat">✅ Histórico de vendas</div>
+          <div class="plan-feat">✅ Controle por categoria</div>
+          <div class="plan-feat">✅ IA de automação</div>
+          <div class="plan-feat">✅ Suporte prioritário</div>
+        </div>
+      </div>
+    </div>
+    <div id="plan-selected-info" style="background:var(--brand-light);border:1.5px solid rgba(232,65,10,.2);border-radius:var(--r);padding:.9rem 1rem;margin-bottom:1rem;display:none">
+      <div style="font-weight:700;font-size:.88rem;margin-bottom:.2rem" id="psi-title"></div>
+      <div style="font-size:.78rem;color:var(--ink2)" id="psi-desc"></div>
+    </div>
+    <button class="btn btn-brand btn-full" id="pay-btn" style="font-size:.95rem;padding:.9rem;margin-bottom:.7rem" onclick="goToMercadoPago()">Pagar com Mercado Pago 💳</button>
+    <div style="text-align:center;font-size:.72rem;color:var(--ink3)">🔒 Pagamento seguro via Mercado Pago · Cancele quando quiser</div>
+  </div>
+</div>
+
+<!-- PENDING -->
+<div class="screen" id="s-pending">
+  <div style="max-width:420px;margin:auto;text-align:center;padding:2rem">
+    <div style="font-size:4rem;margin-bottom:1rem;display:block">✅</div>
+    <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.5rem;color:#fff;margin-bottom:.6rem">Cadastro recebido!</div>
+    <div style="font-size:.9rem;color:rgba(255,255,255,.65);line-height:1.75;margin-bottom:1.5rem">Recebemos seu cadastro, iremos ativar em breve.<br>Assim que sua conta estiver pronta, você receberá um e-mail.</div>
+    <div style="background:rgba(255,255,255,.08);border-radius:var(--r);padding:1rem 1.5rem;margin-bottom:1.8rem">
+      <div style="font-size:.74rem;color:rgba(255,255,255,.45);margin-bottom:.25rem">E-mail cadastrado:</div>
+      <div style="font-size:1rem;font-weight:700;color:#fff" id="pend-email">—</div>
+    </div>
+    <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:1.5rem;text-align:left">
+      <div style="font-size:.75rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.65rem;text-transform:uppercase;letter-spacing:.05em">Próximos passos</div>
+      <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.55rem;font-size:.82rem;color:rgba(255,255,255,.75)"><span style="width:22px;height:22px;background:rgba(74,222,128,.2);color:#4ade80;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex-shrink:0">✓</span>Cadastro enviado com sucesso</div>
+      <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.55rem;font-size:.82rem;color:rgba(255,255,255,.75)"><span style="width:22px;height:22px;background:rgba(251,191,36,.15);color:#fbbf24;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex-shrink:0">2</span>Revisão da equipe PEDIWAY (até 24h)</div>
+      <div style="display:flex;align-items:center;gap:.65rem;font-size:.82rem;color:rgba(255,255,255,.4)"><span style="width:22px;height:22px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex-shrink:0">3</span>Login liberado por e-mail</div>
+    </div>
+    <button class="btn btn-brand btn-full" onclick="goTo('sl')" style="padding:.88rem;font-size:.92rem">← Voltar ao início</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="screen" id="s-dash">
+  <nav class="dash-nav">
+    <div class="dash-logo">PEDI<span>WAY</span></div>
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <span style="font-size:.78rem;color:var(--ink3);font-weight:500" id="dash-sname"></span>
+      <button class="btn" style="background:var(--surface);color:var(--ink2);border:1px solid var(--border);padding:.35rem .75rem;font-size:.74rem" onclick="fazerLogout()">Sair</button>
+    </div>
+  </nav>
+  <div class="dash-tabs">
+    <button class="tb active" onclick="switchTab('t-orders')">🔔 Pedidos</button>
+    <button class="tb" onclick="switchTab('t-ov')">Visão geral</button>
+    <button class="tb" onclick="switchTab('t-menu')">Cardápio</button>
+    <button class="tb" onclick="switchTab('t-flash')">🔥 Fresquinho</button>
+    <button class="tb" id="tb-fin" onclick="switchTabFin()">💰 Financeiro</button>
+    <button class="tb" onclick="switchTab('t-settings')">Configurações</button>
+  </div>
+  <div class="dash-content">
+    <!-- VISÃO GERAL -->
+    <div class="tp" id="t-ov">
+      <!-- Toggle Loja Aberta/Fechada -->
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:1rem 1.1rem;margin-bottom:1.1rem">
+        <div>
+          <div style="font-weight:800;font-size:.92rem" id="loja-status-txt">🟢 Loja aberta</div>
+          <div style="font-size:.72rem;color:var(--ink3);margin-top:.1rem">Cardápio visível e aceitando pedidos</div>
+        </div>
+        <label style="position:relative;display:inline-block;width:52px;height:28px;cursor:pointer;flex-shrink:0">
+          <input type="checkbox" id="toggle-loja-open" onchange="toggleLojaAberta()" checked style="opacity:0;width:0;height:0">
+          <span id="thumb-loja" style="position:absolute;inset:0;background:var(--brand);border-radius:28px;transition:.3s;"></span>
+          <span id="ball-loja" style="position:absolute;left:4px;top:4px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s;transform:translateX(24px);box-shadow:0 1px 4px rgba(0,0,0,.2);"></span>
+        </label>
+      </div>
+      <div class="lb"><div><div style="font-size:.66rem;color:var(--brand);font-weight:700;margin-bottom:.15rem;text-transform:uppercase;letter-spacing:.05em">Link do seu cardápio</div><div class="lu" id="dash-link">pediway.com.br/restaurante/demo</div></div><button class="cb" onclick="copyLink()">Copiar</button></div>
+      <div class="sg">
+        <div class="sc"><div class="sc-lbl">Pedidos hoje</div><div class="sc-val o" id="st-today">0</div></div>
+        <div class="sc"><div class="sc-lbl">Faturamento hoje</div><div class="sc-val g" id="st-rev">R$ 0,00</div></div>
+        <div class="sc"><div class="sc-lbl">Itens no cardápio</div><div class="sc-val" id="st-items">0</div></div>
+        <div class="sc"><div class="sc-lbl">Plano ativo</div><div class="sc-val" style="font-size:1rem" id="st-plan">Básico</div><div style="font-size:.7rem;color:var(--success);margin-top:.2rem">✓ Ativo</div></div>
+      </div>
+      <div class="sh"><span class="st">Últimos pedidos</span><button class="btn btn-outline" style="font-size:.74rem;padding:.35rem .75rem" onclick="switchTab('t-orders')">Ver todos</button></div>
+      <div id="ov-orders"></div>
+    </div>
+    <!-- CARDÁPIO -->
+    <div class="tp" id="t-menu">
+      <div class="sh"><span class="st">Seu cardápio</span><button class="btn btn-brand" onclick="openAddItem()">+ Adicionar item</button></div>
+      <div class="mg" id="menu-grid"></div>
+    </div>
+    <!-- FRESQUINHO -->
+    <div class="tp" id="t-flash">
+      <div class="sh"><span class="st">🔥 Fresquinho</span></div>
+      <div style="background:var(--brand-light);border:1.5px solid rgba(232,65,10,.2);border-radius:var(--r);padding:.85rem 1rem;margin-bottom:1.1rem;">
+        <div style="font-size:.84rem;font-weight:700;margin-bottom:.2rem;">O que é o Fresquinho?</div>
+        <div style="font-size:.76rem;color:var(--ink2);line-height:1.6;">Grave ou suba vídeos da sua cozinha, promoções e novidades. Ficam visíveis por <strong>4 horas</strong> e somem sozinhos! 🔥</div>
+      </div>
+      <div id="flash-admin-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.8rem;margin-bottom:.9rem;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
+        <button class="btn btn-outline btn-full" onclick="document.getElementById('fc-cam').click()" style="flex-direction:column;gap:.3rem;padding:.9rem"><span style="font-size:1.6rem">📸</span><span style="font-size:.76rem">Tirar foto</span></button>
+        <button class="btn btn-outline btn-full" onclick="document.getElementById('fc-file').click()" style="flex-direction:column;gap:.3rem;padding:.9rem"><span style="font-size:1.6rem">🖼️</span><span style="font-size:.76rem">Enviar imagem</span></button>
+      </div>
+      <input type="file" id="fc-file" accept="image/*" onchange="addFlash(this)" style="display:none">
+      <input type="file" id="fc-cam" accept="image/*" capture="environment" onchange="addFlash(this)" style="display:none">
+    </div>
+    <!-- PEDIDOS — aba principal, aparece primeiro -->
+    <div class="tp active" id="t-orders">
+      <div class="sh"><span class="st">Pedidos</span><span style="font-size:.76rem;color:var(--ink3)" id="orders-count"></span></div>
+      <div class="ol" id="orders-list"></div>
+    </div>
+    <!-- FINANCEIRO -->
+    <div class="tp" id="t-financeiro">
+      <div id="fin-lock-banner" class="plan-lock" style="display:none">
+        <span style="font-size:2rem">🔒</span>
+        <div class="plan-lock-text">
+          <h4>Recurso exclusivo do Plano Ultra</h4>
+          <p>Faça upgrade para ter acesso ao financeiro completo, relatórios e fechamento de caixa.</p>
+        </div>
+        <button class="btn btn-brand" style="padding:.5rem 1rem;font-size:.78rem;flex-shrink:0" onclick="goTo('s-payment')">Fazer upgrade</button>
+      </div>
+      <div id="fin-content">
+        <div class="fp-bar">
+          <button class="pb active" onclick="setPeriod('hoje',this)">Hoje</button>
+          <button class="pb" onclick="setPeriod('semana',this)">Esta semana</button>
+          <button class="pb" onclick="setPeriod('mes',this)">Este mês</button>
+          <button class="pb" onclick="setPeriod('90',this)">90 dias</button>
+        </div>
+        <div class="sg" id="fin-stats"></div>
+        <div class="fin-sec"><div class="fin-hdr">📋 Fechamento de Caixa — <span id="fin-period-lbl">Hoje</span></div><div style="overflow-x:auto"><table class="ft"><thead><tr><th>Hora</th><th>Pedido</th><th>Cliente</th><th>Pagamento</th><th>Valor</th></tr></thead><tbody id="fin-body"></tbody></table></div></div>
+        <div class="fin-sec"><div class="fin-hdr">📊 Por categoria</div><div style="overflow-x:auto"><table class="ft"><thead><tr><th>Categoria</th><th>Qtd</th><th>Total</th></tr></thead><tbody id="fin-cat"></tbody></table></div></div>
+      </div>
+    </div>
+    <!-- SETTINGS -->
+    <div class="tp" id="t-settings">
+      <div class="ss">
+        <h3>Entrega e tempo de preparo</h3>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+
+          <!-- Entrega -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs)">
+            <div>
+              <div style="font-weight:700;font-size:.88rem">Entrega</div>
+              <div style="font-size:.72rem;color:var(--ink3)">Entregar no endereço do cliente</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0">
+              <input type="checkbox" id="toggle-delivery" onchange="salvarOpcaoEntrega()" checked style="opacity:0;width:0;height:0">
+              <span id="thumb-delivery" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:.3s;"></span>
+              <span id="ball-delivery" style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2);"></span>
+            </label>
+          </div>
+
+          <!-- Taxa de entrega -->
+          <div id="taxa-entrega-block" style="padding:.75rem 1rem;background:var(--brand-light);border:1.5px solid rgba(232,65,10,.2);border-radius:var(--rs)">
+            <label style="font-size:.78rem;font-weight:700;color:var(--ink2);display:block;margin-bottom:.4rem">Taxa de entrega (R$)</label>
+            <input type="number" id="taxa-entrega" placeholder="0,00 = grátis" min="0" step="0.50" inputmode="decimal"
+              style="width:100%;padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:var(--rs);font-size:.88rem;font-family:'Poppins',sans-serif;background:var(--white)"
+              onchange="salvarOpcaoEntrega()">
+            <div style="font-size:.7rem;color:var(--ink3);margin-top:.3rem">Deixe 0 ou vazio para entrega grátis</div>
+          </div>
+
+          <!-- Retirada -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs)">
+            <div>
+              <div style="font-weight:700;font-size:.88rem">Retirada no local</div>
+              <div style="font-size:.72rem;color:var(--ink3)">Cliente busca no estabelecimento</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0">
+              <input type="checkbox" id="toggle-pickup" onchange="salvarOpcaoEntrega()" checked style="opacity:0;width:0;height:0">
+              <span id="thumb-pickup" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:.3s;"></span>
+              <span id="ball-pickup" style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2);"></span>
+            </label>
+          </div>
+
+          <!-- Tempo de preparo -->
+          <div style="padding:.8rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs)">
+            <label style="font-size:.82rem;font-weight:700;color:var(--ink2);display:block;margin-bottom:.6rem">Tempo de preparo</label>
+            <div style="display:flex;flex-wrap:wrap;gap:.45rem" id="tempo-options">
+              <button type="button" class="tempo-btn" data-val="15" onclick="selecionarTempo(this)">15 min</button>
+              <button type="button" class="tempo-btn" data-val="20" onclick="selecionarTempo(this)">20 min</button>
+              <button type="button" class="tempo-btn" data-val="30" onclick="selecionarTempo(this)">30 min</button>
+              <button type="button" class="tempo-btn" data-val="45" onclick="selecionarTempo(this)">45 min</button>
+              <button type="button" class="tempo-btn" data-val="60" onclick="selecionarTempo(this)">60 min</button>
+            </div>
+            <div style="font-size:.7rem;color:var(--ink3);margin-top:.5rem">Exibido no cardápio do cliente</div>
+          </div>
+
+        </div>
+      </div>
+      <div class="ss">
+        <h3>Informações básicas</h3>
+        <div class="fg"><label>Nome da loja</label><input type="text" id="s-name"></div>
+        <div class="fg"><label>Descrição</label><input type="text" id="s-desc"></div>
+        <div class="fg"><label>Mensagem de boas-vindas</label><textarea rows="2" id="s-wel"></textarea></div>
+        <div class="fg">
+  <label>WhatsApp</label>
+  <div style="display:flex;align-items:center;gap:.5rem">
+    <span style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs);padding:.65rem .75rem;font-size:.88rem;color:var(--ink2);white-space:nowrap;font-weight:700">+55</span>
+    <input type="text" id="s-wp" placeholder="(35) 99999-9999" inputmode="tel" oninput="maskWpp(this)" style="flex:1">
+  </div>
+  <div style="font-size:.7rem;color:var(--ink3);margin-top:.3rem">Número que receberá os pedidos via WhatsApp</div>
+</div>
+        <div class="fg"><label>Endereço do estabelecimento</label><input type="text" id="s-addr" placeholder="Rua, número, bairro, cidade"></div>
+      </div>
+      <div class="ss">
+        <h3>Logo da loja</h3>
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.75rem">
+          <div id="settings-logo-preview" style="width:72px;height:72px;border-radius:50%;background:var(--brand-light);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;flex-shrink:0">
+            <img id="settings-logo-img" style="display:none;width:100%;height:100%;object-fit:cover" alt="logo">
+            <span id="settings-logo-emoji">🏪</span>
+          </div>
+          <div>
+            <button class="btn btn-outline" onclick="document.getElementById('settings-logo-file').click()" style="font-size:.78rem;padding:.42rem .9rem">📷 Alterar logo</button>
+            <input type="file" id="settings-logo-file" accept="image/*" style="display:none" onchange="updateSettingsLogo(this)">
+            <div style="font-size:.7rem;color:var(--ink3);margin-top:.3rem">Aparece no cardápio do cliente</div>
+          </div>
+        </div>
+      </div>
+      <div class="ss">
+        <h3>Aparência</h3>
+        <div class="fg"><label>Cor principal</label><div class="cr">
+          <div class="csw selected" style="background:#E8410A" onclick="selColor('#E8410A','#B83208',this)"></div>
+          <div class="csw" style="background:#1A8A5A" onclick="selColor('#1A8A5A','#0F6646',this)"></div>
+          <div class="csw" style="background:#2563EB" onclick="selColor('#2563EB','#1D4ED8',this)"></div>
+          <div class="csw" style="background:#7C3AED" onclick="selColor('#7C3AED','#6D28D9',this)"></div>
+          <div class="csw" style="background:#DB2777" onclick="selColor('#DB2777','#BE185D',this)"></div>
+          <div class="csw" style="background:#1A1208" onclick="selColor('#1A1208','#000',this)"></div>
+          <div class="csw" style="background:#D97706" onclick="selColor('#D97706','#B45309',this)"></div>
+          <div class="csw" style="background:#DC2626" onclick="selColor('#DC2626','#B91C1C',this)"></div>
+          <div class="csw" style="background:#0F766E" onclick="selColor('#0F766E','#0D6B63',this)"></div>
+          <div class="csw" style="background:linear-gradient(135deg,#E8410A,#DB2777)" onclick="selColor('#E8410A','#B83208',this,&quot;linear-gradient(135deg,#E8410A,#DB2777)&quot;)"></div>
+          <div class="csw" style="background:linear-gradient(135deg,#7C3AED,#2563EB)" onclick="selColor('#7C3AED','#6D28D9',this,&quot;linear-gradient(135deg,#7C3AED,#2563EB)&quot;)"></div>
+          <div class="csw" style="background:linear-gradient(135deg,#1A8A5A,#2563EB)" onclick="selColor('#2563EB','#1D4ED8',this,&quot;linear-gradient(135deg,#1A8A5A,#2563EB)&quot;)"></div>
+          <div class="csw" style="background:linear-gradient(135deg,#D97706,#DC2626)" onclick="selColor('#D97706','#B45309',this,&quot;linear-gradient(135deg,#D97706,#DC2626)&quot;)"></div>
+          <div class="csw" style="background:linear-gradient(135deg,#1A1208,#4A2C1A)" onclick="selColor('#1A1208','#000',this,&quot;linear-gradient(135deg,#1A1208,#4A2C1A)&quot;)"></div>
+          <div class="csw" style="background:linear-gradient(135deg,#DB2777,#7C3AED)" onclick="selColor('#DB2777','#BE185D',this,&quot;linear-gradient(135deg,#DB2777,#7C3AED)&quot;)"></div>
+        </div></div>
+        <div class="fg" style="margin-top:.8rem"><label>Emoji da loja</label><div class="ep" id="store-ep"></div></div>
+      </div>
+
+      <div class="ss">
+        <h3>Horário de funcionamento</h3>
+        <div style="display:flex;flex-direction:column;gap:.55rem" id="horarios-semana">
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <span style="font-size:.8rem;font-weight:600;width:32px;color:var(--ink2)">Seg</span>
+            <input type="time" class="hora-inp" id="h-seg-a" value="08:00">
+            <span style="font-size:.75rem;color:var(--ink3)">às</span>
+            <input type="time" class="hora-inp" id="h-seg-f" value="22:00">
+            <label style="margin-left:auto;display:flex;align-items:center;gap:.35rem;font-size:.75rem;color:var(--ink3);cursor:pointer"><input type="checkbox" id="h-seg-on" checked onchange="salvarHorarios()"> Aberto</label>
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <span style="font-size:.8rem;font-weight:600;width:32px;color:var(--ink2)">Ter</span>
+            <input type="time" class="hora-inp" id="h-ter-a" value="08:00">
+            <span style="font-size:.75rem;color:var(--ink3)">às</span>
+            <input type="time" class="hora-inp" id="h-ter-f" value="22:00">
+            <label style="margin-left:auto;display:flex;align-items:center;gap:.35rem;font-size:.75rem;color:var(--ink3);cursor:pointer"><input type="checkbox" id="h-ter-on" checked onchange="salvarHorarios()"> Aberto</label>
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <span style="font-size:.8rem;font-weight:600;width:32px;color:var(--ink2)">Qua</span>
+            <input type="time" class="hora-inp" id="h-qua-a" value="08:00">
+            <span style="font-size:.75rem;color:var(--ink3)">às</span>
+            <input type="time" class="hora-inp" id="h-qua-f" value="22:00">
+            <label style="margin-left:auto;display:flex;align-items:center;gap:.35rem;font-size:.75rem;color:var(--ink3);cursor:pointer"><input type="checkbox" id="h-qua-on" checked onchange="salvarHorarios()"> Aberto</label>
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <span style="font-size:.8rem;font-weight:600;width:32px;color:var(--ink2)">Qui</span>
+            <input type="time" class="hora-inp" id="h-qui-a" value="08:00">
+            <span style="font-size:.75rem;color:var(--ink3)">às</span>
+            <input type="time" class="hora-inp" id="h-qui-f" value="22:00">
+            <label style="margin-left:auto;display:flex;align-items:center;gap:.35rem;font-size:.75rem;color:var(--ink3);cursor:pointer"><input type="checkbox" id="h-qui-on" checked onchange="salvarHorarios()"> Aberto</label>
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <span style="font-size:.8rem;font-weight:600;width:32px;color:var(--ink2)">Sex</span>
+            <input type="time" class="hora-inp" id="h-sex-a" value="08:00">
+            <span style="font-size:.75rem;color:var(--ink3)">às</span>
+            <input type="time" class="hora-inp" id="h-sex-f" value="22:00">
+            <label style="margin-left:auto;display:flex;align-items:center;gap:.35rem;font-size:.75rem;color:var(--ink3);cursor:pointer"><input type="checkbox" id="h-sex-on" checked onchange="salvarHorarios()"> Aberto</label>
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <span style="font-size:.8rem;font-weight:600;width:32px;color:var(--ink2)">Sáb</span>
+            <input type="time" class="hora-inp" id="h-sab-a" value="09:00">
+            <span style="font-size:.75rem;color:var(--ink3)">às</span>
+            <input type="time" class="hora-inp" id="h-sab-f" value="21:00">
+            <label style="margin-left:auto;display:flex;align-items:center;gap:.35rem;font-size:.75rem;color:var(--ink3);cursor:pointer"><input type="checkbox" id="h-sab-on" checked onchange="salvarHorarios()"> Aberto</label>
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <span style="font-size:.8rem;font-weight:600;width:32px;color:var(--ink2)">Dom</span>
+            <input type="time" class="hora-inp" id="h-dom-a" value="10:00">
+            <span style="font-size:.75rem;color:var(--ink3)">às</span>
+            <input type="time" class="hora-inp" id="h-dom-f" value="20:00">
+            <label style="margin-left:auto;display:flex;align-items:center;gap:.35rem;font-size:.75rem;color:var(--ink3);cursor:pointer"><input type="checkbox" id="h-dom-on" onchange="salvarHorarios()"> Fechado</label>
+          </div>
+        </div>
+      </div>
+      <div class="ss">
+        <h3>Pagamentos aceitos</h3>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer"><input type="checkbox" checked> Pix</label>
+          <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer"><input type="checkbox" checked> Dinheiro</label>
+          <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer"><input type="checkbox" checked> Cartão</label>
+          <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer"><input type="checkbox"> Vale Refeição</label>
+        </div>
+      </div>
+      <!-- Botão salvar abaixo de tudo -->
+      <div style="padding:.5rem 0 1rem">
+        <button class="btn btn-brand btn-full" style="padding:1rem;font-size:.95rem;font-weight:800;border-radius:14px" onclick="saveSettings()">Salvar alterações</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CEO LOGIN -->
+<div class="screen" id="s-ceo-login">
+  <div class="ceo-lc">
+    <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.2rem;color:#fff;margin-bottom:.2rem">PEDI<span style="color:var(--brand)">WAY</span></div>
+    <div style="font-size:.74rem;color:rgba(255,255,255,.35);margin-bottom:1.3rem">Área restrita — somente o proprietário da plataforma</div>
+    <div class="fg"><label style="color:rgba(255,255,255,.5)">Login</label><input type="email" id="ceo-email" placeholder="Login" autocomplete="off" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:#fff"></div>
+    <div class="fg"><label style="color:rgba(255,255,255,.5)">Senha</label><div class="pw-wrap"><input type="password" id="ceo-pass" placeholder="••••••••" autocomplete="off" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:#fff;"><button type="button" class="pw-eye-ceo" onclick="togglePwVis('ceo-pass',this)">👁</button></div></div>
+    <div class="ferr" id="ceo-err" style="color:#f87171;margin-bottom:.4rem">Credenciais inválidas</div>
+    <button class="btn btn-brand btn-full" onclick="doCeoLogin()">Acessar painel</button>
+    <div style="text-align:center;margin-top:.9rem"><a onclick="goTo('sl')" style="color:rgba(255,255,255,.3);font-size:.74rem;cursor:pointer">← Voltar</a></div>
+  </div>
+</div>
+
+<!-- CEO PANEL -->
+<div class="screen" id="s-ceo">
+  <nav class="ceo-nav">
+    <div class="ceo-logo">PEDI<em>WAY</em><span class="ceo-tag">CEO</span></div>
+    <button class="btn" style="background:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.1);padding:.35rem .75rem;font-size:.72rem" onclick="goTo('sl')">Sair</button>
+  </nav>
+  <div class="ceo-tabs">
+    <button class="ct2 active" onclick="switchCeoTab('ceo-dashboard')">Dashboard</button>
+    <button class="ct2" onclick="switchCeoTab('ceo-stores')">Estabelecimentos</button>
+    <button class="ct2" onclick="switchCeoTab('ceo-solic')">Solicitações <span id="solic-badge" style="background:var(--brand);color:#fff;border-radius:100px;padding:.1rem .4rem;font-size:.6rem;font-weight:800;margin-left:.3rem">0</span></button>
+    <button class="ct2" onclick="switchCeoTab('ceo-fin')">Financeiro</button>
+  </div>
+  <div class="ceo-content">
+    <!-- CEO DASHBOARD -->
+    <div class="tp active" id="ceo-dashboard">
+      <div class="sg" style="margin-bottom:1.1rem">
+        <div class="ceo-stat"><div class="ceo-stat-lbl">Ativos</div><div class="ceo-stat-val gr" id="ceo-stat-ativos">0</div></div>
+        <div class="ceo-stat"><div class="ceo-stat-lbl">Pendentes</div><div class="ceo-stat-val br" id="ceo-stat-pend">0</div></div>
+        <div class="ceo-stat"><div class="ceo-stat-lbl">MRR</div><div class="ceo-stat-val gr" id="ceo-stat-mrr">R$ 0</div></div>
+        <div class="ceo-stat"><div class="ceo-stat-lbl">Churn mês</div><div class="ceo-stat-val">0</div></div>
+      </div>
+      <div class="ceo-card">
+        <div style="font-family:'Poppins',sans-serif;font-weight:700;color:#fff;margin-bottom:.85rem;font-size:.9rem;display:flex;align-items:center;gap:.5rem">Estabelecimentos recentes <span class="ai-badge">🤖 IA ativa</span></div>
+        <div style="overflow-x:auto"><table class="ctb"><thead><tr><th>Estabelecimento</th><th>Plano</th><th>Vencimento</th><th>Status</th><th>Ação</th></tr></thead><tbody id="ceo-recent"></tbody></table></div>
+      </div>
+    </div>
+    <!-- CEO STORES -->
+    <div class="tp" id="ceo-stores">
+      <div class="ceo-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:.85rem">
+          <div style="font-family:'Poppins',sans-serif;font-weight:700;color:#fff;font-size:.9rem">Todos os estabelecimentos</div>
+          <div style="position:relative;flex:1;max-width:260px;min-width:180px">
+            <span style="position:absolute;left:.7rem;top:50%;transform:translateY(-50%);font-size:.9rem;pointer-events:none">🔍</span>
+            <input type="text" id="ceo-search" placeholder="Buscar por nome, e-mail..." oninput="filterCeoStores(this.value)"
+              style="width:100%;padding:.48rem .75rem .48rem 2.1rem;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:100px;font-family:'Poppins',sans-serif;font-size:.76rem;color:#fff;outline:none;">
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="ctb">
+            <thead><tr><th>Nome</th><th>E-mail</th><th>Senha</th><th>Plano</th><th>Venc.</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="ceo-all-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Store Detail Panel -->
+      <div id="ceo-store-detail" style="display:none" class="ceo-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+          <div style="font-family:'Poppins',sans-serif;font-weight:700;color:#fff;font-size:.95rem" id="csd-name">Nome da loja</div>
+          <button onclick="document.getElementById('ceo-store-detail').style.display='none'" style="background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.5);cursor:pointer;border-radius:50%;width:28px;height:28px;font-size:1rem">×</button>
+        </div>
+        <div style="background:rgba(232,65,10,.1);border:1px solid rgba(232,65,10,.2);border-radius:var(--rs);padding:.75rem 1rem;margin-bottom:1rem">
+          <div style="font-size:.68rem;color:rgba(255,255,255,.4);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem">Link do cardápio</div>
+          <div style="font-size:.82rem;color:var(--brand);font-weight:600" id="csd-link"></div>
+        </div>
+        <div style="font-size:.8rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.04em">Itens do cardápio</div>
+        <div id="csd-items" style="display:flex;flex-direction:column;gap:.5rem"></div>
+        <div style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn" style="background:rgba(74,222,128,.12);color:#4ade80;border:1px solid rgba(74,222,128,.2);font-size:.74rem;padding:.4rem .85rem" id="csd-act-btn" onclick="ceoToggleStore()">Ativar loja</button>
+          <button class="btn" style="background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2);font-size:.74rem;padding:.4rem .85rem" onclick="ceoEditStore()">✏️ Editar cardápio</button>
+        </div>
+      </div>
+    </div>
+    <!-- CEO SOLICITAÇÕES -->
+    <div class="tp" id="ceo-solic">
+      <div class="ceo-card">
+        <div style="font-family:'Poppins',sans-serif;font-weight:700;color:#fff;margin-bottom:.85rem;font-size:.9rem">Solicitações de cadastro</div>
+        <div style="overflow-x:auto"><table class="ctb"><thead><tr><th>Nome</th><th>Doc</th><th>E-mail</th><th>Plano</th><th>Pagamento</th><th>Data</th><th>Ação</th></tr></thead><tbody id="ceo-solic-body"></tbody></table></div>
+      </div>
+    </div>
+    <!-- CEO FINANCEIRO -->
+    <div class="tp" id="ceo-fin">
+      <div class="sg" style="margin-bottom:1.1rem">
+        <div class="ceo-stat"><div class="ceo-stat-lbl">Receita total</div><div class="ceo-stat-val gr" id="ceo-total-rev">R$ 0</div></div>
+        <div class="ceo-stat"><div class="ceo-stat-lbl">MRR atual</div><div class="ceo-stat-val br" id="ceo-mrr2">R$ 0</div></div>
+        <div class="ceo-stat"><div class="ceo-stat-lbl">Ticket médio</div><div class="ceo-stat-val" id="ceo-ticket">R$ 0</div></div>
+        <div class="ceo-stat"><div class="ceo-stat-lbl">Inadimplentes</div><div class="ceo-stat-val">0</div></div>
+      </div>
+      <div class="ceo-card">
+        <div style="font-family:'Poppins',sans-serif;font-weight:700;color:#fff;margin-bottom:.85rem;font-size:.9rem">Histórico de mensalidades</div>
+        <table class="ctb"><thead><tr><th>Mês</th><th>Básico</th><th>Ultra</th><th>Total</th></tr></thead><tbody id="ceo-hist"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VITRINE CLIENTE -->
+<!-- TELA LOJA INATIVA -->
+<div class="screen" id="s-inactive">
+  <div style="min-height:100vh;background:linear-gradient(135deg,#1a0f05 0%,#2d1810 50%,#1a0f05 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;position:relative;overflow:hidden">
+    <!-- Circles decorativos -->
+    <div style="position:absolute;top:-80px;right:-80px;width:240px;height:240px;border-radius:50%;background:rgba(232,65,10,.08)"></div>
+    <div style="position:absolute;bottom:-100px;left:-60px;width:280px;height:280px;border-radius:50%;background:rgba(232,65,10,.05)"></div>
+    <!-- Ícone animado -->
+    <div style="font-size:4rem;margin-bottom:1.5rem;animation:pulse 2.5s ease-in-out infinite">🔒</div>
+    <!-- Título -->
+    <div style="font-family:'Poppins',sans-serif;font-weight:900;font-size:1.6rem;color:#fff;margin-bottom:.5rem;letter-spacing:-.02em">Painel Suspenso</div>
+    <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.95rem;color:var(--brand);margin-bottom:1.2rem;text-transform:uppercase;letter-spacing:.06em">Plano Inativo</div>
+    <!-- Mensagem criativa -->
+    <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:1.4rem 1.6rem;max-width:360px;margin-bottom:2rem">
+      <p style="font-size:.9rem;color:rgba(255,255,255,.75);line-height:1.7;margin-bottom:0">
+        Sua loja está temporariamente fora do ar. Renove seu plano para que seus clientes voltem a fazer pedidos com você 🚀
+      </p>
+    </div>
+    <!-- Steps -->
+    <div style="display:flex;flex-direction:column;gap:.65rem;width:100%;max-width:340px;margin-bottom:2rem">
+      <div style="display:flex;align-items:center;gap:.75rem;background:rgba(255,255,255,.04);border-radius:10px;padding:.75rem 1rem;border:1px solid rgba(255,255,255,.08)">
+        <span style="font-size:1.2rem">💳</span>
+        <div style="text-align:left"><div style="font-size:.78rem;font-weight:700;color:rgba(255,255,255,.8)">Renove seu plano</div><div style="font-size:.7rem;color:rgba(255,255,255,.4)">Ative novamente com um clique</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem;background:rgba(255,255,255,.04);border-radius:10px;padding:.75rem 1rem;border:1px solid rgba(255,255,255,.08)">
+        <span style="font-size:1.2rem">⚡</span>
+        <div style="text-align:left"><div style="font-size:.78rem;font-weight:700;color:rgba(255,255,255,.8)">Ativação imediata</div><div style="font-size:.7rem;color:rgba(255,255,255,.4)">Sua loja volta em minutos</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem;background:rgba(255,255,255,.04);border-radius:10px;padding:.75rem 1rem;border:1px solid rgba(255,255,255,.08)">
+        <span style="font-size:1.2rem">🔓</span>
+        <div style="text-align:left"><div style="font-size:.78rem;font-weight:700;color:rgba(255,255,255,.8)">Acesso completo liberado</div><div style="font-size:.7rem;color:rgba(255,255,255,.4)">Cardápio, pedidos e financeiro</div></div>
+      </div>
+    </div>
+    <!-- Botões -->
+    <button class="btn btn-brand btn-full" style="padding:1rem;font-size:.95rem;font-weight:800;border-radius:14px;max-width:340px;margin-bottom:.75rem" onclick="alert('Entre em contato via WhatsApp para reativar seu plano.')">
+      🚀 Reativar meu plano
+    </button>
+    <button class="btn btn-outline btn-full" style="padding:.85rem;font-size:.85rem;max-width:340px;color:rgba(255,255,255,.5);border-color:rgba(255,255,255,.15)" onclick="fazerLogout()">
+      ← Sair
+    </button>
+    <!-- Rodapé -->
+    <div style="margin-top:2rem;font-size:.72rem;color:rgba(255,255,255,.25)">PEDI<span style="color:var(--brand)">WAY</span> · Plataforma de Delivery</div>
+  </div>
+</div>
+
+<div class="screen" id="s-store">
+  <div class="s-hero" id="s-hero-bg">
+    <!-- Botão voltar — só aparece quando vem da landing (demo) -->
+    <button id="demo-back-btn" onclick="goTo('sl')" style="display:none;position:absolute;top:.9rem;left:.9rem;background:rgba(255,255,255,.18);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1rem;cursor:pointer;align-items:center;justify-content:center;z-index:3;-webkit-tap-highlight-color:transparent;">←</button>
+    <!-- Logo no canto superior direito -->
+    <div class="s-hero-logo" id="store-logo-el">
+      <span id="se">🍔</span>
+    </div>
+    <!-- Conteúdo do hero -->
+    <div class="s-hero-content">
+      <div class="sn" id="sn">Carregando...</div>
+      <div class="sd" id="sd"></div>
+      <div class="si" id="store-hero-pills">
+        <span class="sii" id="pill-tempo">⏱ 30-45 min</span>
+        <span class="sii" id="pill-entrega">📍 Entrega disponível</span>
+      </div>
+    </div>
+  </div>
+  <div class="fs-sec" id="flash-client-sec" style="display:none">
+    <div class="fs-lbl"><span></span>🔥 Fresquinho de hoje</div>
+    <div class="fr" id="flash-client-row"></div>
+  </div>
+  <!-- Banner loja fechada -->
+  <div id="loja-fechada-banner" style="display:none;position:sticky;top:0;z-index:20;background:#1A1208;color:#fff;padding:.9rem 1.3rem;align-items:center;gap:.75rem;border-bottom:3px solid var(--brand)">
+    <span style="font-size:1.4rem">🔒</span>
+    <div>
+      <div style="font-weight:800;font-size:.9rem">Estamos fechados no momento</div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:.1rem">Em breve voltamos. Obrigado pela visita!</div>
+    </div>
+  </div>
+  <!-- Abas Cardápio / Meus Pedidos -->
+  <div class="mp-tab-bar">
+    <div class="mp-tab active" id="tab-cardapio" onclick="switchClientTab('cardapio')">Cardápio</div>
+    <div class="mp-tab" id="tab-meus-pedidos" onclick="switchClientTab('meus-pedidos')">Meus Pedidos</div>
+  </div>
+  <!-- Painel Cardápio -->
+  <div class="mp-panel active" id="panel-cardapio">
+    <div class="sc-wrap" style="padding:0">
+      <div style="padding:.75rem 1.3rem 0"><div class="ct" id="cat-tabs"></div></div>
+      <div class="cml" id="client-menu" style="padding:0 1.3rem"></div>
+    </div>
+  </div>
+  <!-- Painel Meus Pedidos -->
+  <div class="mp-panel" id="panel-meus-pedidos">
+    <div id="meus-pedidos-lista" style="padding:.5rem 0"></div>
+  </div>
+  <button class="cf" id="cart-fab" onclick="goTo('s-checkout')">
+    <span id="cart-cnt" class="cc">0</span>
+    Ver carrinho
+    <span id="cart-total-fab" style="margin-left:auto;font-family:'Poppins',sans-serif;font-weight:800">R$ 0,00</span>
+  </button>
+</div>
+
+<!-- CHECKOUT -->
+<div class="screen" id="s-checkout">
+  <div class="back-bar"><button class="back-ico" onclick="goTo('s-store')">←</button><span class="back-title">Finalizar pedido</span></div>
+  <div class="co-content">
+    <div class="sl-label">Seu pedido</div>
+    <div id="cart-items"></div>
+    <!-- DELIVERY TYPE -->
+    <div class="sl-label">Tipo de entrega</div>
+    <div id="pickup-address-block" style="display:none"></div>
+    <div class="del-type-row" id="del-type-row">
+      <div class="del-type-card active" id="dt-delivery" onclick="setDeliveryType('delivery')">
+        <div style="font-size:.9rem;font-weight:700">Entrega</div>
+        <div style="font-size:.72rem;color:var(--ink3);margin-top:.15rem" id="taxa-label-checkout">Recebo em casa</div>
+      </div>
+      <div class="del-type-card" id="dt-pickup" onclick="setDeliveryType('pickup')">
+        <div style="font-size:.9rem;font-weight:700">Retirada</div>
+        <div style="font-size:.72rem;color:var(--ink3);margin-top:.15rem">Busco no local</div>
+      </div>
+    </div>
+    <div class="sl-label">Seus dados</div>
+    <div class="fg"><label>Nome completo *</label><input type="text" id="cl-name" placeholder="Ex: Maria Silva" autocomplete="name"></div>
+    <div class="fg"><label>Telefone para contato *</label><input type="tel" id="cl-phone" placeholder="(11) 99999-9999" oninput="maskPhone(this)" autocomplete="tel" inputmode="tel"></div>
+    <div id="address-block">
+      <div class="fg"><label>Endereço completo *</label><input type="text" id="cl-addr" placeholder="Rua, número, bairro" autocomplete="street-address"></div>
+      <div class="fg"><label>Complemento</label><input type="text" id="cl-comp" placeholder="Apto, bloco..."></div>
+    </div>
+    <div class="sl-label">Pagamento</div>
+    <div id="pay-opts">
+      <label class="po selected" onclick="selPayment(this,'Pix')"><input type="radio" name="pay" checked> 💚 Pix</label>
+      <label class="po" onclick="selPayment(this,'Dinheiro')"><input type="radio" name="pay"> 💵 Dinheiro</label>
+      <label class="po" onclick="selPayment(this,'Cartão')"><input type="radio" name="pay"> 💳 Cartão</label>
+    </div>
+    <div class="fg" style="margin-top:.9rem"><label>Observações</label><textarea rows="2" id="cl-obs" placeholder="Ex: sem cebola..."></textarea></div>
+  </div>
+  <div class="co-footer">
+    <div id="co-taxa-row" style="display:none;justify-content:space-between;margin-bottom:.4rem;font-size:.8rem;color:var(--ink3)"><span>Taxa de entrega</span><span id="co-taxa">R$ 0,00</span></div>
+    <div class="co-sum"><span>Total</span><span class="co-total" id="co-total">R$ 0,00</span></div>
+    <button class="btn btn-brand btn-full" style="font-size:.9rem;padding:.85rem" onclick="placeOrder()">Confirmar pedido 🎉</button>
+  </div>
+</div>
+
+<!-- CONFIRM DATA SCREEN -->
+<div class="screen" id="s-confirm-data">
+  <div class="back-bar"><button class="back-ico" onclick="goTo('s-checkout')">←</button><span class="back-title">Confirmar pedido</span></div>
+  <div style="max-width:480px;margin:0 auto;padding:1.3rem">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem;margin-bottom:1rem">
+      <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.4rem">📋 Resumo do pedido</div>
+      <div id="confirm-data-items" style="margin-bottom:.85rem;font-size:.84rem;color:var(--ink2);line-height:1.7"></div>
+      <div style="display:flex;justify-content:space-between;padding-top:.75rem;border-top:1px solid var(--border);font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem">
+        <span>Total</span><span style="color:var(--brand)" id="confirm-data-total">R$ 0,00</span>
+      </div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem;margin-bottom:1rem">
+      <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:.75rem">📍 Dados de entrega</div>
+      <div id="confirm-data-delivery" style="font-size:.84rem;color:var(--ink2);line-height:1.8"></div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem;margin-bottom:1.2rem">
+      <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:.75rem">💳 Pagamento</div>
+      <div id="confirm-data-payment" style="font-size:.84rem;color:var(--ink2)"></div>
+    </div>
+    <button class="btn btn-brand btn-full" style="padding:.9rem;font-size:.95rem" onclick="confirmAndSendOrder()">Confirmar e enviar pedido ✅</button>
+    <button class="btn btn-outline btn-full" style="padding:.85rem;font-size:.88rem;margin-top:.65rem" onclick="goTo('s-checkout')">← Editar pedido</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     TELA 5 — PEDIDO ENVIADO (cada bloco bem separado)
+     ════════════════════════════════════════════════════════ -->
+<div class="screen" id="s-confirm">
+
+  <!-- BLOCO 1 · Arte principal com confetti -->
+  <div class="conf-art" id="conf-art">
+    <div class="conf-particles" id="conf-particles"></div>
+    <div class="conf-title" style="margin-top:.5rem">PEDIDO ENVIADO!</div>
+    <div class="conf-sub">Recebemos seu pedido e já avisamos o estabelecimento 🎉</div>
+    <div style="display:flex;justify-content:center;width:100%;position:relative;z-index:1">
+      <div class="conf-order-badge">
+        <div class="conf-order-lbl">Nº do pedido</div>
+        <div class="conf-order-num" id="conf-order-id">#—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOCO 2 · Status em tempo real (aparece quando o dono atualiza) -->
+  <div class="conf-status-section">
+    <div id="client-status-bar" class="csb"></div>
+    <div id="status-waiting" style="display:flex;align-items:center;gap:.6rem;padding:.5rem 0;font-size:.82rem;color:var(--ink3);">
+      <span style="font-size:1.1rem">⏳</span>
+      <span>Aguardando confirmação do estabelecimento...</span>
+    </div>
+  </div>
+
+  <!-- BLOCO 3 · Jogo enquanto aguarda -->
+  <div class="conf-game-section">
+    <div class="conf-game-hdr">
+      <div class="game-title">🍔 Pega o Lanche!</div>
+      <div class="game-stats">
+        <div class="game-stat">Pontos: <span id="g-score">0</span></div>
+        <div class="game-stat">Tempo: <span id="g-timer">30</span>s</div>
+      </div>
+    </div>
+    <div class="game-area" id="game-area">
+      <div class="game-start-msg" id="game-start-msg">
+        <h3>🍔 Pega o Lanche!</h3>
+        <p>Toque no lanche antes<br>que ele escape!</p>
+        <button class="game-start-btn" onclick="startGame()">Jogar agora →</button>
+      </div>
+      <div class="game-burger" id="game-burger" style="display:none" onclick="clickBurger(event)" ontouchstart="clickBurger(event)">🍔</div>
+      <div class="game-over-msg" id="game-over" style="display:none">
+        <div style="font-size:2rem;margin-bottom:.35rem">🏆</div>
+        <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:.95rem;margin-bottom:.2rem">Fim de jogo!</div>
+        <div style="font-size:.8rem;opacity:.7;margin-bottom:.75rem">Pontuação: <strong id="final-score" style="color:var(--brand)">0</strong></div>
+        <button class="game-start-btn" onclick="startGame()">Jogar de novo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOCO 4 · Ações do cliente -->
+  <div class="conf-actions-section">
+    <button class="btn btn-full" style="background:#25D366;color:#fff;padding:.9rem;font-size:.88rem;font-weight:700;border:none;border-radius:var(--rs)" onclick="openWhatsApp()">
+      💬 Falar com o estabelecimento
+    </button>
+    <button class="btn btn-full btn-outline" style="padding:.85rem;font-size:.86rem" onclick="goBackFromStore()">
+      ← Voltar ao cardápio
+    </button>
+  </div>
+
+</div>
+
+<!-- MODAL ADD ITEM -->
+<div class="mb" id="modal-add">
+  <div class="mo">
+    <div class="mo-h"></div>
+    <div class="mo-hdr"><span class="mo-title" id="modal-title">Adicionar item</span><button class="clo" onclick="closeModal('modal-add')">×</button></div>
+
+    <!-- FOTOS (até 5) -->
+    <div class="fg">
+      <label>Fotos do produto <span style="font-weight:400;color:var(--ink3)">— até 5 fotos</span></label>
+
+      <!-- Grid de previews -->
+      <div id="photos-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.5rem;"></div>
+
+      <!-- Botão adicionar (some quando tiver 5) -->
+      <div id="ph-add-btn" onclick="document.getElementById('item-photo').click()"
+        style="border:2px dashed var(--border);border-radius:var(--rs);padding:.9rem;text-align:center;cursor:pointer;transition:all .2s;">
+        <input type="file" id="item-photo" accept="image/*" multiple onchange="addPhotos(this)" style="display:none">
+        <div style="font-size:1.5rem">📸</div>
+        <div style="font-size:.76rem;font-weight:700;margin-top:.3rem">Adicionar fotos</div>
+        <div style="font-size:.68rem;color:var(--ink3)">JPG, PNG · Opcional</div>
+      </div>
+      <div id="ph-count" style="font-size:.7rem;color:var(--ink3);margin-top:.3rem;text-align:right;display:none"></div>
+    </div>
+
+    <div class="fg"><label>Emoji (sem foto)</label><div class="ep" id="item-ep"></div></div>
+    <div class="fg"><label>Nome *</label><input type="text" id="i-name" placeholder="Ex: X-Burguer Especial"></div>
+    <div class="fg"><label>Descrição</label><textarea id="i-desc" rows="2" placeholder="Ex: Pão brioche, carne 180g..."></textarea></div>
+    <div class="fg"><label>Categoria</label><input type="text" id="i-cat" placeholder="Ex: Lanches, Bebidas, Sobremesas"></div>
+    <div class="fg"><label>Preço (R$) *</label><input type="number" id="i-price" placeholder="0,00" step="0.01" min="0" inputmode="decimal"></div>
+    <div style="display:flex;gap:.6rem;margin-top:.4rem;padding-bottom:.9rem">
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal('modal-add')">Cancelar</button>
+      <button class="btn btn-brand" style="flex:1" onclick="saveItem()">Salvar item</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PRODUTO CLIENTE -->
+<div class="mb" id="modal-product">
+  <div class="mo">
+    <div class="mo-h"></div>
+    <div class="mo-hdr"><span class="mo-title" id="pm-cat"></span><button class="clo" onclick="closeModal('modal-product')">×</button></div>
+    <div class="pm-img" id="pm-img"><div class="ef" id="pm-emoji">🍔</div></div>
+    <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:.3rem" id="pm-name"></div>
+    <div style="font-size:.82rem;color:var(--ink2);line-height:1.65;margin-bottom:.85rem" id="pm-desc"></div>
+    <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.35rem;color:var(--brand);margin-bottom:1rem" id="pm-price"></div>
+    <div style="display:flex;gap:.6rem;padding-bottom:.9rem">
+      <button class="btn btn-outline" style="flex:1;padding:.85rem" onclick="closeModal('modal-product')">Fechar</button>
+      <button class="btn btn-brand" style="flex:2;padding:.85rem" id="pm-add">+ Adicionar ao carrinho</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOTINHA CEO -->
+<div class="mb" id="modal-receipt">
+  <div class="mo">
+    <div class="mo-h"></div>
+    <div class="mo-hdr"><span class="mo-title">Notinha do pedido</span><button class="clo" onclick="closeModal('modal-receipt')">×</button></div>
+    <div id="receipt-content"></div>
+    <div style="display:flex;gap:.6rem;margin-top:.85rem;padding-bottom:.9rem">
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal('modal-receipt')">Fechar</button>
+      <button class="btn btn-brand" style="flex:1" onclick="window.print()">🖨 Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CROP DE IMAGEM -->
+<div class="mb" id="modal-crop">
+  <div class="mo" style="max-height:95vh">
+    <div class="mo-h"></div>
+    <div class="mo-hdr">
+      <span class="mo-title" id="crop-title">Ajustar imagem</span>
+      <button class="clo" onclick="cancelCrop()">×</button>
+    </div>
+    <div style="font-size:.76rem;color:var(--ink3);margin-bottom:.75rem">Arraste para mover · Pinça para zoom</div>
+    <div id="crop-container" style="width:100%;aspect-ratio:1;background:#111;border-radius:var(--r);overflow:hidden;position:relative;touch-action:none;cursor:grab">
+      <img id="crop-img" style="position:absolute;transform-origin:center;user-select:none;-webkit-user-select:none;max-width:none" draggable="false">
+    </div>
+    <div style="display:flex;align-items:center;gap:.75rem;margin-top:.85rem">
+      <span style="font-size:.76rem;color:var(--ink3)">Zoom</span>
+      <input type="range" id="crop-zoom" min="0.5" max="3" step="0.05" value="1" style="flex:1;accent-color:var(--brand)" oninput="applyCropTransform()">
+    </div>
+    <div style="display:flex;gap:.6rem;margin-top:.85rem;padding-bottom:.9rem">
+      <button class="btn btn-outline" style="flex:1" onclick="cancelCrop()">Cancelar</button>
+      <button class="btn btn-brand" style="flex:1" onclick="confirmCrop()">✓ Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- FRESQUINHO PLAYER -->
+<div id="modal-flash" style="display:none;position:fixed;inset:0;z-index:400;background:#000;">
+  <div class="fp-top">
+    <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:.9rem;color:#fff">🔥 Fresquinho</div>
+    <button onclick="closeFlash()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+  </div>
+  <div class="fp-prog" id="fp-prog"></div>
+  <div id="flash-slides" style="width:100%;height:100%;position:relative;overflow:hidden;"></div>
+  <div class="fp-bot"><div id="fs-title" style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;color:#fff;margin-bottom:.2rem;text-shadow:0 1px 8px rgba(0,0,0,.5)"></div></div>
+  <div onclick="flashPrev()" style="position:absolute;left:0;top:0;width:35%;height:100%;z-index:5;cursor:pointer;"></div>
+  <div onclick="flashNext()" style="position:absolute;right:0;top:0;width:35%;height:100%;z-index:5;cursor:pointer;"></div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script src="/js/app.js"></script>
 </body>
 </html>
