@@ -8,11 +8,80 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <div style="text-align:center; margin-top:120px; font-family:Poppins,sans-serif;">
-        <h1 style="font-size:3rem; color:#E8410A;">PEDIWAY</h1>
-        <p style="font-size:1.4rem; color:#333;">Carregando sistema...</p>
+
+<div class="landing">
+  <!-- HEADER -->
+  <header>
+    <div class="logo">PEDI<span>WAY</span></div>
+    <div class="header-buttons">
+      <button class="btn-ghost" onclick="goTo('s-login')">Entrar</button>
+      <button class="btn-primary" onclick="goTo('s-register')">Cadastrar grátis</button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <span class="badge">🚀 Plataforma delivery independente</span>
+      <h1>Seu cardápio.<br>Sua marca.<br><span class="highlight">Seu lucro.</span></h1>
+      <p>Crie sua loja em minutos, compartilhe o link e receba pedidos direto no seu celular.<br>Sem comissão por venda — só uma mensalidade justa.</p>
+      
+      <div class="hero-actions">
+        <button class="btn-primary big" onclick="goTo('s-register')">Cadastrar agora →</button>
+        <button class="btn-ghost big" onclick="openDemo()">Ver demo</button>
+      </div>
+
+      <div class="stats">
+        <div>
+          <strong>R$ 0</strong>
+          <span>comissão por venda</span>
+        </div>
+        <div>
+          <strong>100%</strong>
+          <span>do lucro é seu</span>
+        </div>
+        <div>
+          <strong>∞</strong>
+          <span>pedidos ilimitados</span>
+        </div>
+      </div>
     </div>
 
-    <script type="module" src="/src/main.js"></script>
+    <!-- PHONE MOCKUP -->
+    <div class="phone-mockup">
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="store-header">
+            <div class="store-info">
+              <div class="store-emoji">🍔</div>
+              <div>
+                <div class="store-name">Burguer do Zé</div>
+                <div class="store-rating">⭐ 4.9 • 30-40 min</div>
+              </div>
+            </div>
+          </div>
+          <div class="menu-preview">
+            <div class="menu-item">
+              <div class="item-emoji">🍔</div>
+              <div class="item-info">
+                <div>X-Burguer Especial</div>
+                <div class="price">R$ 28,90</div>
+              </div>
+            </div>
+            <div class="menu-item">
+              <div class="item-emoji">🍟</div>
+              <div class="item-info">
+                <div>Batata Frita Grande</div>
+                <div class="price">R$ 14,90</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script type="module" src="/src/main.js"></script>
 </body>
 </html>
