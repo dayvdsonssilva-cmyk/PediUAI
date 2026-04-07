@@ -3,375 +3,132 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cardápio</title>
+  <title>Cardápio | PEDIWAY</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    :root {
-      --red: #C0392B;
-      --red-dark: #a93226;
-      --bg: #f5f0ea;
-      --card: #ffffff;
-      --border: #e8e0d6;
-      --text: #1a1a1a;
-      --muted: #888;
-    }
-    html { scroll-behavior: smooth; }
+    :root { --red:#C0392B; --red-dark:#a93226; --bg:#f5f0ea; --card:#fff; --border:#e8e0d6; --text:#1a1a1a; --muted:#888; }
+    html { scroll-behavior:smooth; }
     body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; max-width:600px; margin:0 auto; }
 
-    /* ===== HEADER DA LOJA ===== */
-    .loja-header {
-      background: linear-gradient(160deg, #2c1208 0%, #3d1a0e 60%, #4a2010 100%);
-      padding: 20px 20px 0;
-      position: relative;
-      overflow: hidden;
-    }
-    .loja-header::before {
-      content:'';
-      position:absolute; inset:0;
-      background: radial-gradient(circle at 80% 20%, rgba(192,57,43,0.3) 0%, transparent 60%);
-    }
-    .loja-top {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      position: relative;
-      z-index: 1;
-    }
-    .loja-avatar {
-      width: 64px; height: 64px;
-      border-radius: 16px;
-      background: rgba(255,255,255,0.15);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2rem;
-      border: 2px solid rgba(255,255,255,0.2);
-      flex-shrink: 0;
-      overflow: hidden;
-    }
+    /* HEADER */
+    .loja-header { background:linear-gradient(160deg,#2c1208 0%,#3d1a0e 60%,#4a2010 100%); padding:20px 20px 0; position:relative; overflow:hidden; }
+    .loja-header::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 80% 20%,rgba(192,57,43,0.3) 0%,transparent 60%); }
+    .loja-top { display:flex; align-items:center; gap:14px; position:relative; z-index:1; }
+    .loja-avatar { width:64px; height:64px; border-radius:16px; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:2rem; border:2px solid rgba(255,255,255,0.2); flex-shrink:0; overflow:hidden; }
     .loja-avatar img { width:100%; height:100%; object-fit:cover; }
-    .loja-info { flex: 1; }
-    .loja-nome {
-      font-size: 1.25rem; font-weight: 800;
-      color: #fff; line-height: 1.2; margin-bottom: 4px;
-    }
-    .loja-desc { font-size: 0.8rem; color: rgba(255,255,255,0.65); font-weight: 400; }
-    .loja-meta {
-      display: flex; gap: 16px; margin-top: 14px;
-      position: relative; z-index: 1;
-      padding-bottom: 18px;
-    }
-    .meta-item {
-      display: flex; align-items: center; gap: 5px;
-      font-size: 0.78rem; font-weight: 500; color: rgba(255,255,255,0.8);
-    }
-    .meta-icon { font-size: 0.9rem; }
+    .loja-info { flex:1; }
+    .loja-nome { font-size:1.25rem; font-weight:800; color:#fff; line-height:1.2; margin-bottom:4px; }
+    .loja-desc { font-size:0.8rem; color:rgba(255,255,255,0.65); font-weight:400; }
+    .loja-meta { display:flex; gap:16px; margin-top:14px; position:relative; z-index:1; padding-bottom:18px; }
+    .meta-item { display:flex; align-items:center; gap:5px; font-size:0.78rem; font-weight:500; color:rgba(255,255,255,0.8); }
 
-    /* ===== FRESQUINHO ===== */
-    .fresquinho-section {
-      background: var(--card);
-      padding: 14px 0 14px 20px;
-      border-bottom: 1px solid var(--border);
-    }
-    .fresquinho-label {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 0.72rem; font-weight: 800;
-      color: var(--red); letter-spacing: 0.08em;
-      text-transform: uppercase; margin-bottom: 12px;
-    }
-    .fresquinho-label::before {
-      content:''; width:6px; height:6px;
-      background:var(--red); border-radius:50%;
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0%,100% { opacity:1; transform:scale(1); }
-      50% { opacity:0.5; transform:scale(1.3); }
-    }
-    .fresquinho-scroll {
-      display: flex; gap: 10px;
-      overflow-x: auto; padding-right: 20px;
-      scrollbar-width: none;
-    }
+    /* DEMO BANNER */
+    .demo-banner { background:rgba(192,57,43,0.15); border:1px solid rgba(192,57,43,0.3); padding:10px 16px; text-align:center; font-size:0.78rem; font-weight:600; color:var(--red); display:none; }
+    .demo-banner.show { display:block; }
+
+    /* FRESQUINHO */
+    .fresquinho-section { background:var(--card); padding:14px 0 14px 20px; border-bottom:1px solid var(--border); display:none; }
+    .fresquinho-section.show { display:block; }
+    .fresquinho-label { display:flex; align-items:center; gap:6px; font-size:0.72rem; font-weight:800; color:var(--red); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:12px; }
+    .fresquinho-label::before { content:''; width:6px; height:6px; background:var(--red); border-radius:50%; animation:pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+    .fresquinho-scroll { display:flex; gap:10px; overflow-x:auto; padding-right:20px; scrollbar-width:none; }
     .fresquinho-scroll::-webkit-scrollbar { display:none; }
-    .fresh-item {
-      flex-shrink: 0; width: 120px; height: 150px;
-      border-radius: 12px; overflow: hidden;
-      position: relative; cursor: pointer;
-    }
-    .fresh-item img, .fresh-item video {
-      width:100%; height:100%; object-fit:cover; display:block;
-    }
-    .fresh-item-overlay {
-      position:absolute; inset:0;
-      background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%);
-    }
-    .fresh-item-timer {
-      position:absolute; top:6px; right:6px;
-      background:rgba(0,0,0,0.6); color:#fff;
-      font-size:0.65rem; font-weight:700;
-      padding:2px 7px; border-radius:50px;
-    }
-    .fresh-item-name {
-      position:absolute; bottom:6px; left:8px; right:8px;
-      font-size:0.68rem; font-weight:700; color:#fff;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .play-icon {
-      position:absolute; top:50%; left:50%;
-      transform:translate(-50%,-50%);
-      background:rgba(255,255,255,0.85); border-radius:50%;
-      width:32px; height:32px; display:flex;
-      align-items:center; justify-content:center;
-      font-size:0.9rem;
-    }
+    .fresh-item { flex-shrink:0; width:120px; height:150px; border-radius:12px; overflow:hidden; position:relative; cursor:pointer; }
+    .fresh-item img,.fresh-item video { width:100%; height:100%; object-fit:cover; display:block; }
+    .fresh-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(0,0,0,0.5) 0%,transparent 50%); }
+    .fresh-timer { position:absolute; top:6px; right:6px; background:rgba(0,0,0,0.6); color:#fff; font-size:0.65rem; font-weight:700; padding:2px 7px; border-radius:50px; }
 
-    /* ===== FILTROS CATEGORIA ===== */
-    .filtros-wrap {
-      background: var(--card);
-      padding: 12px 0 12px 20px;
-      border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; z-index: 50;
-    }
-    .filtros-scroll {
-      display: flex; gap: 8px;
-      overflow-x: auto; padding-right: 20px;
-      scrollbar-width: none;
-    }
-    .filtros-scroll::-webkit-scrollbar { display: none; }
-    .filtro-btn {
-      flex-shrink: 0;
-      background: #f0ebe4; border: none;
-      padding: 7px 16px; border-radius: 50px;
-      font-family:'Poppins',sans-serif;
-      font-size: 0.82rem; font-weight: 600; color: #555;
-      cursor: pointer; transition: background 0.2s, color 0.2s;
-      white-space: nowrap;
-    }
-    .filtro-btn.active {
-      background: var(--red); color: #fff;
-    }
+    /* FILTROS */
+    .filtros-wrap { background:var(--card); padding:12px 0 12px 20px; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; }
+    .filtros-scroll { display:flex; gap:8px; overflow-x:auto; padding-right:20px; scrollbar-width:none; }
+    .filtros-scroll::-webkit-scrollbar { display:none; }
+    .filtro-btn { flex-shrink:0; background:#f0ebe4; border:none; padding:7px 16px; border-radius:50px; font-family:'Poppins',sans-serif; font-size:0.82rem; font-weight:600; color:#555; cursor:pointer; transition:background 0.2s,color 0.2s; white-space:nowrap; }
+    .filtro-btn.active { background:var(--red); color:#fff; }
 
-    /* ===== LISTA PRODUTOS ===== */
-    .produtos-section { padding: 0 16px 100px; }
-
-    .categoria-header {
-      font-size: 0.72rem; font-weight: 800; color: var(--muted);
-      letter-spacing: 0.08em; text-transform: uppercase;
-      padding: 20px 0 10px;
-    }
-
-    .produto-card {
-      background: var(--card);
-      border-radius: 14px;
-      display: flex; gap: 12px;
-      padding: 14px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      transition: box-shadow 0.2s, transform 0.15s;
-      position: relative;
-      overflow: hidden;
-    }
-    .produto-card:active { transform: scale(0.98); }
-    .produto-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-
-    .produto-thumb {
-      width: 88px; height: 88px; flex-shrink: 0;
-      border-radius: 10px; overflow: hidden;
-    }
+    /* PRODUTOS */
+    .produtos-section { padding:0 16px 100px; }
+    .categoria-header { font-size:0.72rem; font-weight:800; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; padding:20px 0 10px; }
+    .produto-card { background:var(--card); border-radius:14px; display:flex; gap:12px; padding:14px; margin-bottom:10px; cursor:pointer; border:1px solid var(--border); transition:box-shadow 0.2s,transform 0.15s; position:relative; overflow:hidden; }
+    .produto-card:active { transform:scale(0.98); }
+    .produto-card:hover { box-shadow:0 4px 20px rgba(0,0,0,0.08); }
+    .produto-thumb { width:88px; height:88px; flex-shrink:0; border-radius:10px; overflow:hidden; }
     .produto-thumb img { width:100%; height:100%; object-fit:cover; }
-    .produto-thumb-emoji {
-      width:88px; height:88px; border-radius:10px;
-      background: #f5f0e8; display:flex;
-      align-items:center; justify-content:center;
-      font-size:2.8rem; flex-shrink:0;
-    }
-
+    .produto-thumb-emoji { width:88px; height:88px; border-radius:10px; background:#f5f0e8; display:flex; align-items:center; justify-content:center; font-size:2.8rem; flex-shrink:0; }
     .produto-body { flex:1; min-width:0; }
-    .produto-cat {
-      font-size:0.65rem; font-weight:700; color:var(--red);
-      text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px;
-    }
-    .produto-nome {
-      font-size:0.95rem; font-weight:700; color:var(--text);
-      margin-bottom:4px; line-height:1.3;
-    }
-    .produto-desc {
-      font-size:0.78rem; color:var(--muted); line-height:1.45;
-      margin-bottom:8px;
-      display:-webkit-box; -webkit-line-clamp:2;
-      -webkit-box-orient:vertical; overflow:hidden;
-    }
+    .produto-cat { font-size:0.65rem; font-weight:700; color:var(--red); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px; }
+    .produto-nome { font-size:0.95rem; font-weight:700; margin-bottom:4px; line-height:1.3; }
+    .produto-desc { font-size:0.78rem; color:var(--muted); line-height:1.45; margin-bottom:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .produto-footer { display:flex; align-items:center; justify-content:space-between; }
     .produto-preco { font-size:1rem; font-weight:800; color:var(--red); }
-    .produto-preco-de {
-      font-size:0.75rem; color:var(--muted);
-      text-decoration:line-through; margin-right:4px;
-    }
-    .btn-ver-mais {
-      background:none; border:1px solid var(--border);
-      padding:5px 12px; border-radius:50px;
-      font-family:'Poppins',sans-serif;
-      font-size:0.75rem; font-weight:600; color:#555;
-      cursor:pointer; margin-right:8px;
-    }
-    .btn-add-prod {
-      width:34px; height:34px; border-radius:50%;
-      background:var(--red); color:#fff; border:none;
-      font-size:1.3rem; cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      transition:background 0.2s;
-    }
+    .produto-preco-de { font-size:0.75rem; color:var(--muted); text-decoration:line-through; margin-right:4px; }
+    .btn-ver-mais { background:none; border:1px solid var(--border); padding:5px 12px; border-radius:50px; font-family:'Poppins',sans-serif; font-size:0.75rem; font-weight:600; color:#555; cursor:pointer; margin-right:8px; }
+    .btn-add-prod { width:34px; height:34px; border-radius:50%; background:var(--red); color:#fff; border:none; font-size:1.3rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s; }
     .btn-add-prod:hover { background:var(--red-dark); }
+    .promo-ribbon { position:absolute; top:0; left:0; background:var(--red); color:#fff; font-size:0.65rem; font-weight:800; padding:3px 10px; border-radius:0 0 8px 0; }
 
-    .promo-ribbon {
-      position:absolute; top:0; left:0;
-      background:var(--red); color:#fff;
-      font-size:0.65rem; font-weight:800;
-      padding:3px 10px; border-radius:0 0 8px 0;
-    }
-
-    /* ===== MODAL PRODUTO ===== */
-    .modal-overlay {
-      display:none; position:fixed; inset:0;
-      background:rgba(0,0,0,0.6); z-index:1000;
-      align-items:flex-end; justify-content:center;
-    }
+    /* MODAL PRODUTO */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:flex-end; justify-content:center; }
     .modal-overlay.open { display:flex; }
-    .modal-box {
-      background:#fff; border-radius:24px 24px 0 0;
-      width:100%; max-width:600px;
-      max-height:92vh; overflow-y:auto;
-    }
-    .modal-img {
-      width:100%; height:240px; object-fit:cover;
-      border-radius:24px 24px 0 0;
-    }
-    .modal-emoji-bg {
-      width:100%; height:180px;
-      background:linear-gradient(135deg,#f5f0e8,#ede5d8);
-      display:flex; align-items:center; justify-content:center;
-      font-size:5rem; border-radius:24px 24px 0 0;
-    }
-    .modal-close-btn {
-      position:sticky; top:12px; left:calc(100% - 48px);
-      display:block; width:36px; height:36px;
-      background:rgba(255,255,255,0.95); border:none;
-      border-radius:50%; font-size:1rem; cursor:pointer;
-      box-shadow:0 2px 8px rgba(0,0,0,0.15);
-      display:flex; align-items:center; justify-content:center;
-      margin:-48px 12px 0 auto; position:relative; z-index:2;
-    }
+    .modal-box { background:#fff; border-radius:24px 24px 0 0; width:100%; max-width:600px; max-height:92vh; overflow-y:auto; }
+    .modal-img { width:100%; height:240px; object-fit:cover; border-radius:24px 24px 0 0; display:block; }
+    .modal-emoji-bg { width:100%; height:180px; background:linear-gradient(135deg,#f5f0e8,#ede5d8); display:flex; align-items:center; justify-content:center; font-size:5rem; border-radius:24px 24px 0 0; }
+    .modal-close-btn { position:relative; z-index:2; display:flex; width:36px; height:36px; background:rgba(255,255,255,0.95); border:none; border-radius:50%; font-size:1rem; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.15); align-items:center; justify-content:center; margin:-48px 12px 0 auto; }
     .modal-content { padding:20px 20px 32px; }
     .modal-cat { font-size:0.72rem; font-weight:700; color:var(--red); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
     .modal-nome { font-size:1.3rem; font-weight:800; margin-bottom:10px; line-height:1.2; }
     .modal-desc { font-size:0.88rem; color:#666; line-height:1.65; margin-bottom:16px; }
     .modal-preco-wrap { margin-bottom:20px; }
-    .modal-preco-de { font-size:0.85rem; color:var(--muted); text-decoration:line-through; margin-bottom:2px; }
+    .modal-preco-de { font-size:0.85rem; color:var(--muted); text-decoration:line-through; margin-bottom:2px; display:none; }
     .modal-preco { font-size:1.6rem; font-weight:800; color:var(--red); }
     .modal-actions { display:flex; gap:12px; }
-    .btn-fechar {
-      flex:1; background:#f0ebe4; border:none;
-      padding:14px; border-radius:12px;
-      font-family:'Poppins',sans-serif;
-      font-size:0.95rem; font-weight:600; color:#555; cursor:pointer;
-    }
-    .btn-add-carr {
-      flex:2; background:var(--red); border:none;
-      padding:14px; border-radius:12px;
-      font-family:'Poppins',sans-serif;
-      font-size:0.95rem; font-weight:700; color:#fff; cursor:pointer;
-      transition:background 0.2s;
-    }
+    .btn-fechar { flex:1; background:#f0ebe4; border:none; padding:14px; border-radius:12px; font-family:'Poppins',sans-serif; font-size:0.95rem; font-weight:600; color:#555; cursor:pointer; }
+    .btn-add-carr { flex:2; background:var(--red); border:none; padding:14px; border-radius:12px; font-family:'Poppins',sans-serif; font-size:0.95rem; font-weight:700; color:#fff; cursor:pointer; transition:background 0.2s; }
     .btn-add-carr:hover { background:var(--red-dark); }
 
-    /* ===== MODAL CARRINHO ===== */
-    .carr-overlay {
-      display:none; position:fixed; inset:0;
-      background:rgba(0,0,0,0.5); z-index:1000;
-      align-items:flex-end; justify-content:center;
-    }
+    /* CARRINHO OVERLAY */
+    .carr-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:flex-end; justify-content:center; }
     .carr-overlay.open { display:flex; }
-    .carr-box {
-      background:#fff; border-radius:24px 24px 0 0;
-      width:100%; max-width:600px;
-      max-height:88vh; overflow-y:auto;
-    }
-    .carr-header {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:18px 20px; border-bottom:1px solid var(--border);
-      position:sticky; top:0; background:#fff; z-index:1;
-    }
+    .carr-box { background:#fff; border-radius:24px 24px 0 0; width:100%; max-width:600px; max-height:88vh; overflow-y:auto; }
+    .carr-header { display:flex; justify-content:space-between; align-items:center; padding:18px 20px; border-bottom:1px solid var(--border); position:sticky; top:0; background:#fff; z-index:1; }
     .carr-title { font-size:1.05rem; font-weight:700; }
-    .carr-close {
-      background:#f0ebe4; border:none; width:32px; height:32px;
-      border-radius:50%; cursor:pointer; font-size:0.9rem;
-      display:flex; align-items:center; justify-content:center;
-    }
+    .carr-close { background:#f0ebe4; border:none; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:0.9rem; display:flex; align-items:center; justify-content:center; }
     .carr-body { padding:16px 20px; }
-    .carr-item {
-      display:flex; align-items:center; gap:12px;
-      padding:12px 0; border-bottom:1px solid var(--border);
-    }
+    .carr-item { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
     .carr-item-nome { flex:1; font-size:0.9rem; font-weight:600; }
-    .carr-item-qty {
-      display:flex; align-items:center; gap:8px;
-    }
-    .qty-btn {
-      width:26px; height:26px; border-radius:50%;
-      border:1px solid var(--border); background:#fff;
-      font-size:1rem; cursor:pointer; display:flex;
-      align-items:center; justify-content:center; font-weight:700;
-    }
+    .carr-item-qty { display:flex; align-items:center; gap:8px; }
+    .qty-btn { width:26px; height:26px; border-radius:50%; border:1px solid var(--border); background:#fff; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; }
     .qty-num { font-size:0.9rem; font-weight:700; min-width:20px; text-align:center; }
     .carr-item-preco { font-size:0.9rem; font-weight:700; color:var(--red); min-width:70px; text-align:right; }
-    .carr-total-row {
-      display:flex; justify-content:space-between;
-      padding:16px 0; font-weight:800; font-size:1.05rem;
-    }
+    .carr-total-row { display:flex; justify-content:space-between; padding:16px 0; font-weight:800; font-size:1.05rem; }
     .carr-form { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
-    .carr-input {
-      width:100%; background:#faf6f1; border:1px solid var(--border);
-      border-radius:10px; padding:12px 14px;
-      font-family:'Poppins',sans-serif; font-size:0.9rem;
-      outline:none; transition:border-color 0.2s;
-    }
+    .carr-input { width:100%; background:#faf6f1; border:1px solid var(--border); border-radius:10px; padding:12px 14px; font-family:'Poppins',sans-serif; font-size:0.9rem; outline:none; transition:border-color 0.2s; }
     .carr-input:focus { border-color:var(--red); }
-    .btn-finalizar {
-      width:100%; background:var(--red); color:#fff; border:none;
-      padding:16px; border-radius:12px;
-      font-family:'Poppins',sans-serif;
-      font-weight:700; font-size:1rem; cursor:pointer;
-      transition:background 0.2s;
-    }
+    .btn-finalizar { width:100%; background:var(--red); color:#fff; border:none; padding:16px; border-radius:12px; font-family:'Poppins',sans-serif; font-weight:700; font-size:1rem; cursor:pointer; transition:background 0.2s; }
     .btn-finalizar:hover { background:var(--red-dark); }
 
-    /* ===== FAB CARRINHO ===== */
-    .carr-fab {
-      position:fixed; bottom:24px; left:50%;
-      transform:translateX(-50%);
-      background:var(--red); color:#fff; border:none;
-      border-radius:50px; padding:14px 28px;
-      font-family:'Poppins',sans-serif;
-      font-weight:700; font-size:0.95rem;
-      cursor:pointer; display:none;
-      align-items:center; gap:12px;
-      box-shadow:0 8px 28px rgba(192,57,43,0.45);
-      z-index:200; white-space:nowrap;
-      max-width:90vw;
-    }
+    /* FAB */
+    .carr-fab { position:fixed; bottom:70px; left:50%; transform:translateX(-50%); background:var(--red); color:#fff; border:none; border-radius:50px; padding:14px 24px; font-family:'Poppins',sans-serif; font-weight:700; font-size:0.95rem; cursor:pointer; display:none; align-items:center; gap:12px; box-shadow:0 8px 28px rgba(192,57,43,0.45); z-index:200; white-space:nowrap; max-width:90vw; transition:transform 0.15s; }
     .carr-fab.visible { display:flex; }
     .carr-fab-info { display:flex; flex-direction:column; align-items:flex-start; }
     .carr-fab-qtd { font-size:0.72rem; opacity:0.85; }
     .carr-fab-total { font-size:1rem; font-weight:800; }
-    .carr-fab-icon { font-size:1.2rem; }
 
-    /* ===== MEUS PEDIDOS ===== */
+    /* BOTTOM NAV */
+    .bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:600px; background:#fff; border-top:1px solid var(--border); display:flex; z-index:100; padding-bottom:env(safe-area-inset-bottom); }
+    .bnav-btn { flex:1; background:none; border:none; padding:10px 4px 8px; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; font-family:'Poppins',sans-serif; }
+    .bnav-icon { font-size:1.3rem; }
+    .bnav-label { font-size:0.62rem; font-weight:600; color:#aaa; }
+    .bnav-btn.active .bnav-label { color:var(--red); }
+
+    /* PAGES */
+    .page { display:none; padding-bottom:70px; }
+    .page.active { display:block; }
+
+    /* MEUS PEDIDOS */
     .mped-section { padding:16px; }
-    .mped-card {
-      background:var(--card); border:1px solid var(--border);
-      border-radius:14px; padding:16px; margin-bottom:10px;
-    }
+    .mped-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:10px; }
     .mped-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
     .mped-id { font-size:0.95rem; font-weight:700; }
     .mped-status { font-size:0.72rem; font-weight:700; padding:4px 12px; border-radius:50px; }
@@ -381,52 +138,17 @@
     .mped-itens { font-size:0.82rem; color:var(--muted); margin-bottom:6px; }
     .mped-total { font-size:0.9rem; font-weight:700; color:var(--red); }
 
-    /* ===== ABAS BOTTOM ===== */
-    .bottom-nav {
-      position:fixed; bottom:0; left:50%;
-      transform:translateX(-50%);
-      width:100%; max-width:600px;
-      background:#fff; border-top:1px solid var(--border);
-      display:flex; z-index:100;
-      padding-bottom:env(safe-area-inset-bottom);
-    }
-    .bnav-btn {
-      flex:1; background:none; border:none;
-      padding:10px 4px 8px;
-      display:flex; flex-direction:column;
-      align-items:center; gap:3px;
-      cursor:pointer; transition:color 0.2s;
-      font-family:'Poppins',sans-serif;
-    }
-    .bnav-icon { font-size:1.3rem; }
-    .bnav-label { font-size:0.62rem; font-weight:600; color:#aaa; }
-    .bnav-btn.active .bnav-label { color:var(--red); }
-    .bnav-btn.active .bnav-icon { filter:none; }
-
-    /* ===== PAGES ===== */
-    .page { display:none; padding-bottom:70px; }
-    .page.active { display:block; }
-
-    /* ===== EMPTY ===== */
+    /* EMPTY */
     .empty { text-align:center; padding:48px 20px; }
     .empty span { font-size:3rem; display:block; margin-bottom:12px; }
     .empty p { font-size:0.9rem; color:var(--muted); line-height:1.6; }
 
-    /* ===== LOADING ===== */
-    .loading { text-align:center; padding:40px; color:var(--muted); font-size:0.9rem; }
-
-    /* ===== DESKTOP ===== */
-    @media(min-width:601px) {
-      body { box-shadow:0 0 40px rgba(0,0,0,0.1); }
-      .bottom-nav { max-width:600px; }
-      .carr-fab { max-width:560px; }
-    }
+    @media(min-width:601px) { body { box-shadow:0 0 40px rgba(0,0,0,0.1); } .bottom-nav,.carr-fab { max-width:600px; } }
   </style>
 </head>
 <body>
 
-  <!-- HEADER LOJA -->
-  <div class="loja-header" id="loja-header">
+  <div class="loja-header">
     <div class="loja-top">
       <div class="loja-avatar" id="loja-avatar">🏪</div>
       <div class="loja-info">
@@ -435,126 +157,101 @@
       </div>
     </div>
     <div class="loja-meta">
-      <div class="meta-item"><span class="meta-icon">⏱</span> 30-45 min</div>
-      <div class="meta-item"><span class="meta-icon">⭐</span> 4.8</div>
-      <div class="meta-item"><span class="meta-icon">🛵</span> Entrega disponível</div>
+      <div class="meta-item">⏱ 30-45 min</div>
+      <div class="meta-item">⭐ 4.8</div>
+      <div class="meta-item">🛵 Entrega disponível</div>
     </div>
   </div>
 
-  <!-- PAGE: CARDÁPIO -->
-  <div class="page active" id="page-cardapio">
+  <div class="demo-banner" id="demo-banner">
+    👀 Você está visualizando uma demonstração do PEDIWAY — <a href="https://pediway.vercel.app" style="color:var(--red);font-weight:700">Criar minha loja grátis →</a>
+  </div>
 
-    <!-- Fresquinho -->
-    <div class="fresquinho-section" id="fresquinho-section" style="display:none">
+  <div class="page active" id="page-cardapio">
+    <div class="fresquinho-section" id="fresquinho-section">
       <div class="fresquinho-label">No forno de hoje</div>
       <div class="fresquinho-scroll" id="fresquinho-scroll"></div>
     </div>
-
-    <!-- Filtros -->
     <div class="filtros-wrap">
       <div class="filtros-scroll" id="filtros-scroll">
-        <button class="filtro-btn active" onclick="filtrarCategoria('todos', this)">Todos</button>
+        <button class="filtro-btn active" onclick="filtrar('todos',this)">Todos</button>
       </div>
     </div>
-
-    <!-- Produtos -->
     <div class="produtos-section" id="produtos-section">
-      <div class="loading">Carregando cardápio...</div>
+      <div class="empty"><span>🍽️</span><p>Carregando...</p></div>
     </div>
   </div>
 
-  <!-- PAGE: PROMOÇÕES -->
   <div class="page" id="page-promocoes">
     <div style="padding:16px 16px 100px">
-      <div style="padding:16px 0 12px; font-size:0.72rem; font-weight:800; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase">Promoções ativas</div>
-      <div id="promo-lista">
-        <div class="empty"><span>🔥</span><p>Nenhuma promoção ativa.</p></div>
-      </div>
+      <div style="padding:16px 0 12px;font-size:0.72rem;font-weight:800;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase">Promoções ativas</div>
+      <div id="promo-lista"><div class="empty"><span>🔥</span><p>Nenhuma promoção ativa.</p></div></div>
     </div>
   </div>
 
-  <!-- PAGE: FRESQUINHO -->
   <div class="page" id="page-fresquinho">
     <div style="padding:16px 16px 100px">
-      <div style="padding:16px 0 12px; font-size:0.72rem; font-weight:800; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase">✨ Fresquinho</div>
-      <div id="fresh-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+      <div style="padding:16px 0 12px;font-size:0.72rem;font-weight:800;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase">✨ Fresquinho</div>
+      <div id="fresh-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="empty" style="grid-column:1/-1"><span>✨</span><p>Nenhum conteúdo ainda.</p></div>
       </div>
     </div>
   </div>
 
-  <!-- PAGE: MEUS PEDIDOS -->
   <div class="page" id="page-pedidos">
-    <div class="mped-section" id="mped-lista">
-      <div style="padding:16px 0 12px; font-size:0.72rem; font-weight:800; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase">Seus pedidos</div>
-      <div class="empty"><span>📋</span><p>Nenhum pedido ainda.<br>Faça seu primeiro pedido!</p></div>
+    <div class="mped-section">
+      <div style="padding:4px 0 12px;font-size:0.72rem;font-weight:800;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase">Seus pedidos</div>
+      <div id="mped-lista"><div class="empty"><span>📋</span><p>Nenhum pedido ainda.<br>Faça seu primeiro pedido!</p></div></div>
     </div>
   </div>
 
-  <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
-    <button class="bnav-btn active" id="bnav-cardapio" onclick="irPara('cardapio')">
-      <span class="bnav-icon">🍽️</span>
-      <span class="bnav-label">Cardápio</span>
-    </button>
-    <button class="bnav-btn" id="bnav-promocoes" onclick="irPara('promocoes')">
-      <span class="bnav-icon">🔥</span>
-      <span class="bnav-label">Promoções</span>
-    </button>
-    <button class="bnav-btn" id="bnav-fresquinho" onclick="irPara('fresquinho')">
-      <span class="bnav-icon">✨</span>
-      <span class="bnav-label">Fresquinho</span>
-    </button>
-    <button class="bnav-btn" id="bnav-pedidos" onclick="irPara('pedidos')">
-      <span class="bnav-icon">📋</span>
-      <span class="bnav-label">Meus Pedidos</span>
-    </button>
+    <button class="bnav-btn active" id="bnav-cardapio" onclick="irPara('cardapio')"><span class="bnav-icon">🍽️</span><span class="bnav-label">Cardápio</span></button>
+    <button class="bnav-btn" id="bnav-promocoes" onclick="irPara('promocoes')"><span class="bnav-icon">🔥</span><span class="bnav-label">Promoções</span></button>
+    <button class="bnav-btn" id="bnav-fresquinho" onclick="irPara('fresquinho')"><span class="bnav-icon">✨</span><span class="bnav-label">Fresquinho</span></button>
+    <button class="bnav-btn" id="bnav-pedidos" onclick="irPara('pedidos')"><span class="bnav-icon">📋</span><span class="bnav-label">Meus Pedidos</span></button>
   </nav>
 
-  <!-- FAB CARRINHO -->
   <button class="carr-fab" id="carr-fab" onclick="abrirCarrinho()">
-    <span class="carr-fab-icon">🛒</span>
+    🛒
     <div class="carr-fab-info">
       <span class="carr-fab-qtd" id="fab-qtd">0 itens</span>
       <span class="carr-fab-total" id="fab-total">R$ 0,00</span>
     </div>
-    <span style="margin-left:auto; font-size:0.85rem">Ver carrinho →</span>
+    <span style="margin-left:auto;font-size:0.85rem">Ver carrinho →</span>
   </button>
 
   <!-- MODAL PRODUTO -->
-  <div class="modal-overlay" id="modal-prod" onclick="fecharModalProd(event)">
-    <div class="modal-box" id="modal-prod-box">
-      <div id="modal-prod-media"></div>
-      <button class="modal-close-btn" onclick="document.getElementById('modal-prod').classList.remove('open')">✕</button>
+  <div class="modal-overlay" id="modal-prod" onclick="if(event.target.id==='modal-prod')fecharModalProd()">
+    <div class="modal-box">
+      <div id="modal-media"></div>
+      <button class="modal-close-btn" onclick="fecharModalProd()">✕</button>
       <div class="modal-content">
         <div class="modal-cat" id="modal-cat"></div>
         <div class="modal-nome" id="modal-nome"></div>
         <div class="modal-desc" id="modal-desc"></div>
         <div class="modal-preco-wrap">
-          <div class="modal-preco-de" id="modal-preco-de" style="display:none"></div>
+          <div class="modal-preco-de" id="modal-preco-de"></div>
           <div class="modal-preco" id="modal-preco"></div>
         </div>
         <div class="modal-actions">
-          <button class="btn-fechar" onclick="document.getElementById('modal-prod').classList.remove('open')">Fechar</button>
-          <button class="btn-add-carr" id="btn-add-modal">+ Adicionar ao carrinho</button>
+          <button class="btn-fechar" onclick="fecharModalProd()">Fechar</button>
+          <button class="btn-add-carr" id="btn-modal-add">+ Adicionar ao carrinho</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- MODAL CARRINHO -->
-  <div class="carr-overlay" id="carr-overlay" onclick="fecharCarrinhoFora(event)">
+  <div class="carr-overlay" id="carr-overlay" onclick="if(event.target.id==='carr-overlay')fecharCarrinho()">
     <div class="carr-box">
       <div class="carr-header">
         <span class="carr-title">Seu pedido</span>
-        <button class="carr-close" onclick="document.getElementById('carr-overlay').classList.remove('open')">✕</button>
+        <button class="carr-close" onclick="fecharCarrinho()">✕</button>
       </div>
       <div class="carr-body">
         <div id="carr-itens"></div>
-        <div class="carr-total-row">
-          <span>Total</span>
-          <span id="carr-total-val">R$ 0,00</span>
-        </div>
+        <div class="carr-total-row"><span>Total</span><span id="carr-total-val">R$ 0,00</span></div>
         <div class="carr-form">
           <input class="carr-input" id="cli-nome" placeholder="Seu nome *">
           <input class="carr-input" id="cli-whats" placeholder="WhatsApp (opcional)">
@@ -572,76 +269,93 @@
     const SUPA_KEY = '__VITE_SUPABASE_ANON_KEY__';
     const supa = createClient(SUPA_URL, SUPA_KEY);
 
-    const slug = location.pathname.replace(/^\//, '').split('/')[0];
+    const slug = location.pathname.replace(/^\//, '').split('/')[0] || 'demo';
+    const isDemo = slug === 'demo';
+
     let estab = null;
     let todos = [];
     let carrinho = [];
-    let produtoAtual = null;
 
-    // ===== INIT =====
+    // ===== DADOS DEMO =====
+    const DEMO_ESTAB = { id:'demo', nome:'Burguer do Zé', slug:'demo' };
+    const DEMO_PRODUTOS = [
+      { id:'d1', nome:'X-Burguer Especial', descricao:'Pão brioche, carne 180g, queijo cheddar, alface, tomate e molho especial da casa. Uma explosão de sabor em cada mordida.', categoria:'LANCHES', preco:28.90, emoji:'🍔', disponivel:true, promocao:false },
+      { id:'d2', nome:'X-Bacon Duplo', descricao:'Duplo de carne artesanal, bacon crocante, queijo prato, picles e molho barbecue defumado. Para quem não tem medo de exagerar.', categoria:'LANCHES', preco:36.90, preco_original:44.90, emoji:'🍔', disponivel:true, promocao:true },
+      { id:'d3', nome:'Chicken Crispy', descricao:'Frango empanado crocante, molho honey mustard, alface americana e tomate. Leve e irresistível.', categoria:'LANCHES', preco:24.90, emoji:'🍗', disponivel:true, promocao:false },
+      { id:'d4', nome:'Batata Frita Grande', descricao:'Porção generosa de batata frita crocante com sal grosso. Acompanha nosso molho especial da casa.', categoria:'ACOMPANHAMENTOS', preco:14.90, emoji:'🍟', disponivel:true, promocao:false },
+      { id:'d5', nome:'Onion Rings', descricao:'Anéis de cebola empanados e fritos na hora. Crocantes por fora, macios por dentro.', categoria:'ACOMPANHAMENTOS', preco:16.90, emoji:'🧅', disponivel:true, promocao:false },
+      { id:'d6', nome:'Refrigerante 350ml', descricao:'Coca-Cola, Guaraná Antarctica ou Fanta Laranja gelada.', categoria:'BEBIDAS', preco:7.90, emoji:'🥤', disponivel:true, promocao:false },
+      { id:'d7', nome:'Suco Natural 400ml', descricao:'Laranja, maracujá ou limão, feito na hora com fruta fresca. Sem conservantes.', categoria:'BEBIDAS', preco:12.90, emoji:'🧃', disponivel:true, promocao:false },
+      { id:'d8', nome:'Sundae de Chocolate', descricao:'Sorvete cremoso de baunilha com calda quente de chocolate belga e granulado.', categoria:'SOBREMESAS', preco:11.90, emoji:'🍦', disponivel:true, promocao:false },
+    ];
+
     async function init() {
-      const { data } = await supa.from('estabelecimentos').select('*').eq('slug', slug).maybeSingle();
-      if (!data) {
-        document.getElementById('loja-nome').textContent = 'Loja não encontrada';
-        document.getElementById('produtos-section').innerHTML = '<div class="empty"><span>😕</span><p>Essa loja não existe ou foi removida.</p></div>';
-        return;
+      if (isDemo) {
+        estab = DEMO_ESTAB;
+        todos = DEMO_PRODUTOS;
+        document.getElementById('loja-nome').textContent = 'Burguer do Zé';
+        document.getElementById('loja-desc').textContent = 'Os melhores burguers da cidade!';
+        document.getElementById('loja-avatar').textContent = '🍔';
+        document.getElementById('demo-banner').classList.add('show');
+        document.title = 'Burguer do Zé | PEDIWAY Demo';
+        renderFiltros();
+        renderProdutos(todos);
+        renderPromocoes();
+      } else {
+        const { data } = await supa.from('estabelecimentos').select('*').eq('slug', slug).maybeSingle();
+        if (!data) {
+          document.getElementById('loja-nome').textContent = 'Loja não encontrada';
+          document.getElementById('produtos-section').innerHTML = '<div class="empty"><span>😕</span><p>Essa loja não existe.</p></div>';
+          return;
+        }
+        estab = data;
+        document.title = estab.nome + ' | PEDIWAY';
+        document.getElementById('loja-nome').textContent = estab.nome;
+        await Promise.all([carregarProdutos(), carregarFresquinho()]);
+        carregarMeusPedidos();
       }
-      estab = data;
-      document.title = estab.nome + ' | PEDIWAY';
-      document.getElementById('loja-nome').textContent = estab.nome;
-
-      await Promise.all([carregarProdutos(), carregarFresquinho()]);
-      carregarMeusPedidos();
     }
 
-    // ===== PRODUTOS =====
     async function carregarProdutos() {
       const { data } = await supa.from('produtos').select('*')
         .eq('estabelecimento_id', estab.id).eq('disponivel', true).order('categoria');
       todos = data || [];
-      renderFiltros();
-      renderProdutos(todos);
-      renderPromocoes();
+      renderFiltros(); renderProdutos(todos); renderPromocoes();
     }
 
     function renderFiltros() {
       const cats = [...new Set(todos.map(p => p.categoria || 'Outros'))];
       const wrap = document.getElementById('filtros-scroll');
-      wrap.innerHTML = `<button class="filtro-btn active" onclick="filtrarCategoria('todos', this)">Todos</button>`;
+      wrap.innerHTML = `<button class="filtro-btn active" onclick="filtrar('todos',this)">Todos</button>`;
       cats.forEach(c => {
         const btn = document.createElement('button');
-        btn.className = 'filtro-btn';
-        btn.textContent = c;
-        btn.onclick = () => filtrarCategoria(c, btn);
+        btn.className = 'filtro-btn'; btn.textContent = c;
+        btn.onclick = () => filtrar(c, btn);
         wrap.appendChild(btn);
       });
     }
 
-    window.filtrarCategoria = function(cat, btn) {
+    window.filtrar = function(cat, btn) {
       document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      const lista = cat === 'todos' ? todos : todos.filter(p => (p.categoria || 'Outros') === cat);
-      renderProdutos(lista);
+      renderProdutos(cat === 'todos' ? todos : todos.filter(p => (p.categoria||'Outros') === cat));
     };
 
     function renderProdutos(lista) {
       const el = document.getElementById('produtos-section');
-      if (!lista.length) { el.innerHTML = '<div class="empty"><span>🍽️</span><p>Nenhum produto encontrado.</p></div>'; return; }
+      if (!lista.length) { el.innerHTML = '<div class="empty"><span>🍽️</span><p>Nenhum produto.</p></div>'; return; }
       const cats = [...new Set(lista.map(p => p.categoria || 'Outros'))];
       el.innerHTML = cats.map(cat => {
-        const itens = lista.filter(p => (p.categoria || 'Outros') === cat);
-        return `
-          <div class="categoria-header">${cat}</div>
+        const itens = lista.filter(p => (p.categoria||'Outros') === cat);
+        return `<div class="categoria-header">${cat}</div>
           ${itens.map(p => `
             <div class="produto-card" onclick="abrirProduto('${p.id}')">
               ${p.promocao ? `<div class="promo-ribbon">🔥 Promoção</div>` : ''}
-              ${p.foto_url
-                ? `<div class="produto-thumb"><img src="${p.foto_url}" alt="${p.nome}" loading="lazy"></div>`
-                : `<div class="produto-thumb-emoji">${p.emoji || '🍔'}</div>`}
+              ${p.foto_url ? `<div class="produto-thumb"><img src="${p.foto_url}" alt="${p.nome}" loading="lazy"></div>` : `<div class="produto-thumb-emoji">${p.emoji||'🍔'}</div>`}
               <div class="produto-body">
-                <div class="produto-cat">${p.categoria || ''}</div>
+                <div class="produto-cat">${p.categoria||''}</div>
                 <div class="produto-nome">${p.nome}</div>
-                <div class="produto-desc">${p.descricao || ''}</div>
+                <div class="produto-desc">${p.descricao||''}</div>
                 <div class="produto-footer">
                   <div>
                     ${p.promocao && p.preco_original ? `<span class="produto-preco-de">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</span>` : ''}
@@ -664,10 +378,10 @@
       el.innerHTML = promos.map(p => `
         <div class="produto-card" onclick="abrirProduto('${p.id}')">
           <div class="promo-ribbon">🔥 Promoção</div>
-          ${p.foto_url ? `<div class="produto-thumb"><img src="${p.foto_url}" alt="${p.nome}" loading="lazy"></div>` : `<div class="produto-thumb-emoji">${p.emoji || '🍔'}</div>`}
+          ${p.foto_url ? `<div class="produto-thumb"><img src="${p.foto_url}" loading="lazy"></div>` : `<div class="produto-thumb-emoji">${p.emoji||'🍔'}</div>`}
           <div class="produto-body">
             <div class="produto-nome">${p.nome}</div>
-            <div class="produto-desc">${p.descricao || ''}</div>
+            <div class="produto-desc">${p.descricao||''}</div>
             <div class="produto-footer">
               <div>
                 ${p.preco_original ? `<span class="produto-preco-de">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</span>` : ''}
@@ -679,55 +393,91 @@
         </div>`).join('');
     }
 
-    // ===== MODAL PRODUTO =====
+    async function carregarFresquinho() {
+      const { data } = await supa.from('fresquinhos').select('*')
+        .eq('estabelecimento_id', estab.id).gt('expires_at', new Date().toISOString());
+      if (!data?.length) return;
+      document.getElementById('fresquinho-section').classList.add('show');
+      const topoEl = document.getElementById('fresquinho-scroll');
+      const pageEl = document.getElementById('fresh-grid');
+      topoEl.innerHTML = data.map(f => {
+        const rest = new Date(f.expires_at) - new Date();
+        const h = Math.floor(rest/3600000), m = Math.floor((rest%3600000)/60000);
+        return `<div class="fresh-item">
+          ${f.tipo==='video' ? `<video src="${f.url}" muted playsinline loop style="width:100%;height:100%;object-fit:cover"></video>` : `<img src="${f.url}" alt="Fresquinho" loading="lazy">`}
+          <div class="fresh-overlay"></div>
+          <div class="fresh-timer">⏱ ${h>0?h+'h':m+'min'}</div>
+        </div>`;
+      }).join('');
+      pageEl.innerHTML = data.map(f => {
+        const rest = new Date(f.expires_at) - new Date();
+        const h = Math.floor(rest/3600000), m = Math.floor((rest%3600000)/60000);
+        return `<div style="border-radius:14px;overflow:hidden;position:relative;border:1px solid var(--border)">
+          ${f.tipo==='video' ? `<video src="${f.url}" controls playsinline style="width:100%;height:180px;object-fit:cover;display:block"></video>` : `<img src="${f.url}" style="width:100%;height:180px;object-fit:cover;display:block" loading="lazy">`}
+          <div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.65);color:#fff;font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:50px">⏱ ${h>0?h+'h '+m+'min':m+'min'}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function carregarMeusPedidos() {
+      const peds = JSON.parse(localStorage.getItem(`pw_peds_${slug}`) || '[]');
+      if (!peds.length) return;
+      document.getElementById('mped-lista').innerHTML =
+        `<div style="padding:4px 0 12px;font-size:0.72rem;font-weight:800;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase">Seus pedidos</div>` +
+        peds.map(p => `
+          <div class="mped-card">
+            <div class="mped-top">
+              <span class="mped-id">#${p.id?.slice(-4)?.toUpperCase()||'----'}</span>
+              <span class="mped-status status-${p.status||'novo'}">${{novo:'NOVO',preparo:'PREPARO',pronto:'PRONTO'}[p.status||'novo']}</span>
+            </div>
+            <div class="mped-itens">${p.itens?.map(i=>`${i.qtd}x ${i.nome}`).join(' • ')||''}</div>
+            <div class="mped-total">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
+          </div>`).join('');
+    }
+
+    // MODAL PRODUTO
     window.abrirProduto = function(id) {
       const p = todos.find(x => x.id === id); if (!p) return;
-      produtoAtual = p;
       document.getElementById('modal-cat').textContent = p.categoria || '';
       document.getElementById('modal-nome').textContent = p.nome;
       document.getElementById('modal-desc').textContent = p.descricao || '';
       document.getElementById('modal-preco').textContent = `R$ ${Number(p.preco).toFixed(2).replace('.',',')}`;
-      const precoDeEl = document.getElementById('modal-preco-de');
-      if (p.promocao && p.preco_original) {
-        precoDeEl.textContent = `R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}`;
-        precoDeEl.style.display = 'block';
-      } else { precoDeEl.style.display = 'none'; }
-      document.getElementById('modal-prod-media').innerHTML = p.foto_url
+      const de = document.getElementById('modal-preco-de');
+      de.style.display = (p.promocao && p.preco_original) ? 'block' : 'none';
+      if (p.promocao && p.preco_original) de.textContent = `R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}`;
+      document.getElementById('modal-media').innerHTML = p.foto_url
         ? `<img class="modal-img" src="${p.foto_url}" alt="${p.nome}">`
-        : `<div class="modal-emoji-bg">${p.emoji || '🍔'}</div>`;
-      document.getElementById('btn-add-modal').onclick = () => { addCarrinho(id); document.getElementById('modal-prod').classList.remove('open'); };
+        : `<div class="modal-emoji-bg">${p.emoji||'🍔'}</div>`;
+      document.getElementById('btn-modal-add').onclick = () => { addCarrinho(id); fecharModalProd(); };
       document.getElementById('modal-prod').classList.add('open');
     };
+    window.fecharModalProd = () => document.getElementById('modal-prod').classList.remove('open');
 
-    window.fecharModalProd = function(e) { if (e.target.id === 'modal-prod') document.getElementById('modal-prod').classList.remove('open'); };
-
-    // ===== CARRINHO =====
+    // CARRINHO
     window.addCarrinho = function(id) {
       const p = todos.find(x => x.id === id); if (!p) return;
       const ex = carrinho.find(c => c.id === id);
       if (ex) ex.qtd++; else carrinho.push({ id, nome:p.nome, preco:p.preco, qtd:1 });
       atualizarFab();
-      // Feedback visual
       const fab = document.getElementById('carr-fab');
       fab.style.transform = 'translateX(-50%) scale(1.05)';
       setTimeout(() => fab.style.transform = 'translateX(-50%) scale(1)', 150);
     };
 
     function atualizarFab() {
-      const qtd   = carrinho.reduce((s,c) => s+c.qtd, 0);
-      const total = carrinho.reduce((s,c) => s+c.preco*c.qtd, 0);
-      const fab   = document.getElementById('carr-fab');
+      const qtd = carrinho.reduce((s,c) => s+c.qtd, 0);
+      const tot = carrinho.reduce((s,c) => s+c.preco*c.qtd, 0);
       document.getElementById('fab-qtd').textContent = `${qtd} ${qtd===1?'item':'itens'}`;
-      document.getElementById('fab-total').textContent = `R$ ${total.toFixed(2).replace('.',',')}`;
-      fab.classList.toggle('visible', qtd > 0);
+      document.getElementById('fab-total').textContent = `R$ ${tot.toFixed(2).replace('.',',')}`;
+      document.getElementById('carr-fab').classList.toggle('visible', qtd > 0);
     }
 
     window.abrirCarrinho = function() { renderCarrinho(); document.getElementById('carr-overlay').classList.add('open'); };
-    window.fecharCarrinhoFora = function(e) { if (e.target.id === 'carr-overlay') document.getElementById('carr-overlay').classList.remove('open'); };
+    window.fecharCarrinho = () => document.getElementById('carr-overlay').classList.remove('open');
 
     function renderCarrinho() {
-      const el    = document.getElementById('carr-itens');
-      const total = carrinho.reduce((s,c) => s+c.preco*c.qtd, 0);
+      const el  = document.getElementById('carr-itens');
+      const tot = carrinho.reduce((s,c) => s+c.preco*c.qtd, 0);
       el.innerHTML = carrinho.map(c => `
         <div class="carr-item">
           <span class="carr-item-nome">${c.nome}</span>
@@ -738,18 +488,19 @@
           </div>
           <span class="carr-item-preco">R$ ${(c.preco*c.qtd).toFixed(2).replace('.',',')}</span>
         </div>`).join('');
-      document.getElementById('carr-total-val').textContent = `R$ ${total.toFixed(2).replace('.',',')}`;
+      document.getElementById('carr-total-val').textContent = `R$ ${tot.toFixed(2).replace('.',',')}`;
     }
 
-    window.mudarQtd = function(id, delta) {
+    window.mudarQtd = function(id, d) {
       const item = carrinho.find(c => c.id === id); if (!item) return;
-      item.qtd += delta;
+      item.qtd += d;
       if (item.qtd <= 0) carrinho = carrinho.filter(c => c.id !== id);
       renderCarrinho(); atualizarFab();
-      if (!carrinho.length) document.getElementById('carr-overlay').classList.remove('open');
+      if (!carrinho.length) fecharCarrinho();
     };
 
     window.finalizarPedido = async function() {
+      if (isDemo) { alert('🎯 Demo! Em uma loja real o pedido seria enviado ao estabelecimento.\n\nCrie sua loja grátis em pediway.vercel.app'); return; }
       const nome = document.getElementById('cli-nome')?.value.trim();
       if (!nome) { alert('Digite seu nome para continuar.'); return; }
       const total = carrinho.reduce((s,c) => s+c.preco*c.qtd, 0);
@@ -768,8 +519,7 @@
         const peds = JSON.parse(localStorage.getItem(`pw_peds_${slug}`) || '[]');
         peds.unshift({ id:data.id, itens, total, status:'novo' });
         localStorage.setItem(`pw_peds_${slug}`, JSON.stringify(peds.slice(0,20)));
-        carrinho = []; atualizarFab();
-        document.getElementById('carr-overlay').classList.remove('open');
+        carrinho = []; atualizarFab(); fecharCarrinho();
         alert('✅ Pedido feito! Acompanhe em "Meus Pedidos".');
         carregarMeusPedidos();
       } catch(e) {
@@ -779,62 +529,7 @@
       }
     };
 
-    // ===== FRESQUINHO =====
-    async function carregarFresquinho() {
-      const { data } = await supa.from('fresquinhos').select('*')
-        .eq('estabelecimento_id', estab.id)
-        .gt('expires_at', new Date().toISOString());
-      if (!data?.length) return;
-
-      // Seção no topo do cardápio
-      document.getElementById('fresquinho-section').style.display = 'block';
-      document.getElementById('fresquinho-scroll').innerHTML = data.map(f => {
-        const rest = new Date(f.expires_at) - new Date();
-        const h = Math.floor(rest/3600000), m = Math.floor((rest%3600000)/60000);
-        const tempo = h>0?`${h}h`:m+'min';
-        return `<div class="fresh-item">
-          ${f.tipo==='video'
-            ? `<video src="${f.url}" muted playsinline loop style="width:100%;height:100%;object-fit:cover"></video><div class="play-icon">▶</div>`
-            : `<img src="${f.url}" alt="Fresquinho" loading="lazy">`}
-          <div class="fresh-item-overlay"></div>
-          <div class="fresh-item-timer">⏱ ${tempo}</div>
-        </div>`;
-      }).join('');
-
-      // Página Fresquinho
-      document.getElementById('fresh-grid').innerHTML = data.map(f => {
-        const rest = new Date(f.expires_at) - new Date();
-        const h = Math.floor(rest/3600000), m = Math.floor((rest%3600000)/60000);
-        return `<div style="border-radius:14px;overflow:hidden;position:relative;background:#fff;border:1px solid var(--border)">
-          ${f.tipo==='video'
-            ? `<video src="${f.url}" controls playsinline style="width:100%;height:180px;object-fit:cover;display:block"></video>`
-            : `<img src="${f.url}" alt="Fresquinho" style="width:100%;height:180px;object-fit:cover;display:block" loading="lazy">`}
-          <div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.65);color:#fff;font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:50px">⏱ ${h>0?h+'h '+m+'min':m+'min'}</div>
-        </div>`;
-      }).join('');
-    }
-
-    // ===== MEUS PEDIDOS =====
-    function carregarMeusPedidos() {
-      const peds = JSON.parse(localStorage.getItem(`pw_peds_${slug}`) || '[]');
-      const el   = document.getElementById('mped-lista');
-      const header = `<div style="padding:16px 0 12px;font-size:0.72rem;font-weight:800;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase">Seus pedidos</div>`;
-      if (!peds.length) {
-        el.innerHTML = header + '<div class="empty"><span>📋</span><p>Nenhum pedido ainda.<br>Faça seu primeiro pedido!</p></div>';
-        return;
-      }
-      el.innerHTML = header + peds.map(p => `
-        <div class="mped-card">
-          <div class="mped-top">
-            <span class="mped-id">#${p.id?.slice(-4)?.toUpperCase() || '----'}</span>
-            <span class="mped-status status-${p.status||'novo'}">${{novo:'NOVO',preparo:'PREPARO',pronto:'PRONTO'}[p.status||'novo']}</span>
-          </div>
-          <div class="mped-itens">${p.itens?.map(i=>`${i.qtd}x ${i.nome}`).join(' • ')||''}</div>
-          <div class="mped-total">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
-        </div>`).join('');
-    }
-
-    // ===== NAVEGAÇÃO =====
+    // NAVEGAÇÃO
     window.irPara = function(page) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
