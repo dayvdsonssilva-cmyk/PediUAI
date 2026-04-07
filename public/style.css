@@ -517,7 +517,7 @@ h1 {
   transition: border-color 0.2s;
   resize: vertical;
 }
-.input-light:focus { border-color: #FF5C00; }
+.input-light:focus { border-color: #E63946; }
 .input-light::placeholder { color: #bbb; }
 
 /* ===== MODAL ===== */
