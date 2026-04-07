@@ -24,7 +24,8 @@
     <p>Crie sua loja em minutos, compartilhe o link e receba pedidos direto no celular.<br>Sem comissão por venda — só uma mensalidade justa.</p>
     <div class="hero-actions">
       <button class="btn-primary big" onclick="goTo('s-register')">Criar minha loja →</button>
-      <button class="btn-ghost-dark big" onclick="openDemo()">Ver demo de cliente</button>
+      <button class="btn-ghost-dark big" onclick="openDemo()">Ver demo do painel</button>
+      <button class="btn-ghost-dark big" onclick="openDemoCliente()">Ver demo do cardápio</button>
     </div>
     <div class="stats">
       <div><strong>R$0</strong><span>comissão por pedido</span></div>
@@ -98,7 +99,7 @@
       <div style="font-size:3.5rem;margin-bottom:16px">🎉</div>
       <h2>Conta criada!</h2>
       <p class="auth-sub" style="font-size:0.95rem;line-height:1.7;margin-bottom:24px">
-        Seu cadastro foi realizado com sucesso.<br>Faça login para começar!
+        Cadastro realizado com sucesso.<br>Faça login para começar!
       </p>
       <button class="btn-primary full" onclick="goTo('s-login')" style="margin-top:0">Fazer login →</button>
     </div>
@@ -112,7 +113,7 @@
     <div class="logo-light">PEDI<span>WAY</span></div>
     <div class="header-right">
       <span class="dash-store-name" id="dash-store-name">Meu Estabelecimento</span>
-      <button class="btn-sair" onclick="localStorage.removeItem('pw_estab');goTo('s-landing')">Sair</button>
+      <button class="btn-sair" onclick="window._isDemo=false;localStorage.removeItem('pw_estab');goTo('s-landing')">Sair</button>
     </div>
   </header>
 
@@ -185,20 +186,22 @@
       <div class="fresquinho-header">
         <div>
           <h3>✨ Fresquinho</h3>
-          <p style="font-size:0.82rem;color:#888;margin-top:4px">Fotos e vídeos do seu estabelecimento — somem em 4 horas</p>
+          <p style="font-size:0.82rem;color:#888;margin-top:4px">Fotos e vídeos — somem automaticamente em 4 horas</p>
         </div>
         <button class="btn-primary" onclick="document.getElementById('fresh-input').click()">+ Postar</button>
         <input type="file" id="fresh-input" accept="image/*,video/*" style="display:none" onchange="postarFresquinho(event)">
       </div>
       <div class="fresquinho-info">
-        📸 O conteúdo fica visível para seus clientes por <strong>4 horas</strong> e some automaticamente. Máx. 50MB por arquivo.
+        📸 O conteúdo fica visível para seus clientes por <strong>4 horas</strong> e some automaticamente.
       </div>
-      <div class="upload-area" onclick="document.getElementById('fresh-input').click()">
-        <span class="upload-icon">📷</span>
-        <p>Clique para adicionar foto ou vídeo</p>
-        <span>JPG, PNG, MP4 • Máx. 50MB</span>
+      <!-- Stories-style upload area quando vazio -->
+      <div class="stories-upload-area" onclick="document.getElementById('fresh-input').click()">
+        <div class="story-add-btn">
+          <span class="story-plus">+</span>
+        </div>
+        <span class="story-add-label">Adicionar</span>
       </div>
-      <div class="fresquinho-grid" id="fresquinho-grid"></div>
+      <div class="fresquinho-stories" id="fresquinho-grid"></div>
     </div>
   </div>
 
@@ -217,8 +220,6 @@
     <div class="dash-container">
       <h3>Configurações</h3>
       <div class="config-card" style="margin-top:24px">
-
-        <!-- LOGO -->
         <div class="form-group-light">
           <label>Logo do estabelecimento</label>
           <div class="logo-upload-wrap" onclick="document.getElementById('logo-input').click()">
@@ -226,34 +227,28 @@
             <div id="logo-placeholder-text" class="logo-upload-placeholder">
               <span style="font-size:2rem">🏪</span>
               <span style="font-size:0.82rem;color:#aaa;margin-top:6px">Clique para adicionar logo</span>
-              <span style="font-size:0.72rem;color:#bbb">JPG, PNG • Recomendado: 400x400px</span>
+              <span style="font-size:0.72rem;color:#bbb">Recomendado: 400x400px</span>
             </div>
           </div>
           <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="previewLogo(event)">
-          <p style="font-size:0.75rem;color:#aaa;margin-top:6px">A logo aparece no topo do cardápio do seu cliente</p>
         </div>
-
         <div class="form-group-light">
           <label>Nome do estabelecimento</label>
           <input type="text" class="input-light" id="cfg-nome" placeholder="Burguer do Zé">
         </div>
-
         <div class="form-group-light">
           <label>Descrição (aparece no cardápio)</label>
           <input type="text" class="input-light" id="cfg-desc" placeholder="Os melhores burguers da cidade!">
         </div>
-
         <div class="form-group-light">
           <label>Link do cardápio</label>
           <input type="text" class="input-light" id="cfg-slug" placeholder="meu-estabelecimento" oninput="atualizarCfgLink(this.value)">
           <div class="link-preview-light" id="cfg-link-preview">pediway.vercel.app/meu-link</div>
         </div>
-
         <div class="form-group-light">
           <label>WhatsApp para notificações</label>
           <input type="text" class="input-light" id="cfg-whats" placeholder="(11) 99999-9999">
         </div>
-
         <button class="btn-primary" onclick="salvarConfig()">Salvar configurações</button>
       </div>
     </div>
