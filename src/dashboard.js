@@ -1,79 +1,85 @@
 // src/dashboard.js
-import { showToast, gerarSlug } from './utils.js';
+import { showToast } from './utils.js';
+import { getSupa } from './supabase.js';
 
 const EMOJIS = ['🍔','🍕','🌮','🥪','🍜','🥗','🍗','🥩','🫕','🥘',
                  '🍱','🧆','🍣','🍦','🧁','🎂','🥤','🧃','☕','🧋',
                  '🍺','🍷','🥂','🫖','🍹','🔥','⭐','💎','🎯','🏆'];
 
-const FRESH_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 horas
-
-let cardapio = JSON.parse(localStorage.getItem('pw_cardapio') || '[]');
 let emojiSelecionado = '🍔';
-let fotoBase64 = null;
+let fotoFile = null;
 
-export function initDashboard() {
-  // Restaura nome salvo
-  const nome = localStorage.getItem('pw_nome') || '';
-  const slug = localStorage.getItem('pw_slug') || '';
-  if (nome) {
-    const storeEl = document.getElementById('dash-store-name');
-    if (storeEl) storeEl.textContent = nome;
+function getEstab() {
+  return window._estab || JSON.parse(localStorage.getItem('pw_estab') || 'null');
+}
+
+export async function initDashboard() {
+  const estab = getEstab();
+  if (estab) {
+    const el = document.getElementById('dash-store-name');
+    if (el) el.textContent = estab.nome;
+    const linkEl = document.getElementById('link-url');
+    if (linkEl) linkEl.textContent = `pediway.com.br/${estab.slug}`;
     const cfgNome = document.getElementById('cfg-nome');
-    if (cfgNome) cfgNome.value = nome;
-  }
-  if (slug) {
-    const url = `pediway.com.br/${slug}`;
-    const linkUrl = document.getElementById('link-url');
+    if (cfgNome) cfgNome.value = estab.nome;
+    const cfgSlug = document.getElementById('cfg-slug');
+    if (cfgSlug) cfgSlug.value = estab.slug;
     const cfgLink = document.getElementById('cfg-link-preview');
-    if (linkUrl) linkUrl.textContent = url;
-    if (cfgLink) cfgLink.textContent = url;
+    if (cfgLink) cfgLink.textContent = `pediway.com.br/${estab.slug}`;
+    const cfgWhats = document.getElementById('cfg-whats');
+    if (cfgWhats && estab.whatsapp) cfgWhats.value = estab.whatsapp;
   }
-
-  renderCardapio();
+  await renderCardapio();
+  await renderFresquinho();
+  await renderPedidos();
   renderEmojiGrid();
-  renderFresquinho();
-
-  // Atualiza timers do fresquinho a cada minuto
-  setInterval(renderFresquinho, 60000);
 }
 
 // ===== CARDÁPIO =====
-function renderCardapio() {
-  const grid = document.getElementById('cardapio-grid');
+async function renderCardapio() {
+  const estab = getEstab();
+  const grid  = document.getElementById('cardapio-grid');
   const statItens = document.getElementById('stat-itens');
-  if (statItens) statItens.textContent = cardapio.length;
-  if (!grid) return;
+  if (!grid || !estab) return;
 
-  if (!cardapio.length) {
-    grid.innerHTML = `
-      <div class="empty-state-light" style="grid-column:1/-1">
-        <span>🍽️</span>
-        <p>Nenhum item ainda.<br>Adicione seu primeiro produto!</p>
-      </div>`;
+  const { data: produtos } = await getSupa()
+    .from('produtos').select('*')
+    .eq('estabelecimento_id', estab.id)
+    .order('created_at', { ascending: false });
+
+  if (statItens) statItens.textContent = produtos?.length || 0;
+
+  if (!produtos?.length) {
+    grid.innerHTML = `<div class="empty-state-light" style="grid-column:1/-1">
+      <span>🍽️</span><p>Nenhum item ainda.<br>Adicione seu primeiro produto!</p></div>`;
     return;
   }
 
-  grid.innerHTML = cardapio.map((item, i) => `
+  grid.innerHTML = produtos.map(p => `
     <div class="item-card">
       <div class="item-card-img">
-        ${item.foto
-          ? `<img class="item-img" src="${item.foto}" alt="${item.nome}">`
-          : `<div class="item-emoji-bg">${item.emoji || '🍔'}</div>`}
-        <span class="item-disponivel">Disponível</span>
+        ${p.foto_url
+          ? `<img class="item-img" src="${p.foto_url}" alt="${p.nome}">`
+          : `<div class="item-emoji-bg">${p.emoji || '🍔'}</div>`}
+        <span class="item-disponivel">${p.disponivel ? 'Disponível' : 'Indisponível'}</span>
+        ${p.promocao ? `<span class="item-promo-badge">🔥 Promoção</span>` : ''}
       </div>
       <div class="item-body">
-        <div class="item-categoria">${item.categoria || 'SEM CATEGORIA'}</div>
-        <div class="item-nome">${item.nome}</div>
-        <div class="item-desc-text">${item.descricao || ''}</div>
+        <div class="item-categoria">${p.categoria || 'SEM CATEGORIA'}</div>
+        <div class="item-nome">${p.nome}</div>
+        <div class="item-desc-text">${p.descricao || ''}</div>
         <div class="item-footer">
-          <div class="item-preco">R$ ${Number(item.preco).toFixed(2).replace('.', ',')}</div>
+          <div>
+            ${p.promocao && p.preco_original
+              ? `<div class="item-preco-original">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</div>` : ''}
+            <div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>
+          </div>
           <div class="item-acoes">
-            <button class="btn-icon danger" onclick="deletarItem(${i})" title="Remover">🗑️</button>
+            <button class="btn-icon danger" onclick="deletarItem('${p.id}')">🗑️</button>
           </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function renderEmojiGrid() {
@@ -81,41 +87,29 @@ function renderEmojiGrid() {
   if (!grid) return;
   grid.innerHTML = EMOJIS.map(e => `
     <button class="emoji-btn ${e === emojiSelecionado ? 'selected' : ''}"
-      onclick="selecionarEmoji('${e}', this)">${e}</button>
-  `).join('');
+      onclick="selecionarEmoji('${e}', this)">${e}</button>`).join('');
 }
 
-// ===== MODAL ITEM =====
 export function abrirModalItem() {
   document.getElementById('modal-item').classList.add('open');
-  document.getElementById('item-nome').value  = '';
-  document.getElementById('item-desc').value  = '';
-  document.getElementById('item-cat').value   = '';
-  document.getElementById('item-preco').value = '';
+  ['item-nome','item-desc','item-cat','item-preco','item-preco-orig'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const promo = document.getElementById('item-promocao');
+  if (promo) promo.checked = false;
   document.getElementById('foto-preview').innerHTML = '<span>📷 Clique para adicionar foto</span>';
-  fotoBase64 = null;
-  emojiSelecionado = '🍔';
+  fotoFile = null; emojiSelecionado = '🍔';
   renderEmojiGrid();
 }
 
-export function fecharModal() {
-  document.getElementById('modal-item').classList.remove('open');
-}
-
-export function fecharModalFora(e) {
-  if (e.target.id === 'modal-item') fecharModal();
-}
+export function fecharModal() { document.getElementById('modal-item').classList.remove('open'); }
+export function fecharModalFora(e) { if (e.target.id === 'modal-item') fecharModal(); }
 
 export function previewFoto(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    fotoBase64 = e.target.result;
-    document.getElementById('foto-preview').innerHTML =
-      `<img src="${fotoBase64}" style="width:100%;height:100%;object-fit:cover;border-radius:10px">`;
-  };
-  reader.readAsDataURL(file);
+  const file = event.target.files[0]; if (!file) return;
+  fotoFile = file;
+  document.getElementById('foto-preview').innerHTML =
+    `<img src="${URL.createObjectURL(file)}" style="width:100%;height:100%;object-fit:cover;border-radius:10px">`;
 }
 
 export function selecionarEmoji(emoji, btn) {
@@ -124,122 +118,176 @@ export function selecionarEmoji(emoji, btn) {
   btn.classList.add('selected');
 }
 
-export function salvarItem() {
+export async function salvarItem() {
+  const estab = getEstab();
+  if (!estab) return showToast('Faça login novamente.', 'error');
   const nome  = document.getElementById('item-nome')?.value.trim();
-  const preco = document.getElementById('item-preco')?.value;
-  if (!nome)  return showToast('Digite o nome do item.', 'error');
-  if (!preco) return showToast('Digite o preço do item.', 'error');
+  const preco = parseFloat(document.getElementById('item-preco')?.value);
+  if (!nome)        return showToast('Digite o nome do item.', 'error');
+  if (isNaN(preco)) return showToast('Digite o preço.', 'error');
 
-  cardapio.push({
-    nome,
-    descricao: document.getElementById('item-desc')?.value.trim(),
-    categoria: document.getElementById('item-cat')?.value.trim().toUpperCase(),
-    preco:     parseFloat(preco),
-    emoji:     emojiSelecionado,
-    foto:      fotoBase64,
-  });
+  const btn = document.querySelector('#modal-item .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
 
-  localStorage.setItem('pw_cardapio', JSON.stringify(cardapio));
-  renderCardapio();
-  fecharModal();
-  showToast('Item adicionado! ✅');
+  try {
+    let foto_url = null;
+    if (fotoFile) {
+      const ext  = fotoFile.name.split('.').pop();
+      const path = `${estab.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await getSupa().storage.from('fotos').upload(path, fotoFile, { upsert: true });
+      if (upErr) throw new Error('Erro no upload: ' + upErr.message);
+      foto_url = getSupa().storage.from('fotos').getPublicUrl(path).data.publicUrl;
+    }
+    const promocao   = document.getElementById('item-promocao')?.checked || false;
+    const preco_orig = parseFloat(document.getElementById('item-preco-orig')?.value) || null;
+
+    const { error } = await getSupa().from('produtos').insert({
+      estabelecimento_id: estab.id, nome,
+      descricao: document.getElementById('item-desc')?.value.trim(),
+      categoria: document.getElementById('item-cat')?.value.trim().toUpperCase(),
+      preco, preco_original: promocao ? preco_orig : null,
+      foto_url, emoji: emojiSelecionado, disponivel: true, promocao,
+    });
+    if (error) throw new Error(error.message);
+    await renderCardapio(); fecharModal(); showToast('Item adicionado! ✅');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Salvar item'; }
+  }
 }
 
-export function deletarItem(index) {
-  if (!confirm('Remover este item do cardápio?')) return;
-  cardapio.splice(index, 1);
-  localStorage.setItem('pw_cardapio', JSON.stringify(cardapio));
-  renderCardapio();
-  showToast('Item removido.');
+export async function deletarItem(id) {
+  if (!confirm('Remover este item?')) return;
+  await getSupa().from('produtos').delete().eq('id', id);
+  await renderCardapio(); showToast('Item removido.');
 }
 
 // ===== FRESQUINHO =====
-function getFresquinhos() {
-  const raw = JSON.parse(localStorage.getItem('pw_fresquinho') || '[]');
-  const agora = Date.now();
-  // Filtra expirados
-  const validos = raw.filter(f => agora - f.timestamp < FRESH_EXPIRY_MS);
-  if (validos.length !== raw.length) {
-    localStorage.setItem('pw_fresquinho', JSON.stringify(validos));
-  }
-  return validos;
-}
+async function renderFresquinho() {
+  const estab = getEstab();
+  const grid  = document.getElementById('fresquinho-grid');
+  if (!grid || !estab) return;
 
-function formatarTempoRestante(timestamp) {
-  const restante = FRESH_EXPIRY_MS - (Date.now() - timestamp);
-  if (restante <= 0) return 'Expirado';
-  const horas   = Math.floor(restante / 3600000);
-  const minutos = Math.floor((restante % 3600000) / 60000);
-  return horas > 0 ? `${horas}h ${minutos}min` : `${minutos}min`;
-}
+  const { data } = await getSupa().from('fresquinhos').select('*')
+    .eq('estabelecimento_id', estab.id)
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false });
 
-function renderFresquinho() {
-  const grid = document.getElementById('fresquinho-grid');
-  if (!grid) return;
-  const fresquinhos = getFresquinhos();
-
-  if (!fresquinhos.length) {
-    grid.innerHTML = `
-      <div class="empty-state-light" style="grid-column:1/-1">
-        <span>✨</span>
-        <p>Nenhum conteúdo postado ainda.<br>Mostre seu estabelecimento para os clientes!</p>
-      </div>`;
+  if (!data?.length) {
+    grid.innerHTML = `<div class="empty-state-light" style="grid-column:1/-1">
+      <span>✨</span><p>Nenhum conteúdo ainda.<br>Mostre seu estabelecimento!</p></div>`;
     return;
   }
 
-  grid.innerHTML = fresquinhos.map((f, i) => `
-    <div class="fresquinho-card">
+  grid.innerHTML = data.map(f => {
+    const restMs  = new Date(f.expires_at) - new Date();
+    const horas   = Math.floor(restMs / 3600000);
+    const minutos = Math.floor((restMs % 3600000) / 60000);
+    return `<div class="fresquinho-card">
       ${f.tipo === 'video'
-        ? `<video class="fresquinho-media-video" src="${f.src}" controls playsinline></video>`
-        : `<img class="fresquinho-media" src="${f.src}" alt="Fresquinho">`}
-      <div class="fresquinho-timer">⏱ ${formatarTempoRestante(f.timestamp)}</div>
+        ? `<video class="fresquinho-media-video" src="${f.url}" controls playsinline></video>`
+        : `<img class="fresquinho-media" src="${f.url}" alt="Fresquinho">`}
+      <div class="fresquinho-timer">⏱ ${horas > 0 ? horas+'h '+minutos+'min' : minutos+'min'}</div>
       <div class="fresquinho-footer">
-        <span class="fresquinho-desc">${f.descricao || ''}</span>
-        <button class="btn-remover-fresh" onclick="removerFresquinho(${i})" title="Remover">🗑️</button>
+        <button class="btn-remover-fresh" onclick="removerFresquinho('${f.id}')">🗑️</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
-export function postarFresquinho(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const maxSize = 50 * 1024 * 1024; // 50MB
-  if (file.size > maxSize) return showToast('Arquivo muito grande. Máx: 50MB', 'error');
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const fresquinhos = getFresquinhos();
-    fresquinhos.unshift({
-      src:       e.target.result,
-      tipo:      file.type.startsWith('video') ? 'video' : 'foto',
-      timestamp: Date.now(),
-      descricao: '',
-    });
-    localStorage.setItem('pw_fresquinho', JSON.stringify(fresquinhos));
-    renderFresquinho();
-    showToast('Conteúdo postado! Fica disponível por 4h ✨');
-  };
-  reader.readAsDataURL(file);
+export async function postarFresquinho(event) {
+  const estab = getEstab(); const file = event.target.files[0];
+  if (!file || !estab) return;
+  if (file.size > 50 * 1024 * 1024) return showToast('Máx. 50MB', 'error');
+  showToast('Enviando...');
+  const ext  = file.name.split('.').pop();
+  const path = `${estab.id}/fresh_${Date.now()}.${ext}`;
+  const tipo = file.type.startsWith('video') ? 'video' : 'foto';
+  const { error } = await getSupa().storage.from('fotos').upload(path, file, { upsert: true });
+  if (error) return showToast('Erro: ' + error.message, 'error');
+  const url = getSupa().storage.from('fotos').getPublicUrl(path).data.publicUrl;
+  await getSupa().from('fresquinhos').insert({
+    estabelecimento_id: estab.id, url, tipo,
+    expires_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+  });
+  await renderFresquinho();
+  showToast('Postado! Disponível por 4h ✨');
   event.target.value = '';
 }
 
-export function removerFresquinho(index) {
-  const fresquinhos = getFresquinhos();
-  fresquinhos.splice(index, 1);
-  localStorage.setItem('pw_fresquinho', JSON.stringify(fresquinhos));
-  renderFresquinho();
-  showToast('Conteúdo removido.');
+export async function removerFresquinho(id) {
+  await getSupa().from('fresquinhos').delete().eq('id', id);
+  await renderFresquinho(); showToast('Removido.');
 }
 
-// Expõe globalmente
-window.abrirModalItem    = abrirModalItem;
-window.fecharModal       = fecharModal;
-window.fecharModalFora   = fecharModalFora;
-window.previewFoto       = previewFoto;
-window.selecionarEmoji   = selecionarEmoji;
-window.salvarItem        = salvarItem;
-window.deletarItem       = deletarItem;
-window.postarFresquinho  = postarFresquinho;
-window.removerFresquinho = removerFresquinho;
+// ===== PEDIDOS =====
+async function renderPedidos() {
+  const estab = getEstab(); if (!estab) return;
+  const { data: pedidos } = await getSupa().from('pedidos').select('*')
+    .eq('estabelecimento_id', estab.id)
+    .order('created_at', { ascending: false }).limit(50);
+
+  const hoje    = new Date().toDateString();
+  const pedHoje = pedidos?.filter(p => new Date(p.created_at).toDateString() === hoje) || [];
+  const fatHoje = pedHoje.reduce((s, p) => s + Number(p.total || 0), 0);
+
+  const statPed = document.getElementById('stat-pedidos');
+  const statFat = document.getElementById('stat-faturamento');
+  if (statPed) statPed.textContent = pedHoje.length;
+  if (statFat) statFat.textContent = `R$ ${fatHoje.toFixed(2).replace('.', ',')}`;
+
+  const renderCard = p => {
+    const cls = { novo: 'status-novo', preparo: 'status-preparo', pronto: 'status-pronto' }[p.status] || 'status-novo';
+    const lbl = { novo: 'NOVO', preparo: 'PREPARO', pronto: 'PRONTO' }[p.status] || 'NOVO';
+    const min = Math.floor((Date.now() - new Date(p.created_at)) / 60000);
+    return `<div class="pedido-card">
+      <div class="pedido-top">
+        <div>
+          <div class="pedido-id">#${p.id.slice(-4).toUpperCase()} — ${p.cliente_nome || 'Cliente'}</div>
+          <div class="pedido-tempo">há ${min < 1 ? 'menos de 1' : min} min</div>
+        </div>
+        <span class="pedido-status ${cls}">${lbl}</span>
+      </div>
+      <div class="pedido-itens">${Array.isArray(p.itens) ? p.itens.map(i => `${i.qtd}x ${i.nome}`).join(' • ') : ''}</div>
+      <div class="pedido-total">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
+    </div>`;
+  };
+
+  const listUlt = document.getElementById('ultimos-pedidos');
+  const listTod = document.getElementById('todos-pedidos');
+  if (listUlt && pedHoje.length) listUlt.innerHTML = pedHoje.slice(0,3).map(renderCard).join('');
+  if (listTod && pedidos?.length) listTod.innerHTML = pedidos.map(renderCard).join('');
+}
+
+// ===== CONFIGURAÇÕES =====
+export async function salvarConfig() {
+  const estab = getEstab(); if (!estab) return;
+  const nome  = document.getElementById('cfg-nome')?.value.trim();
+  const slug  = document.getElementById('cfg-slug')?.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  const whats = document.getElementById('cfg-whats')?.value.trim();
+  if (!nome || !slug) return showToast('Preencha nome e link.', 'error');
+
+  if (slug !== estab.slug) {
+    const { data: existe } = await getSupa().from('estabelecimentos').select('id').eq('slug', slug).maybeSingle();
+    if (existe) return showToast('Esse link já está em uso. Escolha outro.', 'error');
+  }
+
+  const { error } = await getSupa().from('estabelecimentos').update({ nome, slug, whatsapp: whats }).eq('id', estab.id);
+  if (error) return showToast('Erro: ' + error.message, 'error');
+
+  const novoEstab = { ...estab, nome, slug, whatsapp: whats };
+  window._estab = novoEstab;
+  localStorage.setItem('pw_estab', JSON.stringify(novoEstab));
+  document.getElementById('dash-store-name').textContent = nome;
+  document.getElementById('link-url').textContent = `pediway.com.br/${slug}`;
+  document.getElementById('cfg-link-preview').textContent = `pediway.com.br/${slug}`;
+  showToast('Salvo! ✅');
+}
+
+window.abrirModalItem = abrirModalItem; window.fecharModal = fecharModal;
+window.fecharModalFora = fecharModalFora; window.previewFoto = previewFoto;
+window.selecionarEmoji = selecionarEmoji; window.salvarItem = salvarItem;
+window.deletarItem = deletarItem; window.postarFresquinho = postarFresquinho;
+window.removerFresquinho = removerFresquinho; window.salvarConfig = salvarConfig;
+window.initDashboard = initDashboard;
