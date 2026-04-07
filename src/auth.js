@@ -110,22 +110,20 @@ export async function doLogin() {
   if (btn) { btn.disabled = true; btn.textContent = 'Entrando...'; }
 
   try {
-    const { error } = await getSupa().auth.signInWithPassword({ email, password: pass });
+    const { data, error } = await getSupa().auth.signInWithPassword({ email, password: pass });
     if (error) throw new Error('E-mail ou senha incorretos.');
 
-    // Busca estabelecimento do usuário
-    const { data: { user } } = await getSupa().auth.getUser();
     const { data: estab } = await getSupa()
       .from('estabelecimentos')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', data.user.id)
       .maybeSingle();
 
     if (estab) {
-      localStorage.setItem('pw_estab', JSON.stringify(estab));
       window._estab = estab;
+      localStorage.setItem('pw_estab', JSON.stringify(estab));
     }
-
+    // Mesmo sem estabelecimento, deixa entrar
     goTo('s-dash');
     if (window.initDashboard) window.initDashboard();
 
