@@ -1,4 +1,4 @@
-// ==================== src/utils.js ====================
+// src/utils.js
 export function goTo(screenId) {
   document.querySelectorAll('[data-screen]').forEach(s => s.classList.remove('active'));
   const target = document.querySelector(`[data-screen="${screenId}"]`);
@@ -9,15 +9,14 @@ export function goTo(screenId) {
     console.warn(`Screen "${screenId}" não encontrada.`);
   }
 }
- 
+
 export function openDemo() {
   goTo('s-dash');
 }
- 
+
 export function showToast(msg, type = 'info') {
-  // Remove toast anterior se existir
   document.querySelector('.pediway-toast')?.remove();
- 
+
   const toast = document.createElement('div');
   toast.className = 'pediway-toast';
   toast.style.cssText = `
