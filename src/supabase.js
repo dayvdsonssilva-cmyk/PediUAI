@@ -1,28 +1,16 @@
 // src/supabase.js
 import { createClient } from '@supabase/supabase-js';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
-let supabaseClient = null;
+const SUPA_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPA_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export function getSupa() {
-  if (!supabaseClient) {
-    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }
-  return supabaseClient;
+if (!SUPA_URL || !SUPA_KEY) {
+  console.error('Variáveis do Supabase não encontradas:', { SUPA_URL, SUPA_KEY });
 }
 
-export async function carregarLojaSupa(slug) {
-  const db = getSupa();
-  if (!db) return null;
-  try {
-    const { data } = await db
-      .from('estabelecimentos')
-      .select('*')
-      .eq('slug', slug)
-      .single();
-    return data;
-  } catch (e) {
-    console.log("Erro ao carregar loja:", e);
-    return null;
-  }
+let _client = null;
+
+export function getSupa() {
+  if (!_client) _client = createClient(SUPA_URL, SUPA_KEY);
+  return _client;
 }
