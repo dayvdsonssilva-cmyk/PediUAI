@@ -2,6 +2,7 @@
 import { showToast } from './utils.js';
 import { getSupa } from './supabase.js';
 
+const BASE_URL = 'https://pediway.vercel.app';
 const EMOJIS = ['🍔','🍕','🌮','🥪','🍜','🥗','🍗','🥩','🫕','🥘',
                  '🍱','🧆','🍣','🍦','🧁','🎂','🥤','🧃','☕','🧋',
                  '🍺','🍷','🥂','🫖','🍹','🔥','⭐','💎','🎯','🏆'];
@@ -13,21 +14,27 @@ function getEstab() {
   return window._estab || JSON.parse(localStorage.getItem('pw_estab') || 'null');
 }
 
+function getLinkEstab() {
+  const estab = getEstab();
+  return estab ? `${BASE_URL}/${estab.slug}` : `${BASE_URL}/meu-estabelecimento`;
+}
+
 export async function initDashboard() {
   const estab = getEstab();
   if (estab) {
     const el = document.getElementById('dash-store-name');
     if (el) el.textContent = estab.nome;
     const linkEl = document.getElementById('link-url');
-    if (linkEl) linkEl.textContent = `pediway.com.br/${estab.slug}`;
+    if (linkEl) linkEl.textContent = getLinkEstab();
     const cfgNome = document.getElementById('cfg-nome');
     if (cfgNome) cfgNome.value = estab.nome;
     const cfgSlug = document.getElementById('cfg-slug');
     if (cfgSlug) cfgSlug.value = estab.slug;
     const cfgLink = document.getElementById('cfg-link-preview');
-    if (cfgLink) cfgLink.textContent = `pediway.com.br/${estab.slug}`;
+    if (cfgLink) cfgLink.textContent = getLinkEstab();
     const cfgWhats = document.getElementById('cfg-whats');
     if (cfgWhats && estab.whatsapp) cfgWhats.value = estab.whatsapp;
+    localStorage.setItem('pw_slug', estab.slug);
   }
   await renderCardapio();
   await renderFresquinho();
@@ -97,6 +104,8 @@ export function abrirModalItem() {
   });
   const promo = document.getElementById('item-promocao');
   if (promo) promo.checked = false;
+  const promoGroup = document.getElementById('preco-orig-group');
+  if (promoGroup) promoGroup.style.display = 'none';
   document.getElementById('foto-preview').innerHTML = '<span>📷 Clique para adicionar foto</span>';
   fotoFile = null; emojiSelecionado = '🍔';
   renderEmojiGrid();
@@ -176,7 +185,7 @@ async function renderFresquinho() {
 
   if (!data?.length) {
     grid.innerHTML = `<div class="empty-state-light" style="grid-column:1/-1">
-      <span>✨</span><p>Nenhum conteúdo ainda.<br>Mostre seu estabelecimento!</p></div>`;
+      <span>✨</span><p>Nenhum conteúdo ainda.</p></div>`;
     return;
   }
 
@@ -238,8 +247,8 @@ async function renderPedidos() {
   if (statFat) statFat.textContent = `R$ ${fatHoje.toFixed(2).replace('.', ',')}`;
 
   const renderCard = p => {
-    const cls = { novo: 'status-novo', preparo: 'status-preparo', pronto: 'status-pronto' }[p.status] || 'status-novo';
-    const lbl = { novo: 'NOVO', preparo: 'PREPARO', pronto: 'PRONTO' }[p.status] || 'NOVO';
+    const cls = { novo:'status-novo', preparo:'status-preparo', pronto:'status-pronto' }[p.status] || 'status-novo';
+    const lbl = { novo:'NOVO', preparo:'PREPARO', pronto:'PRONTO' }[p.status] || 'NOVO';
     const min = Math.floor((Date.now() - new Date(p.created_at)) / 60000);
     return `<div class="pedido-card">
       <div class="pedido-top">
@@ -273,21 +282,30 @@ export async function salvarConfig() {
     if (existe) return showToast('Esse link já está em uso. Escolha outro.', 'error');
   }
 
-  const { error } = await getSupa().from('estabelecimentos').update({ nome, slug, whatsapp: whats }).eq('id', estab.id);
+  const { error } = await getSupa().from('estabelecimentos')
+    .update({ nome, slug, whatsapp: whats }).eq('id', estab.id);
   if (error) return showToast('Erro: ' + error.message, 'error');
 
   const novoEstab = { ...estab, nome, slug, whatsapp: whats };
   window._estab = novoEstab;
   localStorage.setItem('pw_estab', JSON.stringify(novoEstab));
+  localStorage.setItem('pw_slug', slug);
+
+  const novoLink = `${BASE_URL}/${slug}`;
   document.getElementById('dash-store-name').textContent = nome;
-  document.getElementById('link-url').textContent = `pediway.com.br/${slug}`;
-  document.getElementById('cfg-link-preview').textContent = `pediway.com.br/${slug}`;
+  document.getElementById('link-url').textContent = novoLink;
+  document.getElementById('cfg-link-preview').textContent = novoLink;
   showToast('Salvo! ✅');
 }
 
-window.abrirModalItem = abrirModalItem; window.fecharModal = fecharModal;
-window.fecharModalFora = fecharModalFora; window.previewFoto = previewFoto;
-window.selecionarEmoji = selecionarEmoji; window.salvarItem = salvarItem;
-window.deletarItem = deletarItem; window.postarFresquinho = postarFresquinho;
-window.removerFresquinho = removerFresquinho; window.salvarConfig = salvarConfig;
-window.initDashboard = initDashboard;
+window.abrirModalItem    = abrirModalItem;
+window.fecharModal       = fecharModal;
+window.fecharModalFora   = fecharModalFora;
+window.previewFoto       = previewFoto;
+window.selecionarEmoji   = selecionarEmoji;
+window.salvarItem        = salvarItem;
+window.deletarItem       = deletarItem;
+window.postarFresquinho  = postarFresquinho;
+window.removerFresquinho = removerFresquinho;
+window.salvarConfig      = salvarConfig;
+window.initDashboard     = initDashboard;
