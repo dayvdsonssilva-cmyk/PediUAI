@@ -349,7 +349,7 @@
         <!-- Dados básicos -->
         <div class="carr-form">
           <input    class="carr-field campo-required" id="cli-nome"  placeholder="Seu nome *">
-          <input    class="carr-field campo-required" id="cli-whats" placeholder="WhatsApp * (obrigatório)" type="tel">
+          <input    class="carr-field campo-required" id="cli-whats" placeholder="WhatsApp * (00) 00000-0000" type="tel" inputmode="numeric" maxlength="15">
           <textarea class="carr-field" id="cli-obs"   placeholder="Algum pedido especial? Ex: sem cebola 🧅" rows="2"></textarea>
         </div>
 
@@ -378,7 +378,13 @@
     <div class="jogo-sub">Clique nos emojis enquanto seu pedido é preparado</div>
     <div class="jogo-placar" id="jogo-placar">Pontos: 0 • Velocidade: 1x</div>
     <div class="jogo-area" id="jogo-area"></div>
-    <button class="jogo-btn-fechar" onclick="fecharJogo()">Fechar e ver meus pedidos</button>
+    <button class="jogo-btn-fechar" onclick="fecharJogo()">Ver meus pedidos 📋</button>
+    <div id="jogo-whats-wrap" style="margin-top:10px;display:none">
+      <a id="jogo-whats-link" href="#" target="_blank"
+        style="display:flex;align-items:center;justify-content:center;gap:6px;background:#25d366;color:#fff;border-radius:50px;padding:11px 24px;font-family:Poppins,sans-serif;font-size:0.85rem;font-weight:700;text-decoration:none">
+        💬 Falar com a loja
+      </a>
+    </div>
   </div>
 
   <script type="module">
@@ -662,7 +668,8 @@
       const nome=document.getElementById('cli-nome')?.value.trim();
       const whats=document.getElementById('cli-whats')?.value.trim();
       if(!nome){alert('Coloca seu nome aí 😄');return;}
-      if(!whats){alert('WhatsApp é obrigatório para você acompanhar o pedido 📱');return;}
+      if(!whats||!whatsValido(whats)){alert('Digite um WhatsApp válido 📱
+Ex: (11) 99999-9999');return;}
       if(opcaoEntrega==='entrega'){
         const rua=document.getElementById('end-rua')?.value.trim();
         const bairro=document.getElementById('end-bairro')?.value.trim();
@@ -691,6 +698,7 @@
         peds.unshift({id:data.id,itens,total,status:'novo'});
         localStorage.setItem(`pw_peds_${slug}`,JSON.stringify(peds.slice(0,20)));
         carrinho=[];atualizarFab();fecharCarrinho();
+        iniciarPolling(data.id);
         iniciarJogo();
         carregarMeusPedidos();
       }catch(e){alert('Eita! Algo deu errado 😬');}
@@ -699,93 +707,105 @@
 
     function carregarMeusPedidos(){
       const peds=JSON.parse(localStorage.getItem(`pw_peds_${slug}`)||'[]');if(!peds.length)return;
+      const whatsEstab = estab?.whatsapp?.replace(/\D/g,'');
+      const STATUS_LABEL = { novo:'⏳ Aguardando', preparo:'🔥 No forno!', pronto:'✅ Pronto!' };
+      const STATUS_DESC  = { novo:'Seu pedido foi enviado e aguarda confirmação.', preparo:'Boa notícia! Seu pedido foi aceito e está sendo preparado.', pronto:'Seu pedido está pronto! Já pode buscar ou aguardar a entrega.' };
+      const STATUS_COR   = { novo:'s-novo', preparo:'s-preparo', pronto:'s-pronto' };
       document.getElementById('ped-lista').innerHTML=peds.map(p=>`
         <div class="ped-card">
-          <div class="ped-top"><span class="ped-id">#${p.id?.slice(-4)?.toUpperCase()||'----'}</span>
-          <span class="ped-status s-${p.status||'novo'}">${{novo:'NOVO',preparo:'PREPARO',pronto:'PRONTO'}[p.status||'novo']}</span></div>
+          <div class="ped-top">
+            <span class="ped-id">#${p.id?.slice(-4)?.toUpperCase()||'----'}</span>
+            <span class="ped-status ${STATUS_COR[p.status||'novo']}">${STATUS_LABEL[p.status||'novo']}</span>
+          </div>
+          <p style="font-size:0.75rem;color:var(--sub);margin-bottom:8px">${STATUS_DESC[p.status||'novo']}</p>
           <div class="ped-itens">${p.itens?.map(i=>`${i.qtd}x ${i.nome}`).join(' • ')||''}</div>
-          <div class="ped-total">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+            <div class="ped-total">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
+            ${whatsEstab ? `<a href="https://wa.me/55${whatsEstab}?text=Olá!%20Meu%20pedido%20é%20%23${p.id?.slice(-4)?.toUpperCase()}" target="_blank"
+              style="display:flex;align-items:center;gap:5px;background:#25d366;color:#fff;border-radius:50px;padding:5px 12px;font-size:0.72rem;font-weight:700;text-decoration:none">
+              💬 Falar com a loja</a>` : ''}
+          </div>
         </div>`).join('');
     }
 
-    // ── JOGO: PEGA O LANCHE ────────────────────────────────
-    const JOGO_EMOJIS=['🍔','🍟','🌮','🍕','🍗','🥤','🧃','🍦','🧁','🌭','🥪','🍜'];
-    let jogoPontos=0,jogoVelocidade=1,jogoInterval=null,jogoEmojis=[];
-
-    function iniciarJogo(){
-      jogoPontos=0;jogoVelocidade=1;jogoEmojis=[];
-      document.getElementById('jogo-overlay').classList.add('open');
-      document.body.classList.add('no-scroll');
-      const area=document.getElementById('jogo-area');
-      area.innerHTML='';
-      // Cria 4 emojis iniciais
-      for(let i=0;i<4;i++) criarEmoji();
-      // Loop de movimento
-      jogoInterval=setInterval(moverEmojis,50/jogoVelocidade);
-      atualizarPlacar();
+    // ── MÁSCARA WHATSAPP ───────────────────────────────────
+    function mascaraWhats(input) {
+      let v = input.value.replace(/\D/g,'');
+      if (v.length > 11) v = v.slice(0,11);
+      if (v.length <= 10) {
+        v = v.replace(/(\d{2})(\d)/,'($1) $2')
+             .replace(/(\d{4})(\d)/,'$1-$2');
+      } else {
+        v = v.replace(/(\d{2})(\d)/,'($1) $2')
+             .replace(/(\d{5})(\d)/,'$1-$2');
+      }
+      input.value = v;
     }
-
-    function criarEmoji(){
-      const area=document.getElementById('jogo-area');
-      const size=area.offsetWidth||300;
-      const el=document.createElement('div');
-      el.className='jogo-emoji';
-      el.textContent=JOGO_EMOJIS[Math.floor(Math.random()*JOGO_EMOJIS.length)];
-      const x=Math.random()*(size-48);
-      const y=Math.random()*(size-48);
-      el.style.left=x+'px';el.style.top=y+'px';
-      el.dataset.vx=(Math.random()*2-1)*2*jogoVelocidade;
-      el.dataset.vy=(Math.random()*2-1)*2*jogoVelocidade;
-      el.onclick=()=>{
-        // Muda emoji e dá ponto
-        el.textContent=JOGO_EMOJIS[Math.floor(Math.random()*JOGO_EMOJIS.length)];
-        el.style.transform='scale(1.4)';
-        setTimeout(()=>el.style.transform='',200);
-        jogoPontos++;
-        // A cada 5 pontos aumenta velocidade
-        if(jogoPontos%5===0){
-          jogoVelocidade=Math.min(jogoVelocidade+0.5,5);
-          clearInterval(jogoInterval);
-          jogoInterval=setInterval(moverEmojis,50/jogoVelocidade);
-          // Adiciona mais emojis
-          if(jogoEmojis.length<8)criarEmoji();
-        }
-        atualizarPlacar();
-      };
-      area.appendChild(el);
-      jogoEmojis.push(el);
+    function whatsValido(val) {
+      return val.replace(/\D/g,'').length >= 10;
     }
+    document.getElementById('cli-whats').addEventListener('input', function(){ mascaraWhats(this); });
 
-    function moverEmojis(){
-      const area=document.getElementById('jogo-area');
-      const size=area.offsetWidth||300;
-      jogoEmojis.forEach(el=>{
-        let x=parseFloat(el.style.left)||0;
-        let y=parseFloat(el.style.top)||0;
-        let vx=parseFloat(el.dataset.vx)*jogoVelocidade;
-        let vy=parseFloat(el.dataset.vy)*jogoVelocidade;
-        x+=vx;y+=vy;
-        if(x<=0||x>=size-48)el.dataset.vx=-parseFloat(el.dataset.vx);
-        if(y<=0||y>=size-48)el.dataset.vy=-parseFloat(el.dataset.vy);
-        x=Math.max(0,Math.min(size-48,x));
-        y=Math.max(0,Math.min(size-48,y));
-        el.style.left=x+'px';el.style.top=y+'px';
-      });
-    }
-
-    function atualizarPlacar(){
-      document.getElementById('jogo-placar').textContent=`Pontos: ${jogoPontos} • Velocidade: ${jogoVelocidade.toFixed(1)}x`;
-    }
-
-    window.fecharJogo=function(){
-      clearInterval(jogoInterval);jogoEmojis=[];
-      document.getElementById('jogo-overlay').classList.remove('open');
-      document.body.classList.remove('no-scroll');
-      irPara('pedidos');
+    // ── JOGO (importado de game.js) ────────────────────────
+    import { startGame, fecharJogo as _fecharJogo } from '/src/game.js';
+    window.iniciarJogo = () => {
+      startGame();
+      // Mostra botão de falar com a loja dentro do jogo
+      const whatsEstab = estab?.whatsapp?.replace(/\D/g,'');
+      const wrap = document.getElementById('jogo-whats-wrap');
+      const link = document.getElementById('jogo-whats-link');
+      if (wrap && link && whatsEstab) {
+        link.href = `https://wa.me/55${whatsEstab}?text=Ol%C3%A1!%20Fiz%20um%20pedido%20e%20quero%20acompanhar%20%F0%9F%9A%80`;
+        wrap.style.display = 'block';
+      }
     };
+    window.fecharJogo  = () => { _fecharJogo(); irPara('pedidos'); };
 
-    // Expõe iniciarJogo para demo
-    window.iniciarJogo=iniciarJogo;
+    // ── POLLING STATUS DO PEDIDO ───────────────────────────
+    let pollingId = null;
+    let pedidoAtivoId = null;
+
+    function iniciarPolling(pedidoId) {
+      pedidoAtivoId = pedidoId;
+      pollingId = setInterval(async () => {
+        if (!pedidoAtivoId) return;
+        const { data } = await supa.from('pedidos').select('status').eq('id', pedidoAtivoId).maybeSingle();
+        if (!data) return;
+        const peds = JSON.parse(localStorage.getItem(`pw_peds_${slug}`) || '[]');
+        const ped  = peds.find(p => p.id === pedidoAtivoId);
+        if (ped && ped.status !== data.status) {
+          ped.status = data.status;
+          localStorage.setItem(`pw_peds_${slug}`, JSON.stringify(peds));
+          carregarMeusPedidos();
+          if (data.status === 'preparo') mostrarNotif('🔥 Pedido aceito! Tá indo pro forno!', '#e05510');
+          if (data.status === 'pronto')  mostrarNotif('\u2705 Pedido pronto! Pode vir buscar \uD83C\uDF89', '#2e7d32');
+        }
+        if (data.status === 'pronto') { clearInterval(pollingId); pedidoAtivoId = null; }
+      }, 8000);
+    }
+
+    function mostrarNotif(msg, cor) {
+      const t = document.createElement('div');
+      t.style.cssText = `position:fixed;top:20px;left:50%;transform:translateX(-50%);
+        background:${cor};color:#fff;padding:12px 24px;border-radius:50px;
+        font-family:'Poppins',sans-serif;font-size:0.85rem;font-weight:700;
+        z-index:9999;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,0.25);`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 4500);
+      // Se jogo aberto, notif dentro dele tb
+      const jogoEl = document.getElementById('jogo-overlay');
+      if (jogoEl?.classList.contains('open')) {
+        const area = document.getElementById('jogo-area');
+        const n = document.createElement('div');
+        n.style.cssText = `position:absolute;top:12px;left:50%;transform:translateX(-50%);
+          background:${cor};color:#fff;padding:8px 16px;border-radius:50px;
+          font-family:'Poppins',sans-serif;font-size:0.78rem;font-weight:700;
+          z-index:10;white-space:nowrap;`;
+        n.textContent = msg;
+        if (area) { area.appendChild(n); setTimeout(() => n.remove(), 4000); }
+      }
+    }
 
     // ── NAVEGAÇÃO ──────────────────────────────────────────
     window.irPara=function(page){
