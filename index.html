@@ -9,7 +9,7 @@
 </head>
 <body>
 
-  <!-- ===== LANDING ===== -->
+  <!-- LANDING -->
   <div data-screen="s-landing" class="screen active">
     <header class="header-dark">
       <div class="logo-dark">PEDI<span>WAY</span></div>
@@ -19,24 +19,22 @@
       </div>
     </header>
     <section class="hero">
-      <div class="hero-content">
-        <span class="badge">🚀 PLATAFORMA DELIVERY INDEPENDENTE</span>
-        <h1>Seu cardápio.<br>Sua marca.<br><span class="highlight">Seu lucro.</span></h1>
-        <p>Crie sua loja em minutos, compartilhe o link com seus clientes e receba pedidos com notinha automática.<br>Sem comissão por venda — só uma mensalidade justa.</p>
-        <div class="hero-actions">
-          <button class="btn-primary big" onclick="goTo('s-register')">Criar minha loja →</button>
-          <button class="btn-ghost-dark big" onclick="openDemo()">Ver demo de cliente</button>
-        </div>
-        <div class="stats">
-          <div><strong>R$0</strong><span>comissão por pedido</span></div>
-          <div><strong>5min</strong><span>para montar seu cardápio</span></div>
-          <div><strong>100%</strong><span>do lucro é seu</span></div>
-        </div>
+      <span class="badge">🚀 PLATAFORMA DELIVERY INDEPENDENTE</span>
+      <h1>Seu cardápio.<br>Sua marca.<br><span class="highlight">Seu lucro.</span></h1>
+      <p>Crie sua loja em minutos, compartilhe o link com seus clientes e receba pedidos com notinha automática.<br>Sem comissão por venda — só uma mensalidade justa.</p>
+      <div class="hero-actions">
+        <button class="btn-primary big" onclick="goTo('s-register')">Criar minha loja →</button>
+        <button class="btn-ghost-dark big" onclick="openDemo()">Ver demo de cliente</button>
+      </div>
+      <div class="stats">
+        <div><strong>R$0</strong><span>comissão por pedido</span></div>
+        <div><strong>5min</strong><span>para montar seu cardápio</span></div>
+        <div><strong>100%</strong><span>do lucro é seu</span></div>
       </div>
     </section>
   </div>
 
-  <!-- ===== LOGIN ===== -->
+  <!-- LOGIN -->
   <div data-screen="s-login" class="screen">
     <header class="header-dark">
       <div class="logo-dark" onclick="goTo('s-landing')" style="cursor:pointer">PEDI<span>WAY</span></div>
@@ -54,14 +52,12 @@
           <input type="password" id="lp" placeholder="••••••••">
         </div>
         <button class="btn-primary full" onclick="doLogin()">Entrar</button>
-        <div class="auth-footer">
-          Não tem conta? <a onclick="goTo('s-register')">Cadastre grátis</a>
-        </div>
+        <div class="auth-footer">Não tem conta? <a onclick="goTo('s-register')">Cadastre grátis</a></div>
       </div>
     </div>
   </div>
 
-  <!-- ===== REGISTER ===== -->
+  <!-- REGISTER -->
   <div data-screen="s-register" class="screen">
     <header class="header-dark">
       <div class="logo-dark" onclick="goTo('s-landing')" style="cursor:pointer">PEDI<span>WAY</span></div>
@@ -72,11 +68,11 @@
         <p class="auth-sub">Grátis por 14 dias, sem cartão.</p>
         <div class="form-group">
           <label>Nome do estabelecimento</label>
-          <input type="text" id="rn" placeholder="Ex: Burguer do Zé" oninput="atualizarSlugPreview(this.value)">
+          <input type="text" id="rn" placeholder="Ex: Burguer do Zé">
         </div>
         <div class="form-group">
-          <label>Seu link será:</label>
-          <div class="link-preview" id="slug-preview">pediway.com.br/seu-estabelecimento</div>
+          <label>CPF ou CNPJ</label>
+          <input type="text" id="rdoc" placeholder="000.000.000-00 ou 00.000.000/0001-00" maxlength="18" oninput="mascaraDoc(this)">
         </div>
         <div class="form-group">
           <label>E-mail</label>
@@ -87,16 +83,31 @@
           <input type="password" id="rp" placeholder="Mínimo 6 caracteres">
         </div>
         <button class="btn-primary full" onclick="doRegister()">Criar conta grátis →</button>
-        <div class="auth-footer">
-          Já tem conta? <a onclick="goTo('s-login')">Entrar</a>
-        </div>
+        <div class="auth-footer">Já tem conta? <a onclick="goTo('s-login')">Entrar</a></div>
       </div>
     </div>
   </div>
 
-  <!-- ===== DASHBOARD ===== -->
-  <div data-screen="s-dash" class="screen dash-screen">
+  <!-- SUCESSO CADASTRO -->
+  <div data-screen="s-sucesso" class="screen">
+    <header class="header-dark">
+      <div class="logo-dark">PEDI<span>WAY</span></div>
+    </header>
+    <div class="auth-container">
+      <div class="auth-card" style="text-align:center">
+        <div style="font-size:3.5rem;margin-bottom:16px">🎉</div>
+        <h2>Cadastro realizado!</h2>
+        <p class="auth-sub" style="margin-bottom:24px;font-size:0.95rem;line-height:1.7">
+          Sua conta foi criada com sucesso.<br>
+          Faça login para começar a usar o PEDIWAY!
+        </p>
+        <button class="btn-primary full" onclick="goTo('s-login')" style="margin-top:0">Fazer login →</button>
+      </div>
+    </div>
+  </div>
 
+  <!-- DASHBOARD -->
+  <div data-screen="s-dash" class="screen dash-screen">
     <header class="header-light">
       <div class="logo-light">PEDI<span>WAY</span></div>
       <div class="header-right">
@@ -148,10 +159,7 @@
           <button class="btn-ver-todos" onclick="showTab('pedidos', document.querySelectorAll('.tab-btn')[3])">Ver todos</button>
         </div>
         <div id="ultimos-pedidos">
-          <div class="empty-state-light">
-            <span>🛵</span>
-            <p>Nenhum pedido ainda.<br>Compartilhe seu link!</p>
-          </div>
+          <div class="empty-state-light"><span>🛵</span><p>Nenhum pedido ainda.<br>Compartilhe seu link!</p></div>
         </div>
       </div>
     </div>
@@ -165,8 +173,7 @@
         </div>
         <div class="cardapio-grid" id="cardapio-grid">
           <div class="empty-state-light" style="grid-column:1/-1">
-            <span>🍽️</span>
-            <p>Nenhum item ainda.<br>Adicione seu primeiro produto!</p>
+            <span>🍽️</span><p>Nenhum item ainda.<br>Adicione seu primeiro produto!</p>
           </div>
         </div>
       </div>
@@ -180,20 +187,15 @@
           <button class="btn-primary" onclick="document.getElementById('fresh-input').click()">+ Postar conteúdo</button>
           <input type="file" id="fresh-input" accept="image/*,video/*" style="display:none" onchange="postarFresquinho(event)">
         </div>
-
         <div class="fresquinho-info">
-          📸 Poste fotos e vídeos do seu estabelecimento. O conteúdo fica visível para seus clientes por <strong>4 horas</strong> e depois some automaticamente.
+          📸 Poste fotos e vídeos do seu estabelecimento. Ficam visíveis para seus clientes por <strong>4 horas</strong> e somem automaticamente.
         </div>
-
         <div class="upload-area" onclick="document.getElementById('fresh-input').click()">
           <span class="upload-icon">📷</span>
           <p>Clique para adicionar foto ou vídeo</p>
           <span>Formatos: JPG, PNG, MP4 • Máx. 50MB</span>
         </div>
-
-        <div class="fresquinho-grid" id="fresquinho-grid">
-          <!-- preenchido pelo JS -->
-        </div>
+        <div class="fresquinho-grid" id="fresquinho-grid"></div>
       </div>
     </div>
 
@@ -202,10 +204,7 @@
       <div class="dash-container">
         <h3>Todos os pedidos</h3>
         <div id="todos-pedidos" style="margin-top:20px">
-          <div class="empty-state-light">
-            <span>📋</span>
-            <p>Nenhum pedido ainda.</p>
-          </div>
+          <div class="empty-state-light"><span>📋</span><p>Nenhum pedido ainda.</p></div>
         </div>
       </div>
     </div>
@@ -217,11 +216,15 @@
         <div class="config-card" style="margin-top:24px">
           <div class="form-group-light">
             <label>Nome do estabelecimento</label>
-            <input type="text" class="input-light" id="cfg-nome" placeholder="Burguer do Zé" oninput="atualizarLinkDash(this.value)">
+            <input type="text" class="input-light" id="cfg-nome" placeholder="Burguer do Zé">
           </div>
           <div class="form-group-light">
-            <label>Seu link do cliente</label>
-            <div class="link-preview" id="cfg-link-preview">pediway.com.br/burguer-do-ze</div>
+            <label>Link do cardápio (apenas letras, números e -)</label>
+            <input type="text" class="input-light" id="cfg-slug" placeholder="burguer-do-ze">
+          </div>
+          <div class="form-group-light">
+            <label>Pré-visualização do link</label>
+            <div class="link-preview" id="cfg-link-preview">pediway.com.br/</div>
           </div>
           <div class="form-group-light">
             <label>WhatsApp para notificações</label>
@@ -231,10 +234,9 @@
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- ===== MODAL: Adicionar Item ===== -->
+  <!-- MODAL: Adicionar Item -->
   <div class="modal-overlay" id="modal-item" onclick="fecharModalFora(event)">
     <div class="modal-box">
       <div class="modal-header">
@@ -268,6 +270,16 @@
         <div class="form-group-light">
           <label>Preço (R$) *</label>
           <input type="number" class="input-light" id="item-preco" placeholder="0,00" step="0.01" min="0">
+        </div>
+        <div class="promo-toggle">
+          <label class="toggle-label">
+            <input type="checkbox" id="item-promocao" onchange="togglePromo(this)">
+            <span>🔥 É uma promoção?</span>
+          </label>
+        </div>
+        <div class="form-group-light" id="preco-orig-group" style="display:none">
+          <label>Preço original (antes da promoção)</label>
+          <input type="number" class="input-light" id="item-preco-orig" placeholder="0,00" step="0.01" min="0">
         </div>
         <div class="modal-footer">
           <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
