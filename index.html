@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PEDIWAY - Seu delivery, do seu jeito</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
@@ -15,10 +15,9 @@
       <div class="logo-dark">PEDI<span>WAY</span></div>
       <div class="header-buttons">
         <button class="btn-ghost-dark" onclick="goTo('s-login')">Entrar</button>
-        <button class="btn-primary" onclick="goTo('s-register')">Cadastrar grátis</button>
+        <button class="btn-primary" onclick="goTo('s-register')">Começar grátis</button>
       </div>
     </header>
-
     <section class="hero">
       <div class="hero-content">
         <span class="badge">🚀 PLATAFORMA DELIVERY INDEPENDENTE</span>
@@ -73,7 +72,11 @@
         <p class="auth-sub">Grátis por 14 dias, sem cartão.</p>
         <div class="form-group">
           <label>Nome do estabelecimento</label>
-          <input type="text" id="rn" placeholder="Ex: Burguer do Zé">
+          <input type="text" id="rn" placeholder="Ex: Burguer do Zé" oninput="atualizarSlugPreview(this.value)">
+        </div>
+        <div class="form-group">
+          <label>Seu link será:</label>
+          <div class="link-preview" id="slug-preview">pediway.com.br/seu-estabelecimento</div>
         </div>
         <div class="form-group">
           <label>E-mail</label>
@@ -97,7 +100,7 @@
     <header class="header-light">
       <div class="logo-light">PEDI<span>WAY</span></div>
       <div class="header-right">
-        <span class="dash-store-name" id="dash-store-name">Burguer do Zé</span>
+        <span class="dash-store-name" id="dash-store-name">Meu Estabelecimento</span>
         <button class="btn-sair" onclick="goTo('s-landing')">Sair</button>
       </div>
     </header>
@@ -105,7 +108,7 @@
     <nav class="dash-nav">
       <button class="tab-btn active" onclick="showTab('visao-geral', this)">Visão geral</button>
       <button class="tab-btn" onclick="showTab('cardapio', this)">Cardápio</button>
-      <button class="tab-btn" onclick="showTab('no-forno', this)">🔥 No Forno</button>
+      <button class="tab-btn" onclick="showTab('fresquinho', this)">✨ Fresquinho</button>
       <button class="tab-btn" onclick="showTab('pedidos', this)">Pedidos</button>
       <button class="tab-btn" onclick="showTab('configuracoes', this)">Configurações</button>
     </nav>
@@ -116,15 +119,14 @@
         <div class="link-box">
           <div>
             <div class="link-label">SEU LINK DO CLIENTE</div>
-            <div class="link-url" id="link-url">pediway.com.br/burguer-do-ze</div>
+            <div class="link-url" id="link-url">pediway.com.br/meu-estabelecimento</div>
           </div>
           <button class="btn-copiar" onclick="copiarLink()">Copiar</button>
         </div>
-
         <div class="stats-grid">
           <div class="stat-box">
             <div class="stat-label">HOJE</div>
-            <div class="stat-num orange" id="stat-pedidos">0</div>
+            <div class="stat-num red" id="stat-pedidos">0</div>
             <div class="stat-desc">pedidos recebidos</div>
           </div>
           <div class="stat-box">
@@ -141,12 +143,10 @@
             <div class="stat-ativo">✓ Ativo</div>
           </div>
         </div>
-
         <div class="section-header">
           <h3>Últimos pedidos</h3>
           <button class="btn-ver-todos" onclick="showTab('pedidos', document.querySelectorAll('.tab-btn')[3])">Ver todos</button>
         </div>
-
         <div id="ultimos-pedidos">
           <div class="empty-state-light">
             <span>🛵</span>
@@ -164,7 +164,7 @@
           <button class="btn-primary" onclick="abrirModalItem()">+ Adicionar item</button>
         </div>
         <div class="cardapio-grid" id="cardapio-grid">
-          <div class="empty-state-light">
+          <div class="empty-state-light" style="grid-column:1/-1">
             <span>🍽️</span>
             <p>Nenhum item ainda.<br>Adicione seu primeiro produto!</p>
           </div>
@@ -172,15 +172,27 @@
       </div>
     </div>
 
-    <!-- No Forno -->
-    <div class="tab-content" id="tab-no-forno">
+    <!-- Fresquinho -->
+    <div class="tab-content" id="tab-fresquinho">
       <div class="dash-container">
-        <h3>🔥 Pedidos em preparo</h3>
-        <div id="forno-list" style="margin-top:20px">
-          <div class="empty-state-light">
-            <span>🍳</span>
-            <p>Nenhum pedido em preparo.</p>
-          </div>
+        <div class="fresquinho-header">
+          <h3>✨ Fresquinho</h3>
+          <button class="btn-primary" onclick="document.getElementById('fresh-input').click()">+ Postar conteúdo</button>
+          <input type="file" id="fresh-input" accept="image/*,video/*" style="display:none" onchange="postarFresquinho(event)">
+        </div>
+
+        <div class="fresquinho-info">
+          📸 Poste fotos e vídeos do seu estabelecimento. O conteúdo fica visível para seus clientes por <strong>4 horas</strong> e depois some automaticamente.
+        </div>
+
+        <div class="upload-area" onclick="document.getElementById('fresh-input').click()">
+          <span class="upload-icon">📷</span>
+          <p>Clique para adicionar foto ou vídeo</p>
+          <span>Formatos: JPG, PNG, MP4 • Máx. 50MB</span>
+        </div>
+
+        <div class="fresquinho-grid" id="fresquinho-grid">
+          <!-- preenchido pelo JS -->
         </div>
       </div>
     </div>
@@ -202,14 +214,14 @@
     <div class="tab-content" id="tab-configuracoes">
       <div class="dash-container">
         <h3>Configurações</h3>
-        <div class="config-card">
+        <div class="config-card" style="margin-top:24px">
           <div class="form-group-light">
             <label>Nome do estabelecimento</label>
-            <input type="text" class="input-light" id="cfg-nome" placeholder="Burguer do Zé">
+            <input type="text" class="input-light" id="cfg-nome" placeholder="Burguer do Zé" oninput="atualizarLinkDash(this.value)">
           </div>
           <div class="form-group-light">
-            <label>Slug (link)</label>
-            <input type="text" class="input-light" id="cfg-slug" placeholder="burguer-do-ze">
+            <label>Seu link do cliente</label>
+            <div class="link-preview" id="cfg-link-preview">pediway.com.br/burguer-do-ze</div>
           </div>
           <div class="form-group-light">
             <label>WhatsApp para notificações</label>
@@ -230,7 +242,6 @@
         <button class="modal-close" onclick="fecharModal()">✕</button>
       </div>
       <div class="modal-body">
-
         <div class="form-group-light">
           <label>Foto do produto</label>
           <div class="foto-upload" id="foto-preview" onclick="document.getElementById('foto-input').click()">
@@ -238,12 +249,10 @@
           </div>
           <input type="file" id="foto-input" accept="image/*" style="display:none" onchange="previewFoto(event)">
         </div>
-
         <div class="form-group-light">
           <label>Emoji (caso sem foto)</label>
           <div class="emoji-grid" id="emoji-grid"></div>
         </div>
-
         <div class="form-group-light">
           <label>Nome do item *</label>
           <input type="text" class="input-light" id="item-nome" placeholder="Ex: X-Burguer Especial">
@@ -260,7 +269,6 @@
           <label>Preço (R$) *</label>
           <input type="number" class="input-light" id="item-preco" placeholder="0,00" step="0.01" min="0">
         </div>
-
         <div class="modal-footer">
           <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
           <button class="btn-primary" onclick="salvarItem()">Salvar item</button>
