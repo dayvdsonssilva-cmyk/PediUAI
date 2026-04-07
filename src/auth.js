@@ -47,32 +47,34 @@ export async function doRegister() {
   const email = document.getElementById('re')?.value.trim();
   const pass  = document.getElementById('rp')?.value;
 
-  if (!nome)            return showToast('Digite o nome do estabelecimento.', 'error');
-  if (!doc)             return showToast('Digite o CPF ou CNPJ.', 'error');
-  if (!docValido(doc))  return showToast('CPF ou CNPJ invalido.', 'error');
-  if (!email)           return showToast('Digite o e-mail.', 'error');
+  if (!nome)           return showToast('Digite o nome do estabelecimento.', 'error');
+  if (!doc)            return showToast('Digite o CPF ou CNPJ.', 'error');
+  if (!docValido(doc)) return showToast('CPF ou CNPJ invalido.', 'error');
+  if (!email)          return showToast('Digite o e-mail.', 'error');
   if (!pass || pass.length < 6) return showToast('Senha minima: 6 caracteres.', 'error');
 
   const btn = document.querySelector('[onclick="doRegister()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Criando...'; }
 
   try {
-    // 1. Cria usuário no Auth
-    const { data: authData, error: authErr } = await getSupa().auth.signUp({
-      email,
-      password: pass,
-    });
+    // 1. Cria o usuário
+    const { data: authData, error: authErr } = await getSupa().auth.signUp({ email, password: pass });
     if (authErr) throw new Error(authErr.message);
 
-    const userId = authData?.user?.id;
-    if (!userId) throw new Error('Nao foi possivel obter o ID do usuario. Tente novamente.');
+    // 2. Faz login imediato para garantir sessão ativa
+    const { data: loginData, error: loginErr } = await getSupa().auth.signInWithPassword({ email, password: pass });
+    if (loginErr) throw new Error('Conta criada mas erro ao ativar sessao. Tente fazer login.');
 
-    // 2. Garante slug único
+    // 3. Pega o user_id da sessão ativa (100% confiável)
+    const userId = loginData?.user?.id;
+    if (!userId) throw new Error('Sessao invalida. Tente fazer login.');
+
+    // 4. Garante slug único
     let slug = gerarSlug(nome);
     let t = 1;
     while (!(await slugLivre(slug))) slug = `${gerarSlug(nome)}-${++t}`;
 
-    // 3. Insere estabelecimento usando o userId que acabou de criar
+    // 5. Insere o estabelecimento com sessão ativa
     const { error: dbErr } = await getSupa().from('estabelecimentos').insert({
       user_id:  userId,
       nome,
@@ -82,7 +84,7 @@ export async function doRegister() {
       plano:    'basico',
     });
 
-    if (dbErr) throw new Error('Erro ao salvar estabelecimento: ' + dbErr.message);
+    if (dbErr) throw new Error('Erro ao salvar: ' + dbErr.message);
 
     goTo('s-sucesso');
 
@@ -110,8 +112,7 @@ export async function doLogin() {
     const userId = data?.user?.id;
     if (!userId) throw new Error('Erro na sessao. Tente novamente.');
 
-    // Busca o estabelecimento do usuário
-    const { data: estab, error: estabErr } = await getSupa()
+    const { data: estab } = await getSupa()
       .from('estabelecimentos')
       .select('*')
       .eq('user_id', userId)
