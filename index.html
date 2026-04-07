@@ -1,87 +1,178 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PEDIWAY - Seu delivery, do seu jeito</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PEDIWAY - Seu delivery, do seu jeito</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
-<div class="landing">
-  <!-- HEADER -->
-  <header>
-    <div class="logo">PEDI<span>WAY</span></div>
-    <div class="header-buttons">
-      <button class="btn-ghost" onclick="goTo('s-login')">Entrar</button>
-      <button class="btn-primary" onclick="goTo('s-register')">Cadastrar grátis</button>
-    </div>
-  </header>
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-content">
-      <span class="badge">🚀 Plataforma delivery independente</span>
-      <h1>Seu cardápio.<br>Sua marca.<br><span class="highlight">Seu lucro.</span></h1>
-      <p>Crie sua loja em minutos, compartilhe o link e receba pedidos direto no seu celular.<br>Sem comissão por venda — só uma mensalidade justa.</p>
-      
-      <div class="hero-actions">
-        <button class="btn-primary big" onclick="goTo('s-register')">Cadastrar agora →</button>
-        <button class="btn-ghost big" onclick="openDemo()">Ver demo</button>
+  <!-- ===== LANDING ===== -->
+  <div data-screen="s-landing" class="screen active">
+    <header>
+      <div class="logo">PEDI<span>WAY</span></div>
+      <div class="header-buttons">
+        <button class="btn-ghost" onclick="goTo('s-login')">Entrar</button>
+        <button class="btn-primary" onclick="goTo('s-register')">Cadastrar grátis</button>
       </div>
+    </header>
 
-      <div class="stats">
-        <div>
-          <strong>R$ 0</strong>
-          <span>comissão por venda</span>
-        </div>
-        <div>
-          <strong>100%</strong>
-          <span>do lucro é seu</span>
-        </div>
-        <div>
-          <strong>∞</strong>
-          <span>pedidos ilimitados</span>
-        </div>
-      </div>
-    </div>
+    <section class="hero">
+      <div class="hero-content">
+        <span class="badge">🚀 Plataforma delivery independente</span>
+        <h1>Seu cardápio.<br>Sua marca.<br><span class="highlight">Seu lucro.</span></h1>
+        <p>Crie sua loja em minutos, compartilhe o link e receba pedidos direto no seu celular.<br>Sem comissão por venda — só uma mensalidade justa.</p>
 
-    <!-- PHONE MOCKUP -->
-    <div class="phone-mockup">
-      <div class="phone-frame">
-        <div class="phone-screen">
-          <div class="store-header">
-            <div class="store-info">
-              <div class="store-emoji">🍔</div>
-              <div>
-                <div class="store-name">Burguer do Zé</div>
-                <div class="store-rating">⭐ 4.9 • 30-40 min</div>
-              </div>
-            </div>
+        <div class="hero-actions">
+          <button class="btn-primary big" onclick="goTo('s-register')">Cadastrar agora →</button>
+          <button class="btn-ghost big" onclick="openDemo()">Ver demo</button>
+        </div>
+
+        <div class="stats">
+          <div>
+            <strong>R$ 0</strong>
+            <span>comissão por venda</span>
           </div>
-          <div class="menu-preview">
-            <div class="menu-item">
-              <div class="item-emoji">🍔</div>
-              <div class="item-info">
-                <div>X-Burguer Especial</div>
-                <div class="price">R$ 28,90</div>
-              </div>
-            </div>
-            <div class="menu-item">
-              <div class="item-emoji">🍟</div>
-              <div class="item-info">
-                <div>Batata Frita Grande</div>
-                <div class="price">R$ 14,90</div>
-              </div>
-            </div>
+          <div>
+            <strong>100%</strong>
+            <span>do lucro é seu</span>
+          </div>
+          <div>
+            <strong>∞</strong>
+            <span>pedidos ilimitados</span>
           </div>
         </div>
       </div>
-    </div>
-  </section>
-</div>
 
-<script type="module" src="/src/main.js"></script>
+      <div class="phone-mockup">
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="store-header">
+              <div class="store-info">
+                <div class="store-emoji">🍔</div>
+                <div>
+                  <div class="store-name">Burguer do Zé</div>
+                  <div class="store-rating">⭐ 4.9 • 30-40 min</div>
+                </div>
+              </div>
+            </div>
+            <div class="menu-preview">
+              <div class="menu-item">
+                <div class="item-emoji">🍔</div>
+                <div class="item-info">
+                  <div>X-Burguer Especial</div>
+                  <div class="price">R$ 28,90</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div class="item-emoji">🍟</div>
+                <div class="item-info">
+                  <div>Batata Frita Grande</div>
+                  <div class="price">R$ 14,90</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div class="item-emoji">🥤</div>
+                <div class="item-info">
+                  <div>Refrigerante Lata</div>
+                  <div class="price">R$ 7,90</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== LOGIN ===== -->
+  <div data-screen="s-login" class="screen">
+    <header>
+      <div class="logo" onclick="goTo('s-landing')" style="cursor:pointer">PEDI<span>WAY</span></div>
+    </header>
+    <div class="auth-container">
+      <div class="auth-card">
+        <h2>Entrar na sua conta</h2>
+        <p class="auth-sub">Bem-vindo de volta!</p>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" id="le" placeholder="seu@email.com">
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="lp" placeholder="••••••••">
+        </div>
+        <button class="btn-primary full" onclick="doLogin()">Entrar</button>
+        <div class="auth-footer">
+          Não tem conta? <a onclick="goTo('s-register')">Cadastre grátis</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== REGISTER ===== -->
+  <div data-screen="s-register" class="screen">
+    <header>
+      <div class="logo" onclick="goTo('s-landing')" style="cursor:pointer">PEDI<span>WAY</span></div>
+    </header>
+    <div class="auth-container">
+      <div class="auth-card">
+        <h2>Criar sua conta</h2>
+        <p class="auth-sub">Grátis por 14 dias, sem cartão.</p>
+        <div class="form-group">
+          <label>Nome do estabelecimento</label>
+          <input type="text" id="rn" placeholder="Ex: Burguer do Zé">
+        </div>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" id="re" placeholder="seu@email.com">
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="rp" placeholder="Mínimo 6 caracteres">
+        </div>
+        <button class="btn-primary full" onclick="doRegister()">Criar conta grátis →</button>
+        <div class="auth-footer">
+          Já tem conta? <a onclick="goTo('s-login')">Entrar</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DASHBOARD ===== -->
+  <div data-screen="s-dash" class="screen">
+    <header>
+      <div class="logo">PEDI<span>WAY</span></div>
+      <div class="header-buttons">
+        <span class="store-badge" id="dash-store-name">🍔 Meu Estabelecimento</span>
+        <button class="btn-ghost small" onclick="goTo('s-landing')">Sair</button>
+      </div>
+    </header>
+    <div class="dash-container">
+      <div class="dash-header">
+        <h2>Pedidos de hoje</h2>
+        <div class="dash-stats">
+          <div class="stat-card">
+            <strong id="total-pedidos">0</strong>
+            <span>pedidos</span>
+          </div>
+          <div class="stat-card">
+            <strong id="total-faturamento">R$ 0</strong>
+            <span>faturamento</span>
+          </div>
+        </div>
+      </div>
+      <div id="orders-list" class="orders-list">
+        <div class="empty-state">
+          <span>🛵</span>
+          <p>Nenhum pedido ainda.<br>Compartilhe seu link!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>
