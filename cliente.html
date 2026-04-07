@@ -667,9 +667,8 @@
     window.finalizarPedido=async function(){
       const nome=document.getElementById('cli-nome')?.value.trim();
       const whats=document.getElementById('cli-whats')?.value.trim();
-      if(!nome){alert('Coloca seu nome aí 😄');return;}
-      if(!whats||!whatsValido(whats)){alert('Digite um WhatsApp válido 📱
-Ex: (11) 99999-9999');return;}
+      if(!nome){alert('Coloca seu nome ai!');return;}
+      if(!whats||!whatsValido(whats)){alert('Digite um WhatsApp valido\nEx: (11) 99999-9999');return;}
       if(opcaoEntrega==='entrega'){
         const rua=document.getElementById('end-rua')?.value.trim();
         const bairro=document.getElementById('end-bairro')?.value.trim();
