@@ -8,315 +8,110 @@
   <style>
     html { touch-action:pan-x pan-y; }
     *    { margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:pan-x pan-y; }
-
     :root {
-      --red:     #C0392B;
-      --red2:    #a93226;
-      --warm:    #f5ede3;
-      --warm2:   #ede3d8;
-      --card:    #ffffff;
-      --text:    #2b1f18;
-      --sub:     #7a6357;
-      --border:  #e8ddd4;
+      --red:#C0392B; --red2:#a93226;
+      --warm:#f5ede3; --warm2:#ede3d8;
+      --card:#fff; --text:#2b1f18; --sub:#7a6357; --border:#e8ddd4;
     }
+    body { font-family:'Poppins',sans-serif; background:var(--warm); color:var(--text); max-width:480px; margin:0 auto; min-height:100vh; overscroll-behavior:none; }
+    body.no-scroll { overflow:hidden; }
 
-    body {
-      font-family:'Poppins',sans-serif;
-      background:var(--warm);
-      color:var(--text);
-      max-width:480px;
-      margin:0 auto;
-      min-height:100vh;
-      overscroll-behavior:none;
-    }
-
-    /* ════════════════════════════════
-       HEADER
-    ════════════════════════════════ */
-    .header {
-      background:linear-gradient(165deg,#1e0a02 0%,#2e1208 50%,#3a1a0c 100%);
-      padding:28px 20px 28px;
-      position:relative;
-      overflow:hidden;
-      min-height:190px;
-      display:flex;
-      flex-direction:column;
-      justify-content:flex-end;
-    }
-    .header-blur1 {
-      position:absolute;top:-40px;right:-40px;
-      width:180px;height:180px;border-radius:50%;
-      background:rgba(192,57,43,0.18);
-      filter:blur(40px);pointer-events:none;
-    }
-    .header-blur2 {
-      position:absolute;bottom:-20px;left:-30px;
-      width:140px;height:140px;border-radius:50%;
-      background:rgba(80,20,5,0.4);
-      filter:blur(30px);pointer-events:none;
-    }
-
-    /* Logo */
-    .logo-wrap {
-      position:absolute;top:16px;right:16px;
-      width:88px;height:88px;border-radius:20px;
-      overflow:hidden;
-      background:#2a1008;
-      border:2px solid rgba(255,255,255,0.12);
-      z-index:2;
-      box-shadow:0 8px 24px rgba(0,0,0,0.35);
-    }
+    /* ── HEADER ── */
+    .header { background:linear-gradient(165deg,#1e0a02 0%,#2e1208 50%,#3a1a0c 100%); padding:28px 20px 28px; position:relative; overflow:hidden; min-height:190px; display:flex; flex-direction:column; justify-content:flex-end; }
+    .hblur1 { position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(192,57,43,0.18);filter:blur(40px);pointer-events:none; }
+    .hblur2 { position:absolute;bottom:-20px;left:-30px;width:140px;height:140px;border-radius:50%;background:rgba(80,20,5,0.4);filter:blur(30px);pointer-events:none; }
+    .logo-wrap { position:absolute;top:16px;right:16px;width:88px;height:88px;border-radius:20px;overflow:hidden;background:#2a1008;border:2px solid rgba(255,255,255,0.12);z-index:2;box-shadow:0 8px 24px rgba(0,0,0,0.35); }
     .logo-wrap img { width:100%;height:100%;object-fit:cover; }
-    .logo-emoji {
-      width:100%;height:100%;
-      display:flex;align-items:center;justify-content:center;
-      font-size:2.4rem;
-    }
-
+    .logo-emoji { width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.4rem; }
     .header-info { position:relative;z-index:1; }
-    .loja-nome {
-      font-size:1.55rem;font-weight:800;
-      color:#fff;text-transform:uppercase;
-      letter-spacing:0.5px;line-height:1.1;
-      margin-bottom:6px;max-width:68%;
-    }
+    .loja-nome { font-size:1.55rem;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:0.5px;line-height:1.1;margin-bottom:6px;max-width:68%; }
     .loja-desc { font-size:0.8rem;color:rgba(255,255,255,0.6);font-weight:400;margin-bottom:14px; }
     .loja-meta { display:flex;gap:14px;flex-wrap:wrap; }
     .meta-item { font-size:0.74rem;font-weight:500;color:rgba(255,255,255,0.8);display:flex;align-items:center;gap:4px; }
 
-    /* ════════════════════════════════
-       DEMO BANNER
-    ════════════════════════════════ */
-    .demo-banner {
-      display:none;
-      background:rgba(192,57,43,0.08);
-      border-bottom:1px solid rgba(192,57,43,0.15);
-      padding:9px 16px;
-      text-align:center;
-      font-size:0.74rem;font-weight:600;color:var(--red);
-    }
+    /* ── DEMO BANNER ── */
+    .demo-banner { display:none;background:rgba(192,57,43,0.08);border-bottom:1px solid rgba(192,57,43,0.15);padding:9px 16px;text-align:center;font-size:0.74rem;font-weight:600;color:var(--red); }
     .demo-banner.show { display:block; }
     .demo-banner a { color:var(--red);font-weight:700;text-decoration:underline; }
 
-    /* ════════════════════════════════
-       FRESQUINHO
-    ════════════════════════════════ */
-    .fresquinho-section {
-      background:var(--card);
-      padding:16px 0 16px 16px;
-      border-bottom:1px solid var(--border);
-      display:none;
-    }
+    /* ── FRESQUINHO ── */
+    .fresquinho-section { background:var(--card);padding:16px 0 16px 16px;border-bottom:1px solid var(--border);display:none; }
     .fresquinho-section.show { display:block; }
-
-    .fresh-header {
-      display:flex;align-items:center;gap:7px;
-      margin-bottom:13px;
-      padding-right:16px;
-    }
-    .live-dot {
-      width:7px;height:7px;border-radius:50%;
-      background:var(--red);flex-shrink:0;
-      animation:livePulse 1.6s infinite;
-    }
-    @keyframes livePulse {
-      0%   { box-shadow:0 0 0 0 rgba(192,57,43,0.7); }
-      70%  { box-shadow:0 0 0 7px rgba(192,57,43,0); }
-      100% { box-shadow:0 0 0 0 rgba(192,57,43,0); }
-    }
-    .fresh-title {
-      font-size:0.68rem;font-weight:800;
-      color:var(--red);letter-spacing:0.1em;text-transform:uppercase;
-    }
-
-    .stories-scroll {
-      display:flex;gap:10px;overflow-x:auto;
-      padding-right:16px;scrollbar-width:none;
-      -webkit-overflow-scrolling:touch;
-    }
+    .fresh-header { display:flex;align-items:center;gap:7px;margin-bottom:13px;padding-right:16px; }
+    .live-dot { width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;animation:livePulse 1.6s infinite; }
+    @keyframes livePulse { 0%{box-shadow:0 0 0 0 rgba(192,57,43,0.7)} 70%{box-shadow:0 0 0 7px rgba(192,57,43,0)} 100%{box-shadow:0 0 0 0 rgba(192,57,43,0)} }
+    .fresh-title { font-size:0.68rem;font-weight:800;color:var(--red);letter-spacing:0.1em;text-transform:uppercase; }
+    .stories-scroll { display:flex;gap:10px;overflow-x:auto;padding-right:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch; }
     .stories-scroll::-webkit-scrollbar { display:none; }
-
-    .story-item {
-      flex-shrink:0;
-      display:flex;flex-direction:column;
-      align-items:center;gap:5px;
-      cursor:pointer;
-    }
-    .story-thumb {
-      width:80px;height:110px;
-      border-radius:14px;overflow:hidden;
-      position:relative;
-      box-shadow:0 3px 12px rgba(0,0,0,0.15);
-      transition:transform 0.15s;
-    }
+    .story-item { flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer; }
+    .story-thumb { width:80px;height:110px;border-radius:14px;overflow:hidden;position:relative;box-shadow:0 3px 12px rgba(0,0,0,0.15);transition:transform 0.15s; }
     .story-item:active .story-thumb { transform:scale(0.94); }
-    .story-thumb img,.story-thumb video {
-      width:100%;height:100%;object-fit:cover;display:block;
-    }
-    .story-gradient {
-      position:absolute;inset:0;
-      background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 50%);
-    }
-    .story-timer {
-      position:absolute;bottom:6px;left:50%;
-      transform:translateX(-50%);
-      background:rgba(0,0,0,0.65);color:#fff;
-      font-size:0.58rem;font-weight:700;
-      padding:2px 8px;border-radius:50px;white-space:nowrap;
-    }
-    .story-caption {
-      font-size:0.65rem;font-weight:700;
-      color:var(--sub);text-align:center;
-      max-width:80px;white-space:nowrap;
-      overflow:hidden;text-overflow:ellipsis;
-    }
-    .story-play {
-      position:absolute;top:50%;left:50%;
-      transform:translate(-50%,-58%);
-      background:rgba(255,255,255,0.88);
-      border-radius:50%;width:26px;height:26px;
-      display:flex;align-items:center;justify-content:center;
-      font-size:0.72rem;
-    }
+    .story-thumb img,.story-thumb video { width:100%;height:100%;object-fit:cover;display:block; }
+    .story-gradient { position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 50%); }
+    .story-timer { position:absolute;bottom:6px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.65);color:#fff;font-size:0.58rem;font-weight:700;padding:2px 8px;border-radius:50px;white-space:nowrap; }
+    .story-caption { font-size:0.65rem;font-weight:700;color:var(--sub);text-align:center;max-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 
-    /* ════════════════════════════════
-       ABAS (só as de cima)
-    ════════════════════════════════ */
-    .abas {
-      background:var(--card);
-      display:flex;
-      border-bottom:1px solid var(--border);
-      position:sticky;top:0;z-index:100;
-    }
-    .aba-btn {
-      flex:1;background:none;border:none;
-      border-bottom:2.5px solid transparent;
-      padding:13px 6px 11px;
-      font-family:'Poppins',sans-serif;
-      font-size:0.72rem;font-weight:700;
-      color:var(--sub);cursor:pointer;
-      text-transform:uppercase;letter-spacing:0.06em;
-      transition:color 0.2s,border-color 0.2s;
-      display:flex;align-items:center;justify-content:center;gap:5px;
-    }
+    /* ── STORIES FULLSCREEN (Instagram style) ── */
+    .story-viewer { display:none;position:fixed;inset:0;background:#000;z-index:3000;touch-action:none; }
+    .story-viewer.open { display:flex;flex-direction:column; }
+    .story-progress-bar { display:flex;gap:4px;padding:12px 16px 0;position:relative;z-index:2; }
+    .story-seg { flex:1;height:2.5px;background:rgba(255,255,255,0.3);border-radius:2px;overflow:hidden; }
+    .story-seg-fill { height:100%;background:#fff;width:0%;transition:width linear; }
+    .story-seg-fill.done { width:100%; }
+    .story-top { display:flex;align-items:center;justify-content:space-between;padding:10px 16px;position:relative;z-index:2; }
+    .story-store-name { font-size:0.85rem;font-weight:700;color:#fff; }
+    .story-close-btn { background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;padding:4px; }
+    .story-media-full { flex:1;display:flex;align-items:center;justify-content:center;position:relative; }
+    .story-media-full img,.story-media-full video { max-width:100%;max-height:100%;object-fit:contain; }
+    .story-tap-left  { position:absolute;left:0;top:0;width:35%;height:100%;z-index:3;cursor:pointer; }
+    .story-tap-right { position:absolute;right:0;top:0;width:35%;height:100%;z-index:3;cursor:pointer; }
+    .story-caption-full { padding:14px 20px;font-size:0.9rem;font-weight:700;color:#fff;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,0.6);position:relative;z-index:2; }
+
+    /* ── ABAS ── */
+    .abas { background:var(--card);display:flex;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100; }
+    .aba-btn { flex:1;background:none;border:none;border-bottom:2.5px solid transparent;padding:13px 6px 11px;font-family:'Poppins',sans-serif;font-size:0.72rem;font-weight:700;color:var(--sub);cursor:pointer;text-transform:uppercase;letter-spacing:0.06em;transition:color 0.2s,border-color 0.2s;display:flex;align-items:center;justify-content:center;gap:5px; }
     .aba-btn.active { color:var(--text);border-bottom-color:var(--red); }
-
-    .promo-dot {
-      width:6px;height:6px;border-radius:50%;
-      background:var(--red);display:none;
-      animation:livePulse 1.6s infinite;
-    }
+    .promo-dot { width:6px;height:6px;border-radius:50%;background:var(--red);display:none;animation:livePulse 1.6s infinite; }
     .promo-dot.show { display:block; }
 
-    /* ════════════════════════════════
-       PAGES
-    ════════════════════════════════ */
+    /* ── PAGES ── */
     .page { display:none;padding-bottom:100px; }
     .page.active { display:block; }
 
-    /* ════════════════════════════════
-       FILTROS
-    ════════════════════════════════ */
-    .filtros-wrap {
-      padding:12px 0 10px 16px;
-      background:var(--warm);
-      position:sticky;top:43px;z-index:90;
-    }
+    /* ── FILTROS ── */
+    .filtros-wrap { padding:12px 0 10px 16px;background:var(--warm);position:sticky;top:43px;z-index:90; }
     .filtros-scroll { display:flex;gap:8px;overflow-x:auto;padding-right:16px;scrollbar-width:none; }
     .filtros-scroll::-webkit-scrollbar { display:none; }
-    .filtro-pill {
-      flex-shrink:0;padding:6px 18px;border-radius:50px;
-      cursor:pointer;font-family:'Poppins',sans-serif;
-      font-size:0.82rem;font-weight:600;white-space:nowrap;border:none;
-      transition:all 0.2s;
-    }
+    .filtro-pill { flex-shrink:0;padding:6px 18px;border-radius:50px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:0.82rem;font-weight:600;white-space:nowrap;border:none;transition:all 0.2s; }
     .filtro-pill.active { background:var(--red);color:#fff;box-shadow:0 3px 10px rgba(192,57,43,0.3); }
     .filtro-pill:not(.active) { background:var(--card);color:var(--sub);border:1.5px solid var(--border); }
 
-    /* ════════════════════════════════
-       PRODUTOS
-    ════════════════════════════════ */
+    /* ── PRODUTOS ── */
     .produtos-wrap { padding:10px 14px; }
-
-    .produto-card {
-      background:var(--card);border-radius:16px;
-      display:flex;align-items:center;gap:13px;
-      padding:13px;margin-bottom:10px;
-      border:1px solid var(--border);cursor:pointer;
-      transition:box-shadow 0.2s,transform 0.1s;
-      position:relative;overflow:hidden;
-    }
+    .produto-card { background:var(--card);border-radius:16px;display:flex;align-items:center;gap:13px;padding:13px;margin-bottom:10px;border:1px solid var(--border);cursor:pointer;transition:box-shadow 0.2s,transform 0.1s;position:relative;overflow:hidden; }
     .produto-card:active { transform:scale(0.98); }
     .produto-card:hover  { box-shadow:0 6px 18px rgba(43,31,24,0.09); }
-
-    .produto-img-wrap {
-      width:92px;height:92px;flex-shrink:0;
-      border-radius:13px;overflow:hidden;
-    }
+    .produto-img-wrap { width:92px;height:92px;flex-shrink:0;border-radius:13px;overflow:hidden; }
     .produto-img-wrap img { width:100%;height:100%;object-fit:cover;display:block; }
-    .produto-emoji-wrap {
-      width:92px;height:92px;flex-shrink:0;
-      border-radius:13px;background:var(--warm2);
-      display:flex;align-items:center;justify-content:center;font-size:2.8rem;
-    }
-
+    .produto-emoji-wrap { width:92px;height:92px;flex-shrink:0;border-radius:13px;background:var(--warm2);display:flex;align-items:center;justify-content:center;font-size:2.8rem; }
     .produto-info { flex:1;min-width:0; }
-    .produto-nome {
-      font-size:0.95rem;font-weight:700;
-      color:var(--text);margin-bottom:3px;line-height:1.25;
-    }
-    .produto-desc {
-      font-size:0.77rem;color:var(--sub);line-height:1.45;
-      margin-bottom:9px;
-      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-    }
+    .produto-nome { font-size:0.95rem;font-weight:700;color:var(--text);margin-bottom:3px;line-height:1.25; }
+    .produto-desc { font-size:0.77rem;color:var(--sub);line-height:1.45;margin-bottom:9px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
     .produto-bottom { display:flex;align-items:center;justify-content:space-between; }
     .preco-wrap { display:flex;flex-direction:column; }
     .produto-preco-de { font-size:0.72rem;color:#b0a098;text-decoration:line-through; }
     .produto-preco    { font-size:1rem;font-weight:800;color:var(--red); }
     .produto-acoes { display:flex;align-items:center;gap:7px; }
-    .btn-ver {
-      background:var(--warm);border:1.5px solid var(--border);
-      padding:5px 13px;border-radius:50px;
-      font-family:'Poppins',sans-serif;font-size:0.74rem;
-      font-weight:600;color:var(--sub);cursor:pointer;
-    }
-    .btn-mais {
-      width:34px;height:34px;border-radius:50%;
-      background:var(--red);color:#fff;border:none;
-      font-size:1.4rem;cursor:pointer;
-      display:flex;align-items:center;justify-content:center;
-      box-shadow:0 3px 10px rgba(192,57,43,0.3);
-      transition:background 0.15s;
-    }
+    .btn-ver { background:var(--warm);border:1.5px solid var(--border);padding:5px 13px;border-radius:50px;font-family:'Poppins',sans-serif;font-size:0.74rem;font-weight:600;color:var(--sub);cursor:pointer; }
+    .btn-mais { width:34px;height:34px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(192,57,43,0.3);transition:background 0.15s; }
     .btn-mais:hover { background:var(--red2); }
+    .promo-ribbon { position:absolute;top:0;left:0;background:var(--red);color:#fff;font-size:0.6rem;font-weight:800;padding:3px 10px;border-radius:0 0 8px 0;letter-spacing:0.04em; }
 
-    .promo-ribbon {
-      position:absolute;top:0;left:0;
-      background:var(--red);color:#fff;
-      font-size:0.6rem;font-weight:800;
-      padding:3px 10px;border-radius:0 0 8px 0;
-      letter-spacing:0.04em;
-    }
-
-    /* ════════════════════════════════
-       PROMOÇÕES PAGE
-    ════════════════════════════════ */
+    /* ── PROMO / PED pages ── */
     .promo-wrap { padding:14px 14px 100px; }
-
-    /* ════════════════════════════════
-       MEUS PEDIDOS PAGE
-    ════════════════════════════════ */
     .ped-wrap { padding:14px 14px 100px; }
-    .sec-label {
-      font-size:0.68rem;font-weight:800;
-      color:var(--sub);letter-spacing:0.08em;
-      text-transform:uppercase;margin-bottom:12px;
-    }
-    .ped-card {
-      background:var(--card);border:1px solid var(--border);
-      border-radius:16px;padding:16px;margin-bottom:10px;
-    }
+    .sec-label { font-size:0.68rem;font-weight:800;color:var(--sub);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px; }
+    .ped-card { background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px; }
     .ped-top { display:flex;justify-content:space-between;align-items:center;margin-bottom:6px; }
     .ped-id  { font-size:0.9rem;font-weight:700;color:var(--text); }
     .ped-status { font-size:0.68rem;font-weight:700;padding:4px 12px;border-radius:50px; }
@@ -326,181 +121,116 @@
     .ped-itens { font-size:0.79rem;color:var(--sub);margin-bottom:5px; }
     .ped-total { font-size:0.88rem;font-weight:700;color:var(--red); }
 
-    /* ════════════════════════════════
-       MODAL PRODUTO
-    ════════════════════════════════ */
-    .modal-bg {
-      display:none;position:fixed;inset:0;
-      background:rgba(0,0,0,0.5);z-index:1000;
-      align-items:flex-end;justify-content:center;
-    }
+    /* ── MODAL PRODUTO ── */
+    .modal-bg { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:flex-end;justify-content:center; }
     .modal-bg.open { display:flex; }
-    .modal-sheet {
-      background:var(--card);border-radius:24px 24px 0 0;
-      width:100%;max-width:480px;max-height:92vh;overflow-y:auto;
-    }
+    .modal-sheet { background:var(--card);border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:92vh;overflow-y:auto; }
     .modal-handle { width:36px;height:4px;background:#ddd;border-radius:2px;margin:12px auto 0; }
-    .modal-cat-header {
-      display:flex;justify-content:space-between;align-items:center;
-      padding:14px 20px 10px;
-    }
+    .modal-cat-header { display:flex;justify-content:space-between;align-items:center;padding:14px 20px 10px; }
     .modal-cat-title { font-size:0.85rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.05em; }
-    .modal-x {
-      width:30px;height:30px;border-radius:50%;
-      background:var(--warm2);border:none;cursor:pointer;
-      font-size:0.85rem;display:flex;align-items:center;justify-content:center;color:var(--sub);
-    }
+    .modal-x { width:30px;height:30px;border-radius:50%;background:var(--warm2);border:none;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center;color:var(--sub); }
     .modal-img-wrap { padding:0 16px; }
     .modal-prod-img { width:100%;height:220px;object-fit:cover;border-radius:16px;display:block; }
-    .modal-prod-emoji {
-      width:100%;height:180px;background:var(--warm2);
-      border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:5rem;
-    }
+    .modal-prod-emoji { width:100%;height:180px;background:var(--warm2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:5rem; }
     .modal-body { padding:18px 20px 32px; }
     .modal-prod-nome { font-size:1.3rem;font-weight:800;color:var(--text);margin-bottom:8px;line-height:1.2; }
     .modal-prod-desc { font-size:0.87rem;color:var(--sub);line-height:1.65;margin-bottom:16px; }
     .modal-prod-preco-de { font-size:0.82rem;color:#b0a098;text-decoration:line-through;margin-bottom:2px;display:none; }
     .modal-prod-preco { font-size:1.7rem;font-weight:800;color:var(--red);margin-bottom:22px; }
     .modal-actions { display:flex;gap:10px; }
-    .btn-fechar {
-      flex:1;background:var(--warm2);border:none;padding:14px;
-      border-radius:14px;font-family:'Poppins',sans-serif;
-      font-size:0.95rem;font-weight:600;color:var(--sub);cursor:pointer;
-    }
-    .btn-add-cart {
-      flex:2.5;background:var(--red);border:none;padding:14px;
-      border-radius:14px;font-family:'Poppins',sans-serif;
-      font-size:0.95rem;font-weight:700;color:#fff;cursor:pointer;
-      box-shadow:0 4px 14px rgba(192,57,43,0.35);transition:background 0.2s;
-    }
+    .btn-fechar { flex:1;background:var(--warm2);border:none;padding:14px;border-radius:14px;font-family:'Poppins',sans-serif;font-size:0.95rem;font-weight:600;color:var(--sub);cursor:pointer; }
+    .btn-add-cart { flex:2.5;background:var(--red);border:none;padding:14px;border-radius:14px;font-family:'Poppins',sans-serif;font-size:0.95rem;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(192,57,43,0.35);transition:background 0.2s; }
     .btn-add-cart:hover { background:var(--red2); }
 
-    /* ════════════════════════════════
-       STORY FULLSCREEN
-    ════════════════════════════════ */
-    .story-full {
-      display:none;position:fixed;inset:0;
-      background:#000;z-index:2000;
-      align-items:center;justify-content:center;
-      flex-direction:column;
-    }
-    .story-full.open { display:flex; }
-    .story-full-media { max-width:100vw;max-height:88vh;border-radius:0;object-fit:contain; }
-    .story-full-caption {
-      position:absolute;bottom:60px;left:20px;right:20px;
-      font-size:1rem;font-weight:700;color:#fff;
-      text-align:center;text-shadow:0 2px 8px rgba(0,0,0,0.6);
-    }
-    .story-full-close {
-      position:absolute;top:20px;right:20px;
-      background:rgba(255,255,255,0.15);border:none;
-      color:#fff;width:38px;height:38px;border-radius:50%;
-      font-size:1.1rem;cursor:pointer;
-      display:flex;align-items:center;justify-content:center;
-    }
-    /* Toque para fechar */
-    .story-full-tap { position:absolute;inset:0;cursor:pointer; }
-
-    /* ════════════════════════════════
-       CARRINHO
-    ════════════════════════════════ */
-    .carr-bg {
-      display:none;position:fixed;inset:0;
-      background:rgba(0,0,0,0.45);z-index:1000;
-      align-items:flex-end;justify-content:center;
-    }
+    /* ── CARRINHO / SACOLA ── */
+    .carr-bg { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:flex-end;justify-content:center; }
     .carr-bg.open { display:flex; }
-    .carr-sheet {
-      background:var(--card);border-radius:24px 24px 0 0;
-      width:100%;max-width:480px;max-height:88vh;overflow-y:auto;
-    }
-    .carr-head {
-      display:flex;justify-content:space-between;align-items:center;
-      padding:18px 20px;border-bottom:1px solid var(--border);
-      position:sticky;top:0;background:var(--card);z-index:1;
-    }
+    .carr-sheet { background:var(--card);border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:92vh;overflow-y:auto; }
+    .carr-head { display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:1; }
     .carr-head-title { font-size:1rem;font-weight:700;color:var(--text); }
-    .carr-head-close {
-      background:var(--warm2);border:none;width:30px;height:30px;
-      border-radius:50%;cursor:pointer;font-size:0.9rem;
-      display:flex;align-items:center;justify-content:center;color:var(--sub);
-    }
+    .carr-head-close { background:var(--warm2);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;color:var(--sub); }
     .carr-content { padding:16px 20px; }
     .carr-row { display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border); }
     .carr-row-nome { flex:1;font-size:0.9rem;font-weight:600;color:var(--text); }
     .carr-qty { display:flex;align-items:center;gap:8px; }
-    .qty-b {
-      width:26px;height:26px;border-radius:50%;
-      border:1.5px solid var(--border);background:var(--card);
-      font-size:1rem;cursor:pointer;font-weight:700;
-      display:flex;align-items:center;justify-content:center;
-    }
+    .qty-b { width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);font-size:1rem;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center; }
     .qty-n { font-size:0.9rem;font-weight:700;min-width:18px;text-align:center;color:var(--text); }
     .carr-row-preco { font-size:0.9rem;font-weight:700;color:var(--red);min-width:68px;text-align:right; }
-    .carr-total {
-      display:flex;justify-content:space-between;
-      padding:14px 0;font-weight:800;font-size:1rem;
-      border-bottom:1px solid var(--border);margin-bottom:14px;color:var(--text);
+    .carr-total { display:flex;justify-content:space-between;padding:14px 0;font-weight:800;font-size:1rem;border-bottom:1px solid var(--border);margin-bottom:18px;color:var(--text); }
+
+    /* Entrega/Retirada */
+    .entrega-opcoes { display:flex;gap:10px;margin-bottom:16px; }
+    .opcao-btn {
+      flex:1;padding:11px;border-radius:12px;border:2px solid var(--border);
+      background:var(--warm);font-family:'Poppins',sans-serif;
+      font-size:0.85rem;font-weight:600;color:var(--sub);cursor:pointer;transition:all 0.2s;text-align:center;
     }
-    .carr-form { display:flex;flex-direction:column;gap:10px;margin-bottom:16px; }
-    .carr-field {
-      width:100%;background:var(--warm);border:1.5px solid var(--border);
+    .opcao-btn.active { border-color:var(--red);background:#fff0ee;color:var(--red); }
+
+    .campos-entrega  { display:none;flex-direction:column;gap:10px;margin-bottom:16px; }
+    .campos-retirada { display:none;flex-direction:column;gap:10px;margin-bottom:16px; }
+    .campos-entrega.show  { display:flex; }
+    .campos-retirada.show { display:flex; }
+
+    .endereco-estab {
+      background:var(--warm);border:1.5px solid var(--border);
       border-radius:12px;padding:12px 14px;
-      font-family:'Poppins',sans-serif;font-size:0.9rem;
-      outline:none;transition:border-color 0.2s;resize:vertical;color:var(--text);
+      font-size:0.85rem;color:var(--sub);font-weight:500;
+      display:flex;align-items:center;gap:8px;
     }
+
+    .carr-form { display:flex;flex-direction:column;gap:10px;margin-bottom:16px; }
+    .carr-field { width:100%;background:var(--warm);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;font-family:'Poppins',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s;resize:vertical;color:var(--text); }
     .carr-field:focus { border-color:var(--red); }
     .carr-field::placeholder { color:#b0a098; }
-    .btn-pedido {
-      width:100%;background:var(--red);color:#fff;border:none;
-      padding:15px;border-radius:14px;
-      font-family:'Poppins',sans-serif;font-weight:700;font-size:1rem;
-      cursor:pointer;transition:background 0.2s;
-      box-shadow:0 4px 14px rgba(192,57,43,0.35);
-    }
+    .campo-required { border-color:rgba(192,57,43,0.3); }
+    .btn-pedido { width:100%;background:var(--red);color:#fff;border:none;padding:15px;border-radius:14px;font-family:'Poppins',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;transition:background 0.2s;box-shadow:0 4px 14px rgba(192,57,43,0.35); }
     .btn-pedido:hover { background:var(--red2); }
 
-    /* ════════════════════════════════
-       FAB
-    ════════════════════════════════ */
-    .fab {
-      position:fixed;bottom:24px;left:50%;
-      transform:translateX(-50%);
-      background:var(--red);color:#fff;border:none;
-      border-radius:50px;padding:14px 26px;
-      font-family:'Poppins',sans-serif;font-weight:700;font-size:0.9rem;
-      cursor:pointer;display:none;align-items:center;gap:14px;
-      box-shadow:0 8px 28px rgba(192,57,43,0.45);
-      z-index:200;white-space:nowrap;max-width:90vw;
-      transition:transform 0.15s;
-    }
+    /* ── FAB ── */
+    .fab { position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;border:none;border-radius:50px;padding:14px 26px;font-family:'Poppins',sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;display:none;align-items:center;gap:14px;box-shadow:0 8px 28px rgba(192,57,43,0.45);z-index:200;white-space:nowrap;max-width:90vw;transition:transform 0.15s; }
     .fab.show { display:flex; }
     .fab-info { display:flex;flex-direction:column;align-items:flex-start; }
-    .fab-qtd  { font-size:0.68rem;opacity:0.82; }
-    .fab-tot  { font-size:0.96rem;font-weight:800; }
+    .fab-tot { font-size:0.96rem;font-weight:800; }
 
-    /* ════════════════════════════════
-       EMPTY
-    ════════════════════════════════ */
+    /* ── JOGO ── */
+    .jogo-overlay { display:none;position:fixed;inset:0;background:rgba(20,8,2,0.96);z-index:4000;flex-direction:column;align-items:center;justify-content:center;padding:24px; }
+    .jogo-overlay.open { display:flex; }
+    .jogo-titulo { font-size:1.2rem;font-weight:800;color:#fff;margin-bottom:4px;text-align:center; }
+    .jogo-sub { font-size:0.82rem;color:rgba(255,255,255,0.55);margin-bottom:20px;text-align:center; }
+    .jogo-placar { font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:12px;text-align:center; }
+    .jogo-area {
+      width:min(320px,85vw);height:min(320px,85vw);
+      background:#1a0a02;border-radius:20px;
+      border:2px solid rgba(192,57,43,0.3);
+      position:relative;overflow:hidden;
+      touch-action:none;
+    }
+    .jogo-emoji {
+      position:absolute;
+      font-size:2rem;
+      cursor:pointer;
+      user-select:none;
+      transition:transform 0.08s;
+      line-height:1;
+    }
+    .jogo-emoji:active { transform:scale(0.85); }
+    .jogo-btn-fechar { margin-top:20px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);padding:10px 28px;border-radius:50px;font-family:'Poppins',sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer; }
+
+    /* ── EMPTY ── */
     .empty { text-align:center;padding:48px 20px; }
     .empty-ico { font-size:3rem;display:block;margin-bottom:12px; }
     .empty p { font-size:0.87rem;color:var(--sub);line-height:1.6; }
 
-    @media(min-width:481px) {
-      body { box-shadow:0 0 50px rgba(43,31,24,0.12); }
-      .fab { max-width:440px; }
-    }
+    @media(min-width:481px) { body{box-shadow:0 0 50px rgba(43,31,24,0.12);} .fab{max-width:440px;} }
   </style>
 </head>
 <body>
 
   <!-- HEADER -->
   <div class="header">
-    <div class="header-blur1"></div>
-    <div class="header-blur2"></div>
-    <div class="logo-wrap" id="logo-wrap">
-      <div class="logo-emoji" id="logo-emoji">🍔</div>
-    </div>
+    <div class="hblur1"></div><div class="hblur2"></div>
+    <div class="logo-wrap" id="logo-wrap"><div class="logo-emoji" id="logo-emoji">🍔</div></div>
     <div class="header-info">
       <div class="loja-nome" id="loja-nome">Carregando...</div>
       <div class="loja-desc" id="loja-desc">Cardápio digital</div>
@@ -518,19 +248,14 @@
 
   <!-- FRESQUINHO -->
   <div class="fresquinho-section" id="fresquinho-section">
-    <div class="fresh-header">
-      <div class="live-dot"></div>
-      <div class="fresh-title">Fresquinho</div>
-    </div>
+    <div class="fresh-header"><div class="live-dot"></div><div class="fresh-title">Fresquinho</div></div>
     <div class="stories-scroll" id="stories-scroll"></div>
   </div>
 
   <!-- ABAS -->
   <div class="abas">
     <button class="aba-btn active" id="aba-cardapio"  onclick="irPara('cardapio')">Cardápio</button>
-    <button class="aba-btn"        id="aba-promocoes" onclick="irPara('promocoes')">
-      Promoção <div class="promo-dot" id="promo-dot"></div>
-    </button>
+    <button class="aba-btn"        id="aba-promocoes" onclick="irPara('promocoes')">Promoção <div class="promo-dot" id="promo-dot"></div></button>
     <button class="aba-btn"        id="aba-pedidos"   onclick="irPara('pedidos')">Meus Pedidos</button>
   </div>
 
@@ -548,28 +273,21 @@
 
   <!-- PAGE: PROMOÇÕES -->
   <div class="page" id="page-promocoes">
-    <div class="promo-wrap">
-      <div class="sec-label">Promoções ativas</div>
-      <div id="promo-lista">
-        <div class="empty"><span class="empty-ico">🔥</span><p>Nenhuma promoção ativa.</p></div>
-      </div>
+    <div class="promo-wrap"><div class="sec-label">Promoções ativas</div>
+      <div id="promo-lista"><div class="empty"><span class="empty-ico">🔥</span><p>Nenhuma promoção ativa.</p></div></div>
     </div>
   </div>
 
   <!-- PAGE: MEUS PEDIDOS -->
   <div class="page" id="page-pedidos">
-    <div class="ped-wrap">
-      <div class="sec-label">Seus pedidos</div>
-      <div id="ped-lista">
-        <div class="empty"><span class="empty-ico">📋</span><p>Nenhum pedido ainda.</p></div>
-      </div>
+    <div class="ped-wrap"><div class="sec-label">Seus pedidos</div>
+      <div id="ped-lista"><div class="empty"><span class="empty-ico">📋</span><p>Nenhum pedido ainda.</p></div></div>
     </div>
   </div>
 
   <!-- FAB -->
   <button class="fab" id="fab" onclick="abrirCarrinho()">
     <div class="fab-info">
-      <span class="fab-qtd" id="fab-qtd">0 itens</span>
       <span class="fab-tot" id="fab-tot">R$ 0,00</span>
     </div>
     <span id="fab-cta" style="margin-left:auto;font-size:0.87rem">Tô com fome →</span>
@@ -597,7 +315,7 @@
     </div>
   </div>
 
-  <!-- MODAL CARRINHO -->
+  <!-- MODAL CARRINHO / SACOLA -->
   <div class="carr-bg" id="carr-bg" onclick="if(event.target===this)fecharCarrinho()">
     <div class="carr-sheet">
       <div class="carr-head">
@@ -606,26 +324,61 @@
       </div>
       <div class="carr-content">
         <div id="carr-lista"></div>
-        <div class="carr-total">
-          <span>Total gostoso</span>
-          <span id="carr-total-v">R$ 0,00</span>
+        <div class="carr-total"><span>Total gostoso</span><span id="carr-total-v">R$ 0,00</span></div>
+
+        <!-- Entrega / Retirada -->
+        <div class="entrega-opcoes">
+          <button class="opcao-btn active" id="btn-entrega"  onclick="selecionarOpcao('entrega')">🛵 Entrega</button>
+          <button class="opcao-btn"        id="btn-retirada" onclick="selecionarOpcao('retirada')">🏃 Retirada</button>
         </div>
+
+        <!-- Campos Entrega -->
+        <div class="campos-entrega show" id="campos-entrega">
+          <input class="carr-field" id="end-rua"    placeholder="Rua e número *">
+          <input class="carr-field" id="end-bairro" placeholder="Bairro *">
+          <input class="carr-field" id="end-compl"  placeholder="Complemento (apto, bloco...)">
+        </div>
+
+        <!-- Campos Retirada -->
+        <div class="campos-retirada" id="campos-retirada">
+          <div class="endereco-estab" id="endereco-estab">
+            📍 <span id="estab-endereco-txt">Endereço do estabelecimento</span>
+          </div>
+        </div>
+
+        <!-- Dados básicos -->
         <div class="carr-form">
-          <input    class="carr-field" id="cli-nome"  placeholder="Seu nome *">
-          <input    class="carr-field" id="cli-whats" placeholder="WhatsApp (opcional)">
+          <input    class="carr-field campo-required" id="cli-nome"  placeholder="Seu nome *">
+          <input    class="carr-field campo-required" id="cli-whats" placeholder="WhatsApp * (obrigatório)" type="tel">
           <textarea class="carr-field" id="cli-obs"   placeholder="Algum pedido especial? Ex: sem cebola 🧅" rows="2"></textarea>
         </div>
+
         <button class="btn-pedido" onclick="finalizarPedido()">Mandar o pedido! 🚀</button>
       </div>
     </div>
   </div>
 
-  <!-- STORY FULLSCREEN -->
-  <div class="story-full" id="story-full">
-    <div class="story-full-tap" onclick="fecharStory()"></div>
-    <button class="story-full-close" onclick="fecharStory()">✕</button>
-    <div id="story-full-content"></div>
-    <div class="story-full-caption" id="story-full-caption"></div>
+  <!-- STORY VIEWER (Instagram style) -->
+  <div class="story-viewer" id="story-viewer">
+    <div class="story-progress-bar" id="story-progress-bar"></div>
+    <div class="story-top">
+      <span class="story-store-name" id="story-store-name"></span>
+      <button class="story-close-btn" onclick="fecharStoryViewer()">✕</button>
+    </div>
+    <div class="story-media-full" id="story-media-full">
+      <div class="story-tap-left"  onclick="storyAnterior()"></div>
+      <div class="story-tap-right" onclick="storyProximo()"></div>
+    </div>
+    <div class="story-caption-full" id="story-caption-full"></div>
+  </div>
+
+  <!-- JOGO -->
+  <div class="jogo-overlay" id="jogo-overlay">
+    <div class="jogo-titulo">🎮 Pega o Lanche!</div>
+    <div class="jogo-sub">Clique nos emojis enquanto seu pedido é preparado</div>
+    <div class="jogo-placar" id="jogo-placar">Pontos: 0 • Velocidade: 1x</div>
+    <div class="jogo-area" id="jogo-area"></div>
+    <button class="jogo-btn-fechar" onclick="fecharJogo()">Fechar e ver meus pedidos</button>
   </div>
 
   <script type="module">
@@ -637,134 +390,180 @@
     document.addEventListener('gestureend',    e=>e.preventDefault(),{passive:false});
     document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
     let lastTap=0;
-    document.addEventListener('touchend',e=>{
-      const now=Date.now();
-      if(now-lastTap<300)e.preventDefault();
-      lastTap=now;
-    },{passive:false});
+    document.addEventListener('touchend',e=>{const now=Date.now();if(now-lastTap<300)e.preventDefault();lastTap=now;},{passive:false});
 
     const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
-    const supa = createClient(SUPA_URL, SUPA_KEY);
+    const supa=createClient(SUPA_URL,SUPA_KEY);
 
-    const slug   = location.pathname.replace(/^\//,'').split('/')[0]||'demo';
-    const isDemo = slug==='demo';
+    const slug=location.pathname.replace(/^\//,'').split('/')[0]||'demo';
+    const isDemo=slug==='demo';
+    let estab=null,todos=[],carrinho=[],opcaoEntrega='entrega';
 
-    let estab=null, todos=[], carrinho=[];
-
-    // ─── DEMO DATA ────────────────────────────────────────
-    const DEMO_PRODUTOS = [
-      { id:'d1', nome:'X-Burguer Especial',   descricao:'Pão brioche, carne 180g, queijo cheddar, alface, tomate e molho especial da casa.',          categoria:'Lanches',        preco:28.90, foto_url:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=400&fit=crop', promocao:false },
-      { id:'d2', nome:'X-Bacon Duplo',        descricao:'Duplo de carne artesanal, bacon crocante, queijo prato, picles e molho barbecue defumado.',  categoria:'Lanches',        preco:36.90, preco_original:44.90, foto_url:'https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=400&h=400&fit=crop', promocao:true  },
-      { id:'d3', nome:'Chicken Crispy',       descricao:'Frango empanado crocante, molho honey mustard, alface americana e tomate fresco.',            categoria:'Lanches',        preco:24.90, foto_url:'https://images.unsplash.com/photo-1615297928064-24977384d0da?w=400&h=400&fit=crop', promocao:false },
-      { id:'d4', nome:'Batata Frita Grande',  descricao:'Porção generosa de batata frita crocante com sal grosso e nosso molho especial.',             categoria:'Acompanhamentos',preco:14.90, foto_url:'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=400&fit=crop', promocao:false },
-      { id:'d5', nome:'Onion Rings',          descricao:'Anéis de cebola empanados e fritos na hora. Crocantes por fora, macios por dentro.',          categoria:'Acompanhamentos',preco:16.90, foto_url:'https://images.unsplash.com/photo-1639024471283-03518883512d?w=400&h=400&fit=crop', promocao:false },
-      { id:'d6', nome:'Refrigerante 350ml',   descricao:'Coca-Cola, Guaraná Antarctica ou Fanta Laranja bem gelada.',                                  categoria:'Bebidas',        preco:7.90,  emoji:'🥤',  foto_url:null, promocao:false },
-      { id:'d7', nome:'Suco Natural 400ml',   descricao:'Laranja, maracujá ou limão, feito na hora com fruta fresca. Sem conservantes.',               categoria:'Bebidas',        preco:12.90, emoji:'🧃',  foto_url:null, promocao:false },
-      { id:'d8', nome:'Sundae de Chocolate',  descricao:'Sorvete cremoso de baunilha com calda quente de chocolate belga e granulado.',                categoria:'Sobremesas',     preco:11.90, foto_url:'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&h=400&fit=crop', promocao:false },
+    // ── DEMO DATA ──────────────────────────────────────────
+    const DEMO_PRODUTOS=[
+      {id:'d1',nome:'X-Burguer Especial',  descricao:'Pão brioche, carne 180g, queijo cheddar, alface, tomate e molho especial da casa.',         categoria:'Lanches',        preco:28.90,foto_url:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=400&fit=crop',promocao:false},
+      {id:'d2',nome:'X-Bacon Duplo',       descricao:'Duplo de carne artesanal, bacon crocante, queijo prato, picles e molho barbecue defumado.', categoria:'Lanches',        preco:36.90,preco_original:44.90,foto_url:'https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=400&h=400&fit=crop',promocao:true},
+      {id:'d3',nome:'Chicken Crispy',      descricao:'Frango empanado crocante, molho honey mustard, alface americana e tomate fresco.',           categoria:'Lanches',        preco:24.90,foto_url:'https://images.unsplash.com/photo-1615297928064-24977384d0da?w=400&h=400&fit=crop',promocao:false},
+      {id:'d4',nome:'Batata Frita Grande', descricao:'Porção generosa de batata frita crocante com sal grosso e nosso molho especial.',            categoria:'Acompanhamentos',preco:14.90,foto_url:'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=400&fit=crop',promocao:false},
+      {id:'d5',nome:'Onion Rings',         descricao:'Anéis de cebola empanados e fritos na hora. Crocantes por fora, macios por dentro.',         categoria:'Acompanhamentos',preco:16.90,foto_url:'https://images.unsplash.com/photo-1639024471283-03518883512d?w=400&h=400&fit=crop',promocao:false},
+      {id:'d6',nome:'Refrigerante 350ml',  descricao:'Coca-Cola, Guaraná Antarctica ou Fanta Laranja bem gelada.',                                 categoria:'Bebidas',        preco:7.90, emoji:'🥤',foto_url:null,promocao:false},
+      {id:'d7',nome:'Suco Natural 400ml',  descricao:'Laranja, maracujá ou limão, feito na hora com fruta fresca. Sem conservantes.',              categoria:'Bebidas',        preco:12.90,emoji:'🧃',foto_url:null,promocao:false},
+      {id:'d8',nome:'Sundae de Chocolate', descricao:'Sorvete cremoso de baunilha com calda quente de chocolate belga e granulado.',               categoria:'Sobremesas',     preco:11.90,foto_url:'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&h=400&fit=crop',promocao:false},
+    ];
+    const DEMO_FRESH=[
+      {id:'f1',tipo:'foto',caption:'Lanche do dia 🔥',url:'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=400&h=560&fit=crop',expires_at:new Date(Date.now()+3*3600000).toISOString()},
+      {id:'f2',tipo:'foto',caption:'Recém saído!',    url:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=560&fit=crop',expires_at:new Date(Date.now()+2*3600000).toISOString()},
+      {id:'f3',tipo:'foto',caption:'Especial hoje ⭐',url:'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=400&h=560&fit=crop',expires_at:new Date(Date.now()+1*3600000+45*60000).toISOString()},
     ];
 
-    const DEMO_FRESH = [
-      { id:'f1', tipo:'foto', caption:'Lanche do dia 🔥', url:'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=400&h=560&fit=crop', expires_at:new Date(Date.now()+3*3600000).toISOString() },
-      { id:'f2', tipo:'foto', caption:'Recém saído!',     url:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=560&fit=crop', expires_at:new Date(Date.now()+2*3600000+20*60000).toISOString() },
-      { id:'f3', tipo:'foto', caption:'Especial hoje ⭐', url:'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=400&h=560&fit=crop', expires_at:new Date(Date.now()+1*3600000+45*60000).toISOString() },
-    ];
-
-    // ─── INIT ─────────────────────────────────────────────
-    async function init() {
-      if (isDemo) {
-        estab = { id:'demo', nome:'Burguer do Zé', slug:'demo' };
-        todos = DEMO_PRODUTOS;
-        document.getElementById('loja-nome').textContent = 'BURGUER DO ZÉ';
-        document.getElementById('loja-desc').textContent = 'Os melhores burguers da cidade!';
-        document.getElementById('logo-emoji').textContent = '🍔';
+    // ── INIT ───────────────────────────────────────────────
+    async function init(){
+      if(isDemo){
+        estab={id:'demo',nome:'Burguer do Zé',slug:'demo',whatsapp:'',descricao:'Os melhores burguers da cidade!'};
+        todos=DEMO_PRODUTOS;
+        document.getElementById('loja-nome').textContent='BURGUER DO ZÉ';
+        document.getElementById('loja-desc').textContent='Os melhores burguers da cidade!';
+        document.getElementById('logo-emoji').textContent='🍔';
         document.getElementById('demo-banner').classList.add('show');
-        document.title = 'Burguer do Zé | PEDIWAY';
-        renderFiltros(); renderProdutos(todos); renderPromos();
-        renderStoriesUI(DEMO_FRESH);
-      } else {
-        const { data } = await supa.from('estabelecimentos').select('*').eq('slug',slug).maybeSingle();
-        if (!data) {
-          document.getElementById('loja-nome').textContent = 'LOJA NÃO ENCONTRADA';
-          document.getElementById('produtos-wrap').innerHTML = '<div class="empty"><span class="empty-ico">😕</span><p>Essa loja não existe.</p></div>';
+        document.getElementById('estab-endereco-txt').textContent='Rua Demo, 123 – Centro';
+        document.title='Burguer do Zé | PEDIWAY';
+        renderFiltros();renderProdutos(todos);renderPromos();
+        renderStoriesUI(DEMO_FRESH,'Burguer do Zé');
+      }else{
+        const{data}=await supa.from('estabelecimentos').select('*').eq('slug',slug).maybeSingle();
+        if(!data){
+          document.getElementById('loja-nome').textContent='LOJA NÃO ENCONTRADA';
+          document.getElementById('produtos-wrap').innerHTML='<div class="empty"><span class="empty-ico">😕</span><p>Essa loja não existe.</p></div>';
           return;
         }
-        estab = data;
-        document.title = estab.nome + ' | PEDIWAY';
-        document.getElementById('loja-nome').textContent = estab.nome.toUpperCase();
-        document.getElementById('loja-desc').textContent = estab.descricao || 'Cardápio digital';
-        if (estab.logo_url) {
-          document.getElementById('logo-wrap').innerHTML = `<img src="${estab.logo_url}" alt="Logo">`;
-        } else {
-          document.getElementById('logo-emoji').textContent = estab.nome.charAt(0);
+        estab=data;
+        document.title=estab.nome+' | PEDIWAY';
+        document.getElementById('loja-nome').textContent=estab.nome.toUpperCase();
+        document.getElementById('loja-desc').textContent=estab.descricao||'Cardápio digital';
+        document.getElementById('estab-endereco-txt').textContent=estab.endereco||'Entre em contato para o endereço';
+        if(estab.logo_url){
+          document.getElementById('logo-wrap').innerHTML=`<img src="${estab.logo_url}" alt="Logo">`;
+        }else{
+          document.getElementById('logo-emoji').textContent=estab.nome.charAt(0);
         }
-        await Promise.all([carregarProdutos(), carregarFresquinho()]);
+        await Promise.all([carregarProdutos(),carregarFresquinho()]);
         carregarMeusPedidos();
       }
     }
 
-    // ─── FRESQUINHO ────────────────────────────────────────
-    function tempo(f) {
-      const r=new Date(f.expires_at)-new Date();
-      const h=Math.floor(r/3600000),m=Math.floor((r%3600000)/60000);
-      return h>0?`${h}h`:m+'min';
-    }
+    // ── ENTREGA / RETIRADA ────────────────────────────────
+    window.selecionarOpcao=function(op){
+      opcaoEntrega=op;
+      document.getElementById('btn-entrega').classList.toggle('active',op==='entrega');
+      document.getElementById('btn-retirada').classList.toggle('active',op==='retirada');
+      document.getElementById('campos-entrega').classList.toggle('show',op==='entrega');
+      document.getElementById('campos-retirada').classList.toggle('show',op==='retirada');
+    };
 
-    function renderStoriesUI(data) {
-      if (!data?.length) return;
+    // ── STORIES ────────────────────────────────────────────
+    let storiesData=[],storyIdx=0,storyTimer=null;
+
+    function tempo(f){const r=new Date(f.expires_at)-new Date();const h=Math.floor(r/3600000),m=Math.floor((r%3600000)/60000);return h>0?`${h}h`:m+'min';}
+
+    function renderStoriesUI(data,nomeLoja){
+      if(!data?.length)return;
+      storiesData=data;
       document.getElementById('fresquinho-section').classList.add('show');
-      document.getElementById('stories-scroll').innerHTML = data.map(f => `
-        <div class="story-item" onclick="abrirStory('${f.url}','${f.tipo||'foto'}','${(f.caption||'').replace(/'/g,"\\'")}')">
+      document.getElementById('story-store-name').textContent=nomeLoja||estab?.nome||'';
+      document.getElementById('stories-scroll').innerHTML=data.map((f,i)=>`
+        <div class="story-item" onclick="abrirStoryViewer(${i})">
           <div class="story-thumb">
-            ${f.tipo==='video'
-              ? `<video src="${f.url}" muted playsinline loop style="width:100%;height:100%;object-fit:cover"></video><div class="story-play">▶</div>`
-              : `<img src="${f.url}" alt="Fresquinho" loading="lazy">`}
+            ${f.tipo==='video'?`<video src="${f.url}" muted playsinline loop style="width:100%;height:100%;object-fit:cover"></video>`:
+              `<img src="${f.url}" alt="Fresquinho" loading="lazy">`}
             <div class="story-gradient"></div>
             <div class="story-timer">⏱ ${tempo(f)}</div>
           </div>
-          ${f.caption ? `<div class="story-caption">${f.caption}</div>` : ''}
+          ${f.caption?`<div class="story-caption">${f.caption}</div>`:''}
         </div>`).join('');
     }
 
-    async function carregarFresquinho() {
-      const { data } = await supa.from('fresquinhos').select('*')
-        .eq('estabelecimento_id',estab.id)
-        .gt('expires_at',new Date().toISOString())
-        .order('created_at',{ascending:false});
-      renderStoriesUI(data||[]);
+    window.abrirStoryViewer=function(idx){
+      storyIdx=idx;
+      document.body.classList.add('no-scroll');
+      document.getElementById('story-viewer').classList.add('open');
+      renderStoryAtual();
+    };
+
+    function renderStoryAtual(){
+      clearTimeout(storyTimer);
+      const f=storiesData[storyIdx];if(!f)return fecharStoryViewer();
+      // Media
+      const mf=document.getElementById('story-media-full');
+      const taps=mf.querySelectorAll('.story-tap-left,.story-tap-right');
+      mf.innerHTML='';
+      taps.forEach(t=>mf.appendChild(t));
+      if(f.tipo==='video'){
+        const v=document.createElement('video');
+        v.src=f.url;v.autoplay=true;v.controls=true;v.playsInline=true;
+        v.style.cssText='max-width:100%;max-height:100%;object-fit:contain;';
+        mf.insertBefore(v,mf.firstChild);
+      }else{
+        const img=document.createElement('img');
+        img.src=f.url;img.alt='Story';
+        img.style.cssText='max-width:100%;max-height:100%;object-fit:contain;';
+        mf.insertBefore(img,mf.firstChild);
+      }
+      document.getElementById('story-caption-full').textContent=f.caption||'';
+      // Progress bars
+      const bar=document.getElementById('story-progress-bar');
+      bar.innerHTML=storiesData.map((_,i)=>`<div class="story-seg"><div class="story-seg-fill ${i<storyIdx?'done':''}"></div></div>`).join('');
+      // Anima a barra atual
+      if(!f.tipo||f.tipo==='foto'){
+        const fill=bar.querySelectorAll('.story-seg-fill')[storyIdx];
+        if(fill){fill.style.transition='width 5s linear';requestAnimationFrame(()=>fill.style.width='100%');}
+        storyTimer=setTimeout(()=>storyProximo(),5000);
+      }
     }
 
-    // ─── PRODUTOS ──────────────────────────────────────────
-    async function carregarProdutos() {
-      const { data } = await supa.from('produtos').select('*')
+    window.storyProximo=function(){
+      if(storyIdx<storiesData.length-1){storyIdx++;renderStoryAtual();}
+      else fecharStoryViewer();
+    };
+    window.storyAnterior=function(){
+      if(storyIdx>0){storyIdx--;renderStoryAtual();}
+    };
+    window.fecharStoryViewer=function(){
+      clearTimeout(storyTimer);
+      document.getElementById('story-viewer').classList.remove('open');
+      document.body.classList.remove('no-scroll');
+      document.getElementById('story-media-full').querySelectorAll('img,video').forEach(e=>e.remove());
+    };
+
+    async function carregarFresquinho(){
+      const{data}=await supa.from('fresquinhos').select('*')
+        .eq('estabelecimento_id',estab.id).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
+      renderStoriesUI(data||[],estab.nome);
+    }
+
+    // ── PRODUTOS ───────────────────────────────────────────
+    async function carregarProdutos(){
+      const{data}=await supa.from('produtos').select('*')
         .eq('estabelecimento_id',estab.id).eq('disponivel',true).order('categoria');
-      todos=data||[];
-      renderFiltros(); renderProdutos(todos); renderPromos();
+      todos=data||[];renderFiltros();renderProdutos(todos);renderPromos();
     }
 
-    function renderFiltros() {
+    function renderFiltros(){
       const cats=[...new Set(todos.map(p=>p.categoria||'Outros'))];
       const wrap=document.getElementById('filtros-scroll');
       wrap.innerHTML=`<button class="filtro-pill active" onclick="filtrar('todos',this)">Todos</button>`;
-      cats.forEach(c=>{
-        const b=document.createElement('button');
-        b.className='filtro-pill'; b.textContent=c;
-        b.onclick=()=>filtrar(c,b); wrap.appendChild(b);
-      });
+      cats.forEach(c=>{const b=document.createElement('button');b.className='filtro-pill';b.textContent=c;b.onclick=()=>filtrar(c,b);wrap.appendChild(b);});
     }
 
     window.filtrar=(cat,btn)=>{
-      document.querySelectorAll('.filtro-pill').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
+      document.querySelectorAll('.filtro-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
       renderProdutos(cat==='todos'?todos:todos.filter(p=>(p.categoria||'Outros')===cat));
     };
 
-    function cardHTML(p) {
+    function cardHTML(p){
       return `<div class="produto-card" onclick="abrirProduto('${p.id}')">
         ${p.promocao?`<div class="promo-ribbon">🔥 PROMOÇÃO</div>`:''}
-        ${p.foto_url
-          ?`<div class="produto-img-wrap"><img src="${p.foto_url}" alt="${p.nome}" loading="lazy"></div>`
-          :`<div class="produto-emoji-wrap">${p.emoji||'🍔'}</div>`}
+        ${p.foto_url?`<div class="produto-img-wrap"><img src="${p.foto_url}" alt="${p.nome}" loading="lazy"></div>`:`<div class="produto-emoji-wrap">${p.emoji||'🍔'}</div>`}
         <div class="produto-info">
           <div class="produto-nome">${p.nome}</div>
           <div class="produto-desc">${p.descricao||''}</div>
@@ -782,54 +581,34 @@
       </div>`;
     }
 
-    function renderProdutos(lista) {
-      const el=document.getElementById('produtos-wrap');
-      el.innerHTML=lista.length?lista.map(cardHTML).join(''):'<div class="empty"><span class="empty-ico">🍽️</span><p>Nenhum produto.</p></div>';
-    }
-
-    function renderPromos() {
+    function renderProdutos(lista){const el=document.getElementById('produtos-wrap');el.innerHTML=lista.length?lista.map(cardHTML).join(''):'<div class="empty"><span class="empty-ico">🍽️</span><p>Nenhum produto.</p></div>';}
+    function renderPromos(){
       const promos=todos.filter(p=>p.promocao);
       document.getElementById('promo-dot')?.classList.toggle('show',promos.length>0);
       const el=document.getElementById('promo-lista');
       el.innerHTML=promos.length?promos.map(cardHTML).join(''):'<div class="empty"><span class="empty-ico">🔥</span><p>Nenhuma promoção ativa.</p></div>';
     }
 
-    // ─── MODAL PRODUTO ────────────────────────────────────
+    // ── MODAL PRODUTO ──────────────────────────────────────
     window.abrirProduto=function(id){
-      const p=todos.find(x=>x.id===id); if(!p) return;
-      document.getElementById('m-cat').textContent   = p.categoria||'';
-      document.getElementById('m-nome').textContent  = p.nome;
-      document.getElementById('m-desc').textContent  = p.descricao||'';
-      document.getElementById('m-preco').textContent = `R$ ${Number(p.preco).toFixed(2).replace('.',',')}`;
+      const p=todos.find(x=>x.id===id);if(!p)return;
+      document.getElementById('m-cat').textContent=p.categoria||'';
+      document.getElementById('m-nome').textContent=p.nome;
+      document.getElementById('m-desc').textContent=p.descricao||'';
+      document.getElementById('m-preco').textContent=`R$ ${Number(p.preco).toFixed(2).replace('.',',')}`;
       const de=document.getElementById('m-preco-de');
       de.style.display=(p.promocao&&p.preco_original)?'block':'none';
-      if(p.promocao&&p.preco_original) de.textContent=`R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}`;
-      document.getElementById('m-media').innerHTML=p.foto_url
-        ?`<img class="modal-prod-img" src="${p.foto_url}" alt="${p.nome}">`
-        :`<div class="modal-prod-emoji">${p.emoji||'🍔'}</div>`;
+      if(p.promocao&&p.preco_original)de.textContent=`R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}`;
+      document.getElementById('m-media').innerHTML=p.foto_url?`<img class="modal-prod-img" src="${p.foto_url}" alt="${p.nome}">`:`<div class="modal-prod-emoji">${p.emoji||'🍔'}</div>`;
       document.getElementById('m-add-btn').onclick=()=>{addCarrinho(id);fecharModal();};
       document.getElementById('modal-prod').classList.add('open');
     };
     window.fecharModal=()=>document.getElementById('modal-prod').classList.remove('open');
 
-    // ─── STORY FULLSCREEN ─────────────────────────────────
-    window.abrirStory=function(url,tipo,caption){
-      const c=document.getElementById('story-full-content');
-      c.innerHTML=tipo==='video'
-        ?`<video src="${url}" controls autoplay class="story-full-media"></video>`
-        :`<img src="${url}" class="story-full-media">`;
-      document.getElementById('story-full-caption').textContent=caption||'';
-      document.getElementById('story-full').classList.add('open');
-    };
-    window.fecharStory=()=>{
-      document.getElementById('story-full').classList.remove('open');
-      document.getElementById('story-full-content').innerHTML='';
-    };
-
-    // ─── CARRINHO ─────────────────────────────────────────
+    // ── CARRINHO ───────────────────────────────────────────
     const CTAS=['Tô com fome →','Bora pedir! →','Quero mais! →','Só mais um... →'];
     window.addCarrinho=function(id){
-      const p=todos.find(x=>x.id===id); if(!p) return;
+      const p=todos.find(x=>x.id===id);if(!p)return;
       const ex=carrinho.find(c=>c.id===id);
       if(ex)ex.qtd++;else carrinho.push({id,nome:p.nome,preco:p.preco,qtd:1});
       atualizarFab();
@@ -841,14 +620,20 @@
     function atualizarFab(){
       const qtd=carrinho.reduce((s,c)=>s+c.qtd,0);
       const tot=carrinho.reduce((s,c)=>s+c.preco*c.qtd,0);
-      document.getElementById('fab-qtd').textContent=`${qtd} ${qtd===1?'item':'itens'}`;
       document.getElementById('fab-tot').textContent=`R$ ${tot.toFixed(2).replace('.',',')}`;
       document.getElementById('fab-cta').textContent=CTAS[Math.min(qtd-1,CTAS.length-1)]||CTAS[CTAS.length-1];
       document.getElementById('fab').classList.toggle('show',qtd>0);
     }
 
-    window.abrirCarrinho  =()=>{renderCarrinho();document.getElementById('carr-bg').classList.add('open');};
-    window.fecharCarrinho =()=>document.getElementById('carr-bg').classList.remove('open');
+    window.abrirCarrinho=()=>{
+      renderCarrinho();
+      document.getElementById('carr-bg').classList.add('open');
+      document.body.classList.add('no-scroll');
+    };
+    window.fecharCarrinho=()=>{
+      document.getElementById('carr-bg').classList.remove('open');
+      document.body.classList.remove('no-scroll');
+    };
 
     function renderCarrinho(){
       const el=document.getElementById('carr-lista');
@@ -867,53 +652,142 @@
     }
 
     window.mudarQtd=function(id,d){
-      const item=carrinho.find(c=>c.id===id); if(!item)return;
-      item.qtd+=d;
-      if(item.qtd<=0)carrinho=carrinho.filter(c=>c.id!==id);
+      const item=carrinho.find(c=>c.id===id);if(!item)return;
+      item.qtd+=d;if(item.qtd<=0)carrinho=carrinho.filter(c=>c.id!==id);
       renderCarrinho();atualizarFab();
       if(!carrinho.length)fecharCarrinho();
     };
 
     window.finalizarPedido=async function(){
-      if(isDemo){alert('🎯 Demo! Em uma loja real o pedido seria enviado.\n\nCrie sua loja em pediway.vercel.app');return;}
       const nome=document.getElementById('cli-nome')?.value.trim();
+      const whats=document.getElementById('cli-whats')?.value.trim();
       if(!nome){alert('Coloca seu nome aí 😄');return;}
+      if(!whats){alert('WhatsApp é obrigatório para você acompanhar o pedido 📱');return;}
+      if(opcaoEntrega==='entrega'){
+        const rua=document.getElementById('end-rua')?.value.trim();
+        const bairro=document.getElementById('end-bairro')?.value.trim();
+        if(!rua||!bairro){alert('Preencha o endereço de entrega 📍');return;}
+      }
+      if(isDemo){alert('🎯 Demo! Em uma loja real o pedido seria enviado.\n\nCrie sua loja em pediway.vercel.app');iniciarJogo();return;}
+
       const total=carrinho.reduce((s,c)=>s+c.preco*c.qtd,0);
       const itens=carrinho.map(c=>({nome:c.nome,qtd:c.qtd,preco:c.preco}));
+      const enderecoEntrega=opcaoEntrega==='entrega'
+        ?`${document.getElementById('end-rua').value}, ${document.getElementById('end-bairro').value}${document.getElementById('end-compl').value?', '+document.getElementById('end-compl').value:''}`
+        :'Retirada no local';
+
       const btn=document.querySelector('.btn-pedido');
       btn.disabled=true;btn.textContent='Mandando...';
       try{
         const{data,error}=await supa.from('pedidos').insert({
-          estabelecimento_id:estab.id,cliente_nome:nome,
-          cliente_whats:document.getElementById('cli-whats')?.value.trim(),
+          estabelecimento_id:estab.id,
+          cliente_nome:nome,cliente_whats:whats,
           observacao:document.getElementById('cli-obs')?.value.trim(),
           itens,total,status:'novo',
+          endereco:enderecoEntrega,
         }).select().single();
         if(error)throw error;
         const peds=JSON.parse(localStorage.getItem(`pw_peds_${slug}`)||'[]');
         peds.unshift({id:data.id,itens,total,status:'novo'});
         localStorage.setItem(`pw_peds_${slug}`,JSON.stringify(peds.slice(0,20)));
         carrinho=[];atualizarFab();fecharCarrinho();
-        alert('✅ Pedido feito! Acompanhe em "Meus Pedidos".');
+        iniciarJogo();
         carregarMeusPedidos();
       }catch(e){alert('Eita! Algo deu errado 😬');}
       finally{btn.disabled=false;btn.textContent='Mandar o pedido! 🚀';}
     };
 
     function carregarMeusPedidos(){
-      const peds=JSON.parse(localStorage.getItem(`pw_peds_${slug}`)||'[]');
-      if(!peds.length)return;
+      const peds=JSON.parse(localStorage.getItem(`pw_peds_${slug}`)||'[]');if(!peds.length)return;
       document.getElementById('ped-lista').innerHTML=peds.map(p=>`
         <div class="ped-card">
-          <div class="ped-top">
-            <span class="ped-id">#${p.id?.slice(-4)?.toUpperCase()||'----'}</span>
-            <span class="ped-status s-${p.status||'novo'}">${{novo:'NOVO',preparo:'PREPARO',pronto:'PRONTO'}[p.status||'novo']}</span>
-          </div>
+          <div class="ped-top"><span class="ped-id">#${p.id?.slice(-4)?.toUpperCase()||'----'}</span>
+          <span class="ped-status s-${p.status||'novo'}">${{novo:'NOVO',preparo:'PREPARO',pronto:'PRONTO'}[p.status||'novo']}</span></div>
           <div class="ped-itens">${p.itens?.map(i=>`${i.qtd}x ${i.nome}`).join(' • ')||''}</div>
           <div class="ped-total">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
         </div>`).join('');
     }
 
+    // ── JOGO: PEGA O LANCHE ────────────────────────────────
+    const JOGO_EMOJIS=['🍔','🍟','🌮','🍕','🍗','🥤','🧃','🍦','🧁','🌭','🥪','🍜'];
+    let jogoPontos=0,jogoVelocidade=1,jogoInterval=null,jogoEmojis=[];
+
+    function iniciarJogo(){
+      jogoPontos=0;jogoVelocidade=1;jogoEmojis=[];
+      document.getElementById('jogo-overlay').classList.add('open');
+      document.body.classList.add('no-scroll');
+      const area=document.getElementById('jogo-area');
+      area.innerHTML='';
+      // Cria 4 emojis iniciais
+      for(let i=0;i<4;i++) criarEmoji();
+      // Loop de movimento
+      jogoInterval=setInterval(moverEmojis,50/jogoVelocidade);
+      atualizarPlacar();
+    }
+
+    function criarEmoji(){
+      const area=document.getElementById('jogo-area');
+      const size=area.offsetWidth||300;
+      const el=document.createElement('div');
+      el.className='jogo-emoji';
+      el.textContent=JOGO_EMOJIS[Math.floor(Math.random()*JOGO_EMOJIS.length)];
+      const x=Math.random()*(size-48);
+      const y=Math.random()*(size-48);
+      el.style.left=x+'px';el.style.top=y+'px';
+      el.dataset.vx=(Math.random()*2-1)*2*jogoVelocidade;
+      el.dataset.vy=(Math.random()*2-1)*2*jogoVelocidade;
+      el.onclick=()=>{
+        // Muda emoji e dá ponto
+        el.textContent=JOGO_EMOJIS[Math.floor(Math.random()*JOGO_EMOJIS.length)];
+        el.style.transform='scale(1.4)';
+        setTimeout(()=>el.style.transform='',200);
+        jogoPontos++;
+        // A cada 5 pontos aumenta velocidade
+        if(jogoPontos%5===0){
+          jogoVelocidade=Math.min(jogoVelocidade+0.5,5);
+          clearInterval(jogoInterval);
+          jogoInterval=setInterval(moverEmojis,50/jogoVelocidade);
+          // Adiciona mais emojis
+          if(jogoEmojis.length<8)criarEmoji();
+        }
+        atualizarPlacar();
+      };
+      area.appendChild(el);
+      jogoEmojis.push(el);
+    }
+
+    function moverEmojis(){
+      const area=document.getElementById('jogo-area');
+      const size=area.offsetWidth||300;
+      jogoEmojis.forEach(el=>{
+        let x=parseFloat(el.style.left)||0;
+        let y=parseFloat(el.style.top)||0;
+        let vx=parseFloat(el.dataset.vx)*jogoVelocidade;
+        let vy=parseFloat(el.dataset.vy)*jogoVelocidade;
+        x+=vx;y+=vy;
+        if(x<=0||x>=size-48)el.dataset.vx=-parseFloat(el.dataset.vx);
+        if(y<=0||y>=size-48)el.dataset.vy=-parseFloat(el.dataset.vy);
+        x=Math.max(0,Math.min(size-48,x));
+        y=Math.max(0,Math.min(size-48,y));
+        el.style.left=x+'px';el.style.top=y+'px';
+      });
+    }
+
+    function atualizarPlacar(){
+      document.getElementById('jogo-placar').textContent=`Pontos: ${jogoPontos} • Velocidade: ${jogoVelocidade.toFixed(1)}x`;
+    }
+
+    window.fecharJogo=function(){
+      clearInterval(jogoInterval);jogoEmojis=[];
+      document.getElementById('jogo-overlay').classList.remove('open');
+      document.body.classList.remove('no-scroll');
+      irPara('pedidos');
+    };
+
+    // Expõe iniciarJogo para demo
+    window.iniciarJogo=iniciarJogo;
+
+    // ── NAVEGAÇÃO ──────────────────────────────────────────
     window.irPara=function(page){
       document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
       document.querySelectorAll('.aba-btn').forEach(b=>b.classList.remove('active'));
