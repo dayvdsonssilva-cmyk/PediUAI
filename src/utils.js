@@ -1,27 +1,43 @@
-// src/utils.js
-import { state, LS } from './config.js';
-
-export function goTo(screen) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById(screen);
-  if (target) target.classList.add('active');
-}
-
-export function showNotif(title, body) {
-  const notif = document.getElementById('notif');
-  if (notif) {
-    document.getElementById('notif-t').textContent = title;
-    document.getElementById('notif-b').textContent = body;
-    notif.classList.add('show');
-    setTimeout(() => notif.classList.remove('show'), 4000);
+// ==================== src/utils.js ====================
+export function goTo(screenId) {
+  document.querySelectorAll('[data-screen]').forEach(s => s.classList.remove('active'));
+  const target = document.querySelector(`[data-screen="${screenId}"]`);
+  if (target) {
+    target.classList.add('active');
+    window.scrollTo(0, 0);
+  } else {
+    console.warn(`Screen "${screenId}" não encontrada.`);
   }
 }
-
+ 
 export function openDemo() {
-  alert("Demo aberta! (Em breve vamos conectar o demo completo)");
-  goTo('sl');
+  goTo('s-dash');
 }
-
-// Exporta tudo que precisar ser global
-window.goTo = goTo;
-window.openDemo = openDemo;
+ 
+export function showToast(msg, type = 'info') {
+  // Remove toast anterior se existir
+  document.querySelector('.pediway-toast')?.remove();
+ 
+  const toast = document.createElement('div');
+  toast.className = 'pediway-toast';
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    background: ${type === 'error' ? '#c0392b' : '#FF6000'};
+    color: white;
+    padding: 13px 28px;
+    border-radius: 50px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    z-index: 9999;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+    animation: toastIn 0.25s ease;
+    white-space: nowrap;
+  `;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
