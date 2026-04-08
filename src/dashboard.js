@@ -72,7 +72,14 @@ function preencherConfig(estab) {
   f('cfg-wháts', estab.whátsapp || '');
   f('cfg-desc', estab.descricao || '');
   f('cfg-endereco', estab.endereco || '');
-  f('cfg-tempo', estab.tempo_entrega || '30-45 min');
+  // Tempo de entrega — select
+  const tempoEl = document.getElementById('cfg-tempo');
+  if (tempoEl && estab.tempo_entrega) {
+    const opts = Array.from(tempoEl.options);
+    const match = opts.find(o => o.value === estab.tempo_entrega);
+    if (match) tempoEl.value = estab.tempo_entrega;
+    else tempoEl.value = '30-45 min';
+  }
   const cl = document.getElementById('cfg-link-preview');
   if (cl) cl.textContent = `${BASE}/${estab.slug}`;
   const ce = document.getElementById('cfg-entrega');
@@ -405,7 +412,10 @@ async function renderCardapio() {
         <div class="item-desc-text">${p.descricao||''}</div>
         <div class="item-footer">
           <div>${p.promocao&&p.preco_original?`<div class="item-preco-original">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</div>`:''}<div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div></div>
-          <div class="item-acoes"><button class="btn-icon danger" onclick="deletarItem('${p.id}')">🗑️</button></div>
+          <div class="item-acoes">
+            <button class="btn-icon" onclick="editarItem('${p.id}')" title="Editar">✏️</button>
+            <button class="btn-icon danger" onclick="deletarItem('${p.id}')" title="Remover">🗑️</button>
+          </div>
         </div>
       </div>
     </div>`).join('');
@@ -445,9 +455,17 @@ function renderCores(corAtiva) {
 }
 
 function aplicarCorDash(cor) {
-  document.documentElement.style.setProperty('--red', cor);
-  document.documentElement.style.setProperty('--red-dark', cor);
-  document.documentElement.style.setProperty('--red-light', hexToRgba(cor, 0.1));
+  // Aplica apenas no dashboard — não na landing page
+  const dash = document.querySelector('[data-screen="s-dash"]');
+  if (dash) {
+    dash.style.setProperty('--red', cor);
+    dash.style.setProperty('--red-dark', cor);
+    dash.style.setProperty('--red-light', hexToRgba(cor, 0.1));
+  }
+  // Também nas abas/nav
+  document.querySelectorAll('.dash-nav,.tab-content,.config-card,.dash-container,.header-light').forEach(el=>{
+    el.style.setProperty('--red', cor);
+  });
 }
 
 function hexToRgba(hex, alphá) {
@@ -543,6 +561,51 @@ export async function deletarItem(id){
   await renderCardapio();showToast('Item removido.');
 }
 
+export async function editarItem(id){
+  const{data:p}=await getSupa().from('produtos').select('*').eq('id',id).maybeSingle();
+  if(!p)return;
+  // Abre modal preenchido
+  abrirModalItem();
+  setTimeout(()=>{
+    const nn=document.getElementById('item-nome'); if(nn)nn.value=p.nome;
+    const dd=document.getElementById('item-desc'); if(dd)dd.value=p.descricao||'';
+    const cc=document.getElementById('item-cat');  if(cc)cc.value=p.categoria||'';
+    const pp=document.getElementById('item-preco');if(pp)pp.value=p.preco;
+    const po=document.getElementById('item-preco-orig');if(po)po.value=p.preco_original||'';
+    const pr=document.getElementById('item-promocao');
+    if(pr){pr.checked=!!p.promocao;togglePromo&&togglePromo(pr);}
+    // Seleciona emoji
+    emojiSel=p.emoji||'🍔';
+    document.querySelectorAll('.emoji-btn').forEach(b=>{
+      if(b.textContent===emojiSel)b.classList.add('selected');
+      else b.classList.remove('selected');
+    });
+    // Botão salvar vira "Salvar alterações"
+    const btn=document.querySelector('#modal-item .btn-primary');
+    if(btn){
+      btn.textContent='Salvar alterações';
+      btn.onclick=async()=>{
+        const nome=document.getElementById('item-nome')?.value.trim();
+        const preco=parseFloat(document.getElementById('item-preco')?.value);
+        if(!nome||isNaN(preco))return showToast('Preencha nome e preço.','error');
+        btn.disabled=true;btn.textContent='Salvando...';
+        const promocao=document.getElementById('item-promocao')?.checked||false;
+        const preco_orig=parseFloat(document.getElementById('item-preco-orig')?.value)||null;
+        const{error}=await getSupa().from('produtos').update({
+          nome,
+          descricao:document.getElementById('item-desc')?.value.trim(),
+          categoria:document.getElementById('item-cat')?.value.trim().toUpperCase(),
+          preco,preco_original:promocao?preco_orig:null,
+          emoji:emojiSel,promocao,
+        }).eq('id',id);
+        btn.disabled=false;
+        if(error)return showToast(error.message,'error');
+        await renderCardapio();fecharModal();showToast('Item atualizado!');
+      };
+    }
+  },100);
+}
+
 // ── FRESQUINHO ────────────────────────────────────────────
 async function renderFresquinho() {
   const estab=getEstab();const grid=document.getElementById('fresquinho-grid');
@@ -572,14 +635,8 @@ export function postarFresquinho(event){
   const file=event.target.files[0];
   if(!file) return;
   if(file.size>50*1024*1024)return showToast('Max. 50MB','error');
-  if(file.type.startsWith('video')){
-    // Video vai direto sem crop
-    uploadFresquinho(file);
-  } else {
-    // Foto abre modal de ajuste
-    freshFilePendente = file;
-    abrirCropFresh(file);
-  }
+  // Upload direto sem crop
+  uploadFresquinho(file);
   event.target.value='';
 }
 
@@ -761,9 +818,14 @@ window.previewFoto       = previewFoto;
 window.selecionarEmoji   = selecionarEmoji;
 window.salvarItem        = salvarItem;
 window.deletarItem       = deletarItem;
+  window.editarItem        = editarItem;
 window.postarFresquinho  = postarFresquinho;
 window.removerFresquinho = removerFresquinho;
 window.salvarConfig      = salvarConfig;
 window.initDashboard     = initDashboard;
 window.previewLogo       = previewLogo;
 window.renderPedidos     = renderPedidos;
+
+window.fecharModal = fecharModal;
+window.fecharModalFora = fecharModalFora;
+window.fecharModalPedido = fecharModalPedido;
