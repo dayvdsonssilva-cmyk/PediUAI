@@ -120,9 +120,13 @@ function iniciarRealtime() {
         const p = payload.new;
         if (!_ultimosPedidosIds.has(p.id)) {
           _ultimosPedidosIds.add(p.id);
-          adicionarPedidoNovo(p);
-          tocarSomNovoPedido(p.id);
-          atualizarBadgePedidos();
+          // Espera 1s para evitar conflito com renderPedidos inicial
+          setTimeout(() => {
+            if (document.getElementById('pnc-' + p.id)) return; // já existe
+            adicionarPedidoNovo(p);
+            tocarSomNovoPedido(p.id);
+            atualizarBadgePedidos();
+          }, 1000);
         }
       })
       .on('postgres_changes', {
@@ -393,6 +397,8 @@ async function renderPedidos() {
   const lista = document.getElementById('pedidos-novos-lista');
   if (lista) {
     if (novos.length) {
+      // Marca todos os novos já carregados como conhecidos
+      novos.forEach(p => _ultimosPedidosIds.add(p.id));
       lista.innerHTML = novos.map(p => {
         const itens = Array.isArray(p.itens) ? p.itens.map(i=>`${i.qtd}x ${i.nome}`).join(', ') : '';
         return `<div class="pedido-novo-card" id="pnc-${p.id}">
