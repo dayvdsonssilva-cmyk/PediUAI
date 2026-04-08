@@ -962,20 +962,26 @@
       var hdr = document.querySelector('.header');
       if (hdr) {
         if (est.capa_tipo === 'imagem' && est.capa_url) {
-          hdr.style.backgroundImage = 'url(' + est.capa_url + ')';
-          hdr.style.backgroundSize  = 'cover';
-          hdr.style.backgroundPosition = 'center';
-          // Overlay escuro para legibilidade
+          var pos = est.capa_pos || 'center center';
+          hdr.style.backgroundImage    = 'url(' + est.capa_url + ')';
+          hdr.style.backgroundSize     = 'cover';
+          hdr.style.backgroundPosition = pos;
+          hdr.style.backgroundRepeat   = 'no-repeat';
+          // Overlay: escurece + blur sutil para legibilidade
           var ov = document.getElementById('header-overlay');
           if (!ov) {
             ov = document.createElement('div');
             ov.id = 'header-overlay';
-            ov.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(2px);z-index:0;';
+            ov.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;';
             hdr.insertBefore(ov, hdr.firstChild);
           }
+          // Degradê escuro sobreposto à imagem
+          ov.style.background = 'linear-gradient(160deg,rgba(0,0,0,0.65) 0%,rgba(0,0,0,0.35) 100%)';
+          ov.style.backdropFilter = 'blur(1px)';
         } else {
-          // Cor sólida com degradê
+          // Cor sólida com degradê baseado na cor escolhida
           hdr.style.backgroundImage = '';
+          hdr.style.backgroundPosition = '';
           var ov2 = document.getElementById('header-overlay');
           if (ov2) ov2.remove();
         }
