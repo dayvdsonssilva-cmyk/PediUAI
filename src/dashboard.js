@@ -155,20 +155,50 @@ export function abrirModalItem() {
   if (promo) promo.checked = false;
   const grp = document.getElementById('preco-orig-group');
   if (grp) grp.style.display = 'none';
-  document.getElementById('foto-preview').innerHTML = '<span>📷 Clique para adicionar foto</span>';
-  fotoFile = null; emojiSel = '🍔';
+  fotosFiles = []; const fg = document.getElementById('fotos-grid'); if (fg) fg.innerHTML = '<div class="foto-add-btn" onclick="document.getElementById(\"foto-input\").click()"><span style="font-size:1.5rem">📷</span><span style="font-size:0.75rem;color:#aaa">Adicionar</span></div>'; emojiSel = '🍔';
   renderEmojiGrid();
 }
 
 export function fecharModal()        { document.getElementById('modal-item').classList.remove('open'); }
 export function fecharModalFora(e)   { if (e.target.id === 'modal-item') fecharModal(); }
 
-export function previewFoto(event) {
-  const file = event.target.files[0]; if (!file) return;
-  fotoFile = file;
-  document.getElementById('foto-preview').innerHTML =
-    `<img src="${URL.createObjectURL(file)}" style="width:100%;height:100%;object-fit:cover;border-radius:10px">`;
+let fotosFiles = []; // até 5 fotos
+
+export function previewFotos(event) {
+  const files = Array.from(event.target.files).slice(0, 5 - fotosFiles.length);
+  files.forEach(file => {
+    if (fotosFiles.length >= 5) return;
+    fotosFiles.push(file);
+  });
+  renderFotosGrid();
+  event.target.value = '';
 }
+
+function renderFotosGrid() {
+  const grid = document.getElementById('fotos-grid');
+  if (!grid) return;
+  let html = fotosFiles.map((f, i) => `
+    <div class="foto-thumb-item" style="position:relative">
+      <img src="${URL.createObjectURL(f)}" style="width:80px;height:80px;object-fit:cover;border-radius:10px;display:block">
+      ${i === 0 ? `<div style="position:absolute;top:3px;left:3px;background:var(--red);color:#fff;font-size:0.55rem;font-weight:700;padding:2px 5px;border-radius:4px">PRINCIPAL</div>` : ''}
+      <button onclick="removerFotoItem(${i})" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);border:none;color:#fff;width:20px;height:20px;border-radius:50%;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>`).join('');
+  if (fotosFiles.length < 5) {
+    html += `<div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
+      <span style="font-size:1.5rem">📷</span>
+      <span style="font-size:0.75rem;color:#aaa">Adicionar</span>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+window.removerFotoItem = function(i) {
+  fotosFiles.splice(i, 1);
+  renderFotosGrid();
+};
+
+// Mantém compatibilidade com previewFoto legacy
+export function previewFoto(event) { previewFotos(event); }
 
 export function selecionarEmoji(emoji, btn) {
   emojiSel = emoji;
@@ -188,10 +218,12 @@ export async function salvarItem() {
 
   try {
     let foto_url = null;
-    if (fotoFile) {
-      const ext  = fotoFile.name.split('.').pop();
+    if (fotosFiles.length > 0) {
+      // Upload da foto principal
+      const file = fotosFiles[0];
+      const ext  = file.name.split('.').pop();
       const path = `${estab.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await getSupa().storage.from('fotos').upload(path, fotoFile, { upsert: true });
+      const { error: upErr } = await getSupa().storage.from('fotos').upload(path, file, { upsert: true });
       if (upErr) throw new Error('Erro no upload: ' + upErr.message);
       foto_url = getSupa().storage.from('fotos').getPublicUrl(path).data.publicUrl;
     }
@@ -247,23 +279,23 @@ async function renderFresquinho() {
 
   if (!data?.length) { renderFresquinhoVazio(); return; }
 
-  grid.innerHTML = data.map(f => {
+  grid.innerHTML = `<div class="fresh-stories-row">` + data.map(f => {
     const rest = new Date(f.expires_at) - new Date();
     const h = Math.floor(rest / 3600000), m = Math.floor((rest % 3600000) / 60000);
     const tempo = h > 0 ? `${h}h ${m}min` : `${m}min`;
     return `
-      <div class="story-card">
-        <div class="story-media-wrap">
+      <div class="fresh-story-item">
+        <div class="fresh-story-thumb" onclick="abrirStoryDash('${f.url}','${f.tipo||'foto'}')">
           ${f.tipo === 'video'
-            ? `<video class="story-media" src="${f.url}" muted playsinline loop onclick="abrirStory('${f.url}','video')"></video>
-               <div class="story-play-icon">▶</div>`
-            : `<img class="story-media" src="${f.url}" alt="Fresquinho" onclick="abrirStory('${f.url}','foto')">`}
-          <div class="story-overlay"></div>
-          <div class="story-timer">⏱ ${tempo}</div>
+            ? `<video src="${f.url}" muted playsinline loop style="width:100%;height:100%;object-fit:cover"></video>
+               <div class="fresh-play">▶</div>`
+            : `<img src="${f.url}" alt="Fresquinho" style="width:100%;height:100%;object-fit:cover">`}
+          <div class="fresh-overlay"></div>
+          <div class="fresh-timer-badge">⏱ ${tempo}</div>
         </div>
-        <button class="story-remove" onclick="removerFresquinho('${f.id}')">🗑️</button>
+        <button class="fresh-remove-btn" onclick="removerFresquinho('${f.id}')">🗑️</button>
       </div>`;
-  }).join('');
+  }).join('') + `</div>`;
 }
 
 export async function postarFresquinho(event) {
@@ -302,6 +334,21 @@ export async function removerFresquinho(id) {
 }
 
 // Abre story em tela cheia
+window.abrirStoryDash = function(url, tipo) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer';
+  overlay.onclick = () => overlay.remove();
+  overlay.innerHTML = tipo === 'video'
+    ? `<video src="${url}" controls autoplay style="max-width:90vw;max-height:90vh;border-radius:12px"></video>`
+    : `<img src="${url}" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain">`;
+  const close = document.createElement('button');
+  close.style.cssText = 'position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:1.1rem;cursor:pointer';
+  close.textContent = '✕';
+  close.onclick = e => { e.stopPropagation(); overlay.remove(); };
+  overlay.appendChild(close);
+  document.body.appendChild(overlay);
+};
+
 window.abrirStory = function(url, tipo) {
   const overlay = document.createElement('div');
   overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer`;
@@ -365,6 +412,67 @@ export function previewLogo(event) {
   if (txt) txt.style.display = 'none';
 }
 
+// ── CROP LOGO ────────────────────────────────────────────────
+let cropObjectUrl = null;
+
+window.abrirCropLogo = function(event) {
+  const file = event.target.files[0]; if (!file) return;
+  logoFile = file;
+  cropObjectUrl = URL.createObjectURL(file);
+  const cropImg = document.getElementById('crop-img');
+  if (cropImg) {
+    cropImg.src = cropObjectUrl;
+    cropImg.style.transform = 'scale(1) translate(0px, 0px)';
+  }
+  document.getElementById('crop-zoom').value = 100;
+  document.getElementById('crop-x').value = 0;
+  document.getElementById('crop-y').value = 0;
+  document.getElementById('crop-overlay').classList.add('open');
+  event.target.value = '';
+};
+
+window.ajustarCropZoom = function(v) {
+  const img = document.getElementById('crop-img'); if (!img) return;
+  const x = document.getElementById('crop-x')?.value || 0;
+  const y = document.getElementById('crop-y')?.value || 0;
+  img.style.transform = `scale(${v/100}) translate(${x}px, ${y}px)`;
+};
+
+window.ajustarCropX = function(v) {
+  const img = document.getElementById('crop-img'); if (!img) return;
+  const zoom = document.getElementById('crop-zoom')?.value || 100;
+  const y = document.getElementById('crop-y')?.value || 0;
+  img.style.transform = `scale(${zoom/100}) translate(${v}px, ${y}px)`;
+};
+
+window.ajustarCropY = function(v) {
+  const img = document.getElementById('crop-img'); if (!img) return;
+  const zoom = document.getElementById('crop-zoom')?.value || 100;
+  const x = document.getElementById('crop-x')?.value || 0;
+  img.style.transform = `scale(${zoom/100}) translate(${x}px, ${v}px)`;
+};
+
+window.fecharCrop = function() {
+  document.getElementById('crop-overlay').classList.remove('open');
+  logoFile = null;
+};
+
+window.confirmarCrop = function() {
+  // Usa a imagem como está (com CSS transform aplicado visualmente)
+  const img = document.getElementById('logo-preview-img');
+  const txt = document.getElementById('logo-placeholder-text');
+  if (img && cropObjectUrl) {
+    img.src = cropObjectUrl;
+    const zoom = document.getElementById('crop-zoom')?.value || 100;
+    const x = document.getElementById('crop-x')?.value || 0;
+    const y = document.getElementById('crop-y')?.value || 0;
+    img.style.transform = `scale(${zoom/100}) translate(${x}px, ${y}px)`;
+    img.style.display = 'block';
+  }
+  if (txt) txt.style.display = 'none';
+  document.getElementById('crop-overlay').classList.remove('open');
+};
+
 // ============================================================
 // CONFIGURAÇÕES
 // ============================================================
@@ -422,6 +530,7 @@ export async function salvarConfig() {
 
 // Expõe globalmente
 window.abrirModalItem    = abrirModalItem;
+  window.previewFotos      = previewFotos;
 window.fecharModal       = fecharModal;
 window.fecharModalFora   = fecharModalFora;
 window.previewFoto       = previewFoto;
