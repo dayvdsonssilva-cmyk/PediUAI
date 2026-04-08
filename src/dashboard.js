@@ -46,6 +46,13 @@ export async function initDashboard() {
   // Cores
   renderCores(estab.cor_primaria || '#C0392B');
 
+  // Restaura aba salva
+  const abasSalva = localStorage.getItem('pw_aba_ativa');
+  if (abasSalva) {
+    const btn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('data-tab') === abasSalva);
+    if (btn) { setTimeout(() => showTab(abasSalva, btn), 100); }
+  }
+
   // Dados
   if (!window._isDemo) {
     await renderCardapio();
@@ -116,15 +123,9 @@ function iniciarRealtime() {
 
 function tocarSomNovoPedido() {
   try {
-    const ctx = new AudioContext();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    o.frequency.setValueAtTime(880, ctx.currentTime);
-    o.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
-    g.gain.setValueAtTime(0.3, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-    o.start(); o.stop(ctx.currentTime + 0.4);
+    const audio = new Audio('/notificacao.mp3');
+    audio.volume = 0.8;
+    audio.play().catch(() => {});
   } catch(e) {}
 }
 
@@ -404,14 +405,28 @@ function renderEmojiGrid() {
 
 function renderCores(corAtiva) {
   const grid = document.getElementById('cores-grid'); if (!grid) return;
-  grid.innerHTML = CORES.map(c=>`
-    <div class="cor-opcao ${c===corAtiva?'ativa':''}" style="background:${c}" onclick="selecionarCor('${c}',this)" title="${c}"></div>`).join('');
+  grid.innerHTML = CORES.map(cor=>`
+    <div class="cor-opcao ${cor===corAtiva?'ativa':''}" style="background:${cor}" onclick="selecionarCor('${cor}',this)" title="${cor}"></div>`).join('');
+  aplicarCorDash(corAtiva);
+}
+
+function aplicarCorDash(cor) {
+  document.documentElement.style.setProperty('--red', cor);
+  document.documentElement.style.setProperty('--red-dark', cor);
+  document.documentElement.style.setProperty('--red-light', hexToRgba(cor, 0.1));
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 window.selecionarCor = function(cor, el) {
   document.querySelectorAll('.cor-opcao').forEach(e=>e.classList.remove('ativa'));
   el.classList.add('ativa');
-  document.documentElement.style.setProperty('--red', cor);
+  aplicarCorDash(cor);
 };
 
 // ── MODAL ITEM ────────────────────────────────────────────
@@ -516,23 +531,74 @@ async function renderFresquinho() {
   }).join('')+'</div>';
 }
 
-export async function postarFresquinho(event){
-  const estab=getEstab();const file=event.target.files[0];
-  if(!file||!estab)return;
+// Arquivo pendente de upload (após crop)
+let freshFilePendente = null;
+
+export function postarFresquinho(event){
+  const file=event.target.files[0];
+  if(!file) return;
   if(file.size>50*1024*1024)return showToast('Max. 50MB','error');
-  showToast('Enviando...');
-  const ext=file.name.split('.').pop();
-  const path=`${estab.id}/fresh_${Date.now()}.${ext}`;
-  const tipo=file.type.startsWith('video')?'video':'foto';
-  const{error}=await getSupa().storage.from('fotos').upload(path,file,{upsert:true});
-  if(error)return showToast('Erro: '+error.message,'error');
-  const url=getSupa().storage.from('fotos').getPublicUrl(path).data.publicUrl;
-  await getSupa().from('fresquinhos').insert({
-    estabelecimento_id:estab.id,url,tipo,
-    expires_at:new Date(Date.now()+4*60*60*1000).toISOString(),
-  });
-  await renderFresquinho();showToast('Postado! Disponivel por 4h');
+  if(file.type.startsWith('video')){
+    // Video vai direto sem crop
+    uploadFresquinho(file);
+  } else {
+    // Foto abre modal de ajuste
+    freshFilePendente = file;
+    abrirCropFresh(file);
+  }
   event.target.value='';
+}
+
+function abrirCropFresh(file) {
+  const url = URL.createObjectURL(file);
+  // Reutiliza o modal de crop mas para fresquinho
+  const overlay = document.getElementById('crop-overlay');
+  const img = document.getElementById('crop-img');
+  if (!overlay || !img) { uploadFresquinho(file); return; }
+  cropObjectUrl = url;
+  cropOffsetX = 0; cropOffsetY = 0; cropZoom = 100;
+  img.src = url;
+  img.style.transform = 'scale(1) translate(0px,0px)';
+  const zoomEl = document.getElementById('crop-zoom');
+  if (zoomEl) zoomEl.value = 100;
+  // Troca o confirmar para fresquinho
+  const btnOk = document.querySelector('.btn-crop-ok');
+  if (btnOk) { btnOk.textContent = 'Postar'; btnOk.onclick = confirmarCropFresh; }
+  overlay.classList.add('open');
+  // Drag
+  const preview = document.getElementById('crop-preview');
+  if (preview) {
+    preview.onmousedown = e=>{ isDragging=true; dragStartX=e.clientX-cropOffsetX; dragStartY=e.clientY-cropOffsetY; };
+    preview.ontouchstart = e=>{ isDragging=true; dragStartX=e.touches[0].clientX-cropOffsetX; dragStartY=e.touches[0].clientY-cropOffsetY; };
+    document.onmousemove = e=>{ if(!isDragging)return; cropOffsetX=e.clientX-dragStartX; cropOffsetY=e.clientY-dragStartY; aplicarCrop(); };
+    document.ontouchmove = e=>{ if(!isDragging)return; cropOffsetX=e.touches[0].clientX-dragStartX; cropOffsetY=e.touches[0].clientY-dragStartY; aplicarCrop(); };
+    document.onmouseup = ()=>isDragging=false;
+    document.ontouchend = ()=>isDragging=false;
+  }
+}
+
+window.confirmarCropFresh = async function() {
+  document.getElementById('crop-overlay')?.classList.remove('open');
+  const btnOk = document.querySelector('.btn-crop-ok');
+  if (btnOk) { btnOk.textContent = 'Usar esta foto'; btnOk.onclick = window.confirmarCrop; }
+  if (freshFilePendente) { await uploadFresquinho(freshFilePendente); freshFilePendente = null; }
+};
+
+async function uploadFresquinho(file) {
+  const estab = getEstab(); if (!estab) return;
+  showToast('Enviando...');
+  const ext = file.name.split('.').pop();
+  const path = `${estab.id}/fresh_${Date.now()}.${ext}`;
+  const tipo = file.type.startsWith('video')?'video':'foto';
+  const { error } = await getSupa().storage.from('fotos').upload(path, file, { upsert: true });
+  if (error) return showToast('Erro: '+error.message, 'error');
+  const url = getSupa().storage.from('fotos').getPublicUrl(path).data.publicUrl;
+  await getSupa().from('fresquinhos').insert({
+    estabelecimento_id: estab.id, url, tipo,
+    expires_at: new Date(Date.now()+4*60*60*1000).toISOString(),
+  });
+  await renderFresquinho();
+  showToast('Postado! Disponivel por 4h');
 }
 
 export async function removerFresquinho(id){
