@@ -227,10 +227,11 @@
             <div id="logo-placeholder-text" class="logo-upload-placeholder">
               <span style="font-size:2rem">🏪</span>
               <span style="font-size:0.82rem;color:#aaa;margin-top:6px">Clique para adicionar logo</span>
-              <span style="font-size:0.72rem;color:#bbb">Recomendado: 400x400px</span>
+              <span style="font-size:0.72rem;color:#bbb">Quadrada, mín. 200x200px</span>
             </div>
           </div>
-          <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="previewLogo(event)">
+          <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="abrirCropLogo(event)">
+          <div style="font-size:0.75rem;color:#aaa;margin-top:4px">Após selecionar, você pode ajustar o enquadramento</div>
         </div>
         <div class="form-group-light">
           <label>Nome do estabelecimento</label>
@@ -265,11 +266,15 @@
     </div>
     <div class="modal-body">
       <div class="form-group-light">
-        <label>Foto do produto</label>
-        <div class="foto-upload" id="foto-preview" onclick="document.getElementById('foto-input').click()">
-          <span>📷 Clique para adicionar foto</span>
+        <label>Fotos do produto (até 5)</label>
+        <div class="fotos-grid" id="fotos-grid">
+          <div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
+            <span style="font-size:1.5rem">📷</span>
+            <span style="font-size:0.75rem;color:#aaa">Adicionar</span>
+          </div>
         </div>
-        <input type="file" id="foto-input" accept="image/*" style="display:none" onchange="previewFoto(event)">
+        <input type="file" id="foto-input" accept="image/*" multiple style="display:none" onchange="previewFotos(event)">
+        <p style="font-size:0.72rem;color:#aaa;margin-top:6px">A primeira foto é a principal. Clique para reordenar.</p>
       </div>
       <div class="form-group-light">
         <label>Emoji (caso sem foto)</label>
@@ -308,6 +313,33 @@
     </div>
   </div>
 </div>
+
+
+  <!-- MODAL CROP LOGO -->
+  <div class="crop-overlay" id="crop-overlay">
+    <div class="crop-box">
+      <h4>Ajustar enquadramento da logo</h4>
+      <div class="crop-preview">
+        <img id="crop-img" src="" alt="Preview">
+      </div>
+      <div class="crop-slider-wrap">
+        <label>Zoom</label>
+        <input type="range" class="crop-slider" id="crop-zoom" min="100" max="200" value="100" oninput="ajustarCropZoom(this.value)">
+      </div>
+      <div class="crop-slider-wrap">
+        <label>Posição vertical</label>
+        <input type="range" class="crop-slider" id="crop-y" min="-50" max="50" value="0" oninput="ajustarCropY(this.value)">
+      </div>
+      <div class="crop-slider-wrap">
+        <label>Posição horizontal</label>
+        <input type="range" class="crop-slider" id="crop-x" min="-50" max="50" value="0" oninput="ajustarCropX(this.value)">
+      </div>
+      <div class="crop-actions">
+        <button class="btn-crop-cancel" onclick="fecharCrop()">Cancelar</button>
+        <button class="btn-crop-ok" onclick="confirmarCrop()">Usar esta foto ✓</button>
+      </div>
+    </div>
+  </div>
 
 <script type="module" src="/src/main.js"></script>
 </body>
