@@ -562,25 +562,47 @@ export async function deletarItem(id){
 }
 
 export async function editarItem(id){
+  const estab=getEstab(); if(!estab) return;
   const{data:p}=await getSupa().from('produtos').select('*').eq('id',id).maybeSingle();
   if(!p)return;
-  // Abre modal preenchido
-  abrirModalItem();
+
+  // Reseta o modal primeiro
+  document.getElementById('modal-item').classList.add('open');
+  fotosFiles=[];
+
   setTimeout(()=>{
-    const nn=document.getElementById('item-nome'); if(nn)nn.value=p.nome;
-    const dd=document.getElementById('item-desc'); if(dd)dd.value=p.descricao||'';
-    const cc=document.getElementById('item-cat');  if(cc)cc.value=p.categoria||'';
-    const pp=document.getElementById('item-preco');if(pp)pp.value=p.preco;
-    const po=document.getElementById('item-preco-orig');if(po)po.value=p.preco_original||'';
+    // Preenche campos
+    const set=(sel,val)=>{const el=document.getElementById(sel);if(el&&val!=null)el.value=val;};
+    set('item-nome', p.nome);
+    set('item-desc', p.descricao||'');
+    set('item-cat',  p.categoria||'');
+    set('item-preco', p.preco);
+    set('item-preco-orig', p.preco_original||'');
     const pr=document.getElementById('item-promocao');
-    if(pr){pr.checked=!!p.promocao;togglePromo&&togglePromo(pr);}
-    // Seleciona emoji
+    if(pr){pr.checked=!!p.promocao; const g=document.getElementById('preco-orig-group'); if(g)g.style.display=p.promocao?'flex':'none';}
+
+    // Emoji
     emojiSel=p.emoji||'🍔';
     document.querySelectorAll('.emoji-btn').forEach(b=>{
-      if(b.textContent===emojiSel)b.classList.add('selected');
-      else b.classList.remove('selected');
+      b.classList.toggle('selected', b.textContent===emojiSel);
     });
-    // Botão salvar vira "Salvar alterações"
+
+    // Foto existente no grid
+    const grid=document.getElementById('fotos-grid');
+    if(grid && p.foto_url){
+      grid.innerHTML=`
+        <div class="foto-thumb-item" style="position:relative">
+          <img src="${p.foto_url}" style="width:80px;height:80px;object-fit:cover;border-radius:10px;display:block">
+          <div style="position:absolute;top:3px;left:3px;background:var(--red);color:#fff;font-size:0.55rem;font-weight:700;padding:2px 5px;border-radius:4px">ATUAL</div>
+          <button onclick="this.closest('.foto-thumb-item').remove()" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);border:none;color:#fff;width:20px;height:20px;border-radius:50%;font-size:0.7rem;cursor:pointer">✕</button>
+        </div>
+        <div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
+          <span style="font-size:1.5rem">📷</span>
+          <span style="font-size:0.75rem;color:#aaa">Nova foto</span>
+        </div>`;
+    }
+
+    // Botão salvar
     const btn=document.querySelector('#modal-item .btn-primary');
     if(btn){
       btn.textContent='Salvar alterações';
@@ -588,22 +610,37 @@ export async function editarItem(id){
         const nome=document.getElementById('item-nome')?.value.trim();
         const preco=parseFloat(document.getElementById('item-preco')?.value);
         if(!nome||isNaN(preco))return showToast('Preencha nome e preço.','error');
-        btn.disabled=true;btn.textContent='Salvando...';
-        const promocao=document.getElementById('item-promocao')?.checked||false;
-        const preco_orig=parseFloat(document.getElementById('item-preco-orig')?.value)||null;
-        const{error}=await getSupa().from('produtos').update({
-          nome,
-          descricao:document.getElementById('item-desc')?.value.trim(),
-          categoria:document.getElementById('item-cat')?.value.trim().toUpperCase(),
-          preco,preco_original:promocao?preco_orig:null,
-          emoji:emojiSel,promocao,
-        }).eq('id',id);
-        btn.disabled=false;
-        if(error)return showToast(error.message,'error');
-        await renderCardapio();fecharModal();showToast('Item atualizado!');
+        btn.disabled=true; btn.textContent='Salvando...';
+        try {
+          let foto_url=p.foto_url||null;
+          if(fotosFiles.length>0){
+            const file=fotosFiles[0];
+            const ext=file.name.split('.').pop();
+            const path=`${estab.id}/${Date.now()}.${ext}`;
+            const{error:upErr}=await getSupa().storage.from('fotos').upload(path,file,{upsert:true});
+            if(upErr)throw new Error('Erro upload: '+upErr.message);
+            foto_url=getSupa().storage.from('fotos').getPublicUrl(path).data.publicUrl;
+          }
+          // Se o thumb da foto atual foi removido, limpa a foto
+          const thumbAtual=document.querySelector('#fotos-grid .foto-thumb-item');
+          if(!thumbAtual && fotosFiles.length===0) foto_url=null;
+
+          const promocao=document.getElementById('item-promocao')?.checked||false;
+          const preco_orig=parseFloat(document.getElementById('item-preco-orig')?.value)||null;
+          const{error}=await getSupa().from('produtos').update({
+            nome,
+            descricao:document.getElementById('item-desc')?.value.trim(),
+            categoria:document.getElementById('item-cat')?.value.trim().toUpperCase(),
+            preco, preco_original:promocao?preco_orig:null,
+            emoji:emojiSel, promocao, foto_url,
+          }).eq('id',id);
+          if(error)throw new Error(error.message);
+          await renderCardapio(); fecharModal(); showToast('Item atualizado!');
+        } catch(e){ showToast(e.message,'error'); }
+        finally{ btn.disabled=false; btn.textContent='Salvar alterações'; }
       };
     }
-  },100);
+  }, 100);
 }
 
 // ── FRESQUINHO ────────────────────────────────────────────
