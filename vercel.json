@@ -4,6 +4,7 @@
     { "source": "/assets/:path*", "destination": "/assets/:path*" },
     { "source": "/style.css", "destination": "/style.css" },
     { "source": "/cliente.html", "destination": "/cliente.html" },
+    { "source": "/admin", "destination": "/admin.html" },
     { "source": "/:slug", "destination": "/cliente.html" }
   ]
 }
