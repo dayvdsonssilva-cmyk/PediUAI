@@ -731,7 +731,51 @@
         peds.unshift({id:pedidoId,itens,total,status:'novo',endereco:enderecoEntrega});
         localStorage.setItem(`pw_peds_${slug}`,JSON.stringify(peds.slice(0,20)));
         carrinho=[];atualizarFab();fecharCarrinho();
-        iniciarPolling(pedidoId);
+        // Inicia polling usando whatsapp
+        pollingWhats = document.getElementById('cli-whats')?.value?.replace(/\D/g,'');
+        pollingEstabId = estab?.id;
+        if (pollingWhats && pollingEstabId) {
+          clearInterval(pollingId);
+          pollingId = setInterval(async () => {
+            try {
+              const { data } = await supa.from('pedidos')
+                .select('id,status,endereco,itens,total')
+                .eq('estabelecimento_id', pollingEstabId)
+                .eq('cliente_whats', pollingWhats)
+                .order('created_at', { ascending: false })
+                .limit(5);
+              if (!data?.length) return;
+              const peds = JSON.parse(localStorage.getItem('pw_peds_' + slug) || '[]');
+              let atualizado = false;
+              data.forEach(pedDb => {
+                let pedLocal = peds.find(p => p.id === pedDb.id);
+                if (!pedLocal) {
+                  pedLocal = peds.find(p => p.id && p.id.startsWith('local_'));
+                }
+                if (!pedLocal) {
+                  if (!peds.find(x => x.id === pedDb.id)) {
+                    peds.unshift({ id: pedDb.id, itens: pedDb.itens || [], total: pedDb.total || 0, status: pedDb.status, endereco: pedDb.endereco });
+                    atualizado = true;
+                  }
+                  return;
+                }
+                if (pedLocal.id !== pedDb.id) { pedLocal.id = pedDb.id; pedLocal.itens = pedDb.itens || pedLocal.itens; pedLocal.total = pedDb.total || pedLocal.total; atualizado = true; }
+                if (pedLocal.status !== pedDb.status) {
+                  pedLocal.status = pedDb.status;
+                  atualizado = true;
+                  const isEnt = (pedDb.endereco || '') !== '' && (pedDb.endereco || '') !== 'Retirada no local';
+                  if (pedDb.status === 'preparo') mostrarNotif('Pedido confirmado! Sendo preparado...', '#e05510');
+                  if (pedDb.status === 'pronto') mostrarNotif(isEnt ? 'Seu pedido saiu para entrega!' : 'Pronto para retirada!', '#2e7d32');
+                  if (pedDb.status === 'recusado') mostrarNotif('Pedido nao confirmado pela loja.', '#dc2626');
+                }
+              });
+              if (atualizado) {
+                localStorage.setItem('pw_peds_' + slug, JSON.stringify(peds));
+                carregarMeusPedidos();
+              }
+            } catch(e) { console.log('Polling:', e); }
+          }, 5000);
+        }
         iniciarJogo();
         carregarMeusPedidos();
       }catch(e){ console.error('Erro pedido:',e); alert('Erro ao enviar pedido: '+(e?.message||e?.details||JSON.stringify(e)||'Tente novamente.')); }
@@ -844,25 +888,17 @@
       return '#'+[rgb.r,rgb.g,rgb.b].map(v=>Math.max(0,v-amt).toString(16).padStart(2,'0')).join('');
     }
 
-    // Polling busca por whatsapp do cliente no estabelecimento
     let pollingWhats = null;
     let pollingEstabId = null;
-    let ultimoStatus = {};
 
     function iniciarPolling(pedidoIdLocal) {
-      pollingWhats = document.getElementById('cli-whats')?.value?.replace(/\D/g,'');
-      pollingEstabId = estab?.id;
-      if (!pollingWhats || !pollingEstabId) return;
+      // Polling já iniciado inline após o pedido
+    }
 
-      pollingId = setInterval(async () => {
-        try {
-          const { data, error: pollErr } = await supa.from('pedidos')
-            .select('id,status,endereco')
-            .eq('estabelecimento_id', pollingEstabId)
-            .eq('cliente_whats', pollingWhats)
-            .order('created_at', { ascending: false })
-            .limit(5);
-          if (pollErr) { console.log('Polling err:', pollErr); return; }
+    // Stub para não quebrar chamada antiga
+    function _pollBodyNoop() {
+      try {
+          const { data, error: pollErr } = await supa; // nunca executado
           if (!data?.length) return;
 
           const peds = JSON.parse(localStorage.getItem(`pw_peds_${slug}`) || '[]');
@@ -900,7 +936,7 @@
             carregarMeusPedidos();
           }
         } catch(e) { console.log('Polling error:', e); }
-      }, 8000);
+      }, 5000);
     }
 
     function mostrarNotif(msg, cor) {
