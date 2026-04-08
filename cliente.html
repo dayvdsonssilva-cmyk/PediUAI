@@ -238,7 +238,6 @@
       <div class="loja-desc" id="loja-desc">Cardápio digital</div>
       <div class="loja-meta">
         <div class="meta-item">⊙ <span id="meta-tempo">30-45 min</span></div>
-        <div class="meta-item">⭐ 4.8</div>
         <div class="meta-item">🛵 Entrega disponível</div>
       </div>
     </div>
@@ -355,7 +354,7 @@
           <textarea class="carr-field" id="cli-obs"   placeholder="Algum pedido especial? Ex: sem cebola 🧅" rows="2"></textarea>
         </div>
 
-        <button class="btn-pedido" onclick="finalizarPedido()">Mandar o pedido! 🚀</button>
+        <button class="btn-pedido" id="btn-pedido" onclick="finalizarPedido()">Mandar o pedido! 🚀</button>
       </div>
     </div>
   </div>
@@ -584,6 +583,9 @@
         <div style="font-size:0.82rem;color:rgba(255,255,255,0.6);text-align:center">
           Voltamos em breve! Acompanhe nossas novidades.
         </div>`;
+      // Esconde botão de pedido
+      var btnPed = document.getElementById('btn-pedido');
+      if(btnPed) btnPed.style.display='none';
       document.body.appendChild(banner);
       // Esconde FAB e bloqueia sacola
       const fab = document.getElementById('fab');
@@ -696,6 +698,7 @@
     };
 
     window.finalizarPedido=async function(){
+      if(window._lojaFechada){ mostrarNotif('Loja fechada no momento. Tente mais tarde.','#333'); return; }
       const nome=document.getElementById('cli-nome')?.value.trim();
       const whats=document.getElementById('cli-whats')?.value.trim();
       if(!nome){alert('Coloca seu nome ai!');return;}
@@ -733,6 +736,39 @@
         carrinho=[];atualizarFab();fecharCarrinho();
         // Inicia polling usando whatsapp
         iniciarPollingCliente();
+        // Realtime de pedidos via Supabase channel
+        if (pollingWhats && pollingEstabId) {
+          supa.channel('pedidos-cliente')
+            .on('postgres_changes', {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'pedidos',
+            }, payload => {
+              var p = payload.new;
+              if (!p || p.estabelecimento_id !== pollingEstabId) return;
+              var pNum = p.cliente_whats ? p.cliente_whats.replace(/\D/g,'') : '';
+              if (pNum !== pollingWhats) return;
+              // Atualiza status local
+              var peds = JSON.parse(localStorage.getItem('pw_peds_' + slug) || '[]');
+              var pedLocal = peds.find(function(x){ return x.id === p.id; });
+              if (!pedLocal) {
+                peds.unshift({id:p.id, itens:p.itens||[], total:p.total||0, status:p.status, endereco:p.endereco});
+                localStorage.setItem('pw_peds_' + slug, JSON.stringify(peds));
+                carregarMeusPedidos();
+                return;
+              }
+              if (pedLocal.status !== p.status) {
+                pedLocal.status = p.status;
+                localStorage.setItem('pw_peds_' + slug, JSON.stringify(peds));
+                carregarMeusPedidos();
+                var isEnt = (p.endereco||'') !== '' && (p.endereco||'') !== 'Retirada no local';
+                if (p.status === 'preparo') mostrarNotif('Pedido confirmado! Sendo preparado...', '#e05510');
+                if (p.status === 'pronto') mostrarNotif(isEnt ? 'Seu pedido saiu para entrega!' : 'Pronto para retirada!', '#2e7d32');
+                if (p.status === 'recusado') mostrarNotif('Pedido nao confirmado pela loja.', '#dc2626');
+              }
+            })
+            .subscribe();
+        }
         iniciarJogo();
         carregarMeusPedidos();
       }catch(e){ console.error('Erro pedido:',e); alert('Erro ao enviar pedido: '+(e?.message||e?.details||JSON.stringify(e)||'Tente novamente.')); }
@@ -851,10 +887,11 @@
       } else {
         if(banner) banner.remove();
         window._lojaFechada = false;
-        // Reabilita FAB se tem itens
-        const qtd = carrinho.reduce((s,cc)=>s+cc.qtd,0);
-        const fab = document.getElementById('fab');
-        if(fab && qtd>0) fab.style.display='flex';
+        var btnPed2 = document.getElementById('btn-pedido');
+        if(btnPed2) btnPed2.style.display='';
+        var qtdR = carrinho.reduce(function(s,cc){return s+cc.qtd;},0);
+        var fabEl = document.getElementById('fab');
+        if(fabEl && qtdR>0) fabEl.style.display='flex';
       }
     }
 
@@ -908,11 +945,12 @@
       if (!pollingWhats || !pollingEstabId) return;
       try {
         var res = await supa.from('pedidos')
-          .select('id,status,endereco,itens,total')
+          .select('id,status,endereco,itens,total,cliente_whats')
           .eq('estabelecimento_id', pollingEstabId)
           .eq('cliente_whats', pollingWhats)
+          .not('status', 'in', '("recusado")')
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(10);
         var data = res.data;
         if (!data || !data.length) return;
         var pedsStr = localStorage.getItem('pw_peds_' + slug) || '[]';
