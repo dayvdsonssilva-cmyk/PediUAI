@@ -95,11 +95,11 @@ window.atualizarStatusLoja = function(aberto) {
 // ── REALTIME ──────────────────────────────────────────────
 function iniciarRealtime() {
   const estab = getEstab(); if (!estab) return;
-  if (realtimeSub) getSupa().removeChánnel(realtimeSub);
+  if (realtimeSub) getSupa().removeChannel(realtimeSub);
 
   realtimeSub = getSupa()
-    .chánnel('pedidos-realtime')
-    .on('postgres_chánges', {
+    .channel('pedidos-realtime')
+    .on('postgres_changes', {
       event: 'INSERT',
       schema: 'public',
       table: 'pedidos',
@@ -110,7 +110,7 @@ function iniciarRealtime() {
       tocarSomNovoPedido(p.id);
       atualizarBadgePedidos();
     })
-    .on('postgres_chánges', {
+    .on('postgres_changes', {
       event: 'UPDATE',
       schema: 'public',
       table: 'pedidos',
