@@ -86,6 +86,19 @@ function preencherConfig(estab) {
   if (ce) ce.checked = estab.faz_entrega !== false;
   const cr = document.getElementById('cfg-retirada');
   if (cr) cr.checked = estab.faz_retirada !== false;
+  // Preenche capa
+  const capaTipoEl = document.querySelector(`input[name="capa-tipo"][value="${estab.capa_tipo||'cor'}"]`);
+  if (capaTipoEl) { capaTipoEl.checked = true; window.alternarTipoCapa(estab.capa_tipo||'cor'); }
+  if (estab.capa_url) {
+    const img  = document.getElementById('capa-preview-img');
+    const wrap = document.getElementById('capa-preview-img-wrap');
+    if (img)  img.src = estab.capa_url;
+    if (wrap) wrap.style.display = 'block';
+    window._capaUrl = estab.capa_url;
+  } else {
+    const prev = document.getElementById('capa-preview');
+    if (prev) prev.style.background = estab.cor_primaria || '#C0392B';
+  }
 }
 
 function atualizarBadgeLoja(aberto) {
@@ -105,38 +118,30 @@ let _pollingDashId = null;
 
 function iniciarRealtime() {
   const estab = getEstab(); if (!estab || estab.id === 'demo') return;
-
-  // Remove canal anterior
   if (realtimeSub) { try { getSupa().removeChannel(realtimeSub); } catch(e){} }
 
-  // Tenta Realtime
-  try {
-    realtimeSub = getSupa()
-      .channel('pedidos-dash-' + estab.id)
-      .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'pedidos',
-        filter: `estabelecimento_id=eq.${estab.id}`,
-      }, payload => {
-        const p = payload.new;
-        if (!_ultimosPedidosIds.has(p.id)) {
-          _ultimosPedidosIds.add(p.id);
-          // Espera 1s para evitar conflito com renderPedidos inicial
-          setTimeout(() => {
-            if (document.getElementById('pnc-' + p.id)) return; // já existe
-            adicionarPedidoNovo(p);
-            tocarSomNovoPedido(p.id);
-            atualizarBadgePedidos();
-          }, 1000);
-        }
-      })
-      .on('postgres_changes', {
-        event: 'UPDATE', schema: 'public', table: 'pedidos',
-        filter: `estabelecimento_id=eq.${estab.id}`,
-      }, () => { renderPedidos(); })
-      .subscribe();
-  } catch(e) { console.log('Realtime erro:', e); }
+  // Realtime — sem timeout, sem check de duplicata por ID de elemento
+  realtimeSub = getSupa()
+    .channel('pedidos-rt-' + Date.now())
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'pedidos',
+      filter: `estabelecimento_id=eq.${estab.id}`,
+    }, payload => {
+      const p = payload.new;
+      _ultimosPedidosIds.add(p.id);
+      adicionarPedidoNovo(p);
+      tocarSomNovoPedido(p.id);
+      atualizarBadgePedidos();
+    })
+    .on('postgres_changes', {
+      event: 'UPDATE', schema: 'public', table: 'pedidos',
+      filter: `estabelecimento_id=eq.${estab.id}`,
+    }, () => { renderPedidos(); })
+    .subscribe(status => {
+      console.log('Realtime status:', status);
+    });
 
-  // Polling de segurança a cada 8s (garante chegada mesmo sem Realtime)
+  // Polling a cada 6s como fallback
   clearInterval(_pollingDashId);
   _pollingDashId = setInterval(async () => {
     const est = getEstab(); if (!est || est.id === 'demo') return;
@@ -146,7 +151,7 @@ function iniciarRealtime() {
         .eq('estabelecimento_id', est.id)
         .eq('status', 'novo')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(20);
       if (!data) return;
       data.forEach(p => {
         if (!_ultimosPedidosIds.has(p.id)) {
@@ -156,8 +161,8 @@ function iniciarRealtime() {
           atualizarBadgePedidos();
         }
       });
-    } catch(e) {}
-  }, 8000);
+    } catch(e) { console.error('Polling erro:', e); }
+  }, 6000);
 }
 
 let notifLoop = null;
@@ -854,6 +859,11 @@ export async function salvarConfig(){
       const{data:existe}=await getSupa().from('estabelecimentos').select('id').eq('slug',slug).maybeSingle();
       if(existe)throw new Error('Esse link já está em uso.');
     }
+    // Upload da capa se tiver arquivo novo
+    if (window._capaFile) {
+      const capaUploaded = await window._uploadCapaSeNecessario(estab.id);
+      if (capaUploaded) window._capaUrl = capaUploaded;
+    }
     let logo_url=estab.logo_url||null;
     if(logoFile){
       const ext=logoFile.name.split('.').pop();
@@ -863,10 +873,14 @@ export async function salvarConfig(){
       logo_url=getSupa().storage.from('fotos').getPublicUrl(path).data.publicUrl;
       logoFile=null;
     }
+    const capaUrl = window._capaUrl !== undefined ? window._capaUrl : (estab.capa_url||null);
+    const capaCor = document.querySelector('.cor-opcao.ativa')?.style.background || corAtiva;
+    const capaTipo = document.querySelector('input[name="capa-tipo"]:checked')?.value || estab.capa_tipo || 'cor';
     const{error}=await getSupa().from('estabelecimentos').update({
       nome,slug,whatsapp:whats,descricao:desc,endereco,
       tempo_entrega:tempo,aberto,faz_entrega,faz_retirada,
       cor_primaria:corAtiva,logo_url,
+      capa_url:capaUrl, capa_tipo:capaTipo,
     }).eq('id',estab.id);
     if(error)throw new Error(error.message);
     const novoEstab={...estab,nome,slug,whatsapp:whats,descricao:desc,endereco,tempo_entrega:tempo,aberto,faz_entrega,faz_retirada,cor_primaria:corAtiva,logo_url};
@@ -899,3 +913,60 @@ window.salvarConfig      = salvarConfig;
 window.initDashboard     = initDashboard;
 window.previewLogo       = previewLogo;
 window.renderPedidos     = renderPedidos;
+
+
+
+// ── CAPA DO CARDÁPIO ──────────────────────────────────────────────────────────
+window._capaUrl = undefined;
+
+window.alternarTipoCapa = function(tipo) {
+  const imgInput = document.getElementById('capa-imagem-input');
+  const preview  = document.getElementById('capa-preview');
+  const imgWrap  = document.getElementById('capa-preview-img-wrap');
+  if (tipo === 'imagem') {
+    if (imgInput) imgInput.style.display = 'block';
+  } else {
+    if (imgInput) imgInput.style.display = 'none';
+    if (imgWrap)  imgWrap.style.display  = 'none';
+    if (preview) {
+      const cor = document.querySelector('.cor-opcao.ativa')?.style.background || 'var(--red)';
+      preview.style.background = cor;
+    }
+  }
+};
+
+window.previewCapa = function(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const url  = URL.createObjectURL(file);
+  const img  = document.getElementById('capa-preview-img');
+  const wrap = document.getElementById('capa-preview-img-wrap');
+  if (img)  { img.src = url; }
+  if (wrap) { wrap.style.display = 'block'; }
+  // Salva para upload
+  window._capaFile = file;
+  window._capaUrl  = null; // será substituído após upload
+};
+
+// Atualiza preview da capa quando muda a cor
+const _origSelecionarCor = window.selecionarCor;
+window.selecionarCor = function(cor, el) {
+  if (_origSelecionarCor) _origSelecionarCor(cor, el);
+  const tipo = document.querySelector('input[name="capa-tipo"]:checked')?.value || 'cor';
+  if (tipo === 'cor') {
+    const preview = document.getElementById('capa-preview');
+    if (preview) preview.style.background = cor;
+  }
+};
+
+// Upload da capa durante salvarConfig
+window._uploadCapaSeNecessario = async function(estabId) {
+  if (!window._capaFile) return window._capaUrl;
+  const ext  = window._capaFile.name.split('.').pop();
+  const path = `${estabId}/capa.${ext}`;
+  const { error } = await getSupa().storage.from('fotos').upload(path, window._capaFile, { upsert: true });
+  if (error) { showToast('Erro no upload da capa: ' + error.message, 'error'); return null; }
+  const url = getSupa().storage.from('fotos').getPublicUrl(path).data.publicUrl;
+  window._capaUrl  = url;
+  window._capaFile = null;
+  return url;
+};
