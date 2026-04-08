@@ -448,16 +448,23 @@
         estab=data;
         document.title=estab.nome+' | PEDIWAY';
         document.getElementById('loja-nome').textContent=estab.nome.toUpperCase();
-        document.getElementById('loja-desc').textContent=estab.descricao||'Cardapio digital';
-        document.getElementById('estab-endereco-txt').textContent=estab.endereco||'Entre em contato para o endereco';
-        if(estab.cor_primaria) aplicarCorPrimaria(estab.cor_primaria);
-        if(estab.logo_url){
-          document.getElementById('logo-wrap').innerHTML=`<img src="${estab.logo_url}" alt="Logo">`;
-        }else{
-          document.getElementById('logo-emoji').textContent=estab.nome.charAt(0);
-        }
-        await Promise.all([carregarProdutos(),carregarFresquinho()]);
+        // Aplica todos os dados do estab de uma vez
+        aplicarDadosEstab(estab);
+
+        await Promise.all([carregarProdutos(), carregarFresquinho()]);
         carregarMeusPedidos();
+
+        // ── POLLING ESTAB a cada 8s ──────────────────────────
+        setInterval(function() {
+          supa.from('estabelecimentos')
+            .select('nome,descricao,cor_primaria,logo_url,aberto,faz_entrega,faz_retirada,tempo_entrega,endereco,whatsapp')
+            .eq('slug', slug)
+            .maybeSingle()
+            .then(function(res) {
+              if (res.data) aplicarDadosEstab(res.data);
+            });
+        }, 8000);
+
       }
     }
 
@@ -870,6 +877,7 @@
     let pollingEstabId = null;
 
     function aplicarDadosEstab(est) {
+      if (!est) return;
       estab = est;
 
       // Nome e descrição
