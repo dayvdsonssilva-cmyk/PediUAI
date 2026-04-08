@@ -398,8 +398,8 @@
     let lastTap=0;
     document.addEventListener('touchend',e=>{const now=Date.now();if(now-lastTap<300)e.preventDefault();lastTap=now;},{passive:false});
 
-    const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
+    const SUPA_URL='__VITE_SUPABASE_URL__';
+    const SUPA_KEY='__VITE_SUPABASE_ANON_KEY__';
     const supa=createClient(SUPA_URL,SUPA_KEY);
 
     const slug=location.pathname.replace(/^\//,'').split('/')[0]||'demo';
@@ -431,6 +431,7 @@
         document.getElementById('loja-nome').textContent='BURGUER DO ZÉ';
         document.getElementById('loja-desc').textContent='Os melhores burguers da cidade!';
         document.getElementById('logo-emoji').textContent='🍔';
+        aplicarCorPrimaria('#C0392B');
         document.getElementById('demo-banner').classList.add('show');
         document.getElementById('estab-endereco-txt').textContent='Rua Demo, 123 – Centro';
         document.title='Burguer do Zé | PEDIWAY';
@@ -446,8 +447,9 @@
         estab=data;
         document.title=estab.nome+' | PEDIWAY';
         document.getElementById('loja-nome').textContent=estab.nome.toUpperCase();
-        document.getElementById('loja-desc').textContent=estab.descricao||'Cardápio digital';
-        document.getElementById('estab-endereco-txt').textContent=estab.endereco||'Entre em contato para o endereço';
+        document.getElementById('loja-desc').textContent=estab.descricao||'Cardapio digital';
+        document.getElementById('estab-endereco-txt').textContent=estab.endereco||'Entre em contato para o endereco';
+        if(estab.cor_primaria) aplicarCorPrimaria(estab.cor_primaria);
         if(estab.logo_url){
           document.getElementById('logo-wrap').innerHTML=`<img src="${estab.logo_url}" alt="Logo">`;
         }else{
@@ -685,46 +687,60 @@
       const btn=document.querySelector('.btn-pedido');
       btn.disabled=true;btn.textContent='Mandando...';
       try{
-        const{data,error}=await supa.from('pedidos').insert({
+        // Insert sem .select() para evitar problemas de RLS em celulares
+        const{error}=await supa.from('pedidos').insert({
           estabelecimento_id:estab.id,
           cliente_nome:nome,cliente_whats:whats,
-          observacao:document.getElementById('cli-obs')?.value.trim(),
+          observacao:document.getElementById('cli-obs')?.value.trim()||'',
           itens,total,status:'novo',
           endereco:enderecoEntrega,
-        }).select().single();
+        });
         if(error)throw error;
+        // Gera ID local temporario para tracking
+        const pedidoId='local_'+Date.now();
         const peds=JSON.parse(localStorage.getItem(`pw_peds_${slug}`)||'[]');
-        peds.unshift({id:data.id,itens,total,status:'novo'});
+        peds.unshift({id:pedidoId,itens,total,status:'novo',endereco:enderecoEntrega});
         localStorage.setItem(`pw_peds_${slug}`,JSON.stringify(peds.slice(0,20)));
         carrinho=[];atualizarFab();fecharCarrinho();
-        iniciarPolling(data.id);
+        iniciarPolling(pedidoId);
         iniciarJogo();
         carregarMeusPedidos();
-      }catch(e){alert('Eita! Algo deu errado 😬');}
+      }catch(e){ console.error('Erro pedido:',e); alert('Erro ao enviar pedido: '+(e?.message||e?.details||JSON.stringify(e)||'Tente novamente.')); }
       finally{btn.disabled=false;btn.textContent='Mandar o pedido! 🚀';}
     };
 
     function carregarMeusPedidos(){
       const peds=JSON.parse(localStorage.getItem(`pw_peds_${slug}`)||'[]');if(!peds.length)return;
       const whatsEstab = estab?.whatsapp?.replace(/\D/g,'');
-      const STATUS_LABEL = { novo:'⏳ Aguardando', preparo:'🔥 No forno!', pronto:'✅ Pronto!' };
-      const STATUS_DESC  = { novo:'Seu pedido foi enviado e aguarda confirmação.', preparo:'Boa notícia! Seu pedido foi aceito e está sendo preparado.', pronto:'Seu pedido está pronto! Já pode buscar ou aguardar a entrega.' };
-      const STATUS_COR   = { novo:'s-novo', preparo:'s-preparo', pronto:'s-pronto' };
-      document.getElementById('ped-lista').innerHTML=peds.map(p=>`
+      const STATUS_COR = { novo:'s-novo', preparo:'s-preparo', pronto:'s-pronto' };
+      document.getElementById('ped-lista').innerHTML=peds.map(p=>{
+        const isEntrega = p.endereco && p.endereco !== 'Retirada no local';
+        const STATUS_LABEL = {
+          novo:'Aguardando confirmacao',
+          preparo: isEntrega ? 'Saiu para entrega!' : 'Pronto para retirada!',
+          pronto:  isEntrega ? 'Entregue!' : 'Retirado!',
+        };
+        const STATUS_DESC = {
+          novo:'Seu pedido foi recebido e aguarda confirmacao da loja.',
+          preparo: isEntrega ? 'Seu pedido esta a caminho!' : 'Seu pedido esta pronto, pode vir buscar!',
+          pronto: 'Pedido finalizado. Obrigado!',
+        };
+        return `
         <div class="ped-card">
           <div class="ped-top">
             <span class="ped-id">#${p.id?.slice(-4)?.toUpperCase()||'----'}</span>
-            <span class="ped-status ${STATUS_COR[p.status||'novo']}">${STATUS_LABEL[p.status||'novo']}</span>
+            <span class="ped-status ${STATUS_COR[p.status||'novo']}">${STATUS_LABEL[p.status||'novo']||'Aguardando'}</span>
           </div>
-          <p style="font-size:0.75rem;color:var(--sub);margin-bottom:8px">${STATUS_DESC[p.status||'novo']}</p>
+          <p style="font-size:0.75rem;color:var(--sub);margin-bottom:8px">${STATUS_DESC[p.status||'novo']||''}</p>
           <div class="ped-itens">${p.itens?.map(i=>`${i.qtd}x ${i.nome}`).join(' • ')||''}</div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
             <div class="ped-total">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
-            ${whatsEstab ? `<a href="https://wa.me/55${whatsEstab}?text=Olá!%20Meu%20pedido%20é%20%23${p.id?.slice(-4)?.toUpperCase()}" target="_blank"
+            ${whatsEstab ? `<a href="https://wa.me/55${whatsEstab}?text=Ola!%20Meu%20pedido%20e%20%23${p.id?.slice(-4)?.toUpperCase()}" target="_blank"
               style="display:flex;align-items:center;gap:5px;background:#25d366;color:#fff;border-radius:50px;padding:5px 12px;font-size:0.72rem;font-weight:700;text-decoration:none">
-              💬 Falar com a loja</a>` : ''}
+              Falar com a loja</a>` : ''}
           </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     }
 
     // ── MÁSCARA WHATSAPP ───────────────────────────────────
@@ -764,22 +780,63 @@
     let pollingId = null;
     let pedidoAtivoId = null;
 
-    function iniciarPolling(pedidoId) {
-      pedidoAtivoId = pedidoId;
+    // Aplica cor do estabelecimento
+    function aplicarCorPrimaria(cor) {
+      document.documentElement.style.setProperty('--red', cor);
+      document.documentElement.style.setProperty('--red2', cor);
+    }
+
+    // Polling busca por whatsapp do cliente no estabelecimento
+    let pollingWhats = null;
+    let pollingEstabId = null;
+    let ultimoStatus = {};
+
+    function iniciarPolling(pedidoIdLocal) {
+      pollingWhats = document.getElementById('cli-whats')?.value?.replace(/\D/g,'');
+      pollingEstabId = estab?.id;
+      if (!pollingWhats || !pollingEstabId) return;
+
       pollingId = setInterval(async () => {
-        if (!pedidoAtivoId) return;
-        const { data } = await supa.from('pedidos').select('status').eq('id', pedidoAtivoId).maybeSingle();
-        if (!data) return;
-        const peds = JSON.parse(localStorage.getItem(`pw_peds_${slug}`) || '[]');
-        const ped  = peds.find(p => p.id === pedidoAtivoId);
-        if (ped && ped.status !== data.status) {
-          ped.status = data.status;
-          localStorage.setItem(`pw_peds_${slug}`, JSON.stringify(peds));
-          carregarMeusPedidos();
-          if (data.status === 'preparo') mostrarNotif('🔥 Pedido aceito! Tá indo pro forno!', '#e05510');
-          if (data.status === 'pronto')  mostrarNotif('\u2705 Pedido pronto! Pode vir buscar \uD83C\uDF89', '#2e7d32');
-        }
-        if (data.status === 'pronto') { clearInterval(pollingId); pedidoAtivoId = null; }
+        try {
+          const { data } = await supa.from('pedidos')
+            .select('id,status,endereco')
+            .eq('estabelecimento_id', pollingEstabId)
+            .eq('cliente_whats', pollingWhats)
+            .in('status', ['novo','preparo','pronto'])
+            .order('created_at', { ascending: false })
+            .limit(3);
+          if (!data?.length) return;
+
+          const peds = JSON.parse(localStorage.getItem(`pw_peds_${slug}`) || '[]');
+          let atualizado = false;
+
+          data.forEach(pedDb => {
+            // Tenta achar pedido local pelo status anterior
+            const pedLocal = peds.find(p => p.id === pedDb.id || (p.status === 'novo' && pedDb.status !== 'novo'));
+            if (!pedLocal) {
+              // Pedido novo que nao temos ainda - adiciona
+              if (!peds.find(x=>x.id===pedDb.id)) {
+                peds.unshift({id:pedDb.id, itens:[], total:0, status:pedDb.status, endereco:pedDb.endereco});
+                atualizado=true;
+              }
+              return;
+            }
+            if (pedLocal.status !== pedDb.status) {
+              const statusAnterior = pedLocal.status;
+              pedLocal.id = pedDb.id; // atualiza com ID real
+              pedLocal.status = pedDb.status;
+              atualizado = true;
+              const isEntrega = pedDb.endereco && pedDb.endereco !== 'Retirada no local';
+              if (pedDb.status === 'preparo') mostrarNotif('Pedido aceito! Ta indo pro forno!', '#e05510');
+              if (pedDb.status === 'pronto') mostrarNotif(isEntrega ? 'Pedido saiu para entrega!' : 'Pronto para retirada!', '#2e7d32');
+            }
+          });
+
+          if (atualizado) {
+            localStorage.setItem(`pw_peds_${slug}`, JSON.stringify(peds));
+            carregarMeusPedidos();
+          }
+        } catch(e) { console.log('Polling error:', e); }
       }, 8000);
     }
 
