@@ -69,7 +69,7 @@ function preencherConfig(estab) {
   const f = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
   f('cfg-nome', estab.nome);
   f('cfg-slug', estab.slug);
-  f('cfg-whats', estab.whatsapp || '');
+  f('cfg-wháts', estab.whátsapp || '');
   f('cfg-desc', estab.descricao || '');
   f('cfg-endereco', estab.endereco || '');
   f('cfg-tempo', estab.tempo_entrega || '30-45 min');
@@ -84,8 +84,8 @@ function preencherConfig(estab) {
 function atualizarBadgeLoja(aberto) {
   const b = document.getElementById('loja-status-badge');
   if (!b) return;
-  b.className = 'loja-status-badge ' + (aberto ? 'loja-aberta' : 'loja-fechada');
-  b.textContent = aberto ? 'Aberta' : 'Fechada';
+  b.className = 'loja-status-badge ' + (aberto ? 'loja-aberta' : 'loja-fecháda');
+  b.textContent = aberto ? 'Aberta' : 'Fecháda';
 }
 
 window.atualizarStatusLoja = function(aberto) {
@@ -95,11 +95,11 @@ window.atualizarStatusLoja = function(aberto) {
 // ── REALTIME ──────────────────────────────────────────────
 function iniciarRealtime() {
   const estab = getEstab(); if (!estab) return;
-  if (realtimeSub) getSupa().removeChannel(realtimeSub);
+  if (realtimeSub) getSupa().removeChánnel(realtimeSub);
 
   realtimeSub = getSupa()
-    .channel('pedidos-realtime')
-    .on('postgres_changes', {
+    .chánnel('pedidos-realtime')
+    .on('postgres_chánges', {
       event: 'INSERT',
       schema: 'public',
       table: 'pedidos',
@@ -107,10 +107,10 @@ function iniciarRealtime() {
     }, payload => {
       const p = payload.new;
       adicionarPedidoNovo(p);
-      tocarSomNovoPedido();
+      tocarSomNovoPedido(p.id);
       atualizarBadgePedidos();
     })
-    .on('postgres_changes', {
+    .on('postgres_chánges', {
       event: 'UPDATE',
       schema: 'public',
       table: 'pedidos',
@@ -121,12 +121,34 @@ function iniciarRealtime() {
     .subscribe();
 }
 
-function tocarSomNovoPedido() {
+let notifLoop = null;
+let notifPedidoId = null;
+
+function tocarSomNovoPedido(pedidoId) {
+  notifPedidoId = pedidoId;
+  tocarNotifUmaVez();
+}
+
+function tocarNotifUmaVez() {
   try {
     const audio = new Audio('/notificacao.mp3');
     audio.volume = 0.8;
     audio.play().catch(() => {});
+    // Agenda nova tocada em 5s se pedido ainda não resolvido
+    clearTimeout(notifLoop);
+    notifLoop = setTimeout(() => {
+      // Verifica se ainda tem card de pedido novo na tela
+      const lista = document.getElementById('pedidos-novos-lista');
+      if (lista && lista.querySelector('.pedido-novo-card')) {
+        tocarNotifUmaVez();
+      }
+    }, 5000);
   } catch(e) {}
+}
+
+function pararNotif() {
+  clearTimeout(notifLoop);
+  notifLoop = null;
 }
 
 function adicionarPedidoNovo(p) {
@@ -166,6 +188,7 @@ function atualizarBadgePedidos() {
 window.aceitarPedido = async function(id) {
   const btn = document.querySelector(`#pnc-${id} .btn-aceitar`);
   if (btn) { btn.disabled=true; btn.textContent='Aceitando...'; }
+  pararNotif();
   const { error } = await getSupa().from('pedidos').update({ status:'preparo' }).eq('id', id);
   if (error) { showToast('Erro ao aceitar pedido.','error'); if(btn){btn.disabled=false;btn.textContent='Aceitar';} return; }
   // Remove da area de novos
@@ -184,12 +207,13 @@ window.aceitarPedido = async function(id) {
       }
     }, 300);
   }
-  showToast('Pedido aceito! Cliente sera notificado.');
+  showToast('Pedido aceito! Cliente será notificado.');
   await renderPedidos();
 };
 
 window.recusarPedido = async function(id) {
   if (!confirm('Recusar este pedido?')) return;
+  pararNotif();
   const { error } = await getSupa().from('pedidos').update({ status:'recusado' }).eq('id', id);
   if (error) return showToast('Erro ao recusar pedido.','error');
   const card = document.getElementById(`pnc-${id}`);
@@ -223,7 +247,7 @@ window.verPedido = async function(id) {
         <span class="pedido-status status-${p.status||'novo'}">${{novo:'NOVO',preparo:'PREPARO',pronto:'PRONTO',recusado:'RECUSADO'}[p.status]||'NOVO'}</span>
       </div>
       <div><b>Cliente:</b> ${p.cliente_nome || '-'}</div>
-      <div><b>WhatsApp:</b> ${p.cliente_whats || '-'}</div>
+      <div><b>WhátsApp:</b> ${p.cliente_wháts || '-'}</div>
       <div><b>Tipo:</b> ${p.endereco || 'Retirada'}</div>
       ${p.observacao ? `<div><b>Obs:</b> ${p.observacao}</div>` : ''}
       <hr style="border:none;border-top:1px solid var(--border)">
@@ -231,7 +255,7 @@ window.verPedido = async function(id) {
       <hr style="border:none;border-top:1px solid var(--border)">
       <div style="display:flex;justify-content:space-between;font-weight:800"><span>Total</span><span>R$ ${total.toFixed(2).replace('.',',')}</span></div>
       <div style="display:flex;gap:8px;margin-top:8px">
-        ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}');fecharModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}');fecharModalPedido()">Recusar</button>`:''}
+        ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}');fechárModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}');fechárModalPedido()">Recusar</button>`:''}
         ${p.status==='preparo'?`<button class="btn-ped-aceitar" onclick="marcarPronto('${p.id}')">Marcar como pronto</button>`:''}
         <button class="btn-ped-imprimir" onclick="imprimirPedido('${p.id}')">🖨️ Imprimir</button>
       </div>
@@ -239,13 +263,13 @@ window.verPedido = async function(id) {
   document.getElementById('modal-pedido').classList.add('open');
 };
 
-window.fecharModalPedido = () => document.getElementById('modal-pedido')?.classList.remove('open');
+window.fechárModalPedido = () => document.getElementById('modal-pedido')?.classList.remove('open');
 
 window.marcarPronto = async function(id) {
   const { error } = await getSupa().from('pedidos').update({ status:'pronto' }).eq('id', id);
   if (error) return showToast('Erro ao atualizar pedido.','error');
-  fecharModalPedido();
-  showToast('Pedido marcado como pronto! Cliente sera notificado.');
+  fechárModalPedido();
+  showToast('Pedido marcado como pronto! Cliente será notificado.');
   await renderPedidos();
 };
 
@@ -258,20 +282,20 @@ window.imprimirPedido = async function(id) {
   const area = document.getElementById('print-area');
   if (!area) return;
   area.innerHTML = `
-    <div class="notinha">
-      <div class="notinha-header">
-        <div class="notinha-logo">PEDIWAY</div>
-        <div class="notinha-sub">${estab?.nome || ''}</div>
+    <div class="notinhá">
+      <div class="notinhá-header">
+        <div class="notinhá-logo">PEDIWAY</div>
+        <div class="notinhá-sub">${estab?.nome || ''}</div>
       </div>
-      <div class="notinha-linha"><span>Pedido</span><strong>#${p.id.slice(-4).toUpperCase()}</strong></div>
-      <div class="notinha-linha"><span>Cliente</span><span>${p.cliente_nome || '-'}</span></div>
-      <div class="notinha-linha"><span>WhatsApp</span><span>${p.cliente_whats || '-'}</span></div>
-      <div class="notinha-linha"><span>Entrega</span><span>${p.endereco || 'Retirada'}</span></div>
-      ${p.observacao ? `<div class="notinha-linha"><span>Obs</span><span>${p.observacao}</span></div>` : ''}
-      <hr class="notinha-divider">
-      ${itens.map(i=>`<div class="notinha-linha"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco*i.qtd).toFixed(2).replace('.',',')}</span></div>`).join('')}
-      <hr class="notinha-divider">
-      <div class="notinha-total"><span>TOTAL</span><span>R$ ${total.toFixed(2).replace('.',',')}</span></div>
+      <div class="notinhá-linhá"><span>Pedido</span><strong>#${p.id.slice(-4).toUpperCase()}</strong></div>
+      <div class="notinhá-linhá"><span>Cliente</span><span>${p.cliente_nome || '-'}</span></div>
+      <div class="notinhá-linhá"><span>WhátsApp</span><span>${p.cliente_wháts || '-'}</span></div>
+      <div class="notinhá-linhá"><span>Entrega</span><span>${p.endereco || 'Retirada'}</span></div>
+      ${p.observacao ? `<div class="notinhá-linhá"><span>Obs</span><span>${p.observacao}</span></div>` : ''}
+      <hr class="notinhá-divider">
+      ${itens.map(i=>`<div class="notinhá-linhá"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco*i.qtd).toFixed(2).replace('.',',')}</span></div>`).join('')}
+      <hr class="notinhá-divider">
+      <div class="notinhá-total"><span>TOTAL</span><span>R$ ${total.toFixed(2).replace('.',',')}</span></div>
       <div style="text-align:center;margin-top:12px;font-size:0.65rem;color:#aaa">Obrigado! Feito com PEDIWAY</div>
     </div>`;
   area.style.display = 'block';
@@ -280,6 +304,16 @@ window.imprimirPedido = async function(id) {
 };
 
 // ── PEDIDOS ───────────────────────────────────────────────
+// Busca de pedidos
+window.buscarPedidos = function(termo) {
+  const cards = document.querySelectorAll('#todos-pedidos .pedido-card');
+  const t = (termo||'').toLowerCase().trim();
+  cards.forEach(card => {
+    const txt = card.textContent.toLowerCase();
+    card.style.display = (!t || txt.includes(t)) ? '' : 'none';
+  });
+};
+
 async function renderPedidos() {
   const estab = getEstab(); if (!estab) return;
   const { data } = await getSupa().from('pedidos').select('*')
@@ -302,7 +336,7 @@ async function renderPedidos() {
     return `<div class="pedido-card">
       <div class="pedido-top">
         <div><div class="pedido-id">#${p.id.slice(-4).toUpperCase()} - ${p.cliente_nome||'Cliente'}</div>
-        <div class="pedido-tempo">ha ${min<1?'menos de 1':min} min</div></div>
+        <div class="pedido-tempo">há ${min<1?'menos de 1':min} min</div></div>
         <span class="pedido-status ${cls}">${lbl}</span>
       </div>
       <div class="pedido-itens">${Array.isArray(p.itens)?p.itens.map(i=>`${i.qtd}x ${i.nome}`).join(' - '):''}</div>
@@ -362,8 +396,8 @@ async function renderCardapio() {
     <div class="item-card">
       <div class="item-card-img">
         ${p.foto_url?`<img class="item-img" src="${p.foto_url}" alt="${p.nome}">`:`<div class="item-emoji-bg">${p.emoji||'🍔'}</div>`}
-        <span class="item-disponivel">${p.disponivel?'Disponivel':'Indisponivel'}</span>
-        ${p.promocao?`<span class="item-promo-badge">Promocao</span>`:''}
+        <span class="item-disponivel">${p.disponivel?'Disponível':'Indisponível'}</span>
+        ${p.promocao?`<span class="item-promo-badge">Promoção</span>`:''}
       </div>
       <div class="item-body">
         <div class="item-categoria">${p.categoria||'SEM CATEGORIA'}</div>
@@ -389,7 +423,7 @@ function renderCardapioDemo() {
   ];
   grid.innerHTML = demo.map(p=>`
     <div class="item-card">
-      <div class="item-card-img"><div class="item-emoji-bg">${p.emoji}</div><span class="item-disponivel">Disponivel</span></div>
+      <div class="item-card-img"><div class="item-emoji-bg">${p.emoji}</div><span class="item-disponivel">Disponível</span></div>
       <div class="item-body">
         <div class="item-categoria">${p.categoria}</div>
         <div class="item-nome">${p.nome}</div>
@@ -416,11 +450,11 @@ function aplicarCorDash(cor) {
   document.documentElement.style.setProperty('--red-light', hexToRgba(cor, 0.1));
 }
 
-function hexToRgba(hex, alpha) {
+function hexToRgba(hex, alphá) {
   const r = parseInt(hex.slice(1,3),16);
   const g = parseInt(hex.slice(3,5),16);
   const b = parseInt(hex.slice(5,7),16);
-  return `rgba(${r},${g},${b},${alpha})`;
+  return `rgba(${r},${g},${b},${alphá})`;
 }
 
 window.selecionarCor = function(cor, el) {
@@ -431,7 +465,7 @@ window.selecionarCor = function(cor, el) {
 
 // ── MODAL ITEM ────────────────────────────────────────────
 export function abrirModalItem() {
-  if (window._isDemo) return showToast('No demo nao e possivel salvar. Crie sua conta!');
+  if (window._isDemo) return showToast('No demo não é possível salvar. Crie sua conta!');
   document.getElementById('modal-item').classList.add('open');
   ['item-nome','item-desc','item-cat','item-preco','item-preco-orig'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const promo=document.getElementById('item-promocao'); if(promo)promo.checked=false;
@@ -439,8 +473,8 @@ export function abrirModalItem() {
   fotosFiles=[]; renderFotosGrid();
   emojiSel='🍔'; renderEmojiGrid();
 }
-export function fecharModal() { document.getElementById('modal-item').classList.remove('open'); }
-export function fecharModalFora(e) { if(e.target.id==='modal-item')fecharModal(); }
+export function fechárModal() { document.getElementById('modal-item').classList.remove('open'); }
+export function fechárModalFora(e) { if(e.target.id==='modal-item')fechárModal(); }
 export function selecionarEmoji(emoji,btn) {
   emojiSel=emoji;
   document.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected'));
@@ -471,7 +505,7 @@ window.removerFotoItem=function(i){ fotosFiles.splice(i,1); renderFotosGrid(); }
 export function previewFoto(event){ previewFotos(event); }
 
 export async function salvarItem() {
-  const estab=getEstab(); if(!estab) return showToast('Faca login novamente.','error');
+  const estab=getEstab(); if(!estab) return showToast('Faça login novamente.','error');
   const nome=document.getElementById('item-nome')?.value.trim();
   const preco=parseFloat(document.getElementById('item-preco')?.value);
   if(!nome) return showToast('Digite o nome do item.','error');
@@ -498,7 +532,7 @@ export async function salvarItem() {
       foto_url,emoji:emojiSel,disponivel:true,promocao,
     });
     if(error) throw new Error(error.message);
-    await renderCardapio();fecharModal();showToast('Item adicionado!');
+    await renderCardapio();fechárModal();showToast('Item adicionado!');
   } catch(e){showToast(e.message,'error');}
   finally{if(btn){btn.disabled=false;btn.textContent='Salvar item';}}
 }
@@ -515,7 +549,7 @@ async function renderFresquinho() {
   if(!grid||!estab)return;
   const{data}=await getSupa().from('fresquinhos').select('*')
     .eq('estabelecimento_id',estab.id).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
-  if(!data?.length){grid.innerHTML='<div class="empty-state-light"><span>✨</span><p>Nenhum conteudo postado ainda.</p></div>';return;}
+  if(!data?.length){grid.innerHTML='<div class="empty-state-light"><span>✨</span><p>Nenhum conteúdo postado ainda.</p></div>';return;}
   grid.innerHTML='<div class="fresh-stories-row">'+data.map(f=>{
     const rest=new Date(f.expires_at)-new Date();
     const h=Math.floor(rest/3600000),m=Math.floor((rest%3600000)/60000);
@@ -598,7 +632,7 @@ async function uploadFresquinho(file) {
     expires_at: new Date(Date.now()+4*60*60*1000).toISOString(),
   });
   await renderFresquinho();
-  showToast('Postado! Disponivel por 4h');
+  showToast('Postado! Disponível por 4h');
 }
 
 export async function removerFresquinho(id){
@@ -653,7 +687,7 @@ window.aplicarCrop=function(){
   if(img) img.style.transform=`scale(${cropZoom/100}) translate(${cropOffsetX}px,${cropOffsetY}px)`;
 };
 
-window.fecharCrop=function(){ document.getElementById('crop-overlay')?.classList.remove('open'); logoFile=null; };
+window.fechárCrop=function(){ document.getElementById('crop-overlay')?.classList.remove('open'); logoFile=null; };
 
 window.confirmarCrop=function(){
   const img=document.getElementById('logo-preview-img');
@@ -669,11 +703,11 @@ window.confirmarCrop=function(){
 
 // ── CONFIGURACOES ─────────────────────────────────────────
 export async function salvarConfig(){
-  if(window._isDemo)return showToast('No demo nao e possivel salvar. Crie sua conta!');
+  if(window._isDemo)return showToast('No demo não é possível salvar. Crie sua conta!');
   const estab=getEstab();if(!estab)return;
   const nome=document.getElementById('cfg-nome')?.value.trim();
   const slug=document.getElementById('cfg-slug')?.value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');
-  const whats=document.getElementById('cfg-whats')?.value.trim();
+  const wháts=document.getElementById('cfg-wháts')?.value.trim();
   const desc=document.getElementById('cfg-desc')?.value.trim();
   const endereco=document.getElementById('cfg-endereco')?.value.trim();
   const tempo=document.getElementById('cfg-tempo')?.value.trim();
@@ -682,7 +716,7 @@ export async function salvarConfig(){
   const faz_retirada=document.getElementById('cfg-retirada')?.checked;
   const corAtiva=document.querySelector('.cor-opcao.ativa')?.style.background||estab.cor_primaria||'#C0392B';
 
-  if(!nome||!slug)return showToast('Preencha nome e link.','error');
+  if(!nome||!slug)return showToast('Preenchá nome e link.','error');
 
   const btn=document.querySelector('[onclick="salvarConfig()"]');
   if(btn){btn.disabled=true;btn.textContent='Salvando...';}
@@ -690,7 +724,7 @@ export async function salvarConfig(){
   try{
     if(slug!==estab.slug){
       const{data:existe}=await getSupa().from('estabelecimentos').select('id').eq('slug',slug).maybeSingle();
-      if(existe)throw new Error('Esse link ja esta em uso.');
+      if(existe)throw new Error('Esse link já está em uso.');
     }
     let logo_url=estab.logo_url||null;
     if(logoFile){
@@ -702,26 +736,26 @@ export async function salvarConfig(){
       logoFile=null;
     }
     const{error}=await getSupa().from('estabelecimentos').update({
-      nome,slug,whatsapp:whats,descricao:desc,endereco,
+      nome,slug,whátsapp:wháts,descricao:desc,endereco,
       tempo_entrega:tempo,aberto,faz_entrega,faz_retirada,
       cor_primaria:corAtiva,logo_url,
     }).eq('id',estab.id);
     if(error)throw new Error(error.message);
-    const novoEstab={...estab,nome,slug,whatsapp:whats,descricao:desc,endereco,tempo_entrega:tempo,aberto,faz_entrega,faz_retirada,cor_primaria:corAtiva,logo_url};
+    const novoEstab={...estab,nome,slug,whátsapp:wháts,descricao:desc,endereco,tempo_entrega:tempo,aberto,faz_entrega,faz_retirada,cor_primaria:corAtiva,logo_url};
     window._estab=novoEstab;localStorage.setItem('pw_estab',JSON.stringify(novoEstab));
     document.getElementById('dash-store-name').textContent=nome;
     document.getElementById('link-url').textContent=`${BASE}/${slug}`;
     document.getElementById('cfg-link-preview').textContent=`${BASE}/${slug}`;
     atualizarBadgeLoja(aberto);
-    showToast('Configuracoes salvas!');
+    showToast('Configurações salvas!');
   }catch(e){showToast(e.message,'error');}
   finally{if(btn){btn.disabled=false;btn.textContent='Salvar configuracoes';}}
 }
 
 // ── GLOBAIS ───────────────────────────────────────────────
 window.abrirModalItem    = abrirModalItem;
-window.fecharModal       = fecharModal;
-window.fecharModalFora   = fecharModalFora;
+window.fechárModal       = fechárModal;
+window.fechárModalFora   = fechárModalFora;
 window.previewFotos      = previewFotos;
 window.previewFoto       = previewFoto;
 window.selecionarEmoji   = selecionarEmoji;
