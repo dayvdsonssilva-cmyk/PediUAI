@@ -18,7 +18,7 @@
     body.no-scroll { overflow:hidden; }
 
     /* ── HEADER ── */
-    .header { background:linear-gradient(165deg,#1e0a02 0%,#2e1208 50%,#3a1a0c 100%); padding:28px 20px 28px; position:relative; overflow:hidden; min-height:190px; display:flex; flex-direction:column; justify-content:flex-end; }
+    .header { background:var(--header-grad, linear-gradient(165deg,#1e0a02 0%,#2e1208 50%,#3a1a0c 100%)); padding:28px 20px 28px; position:relative; overflow:hidden; min-height:190px; display:flex; flex-direction:column; justify-content:flex-end; }
     .hblur1 { position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(192,57,43,0.18);filter:blur(40px);pointer-events:none; }
     .hblur2 { position:absolute;bottom:-20px;left:-30px;width:140px;height:140px;border-radius:50%;background:rgba(80,20,5,0.4);filter:blur(30px);pointer-events:none; }
     .logo-wrap { position:absolute;top:12px;right:12px;width:120px;height:120px;border-radius:22px;overflow:hidden;background:#2a1008;border:3px solid rgba(255,255,255,0.18);z-index:2;box-shadow:0 8px 28px rgba(0,0,0,0.4); }
@@ -808,14 +808,16 @@
       document.getElementById('ped-lista').innerHTML=peds.map(p=>{
         const isEntrega = p.endereco && p.endereco !== 'Retirada no local';
         const STATUS_LABEL = {
-          novo:'Aguardando',
-          preparo: isEntrega ? 'Saiu para entrega!' : 'Pronto para retirada!',
-          pronto:  isEntrega ? 'Entregue!' : 'Retirado!',
+          novo:     '⏳ Aguardando',
+          preparo:  '🔥 Aceito — preparando',
+          pronto:   isEntrega ? '🛵 Saiu para entrega!' : '✅ Pronto para retirada!',
+          recusado: '❌ Não confirmado',
         };
         const STATUS_DESC = {
-          novo:'Seu pedido foi recebido e aguarda confirmacao da loja.',
-          preparo: isEntrega ? 'Seu pedido esta a caminho!' : 'Seu pedido esta pronto, pode vir buscar!',
-          pronto: 'Pedido finalizado. Obrigado!',
+          novo:     'Seu pedido foi recebido e aguarda confirmação da loja.',
+          preparo:  'Pedido aceito! Está sendo preparado com carinho.',
+          pronto:   isEntrega ? 'Seu pedido está a caminho!' : 'Pode vir buscar! Seu pedido está pronto.',
+          recusado: 'O estabelecimento não pôde confirmar este pedido.',
         };
         return `
         <div class="ped-card">
