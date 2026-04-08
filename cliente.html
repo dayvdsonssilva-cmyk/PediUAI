@@ -732,50 +732,7 @@
         localStorage.setItem(`pw_peds_${slug}`,JSON.stringify(peds.slice(0,20)));
         carrinho=[];atualizarFab();fecharCarrinho();
         // Inicia polling usando whatsapp
-        pollingWhats = document.getElementById('cli-whats')?.value?.replace(/\D/g,'');
-        pollingEstabId = estab?.id;
-        if (pollingWhats && pollingEstabId) {
-          clearInterval(pollingId);
-          pollingId = setInterval(async () => {
-            try {
-              const { data } = await supa.from('pedidos')
-                .select('id,status,endereco,itens,total')
-                .eq('estabelecimento_id', pollingEstabId)
-                .eq('cliente_whats', pollingWhats)
-                .order('created_at', { ascending: false })
-                .limit(5);
-              if (!data?.length) return;
-              const peds = JSON.parse(localStorage.getItem('pw_peds_' + slug) || '[]');
-              let atualizado = false;
-              data.forEach(pedDb => {
-                let pedLocal = peds.find(p => p.id === pedDb.id);
-                if (!pedLocal) {
-                  pedLocal = peds.find(p => p.id && p.id.startsWith('local_'));
-                }
-                if (!pedLocal) {
-                  if (!peds.find(x => x.id === pedDb.id)) {
-                    peds.unshift({ id: pedDb.id, itens: pedDb.itens || [], total: pedDb.total || 0, status: pedDb.status, endereco: pedDb.endereco });
-                    atualizado = true;
-                  }
-                  return;
-                }
-                if (pedLocal.id !== pedDb.id) { pedLocal.id = pedDb.id; pedLocal.itens = pedDb.itens || pedLocal.itens; pedLocal.total = pedDb.total || pedLocal.total; atualizado = true; }
-                if (pedLocal.status !== pedDb.status) {
-                  pedLocal.status = pedDb.status;
-                  atualizado = true;
-                  const isEnt = (pedDb.endereco || '') !== '' && (pedDb.endereco || '') !== 'Retirada no local';
-                  if (pedDb.status === 'preparo') mostrarNotif('Pedido confirmado! Sendo preparado...', '#e05510');
-                  if (pedDb.status === 'pronto') mostrarNotif(isEnt ? 'Seu pedido saiu para entrega!' : 'Pronto para retirada!', '#2e7d32');
-                  if (pedDb.status === 'recusado') mostrarNotif('Pedido nao confirmado pela loja.', '#dc2626');
-                }
-              });
-              if (atualizado) {
-                localStorage.setItem('pw_peds_' + slug, JSON.stringify(peds));
-                carregarMeusPedidos();
-              }
-            } catch(e) { console.log('Polling:', e); }
-          }, 5000);
-        }
+        iniciarPollingCliente();
         iniciarJogo();
         carregarMeusPedidos();
       }catch(e){ console.error('Erro pedido:',e); alert('Erro ao enviar pedido: '+(e?.message||e?.details||JSON.stringify(e)||'Tente novamente.')); }
@@ -895,48 +852,74 @@
       // Polling já iniciado inline após o pedido
     }
 
-    // Stub para não quebrar chamada antiga
-    function _pollBodyNoop() {
+
+        // ── POLLING CLIENTE ────────────────────────────────────
+    var pollingWhats = null;
+    var pollingEstabId = null;
+
+    function iniciarPollingCliente() {
+      pollingWhats = (document.getElementById('cli-whats') || {}).value || '';
+      pollingWhats = pollingWhats.replace(/\D/g, '');
+      pollingEstabId = estab ? estab.id : null;
+      if (!pollingWhats || !pollingEstabId) return;
+      clearInterval(pollingId);
+      pollingId = setInterval(rodarPolling, 5000);
+    }
+
+    async function rodarPolling() {
+      if (!pollingWhats || !pollingEstabId) return;
       try {
-          const { data, error: pollErr } = await supa; // nunca executado
-          if (!data?.length) return;
-
-          const peds = JSON.parse(localStorage.getItem(`pw_peds_${slug}`) || '[]');
-          let atualizado = false;
-
-          data.forEach(pedDb => {
-            // Procura por ID real primeiro, depois por pedido local sem ID real
-            let pedLocal = peds.find(p => p.id === pedDb.id);
-            if (!pedLocal) {
-              // Tenta associar pedido local (temp) com o real
-              pedLocal = peds.find(p => p.id.startsWith('local_') && p.status === pedDb.status || 
-                                        (p.id.startsWith('local_') && pedDb.status !== 'recusado'));
-            }
-            if (!pedLocal) {
-              // Pedido não registrado localmente — adiciona
-              if (!peds.find(x=>x.id===pedDb.id)) {
-                peds.unshift({id:pedDb.id, itens:pedDb.itens||[], total:pedDb.total||0, status:pedDb.status, endereco:pedDb.endereco});
-                atualizado=true;
-              }
-              return;
-            }
-            // Atualiza ID real
-            if (pedLocal.id !== pedDb.id) { pedLocal.id = pedDb.id; atualizado=true; }
-            if (pedLocal.status !== pedDb.status) {
-              pedLocal.status = pedDb.status;
-              atualizado = true;
-              const isEntrega = (pedDb.endereco||pedLocal.endereco||'') !== 'Retirada no local' && (pedDb.endereco||pedLocal.endereco||'') !== '';
-              if (pedDb.status === 'preparo') mostrarNotif('Pedido confirmado! Sendo preparado...', '#e05510');
-              if (pedDb.status === 'pronto') mostrarNotif(isEntrega ? 'Seu pedido saiu para entrega!' : 'Pronto para retirada!', '#2e7d32');
-            }
-          });
-
-          if (atualizado) {
-            localStorage.setItem(`pw_peds_${slug}`, JSON.stringify(peds));
-            carregarMeusPedidos();
+        var res = await supa.from('pedidos')
+          .select('id,status,endereco,itens,total')
+          .eq('estabelecimento_id', pollingEstabId)
+          .eq('cliente_whats', pollingWhats)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        var data = res.data;
+        if (!data || !data.length) return;
+        var pedsStr = localStorage.getItem('pw_peds_' + slug) || '[]';
+        var peds = JSON.parse(pedsStr);
+        var atualizado = false;
+        for (var i = 0; i < data.length; i++) {
+          var pedDb = data[i];
+          var pedLocal = null;
+          for (var j = 0; j < peds.length; j++) {
+            if (peds[j].id === pedDb.id) { pedLocal = peds[j]; break; }
           }
-        } catch(e) { console.log('Polling error:', e); }
-      }, 5000);
+          if (!pedLocal) {
+            for (var j = 0; j < peds.length; j++) {
+              if (peds[j].id && peds[j].id.indexOf('local_') === 0) { pedLocal = peds[j]; break; }
+            }
+          }
+          if (!pedLocal) {
+            var existe = false;
+            for (var j = 0; j < peds.length; j++) { if (peds[j].id === pedDb.id) { existe = true; break; } }
+            if (!existe) {
+              peds.unshift({ id: pedDb.id, itens: pedDb.itens || [], total: pedDb.total || 0, status: pedDb.status, endereco: pedDb.endereco });
+              atualizado = true;
+            }
+            continue;
+          }
+          if (pedLocal.id !== pedDb.id) {
+            pedLocal.id = pedDb.id;
+            pedLocal.itens = pedDb.itens || pedLocal.itens;
+            pedLocal.total = pedDb.total || pedLocal.total;
+            atualizado = true;
+          }
+          if (pedLocal.status !== pedDb.status) {
+            pedLocal.status = pedDb.status;
+            atualizado = true;
+            var isEnt = pedDb.endereco && pedDb.endereco !== '' && pedDb.endereco !== 'Retirada no local';
+            if (pedDb.status === 'preparo') mostrarNotif('Pedido confirmado! Sendo preparado...', '#e05510');
+            if (pedDb.status === 'pronto') mostrarNotif(isEnt ? 'Seu pedido saiu para entrega!' : 'Pronto para retirada!', '#2e7d32');
+            if (pedDb.status === 'recusado') mostrarNotif('Pedido nao confirmado pela loja.', '#dc2626');
+          }
+        }
+        if (atualizado) {
+          localStorage.setItem('pw_peds_' + slug, JSON.stringify(peds));
+          carregarMeusPedidos();
+        }
+      } catch(e) { console.log('Polling err:', e); }
     }
 
     function mostrarNotif(msg, cor) {
