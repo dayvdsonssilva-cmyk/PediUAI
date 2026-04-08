@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-
 export default defineConfig({
   root: '.',
   publicDir: 'public',
@@ -9,6 +8,7 @@ export default defineConfig({
       input: {
         main:    'index.html',
         cliente: 'cliente.html',
+        admin:   'admin.html',
       }
     }
   },
