@@ -237,7 +237,7 @@
       <div class="loja-nome" id="loja-nome">Carregando...</div>
       <div class="loja-desc" id="loja-desc">Cardápio digital</div>
       <div class="loja-meta">
-        <div class="meta-item">⊙ <span id="meta-tempo">30-45 min</span></div>
+        <div class="meta-item" id="meta-entrega-wrap">⊙ <span id="meta-tempo">30-45 min</span></div>
         <div class="meta-item">🛵 Entrega disponível</div>
       </div>
     </div>
@@ -699,6 +699,9 @@
 
     window.finalizarPedido=async function(){
       if(window._lojaFechada){ mostrarNotif('Loja fechada no momento. Tente mais tarde.','#333'); return; }
+      // Atualiza whatsapp para o polling
+      pollingWhats = (document.getElementById('cli-whats')||{value:''}).value.replace(/\D/g,'');
+      pollingEstabId = estab ? estab.id : null;
       const nome=document.getElementById('cli-nome')?.value.trim();
       const whats=document.getElementById('cli-whats')?.value.trim();
       if(!nome){alert('Coloca seu nome ai!');return;}
@@ -706,7 +709,7 @@
       if(opcaoEntrega==='entrega'){
         const rua=document.getElementById('end-rua')?.value.trim();
         const bairro=document.getElementById('end-bairro')?.value.trim();
-        if(!rua||!bairro){alert('Preencha o endereço de entrega 📍');return;}
+        if(!rua||!bairro){alert('Preencha o endereco de entrega.');return;}
       }
       if(isDemo){alert('🎯 Demo! Em uma loja real o pedido seria enviado.\n\nCrie sua loja em pediway.vercel.app');iniciarJogo();return;}
 
@@ -735,40 +738,9 @@
         localStorage.setItem(`pw_peds_${slug}`,JSON.stringify(peds.slice(0,20)));
         carrinho=[];atualizarFab();fecharCarrinho();
         // Inicia polling usando whatsapp
-        iniciarPollingCliente();
-        // Realtime de pedidos via Supabase channel
-        if (pollingWhats && pollingEstabId) {
-          supa.channel('pedidos-cliente')
-            .on('postgres_changes', {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'pedidos',
-            }, payload => {
-              var p = payload.new;
-              if (!p || p.estabelecimento_id !== pollingEstabId) return;
-              var pNum = p.cliente_whats ? p.cliente_whats.replace(/\D/g,'') : '';
-              if (pNum !== pollingWhats) return;
-              // Atualiza status local
-              var peds = JSON.parse(localStorage.getItem('pw_peds_' + slug) || '[]');
-              var pedLocal = peds.find(function(x){ return x.id === p.id; });
-              if (!pedLocal) {
-                peds.unshift({id:p.id, itens:p.itens||[], total:p.total||0, status:p.status, endereco:p.endereco});
-                localStorage.setItem('pw_peds_' + slug, JSON.stringify(peds));
-                carregarMeusPedidos();
-                return;
-              }
-              if (pedLocal.status !== p.status) {
-                pedLocal.status = p.status;
-                localStorage.setItem('pw_peds_' + slug, JSON.stringify(peds));
-                carregarMeusPedidos();
-                var isEnt = (p.endereco||'') !== '' && (p.endereco||'') !== 'Retirada no local';
-                if (p.status === 'preparo') mostrarNotif('Pedido confirmado! Sendo preparado...', '#e05510');
-                if (p.status === 'pronto') mostrarNotif(isEnt ? 'Seu pedido saiu para entrega!' : 'Pronto para retirada!', '#2e7d32');
-                if (p.status === 'recusado') mostrarNotif('Pedido nao confirmado pela loja.', '#dc2626');
-              }
-            })
-            .subscribe();
-        }
+        // Inicia polling de pedidos
+        pollingWhats = (document.getElementById('cli-whats')||{value:''}).value.replace(/\D/g,'');
+        pollingEstabId = estab ? estab.id : null;
         iniciarJogo();
         carregarMeusPedidos();
       }catch(e){ console.error('Erro pedido:',e); alert('Erro ao enviar pedido: '+(e?.message||e?.details||JSON.stringify(e)||'Tente novamente.')); }
@@ -805,9 +777,7 @@
               <button onclick="verDetalhesPedido('${p.id}')" style="background:var(--warm2);border:1.5px solid var(--border);padding:5px 13px;border-radius:50px;font-family:'Poppins',sans-serif;font-size:0.74rem;font-weight:600;color:var(--sub);cursor:pointer">
                 Ver detalhes
               </button>
-              ${whatsEstab ? `<a href="https://wa.me/55${whatsEstab}?text=Ola!%20Meu%20pedido%20e%20%23${p.id?.slice(-4)?.toUpperCase()}" target="_blank"
-                style="display:flex;align-items:center;gap:5px;background:#25d366;color:#fff;border-radius:50px;padding:5px 12px;font-size:0.72rem;font-weight:700;text-decoration:none">
-                Falar com a loja</a>` : ''}
+              ${whatsEstab ? '<a href="https://wa.me/55'+whatsEstab+'?text=Ola!%20Meu%20pedido%20e%20%23'+(p.id&&!p.id.startsWith("local_")?p.id.slice(-4).toUpperCase():"----")+'" target="_blank" style="display:flex;align-items:center;gap:5px;background:#25d366;color:#fff;border-radius:50px;padding:5px 12px;font-size:0.72rem;font-weight:700;text-decoration:none">Falar com a loja</a>' : ''}
             </div>
           </div>
         </div>`;
@@ -854,66 +824,83 @@
 
     function aplicarDadosEstab(est) {
       estab = est;
-      document.getElementById('loja-nome').textContent = est.nome.toUpperCase();
-      document.getElementById('loja-desc').textContent = est.descricao||'Cardápio digital';
-      document.getElementById('estab-endereco-txt').textContent = est.endereco||'Entre em contato para o endereço';
-      // Tempo de entrega no meta
-      const metaTempo = document.getElementById('meta-tempo');
-      if(metaTempo) metaTempo.textContent = est.tempo_entrega||'30-45 min';
-      // Entrega / Retirada — atualiza opções da sacola
-      const btnEnt = document.getElementById('btn-entrega');
-      const btnRet = document.getElementById('btn-retirada');
-      if(btnEnt) btnEnt.style.display = est.faz_entrega===false ? 'none' : '';
-      if(btnRet) btnRet.style.display = est.faz_retirada===false ? 'none' : '';
-      // Se só faz retirada, seleciona retirada
-      if(est.faz_entrega===false && est.faz_retirada!==false) selecionarOpcao('retirada');
-      // Cor
-      if(est.cor_primaria) aplicarCorPrimaria(est.cor_primaria);
-      // Logo
-      if(est.logo_url) {
-        const lw = document.getElementById('logo-wrap');
-        if(lw) lw.innerHTML = '<img src="'+est.logo_url+'" alt="Logo" style="width:100%;height:100%;object-fit:cover">';
-      } else {
-        const le = document.getElementById('logo-emoji');
-        if(le) le.textContent = est.nome.charAt(0);
+
+      // Nome e descrição
+      var nomeEl = document.getElementById('loja-nome');
+      if(nomeEl) nomeEl.textContent = (est.nome||'').toUpperCase();
+      var descEl = document.getElementById('loja-desc');
+      if(descEl) descEl.textContent = est.descricao||'Cardapio digital';
+
+      // Tempo de entrega
+      var tempoEl = document.getElementById('meta-tempo');
+      if(tempoEl) tempoEl.textContent = est.tempo_entrega||'30-45 min';
+
+      // Entrega / Retirada
+      var btnEnt = document.getElementById('btn-entrega');
+      var btnRet = document.getElementById('btn-retirada');
+      if(btnEnt) btnEnt.style.display = (est.faz_entrega===false) ? 'none' : '';
+      if(btnRet) btnRet.style.display = (est.faz_retirada===false) ? 'none' : '';
+      // Se só retirada disponível, força retirada
+      if(est.faz_entrega===false && est.faz_retirada!==false) {
+        selecionarOpcao('retirada');
       }
-      // Loja fechada
-      const banner = document.getElementById('loja-fechada-banner');
+      // Se só entrega disponível, força entrega
+      if(est.faz_retirada===false && est.faz_entrega!==false) {
+        selecionarOpcao('entrega');
+      }
+
+      // Cor primária
+      if(est.cor_primaria) aplicarCorPrimaria(est.cor_primaria);
+
+      // Logo
+      var logowrap = document.getElementById('logo-wrap');
+      if(logowrap) {
+        if(est.logo_url) {
+          logowrap.innerHTML = '<img src="'+est.logo_url+'" alt="Logo" style="width:100%;height:100%;object-fit:cover">';
+        } else {
+          var le = document.getElementById('logo-emoji');
+          if(le) le.textContent = (est.nome||'L').charAt(0).toUpperCase();
+        }
+      }
+
+      // Aberto / Fechado
+      var banner = document.getElementById('loja-fechada-banner');
       if(est.aberto===false) {
-        if(!banner) mostrarLojaFechada();
         window._lojaFechada = true;
-        const fab = document.getElementById('fab');
+        if(!banner) mostrarLojaFechada();
+        var fab = document.getElementById('fab');
         if(fab) fab.style.display='none';
+        var btnPed = document.getElementById('btn-pedido');
+        if(btnPed) btnPed.style.display='none';
       } else {
-        if(banner) banner.remove();
         window._lojaFechada = false;
-        var btnPed2 = document.getElementById('btn-pedido');
-        if(btnPed2) btnPed2.style.display='';
-        var qtdR = carrinho.reduce(function(s,cc){return s+cc.qtd;},0);
+        if(banner) banner.remove();
+        var btnPed3 = document.getElementById('btn-pedido');
+        if(btnPed3) btnPed3.style.display='';
+        var qtdAtual = carrinho.reduce(function(s,item){return s+item.qtd;},0);
         var fabEl = document.getElementById('fab');
-        if(fabEl && qtdR>0) fabEl.style.display='flex';
+        if(fabEl && qtdAtual>0) fabEl.style.display='flex';
       }
     }
 
     // Aplica cor do estabelecimento
     function aplicarCorPrimaria(cor) {
+      // CSS vars globais
       document.documentElement.style.setProperty('--red', cor);
       document.documentElement.style.setProperty('--red2', darkenHex(cor, 20));
-      const rgb = hexToRgb(cor);
+
+      var rgb = hexToRgb(cor);
       if (rgb) {
-        const d1 = `rgb(${Math.max(0,rgb.r-80)},${Math.max(0,rgb.g-60)},${Math.max(0,rgb.b-40)})`;
-        const d2 = `rgb(${Math.max(0,rgb.r-50)},${Math.max(0,rgb.g-38)},${Math.max(0,rgb.b-25)})`;
-        const d3 = `rgb(${Math.max(0,rgb.r-30)},${Math.max(0,rgb.g-22)},${Math.max(0,rgb.b-15)})`;
-        document.documentElement.style.setProperty('--header-dark1', d1);
-        document.documentElement.style.setProperty('--header-dark2', d2);
-        document.documentElement.style.setProperty('--header-dark3', d3);
-        // Gradiente de fundo profissional
+        // Cor escura derivada para o header (bem escura para contraste)
+        var escuro1 = 'rgb('+Math.max(0,Math.round(rgb.r*0.25))+','+Math.max(0,Math.round(rgb.g*0.20))+','+Math.max(0,Math.round(rgb.b*0.18))+')';
+        var escuro2 = 'rgb('+Math.max(0,Math.round(rgb.r*0.35))+','+Math.max(0,Math.round(rgb.g*0.28))+','+Math.max(0,Math.round(rgb.b*0.25))+')';
+        var escuro3 = 'rgb('+Math.max(0,Math.round(rgb.r*0.45))+','+Math.max(0,Math.round(rgb.g*0.36))+','+Math.max(0,Math.round(rgb.b*0.32))+')';
+        document.documentElement.style.setProperty('--header-dark1', escuro1);
+        document.documentElement.style.setProperty('--header-dark2', escuro2);
+        document.documentElement.style.setProperty('--header-dark3', escuro3);
+        // Gradiente: escuro no topo → levemente menos escuro
         document.documentElement.style.setProperty('--grad-top',
-          `linear-gradient(160deg, ${d1} 0%, ${d2} 50%, ${d3} 100%)`);
-        // Aplica filtro de cor nos botões vermelhos
-        document.querySelectorAll('.btn-mais,.btn-pedido,.btn-add-cart,.filtro-pill.active').forEach(el=>{
-          el.style.background = cor;
-        });
+          'linear-gradient(160deg, '+escuro1+' 0%, '+escuro2+' 60%, '+escuro3+' 100%)');
       }
     }
     function hexToRgb(hex) {
