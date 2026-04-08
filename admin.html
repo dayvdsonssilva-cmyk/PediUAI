@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PEDIWAY Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Poppins',sans-serif;background:#0d0d0d;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
+    .login-box{background:#161616;border:1px solid #222;border-radius:20px;padding:48px 40px;width:380px;max-width:94vw;text-align:center}
+    .logo{font-size:1.6rem;font-weight:800;color:#fff;margin-bottom:4px}
+    .logo span{color:#C0392B}
+    .subtitle{font-size:0.75rem;color:#555;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:40px}
+    .pin-input{width:100%;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:12px;padding:16px;color:#fff;font-family:'Poppins',sans-serif;font-size:1.2rem;font-weight:700;letter-spacing:0.3em;text-align:center;outline:none;transition:border-color 0.2s}
+    .pin-input:focus{border-color:#C0392B}
+    .pin-input.erro{border-color:#dc2626;animation:shake 0.3s ease}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+    .btn-entrar{width:100%;margin-top:16px;background:#C0392B;color:#fff;border:none;border-radius:12px;padding:15px;font-family:'Poppins',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;transition:background 0.2s}
+    .btn-entrar:hover{background:#a93226}
+    .erro-msg{color:#dc2626;font-size:0.82rem;margin-top:10px;display:none}
+
+    /* ── PAINEL CEO ── */
+    .painel{display:none;max-width:1200px;margin:0 auto;padding:32px 5%}
+    .painel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid #222}
+    .painel-logo{font-size:1.4rem;font-weight:800}
+    .painel-logo span{color:#C0392B}
+    .btn-sair-adm{background:#1e1e1e;border:1px solid #333;color:#aaa;padding:8px 18px;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer}
+    .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px}
+    .stat-card{background:#161616;border:1px solid #222;border-radius:14px;padding:22px}
+    .stat-card-label{font-size:0.7rem;font-weight:700;color:#555;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
+    .stat-card-num{font-size:2rem;font-weight:800;color:#fff}
+    .stat-card-num.red{color:#C0392B}
+    .stat-card-num.green{color:#22c55e}
+    .section-title{font-size:1rem;font-weight:700;color:#fff;margin-bottom:16px}
+    .table-wrap{background:#161616;border:1px solid #222;border-radius:14px;overflow:hidden;margin-bottom:32px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#1a1a1a;padding:12px 16px;text-align:left;font-size:0.72rem;font-weight:700;color:#555;letter-spacing:0.06em;text-transform:uppercase}
+    td{padding:12px 16px;font-size:0.85rem;border-top:1px solid #1e1e1e;vertical-align:middle}
+    tr:hover td{background:#1a1a1a}
+    .badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:0.7rem;font-weight:700}
+    .badge.ativo{background:#052e16;color:#22c55e}
+    .badge.inativo{background:#1c1917;color:#78716c}
+    .badge.trial{background:#1c1107;color:#f59e0b}
+    .btn-acao{background:#1e1e1e;border:1px solid #333;color:#aaa;padding:5px 12px;border-radius:6px;font-family:'Poppins',sans-serif;font-size:0.75rem;font-weight:600;cursor:pointer;margin-right:4px;transition:all 0.2s}
+    .btn-acao:hover{border-color:#C0392B;color:#fff}
+    .btn-acao.danger:hover{background:#C0392B;border-color:#C0392B;color:#fff}
+    .search-bar{background:#1e1e1e;border:1px solid #2a2a2a;border-radius:10px;padding:10px 16px;color:#fff;font-family:'Poppins',sans-serif;font-size:0.88rem;outline:none;width:280px}
+    .search-bar::placeholder{color:#555}
+    .loading{color:#555;font-size:0.85rem;text-align:center;padding:40px}
+    .toast-adm{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;padding:12px 24px;border-radius:50px;font-weight:700;font-size:0.85rem;z-index:9999;display:none}
+  </style>
+</head>
+<body>
+
+<!-- TELA DE LOGIN -->
+<div id="tela-login">
+  <div class="login-box">
+    <div class="logo">PEDI<span>WAY</span></div>
+    <div class="subtitle">Acesso CEO</div>
+    <input class="pin-input" id="pin-input" type="password" placeholder="••••••••" maxlength="10"
+           onkeydown="if(event.key==='Enter')verificarCodigo()">
+    <button class="btn-entrar" onclick="verificarCodigo()">Entrar</button>
+    <div class="erro-msg" id="erro-msg">Código incorreto. Tente novamente.</div>
+  </div>
+</div>
+
+<!-- PAINEL CEO -->
+<div class="painel" id="painel-ceo">
+  <div class="painel-header">
+    <div class="painel-logo">PEDI<span>WAY</span> <span style="font-size:0.75rem;color:#555;font-weight:500">CEO Panel</span></div>
+    <button class="btn-sair-adm" onclick="sairAdmin()">Sair</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-card-label">Total de lojas</div>
+      <div class="stat-card-num red" id="stat-total">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Lojas ativas</div>
+      <div class="stat-card-num green" id="stat-ativas">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Total de pedidos</div>
+      <div class="stat-card-num" id="stat-pedidos">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Pedidos hoje</div>
+      <div class="stat-card-num red" id="stat-pedidos-hoje">--</div>
+    </div>
+  </div>
+
+  <!-- Busca e tabela de lojas -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div class="section-title" style="margin-bottom:0">Estabelecimentos</div>
+    <input class="search-bar" id="busca-lojas" placeholder="🔍 Buscar loja..." oninput="filtrarLojas(this.value)">
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Loja</th>
+          <th>Slug</th>
+          <th>Plano</th>
+          <th>Status</th>
+          <th>Criado em</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-lojas"><tr><td colspan="6" class="loading">Carregando...</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- Tabela de pedidos recentes -->
+  <div class="section-title">Pedidos recentes (todos os estabelecimentos)</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#ID</th>
+          <th>Loja</th>
+          <th>Cliente</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Data</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-pedidos"><tr><td colspan="6" class="loading">Carregando...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast-adm" id="toast-adm"></div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
+  const SUPA_KEY = 'SUA_ANON_KEY_AQUI'; // Substitua pela service_role key para acesso total
+  const supa = createClient(SUPA_URL, SUPA_KEY);
+
+  const CODIGO_SECRETO = '35585201';
+
+  let todasLojas = [];
+
+  window.verificarCodigo = function() {
+    const input = document.getElementById('pin-input');
+    const erro  = document.getElementById('erro-msg');
+    if (input.value === CODIGO_SECRETO) {
+      document.getElementById('tela-login').style.display = 'none';
+      document.body.style.alignItems = 'flex-start';
+      document.getElementById('painel-ceo').style.display = 'block';
+      carregarDados();
+    } else {
+      input.classList.add('erro');
+      erro.style.display = 'block';
+      setTimeout(() => { input.classList.remove('erro'); input.value = ''; }, 600);
+    }
+  };
+
+  window.sairAdmin = function() {
+    document.getElementById('painel-ceo').style.display = 'none';
+    document.getElementById('tela-login').style.display = 'flex';
+    document.body.style.alignItems = 'center';
+    document.getElementById('pin-input').value = '';
+  };
+
+  async function carregarDados() {
+    // Lojas
+    const { data: lojas } = await supa.from('estabelecimentos').select('*').order('created_at', { ascending: false });
+    todasLojas = lojas || [];
+    renderLojas(todasLojas);
+
+    // Stats
+    document.getElementById('stat-total').textContent = todasLojas.length;
+    document.getElementById('stat-ativas').textContent = todasLojas.filter(l => l.status === 'ativo').length;
+
+    // Pedidos
+    const { data: pedidos } = await supa.from('pedidos').select('*,estabelecimentos(nome)').order('created_at', { ascending: false }).limit(100);
+    const hoje = new Date().toDateString();
+    document.getElementById('stat-pedidos').textContent = pedidos?.length || 0;
+    document.getElementById('stat-pedidos-hoje').textContent = (pedidos||[]).filter(p => new Date(p.created_at).toDateString() === hoje).length;
+    renderPedidos(pedidos || []);
+  }
+
+  function renderLojas(lista) {
+    const tbody = document.getElementById('tbody-lojas');
+    if (!lista.length) { tbody.innerHTML = '<tr><td colspan="6" class="loading">Nenhuma loja encontrada</td></tr>'; return; }
+    tbody.innerHTML = lista.map(l => {
+      const dt = new Date(l.created_at).toLocaleDateString('pt-BR');
+      const plano = { basico:'Trial', pro:'Pro', premium:'Premium' }[l.plano] || 'Trial';
+      const planoCls = { basico:'trial', pro:'ativo', premium:'ativo' }[l.plano] || 'trial';
+      return `<tr>
+        <td><strong>${l.nome}</strong></td>
+        <td><a href="//${location.host}/${l.slug}" target="_blank" style="color:#C0392B;text-decoration:none">${l.slug}</a></td>
+        <td><span class="badge ${planoCls}">${plano}</span></td>
+        <td><span class="badge ${l.status==='ativo'?'ativo':'inativo'}">${l.status==='ativo'?'Ativo':'Inativo'}</span></td>
+        <td style="color:#555">${dt}</td>
+        <td>
+          <button class="btn-acao" onclick="verLoja('${l.slug}')">Ver</button>
+          <button class="btn-acao danger" onclick="removerLoja('${l.id}','${l.nome}')">Remover</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderPedidos(lista) {
+    const tbody = document.getElementById('tbody-pedidos');
+    if (!lista.length) { tbody.innerHTML = '<tr><td colspan="6" class="loading">Nenhum pedido</td></tr>'; return; }
+    const cls = { novo:'trial', preparo:'ativo', pronto:'ativo', recusado:'inativo' };
+    const lbl = { novo:'Novo', preparo:'Preparo', pronto:'Pronto', recusado:'Recusado' };
+    tbody.innerHTML = lista.slice(0,50).map(p => {
+      const dt = new Date(p.created_at).toLocaleString('pt-BR');
+      return `<tr>
+        <td><strong>#${p.id.slice(-4).toUpperCase()}</strong></td>
+        <td style="color:#aaa">${p.estabelecimentos?.nome||'-'}</td>
+        <td>${p.cliente_nome||'-'}</td>
+        <td style="color:#C0392B;font-weight:700">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</td>
+        <td><span class="badge ${cls[p.status]||'trial'}">${lbl[p.status]||p.status}</span></td>
+        <td style="color:#555;font-size:0.78rem">${dt}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.filtrarLojas = function(termo) {
+    const t = (termo||'').toLowerCase();
+    renderLojas(t ? todasLojas.filter(l => l.nome.toLowerCase().includes(t) || l.slug.includes(t)) : todasLojas);
+  };
+
+  window.verLoja = function(slug) { window.open('/' + slug, '_blank'); };
+
+  window.removerLoja = async function(id, nome) {
+    if (!confirm(`Remover a loja "${nome}"? Esta ação não pode ser desfeita.`)) return;
+    const { error } = await supa.from('estabelecimentos').delete().eq('id', id);
+    if (error) { alert('Erro: ' + error.message); return; }
+    toasty('Loja removida!');
+    carregarDados();
+  };
+
+  function toasty(msg) {
+    const t = document.getElementById('toast-adm');
+    t.textContent = msg; t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 2800);
+  }
+
+  // Login com Enter
+  document.getElementById('pin-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') window.verificarCodigo();
+  });
+</script>
+</body>
+</html>
