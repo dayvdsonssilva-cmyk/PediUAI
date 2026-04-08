@@ -67,8 +67,20 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .tab-btn { background:none; border:none; border-bottom:2px solid transparent; padding:14px 16px; font-family:'Poppins',sans-serif; font-size:0.9rem; font-weight:500; color:#888; cursor:pointer; white-space:nowrap; transition:color 0.2s,border-color 0.2s; position:relative; }
 .tab-btn:hover { color:#333; }
 .tab-btn.active { color:var(--red); border-bottom-color:var(--red); font-weight:600; }
-.tab-badge { position:absolute; top:8px; right:6px; background:var(--red); color:#fff; border-radius:50%; width:18px; height:18px; font-size:0.65rem; font-weight:800; display:none; align-items:center; justify-content:center; }
-.tab-badge.show { display:flex; }
+.tab-badge {
+  display:none; align-items:center; justify-content:center;
+  background:var(--red); color:#fff; border-radius:50px;
+  min-width:20px; height:20px; padding:0 5px;
+  font-size:0.68rem; font-weight:800;
+  margin-left:6px; vertical-align:middle;
+  box-shadow:0 2px 6px rgba(192,57,43,0.5);
+  animation:pulseBadge 1.5s infinite;
+}
+.tab-badge.show { display:inline-flex; }
+@keyframes pulseBadge {
+  0%,100% { transform:scale(1); }
+  50%      { transform:scale(1.15); }
+}
 
 .tab-content { display:none; }
 .tab-content.active { display:block; }
@@ -307,12 +319,70 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 /* TOAST */
 @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 
-/* RESPONSIVE */
-@media(max-width:900px) { h1{font-size:2.8rem} .stats-grid{grid-template-columns:repeat(2,1fr)} .cardapio-grid{grid-template-columns:repeat(2,1fr)} }
+/* ═══ MOBILE ═══════════════════════════════════════════════════════ */
 @media(max-width:600px) {
   h1{font-size:2.2rem} .hero{padding:130px 5% 60px} .hero-actions{flex-direction:column}
   .stats{gap:28px} .stats-grid{grid-template-columns:repeat(2,1fr)}
-  .cardapio-grid{grid-template-columns:1fr}
+  .cardapio-grid{grid-column:1fr}
   .dash-container{padding:20px 4%} .link-box{flex-direction:column;align-items:flex-start}
-  .tab-btn{padding:12px 10px;font-size:0.8rem} .emoji-grid{grid-template-columns:repeat(5,1fr)}
+  .tab-btn{padding:12px 8px;font-size:0.78rem} .emoji-grid{grid-template-columns:repeat(5,1fr)}
+  .pedido-novo-card{width:160px}
+}
+@media(max-width:900px) and (min-width:601px) {
+  h1{font-size:2.8rem} .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .cardapio-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ═══ DESKTOP ═══════════════════════════════════════════════════════ */
+@media(min-width:900px) {
+  /* Dashboard container mais largo */
+  .dash-container { max-width:1200px; padding:40px 5%; }
+
+  /* Nav com mais espaço */
+  .dash-nav { padding:0 5%; gap:8px; }
+  .tab-btn  { padding:16px 24px; font-size:0.95rem; }
+
+  /* Stats grid 4 colunas mais largas */
+  .stats-grid { grid-template-columns:repeat(4,1fr); gap:24px; margin-bottom:40px; }
+  .stat-num   { font-size:2.4rem; }
+
+  /* Cardápio 3 colunas maiores */
+  .cardapio-grid { grid-template-columns:repeat(3,1fr); gap:24px; }
+  .item-card .item-img,
+  .item-card .item-emoji-bg { height:200px; }
+
+  /* Novos pedidos em linha */
+  .pedidos-novos-lista { flex-wrap:wrap; gap:16px; min-height:120px; }
+  .pedido-novo-card    { width:240px; }
+
+  /* Config card mais largo */
+  .config-card { max-width:700px; }
+
+  /* Fresquinho em mais colunas */
+  .fresh-stories-row { gap:20px; }
+  .fresh-story-thumb { width:130px; height:180px; border-radius:18px; }
+
+  /* Header landing maior */
+  .hero   { padding:180px 8% 120px; max-width:860px; }
+  h1      { font-size:5rem; }
+  .hero p { font-size:1.1rem; max-width:640px; }
+
+  /* Auth card centralizado e maior */
+  .auth-card { padding:52px; max-width:520px; }
+
+  /* Pedidos histórico */
+  #todos-pedidos .pedido-card { padding:22px 28px; }
+
+  /* Link box */
+  .link-box { padding:24px 32px; }
+
+  /* Modal mais largo */
+  .modal-box { max-width:640px; border-radius:20px 20px 0 0; }
+}
+
+@media(min-width:1200px) {
+  .dash-container    { max-width:1400px; }
+  .cardapio-grid     { grid-template-columns:repeat(4,1fr); }
+  .stats-grid        { gap:28px; }
+  .pedido-novo-card  { width:260px; }
 }
