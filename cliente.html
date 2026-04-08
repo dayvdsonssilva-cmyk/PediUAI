@@ -400,8 +400,8 @@
     let lastTap=0;
     document.addEventListener('touchend',e=>{const now=Date.now();if(now-lastTap<300)e.preventDefault();lastTap=now;},{passive:false});
 
-    const SUPA_URL='__VITE_SUPABASE_URL__';
-    const SUPA_KEY='__VITE_SUPABASE_ANON_KEY__';
+    const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
     const supa=createClient(SUPA_URL,SUPA_KEY);
 
     const slug=location.pathname.replace(/^\//,'').split('/')[0]||'demo';
@@ -813,7 +813,8 @@
 
     // ── POLLING STATUS DO PEDIDO ───────────────────────────
     let pollingId = null;
-    let pedidoAtivoId = null;
+    let pollingWhats = null;
+    let pollingEstabId = null;
 
     // Aplica cor do estabelecimento
     function aplicarCorPrimaria(cor) {
@@ -845,8 +846,6 @@
       return '#'+[rgb.r,rgb.g,rgb.b].map(v=>Math.max(0,v-amt).toString(16).padStart(2,'0')).join('');
     }
 
-    let pollingWhats = null;
-    let pollingEstabId = null;
 
     function iniciarPolling(pedidoIdLocal) {
       // Polling já iniciado inline após o pedido
@@ -854,9 +853,6 @@
 
 
         // ── POLLING CLIENTE ────────────────────────────────────
-    var pollingWhats = null;
-    var pollingEstabId = null;
-
     function iniciarPollingCliente() {
       pollingWhats = (document.getElementById('cli-whats') || {}).value || '';
       pollingWhats = pollingWhats.replace(/\D/g, '');
