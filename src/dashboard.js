@@ -100,32 +100,60 @@ window.atualizarStatusLoja = function(aberto) {
 };
 
 // ── REALTIME ──────────────────────────────────────────────
-function iniciarRealtime() {
-  const estab = getEstab(); if (!estab) return;
-  if (realtimeSub) getSupa().removeChannel(realtimeSub);
+let _ultimosPedidosIds = new Set();
+let _pollingDashId = null;
 
-  realtimeSub = getSupa()
-    .channel('pedidos-realtime')
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'pedidos',
-      filter: `estabelecimento_id=eq.${estab.id}`,
-    }, payload => {
-      const p = payload.new;
-      adicionarPedidoNovo(p);
-      tocarSomNovoPedido(p.id);
-      atualizarBadgePedidos();
-    })
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'pedidos',
-      filter: `estabelecimento_id=eq.${estab.id}`,
-    }, () => {
-      renderPedidos();
-    })
-    .subscribe();
+function iniciarRealtime() {
+  const estab = getEstab(); if (!estab || estab.id === 'demo') return;
+
+  // Remove canal anterior
+  if (realtimeSub) { try { getSupa().removeChannel(realtimeSub); } catch(e){} }
+
+  // Tenta Realtime
+  try {
+    realtimeSub = getSupa()
+      .channel('pedidos-dash-' + estab.id)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'pedidos',
+        filter: 'estabelecimento_id=eq.' + estab.id,
+      }, payload => {
+        const p = payload.new;
+        if (!_ultimosPedidosIds.has(p.id)) {
+          _ultimosPedidosIds.add(p.id);
+          adicionarPedidoNovo(p);
+          tocarSomNovoPedido(p.id);
+          atualizarBadgePedidos();
+        }
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'pedidos',
+        filter: 'estabelecimento_id=eq.' + estab.id,
+      }, () => { renderPedidos(); })
+      .subscribe();
+  } catch(e) { console.log('Realtime erro:', e); }
+
+  // Polling de segurança a cada 8s (garante chegada mesmo sem Realtime)
+  clearInterval(_pollingDashId);
+  _pollingDashId = setInterval(async () => {
+    const est = getEstab(); if (!est || est.id === 'demo') return;
+    try {
+      const { data } = await getSupa().from('pedidos')
+        .select('id,cliente_nome,itens,total,status,created_at')
+        .eq('estabelecimento_id', est.id)
+        .eq('status', 'novo')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (!data) return;
+      data.forEach(p => {
+        if (!_ultimosPedidosIds.has(p.id)) {
+          _ultimosPedidosIds.add(p.id);
+          adicionarPedidoNovo(p);
+          tocarSomNovoPedido(p.id);
+          atualizarBadgePedidos();
+        }
+      });
+    } catch(e) {}
+  }, 8000);
 }
 
 let notifLoop = null;
