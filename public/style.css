@@ -202,89 +202,42 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   .cardapio-grid{grid-template-columns:1fr} .fresquinho-grid{grid-template-columns:1fr}
   .dash-container{padding:20px 4%} .link-box{flex-direction:column;align-items:flex-start}
   .tab-btn{padding:12px 10px;font-size:0.8rem} .emoji-grid{grid-template-columns:repeat(5,1fr)}
-  /* ===== FRESQUINHO STORIES (adicionar no final do style.css) ===== */
-
-.stories-upload-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  width: fit-content;
-  margin-bottom: 20px;
 }
 
-.story-add-btn {
-  width: 80px;
-  height: 110px;
-  border-radius: 16px;
-  background: #f0ebe4;
-  border: 2.5px dashed var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: border-color 0.2s, background 0.2s;
-}
-.stories-upload-area:hover .story-add-btn {
-  border-color: var(--red);
-  background: #fdf5f4;
-}
-
-.story-plus {
-  font-size: 1.8rem;
-  color: #aaa;
-  font-weight: 300;
-  line-height: 1;
-}
-
-.story-add-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #aaa;
-}
-
-/* Grid dos stories */
-.fresquinho-stories {
+/* ===== FRESQUINHO STORIES NO DASHBOARD ===== */
+.fresh-stories-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
 }
 
-.story-card {
+.fresh-story-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  position: relative;
 }
 
-.story-media-wrap {
-  width: 90px;
-  height: 124px;
-  border-radius: 16px;
+.fresh-story-thumb {
+  width: 100px;
+  height: 140px;
+  border-radius: 14px;
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  border: 3px solid var(--red);
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--red);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.12);
   transition: transform 0.15s;
+  flex-shrink: 0;
 }
-.story-media-wrap:hover { transform: scale(1.04); }
+.fresh-story-thumb:hover { transform: scale(1.04); }
 
-.story-media {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.story-overlay {
+.fresh-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 50%);
+  background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%);
 }
 
-.story-timer {
+.fresh-timer-badge {
   position: absolute;
   bottom: 6px;
   left: 50%;
@@ -293,16 +246,16 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   color: #fff;
   font-size: 0.58rem;
   font-weight: 700;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 50px;
   white-space: nowrap;
 }
 
-.story-play-icon {
+.fresh-play {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -60%);
+  transform: translate(-50%, -58%);
   background: rgba(255,255,255,0.85);
   border-radius: 50%;
   width: 28px;
@@ -313,14 +266,83 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   font-size: 0.75rem;
 }
 
-.story-remove {
+.fresh-remove-btn {
   background: none;
   border: none;
-  font-size: 0.9rem;
   color: #bbb;
   cursor: pointer;
+  font-size: 0.9rem;
   transition: color 0.2s;
   padding: 0;
 }
-.story-remove:hover { color: var(--red); }
+.fresh-remove-btn:hover { color: var(--red); }
+
+/* ===== MODAL CROP LOGO ===== */
+.crop-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+.crop-overlay.open { display: flex; }
+.crop-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  max-width: 420px;
+  width: 90%;
+}
+.crop-box h4 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; color: #1a1a1a; }
+.crop-preview {
+  width: 200px;
+  height: 200px;
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 0 auto 16px;
+  border: 2px solid var(--border);
+  position: relative;
+}
+.crop-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.crop-slider-wrap { margin-bottom: 16px; }
+.crop-slider-wrap label { font-size: 0.8rem; font-weight: 600; color: #555; display: block; margin-bottom: 6px; }
+.crop-slider { width: 100%; accent-color: var(--red); }
+.crop-actions { display: flex; gap: 10px; }
+.btn-crop-cancel { flex: 1; background: #f0ebe4; border: none; padding: 12px; border-radius: 10px; font-family: 'Poppins', sans-serif; font-weight: 600; color: #555; cursor: pointer; }
+.btn-crop-ok { flex: 2; background: var(--red); border: none; padding: 12px; border-radius: 10px; font-family: 'Poppins', sans-serif; font-weight: 700; color: #fff; cursor: pointer; }
+
+/* ===== FOTOS MÚLTIPLAS PRODUTO ===== */
+.fotos-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.foto-add-btn {
+  width: 80px;
+  height: 80px;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  background: var(--cream);
+  transition: border-color 0.2s;
+}
+.foto-add-btn:hover { border-color: var(--red); }
+
+.foto-thumb-item {
+  position: relative;
+  flex-shrink: 0;
 }
