@@ -249,12 +249,28 @@
             </div>
           </div>
           <!-- Input imagem da capa -->
-          <div id="capa-imagem-input" style="display:none">
-            <button class="btn-ghost-sm" onclick="document.getElementById('capa-input').click()" style="background:#f0ebe4;border:1.5px solid var(--border);padding:9px 18px;border-radius:8px;font-family:Poppins,sans-serif;font-size:0.85rem;font-weight:600;color:#555;cursor:pointer">
+          <div id="capa-imagem-input" style="display:none;flex-direction:column;gap:12px">
+            <button onclick="document.getElementById('capa-input').click()"
+              style="background:#f0ebe4;border:1.5px solid var(--border);padding:9px 18px;border-radius:8px;font-family:Poppins,sans-serif;font-size:0.85rem;font-weight:600;color:#555;cursor:pointer;width:fit-content">
               📷 Escolher imagem de fundo
             </button>
             <input type="file" id="capa-input" accept="image/*" style="display:none" onchange="previewCapa(event)">
-            <p style="font-size:0.72rem;color:#aaa;margin-top:6px">A imagem terá desfoque leve para não competir com o texto</p>
+            <!-- Ajuste de posição -->
+            <div id="capa-pos-controls" style="display:flex;flex-direction:column;gap:8px">
+              <div>
+                <label style="font-size:0.75rem;font-weight:600;color:#888;display:block;margin-bottom:4px">Posição horizontal</label>
+                <input type="range" id="capa-pos-x" min="0" max="100" value="50"
+                  style="width:100%;accent-color:var(--red)"
+                  oninput="ajustarPosicaoCapa()">
+              </div>
+              <div>
+                <label style="font-size:0.75rem;font-weight:600;color:#888;display:block;margin-bottom:4px">Posição vertical</label>
+                <input type="range" id="capa-pos-y" min="0" max="100" value="50"
+                  style="width:100%;accent-color:var(--red)"
+                  oninput="ajustarPosicaoCapa()">
+              </div>
+              <p style="font-size:0.72rem;color:#aaa">Arraste os controles para ajustar o enquadramento da capa</p>
+            </div>
           </div>
         </div>
 
