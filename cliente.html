@@ -19,8 +19,8 @@
 
     /* ── HEADER ── */
     .header { background:var(--header-grad, linear-gradient(165deg,#1e0a02 0%,#2e1208 50%,#3a1a0c 100%)); padding:28px 20px 28px; position:relative; overflow:hidden; min-height:190px; display:flex; flex-direction:column; justify-content:flex-end; }
-    .hblur1 { position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(192,57,43,0.18);filter:blur(40px);pointer-events:none; }
-    .hblur2 { position:absolute;bottom:-20px;left:-30px;width:140px;height:140px;border-radius:50%;background:rgba(80,20,5,0.4);filter:blur(30px);pointer-events:none; }
+    .hblur1 { position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(192,57,43,0.18);filter:blur(40px);pointer-events:none;z-index:1; }
+    .hblur2 { position:absolute;bottom:-20px;left:-30px;width:140px;height:140px;border-radius:50%;background:rgba(80,20,5,0.4);filter:blur(30px);pointer-events:none;z-index:1; }
     .logo-wrap { position:absolute;top:12px;right:12px;width:120px;height:120px;border-radius:22px;overflow:hidden;background:var(--logo-bg,#2a1008);border:3px solid rgba(255,255,255,0.18);z-index:2;box-shadow:0 8px 28px rgba(0,0,0,0.4); }
     .logo-wrap img { width:100%;height:100%;object-fit:cover; }
     .logo-emoji { width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.4rem; }
@@ -958,6 +958,28 @@
 
       // Cor primária
       aplicarCorPrimaria(est.cor_primaria || '#C0392B');
+      // Aplica capa (imagem ou cor)
+      var hdr = document.querySelector('.header');
+      if (hdr) {
+        if (est.capa_tipo === 'imagem' && est.capa_url) {
+          hdr.style.backgroundImage = 'url(' + est.capa_url + ')';
+          hdr.style.backgroundSize  = 'cover';
+          hdr.style.backgroundPosition = 'center';
+          // Overlay escuro para legibilidade
+          var ov = document.getElementById('header-overlay');
+          if (!ov) {
+            ov = document.createElement('div');
+            ov.id = 'header-overlay';
+            ov.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(2px);z-index:0;';
+            hdr.insertBefore(ov, hdr.firstChild);
+          }
+        } else {
+          // Cor sólida com degradê
+          hdr.style.backgroundImage = '';
+          var ov2 = document.getElementById('header-overlay');
+          if (ov2) ov2.remove();
+        }
+      }
 
       // Logo
       var logowrap = document.getElementById('logo-wrap');
