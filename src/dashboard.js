@@ -115,7 +115,7 @@ function iniciarRealtime() {
       .channel('pedidos-dash-' + estab.id)
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'pedidos',
-        filter: 'estabelecimento_id=eq.' + estab.id,
+        filter: `estabelecimento_id=eq.${estab.id}`,
       }, payload => {
         const p = payload.new;
         if (!_ultimosPedidosIds.has(p.id)) {
@@ -131,7 +131,7 @@ function iniciarRealtime() {
       })
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'pedidos',
-        filter: 'estabelecimento_id=eq.' + estab.id,
+        filter: `estabelecimento_id=eq.${estab.id}`,
       }, () => { renderPedidos(); })
       .subscribe();
   } catch(e) { console.log('Realtime erro:', e); }
@@ -142,7 +142,7 @@ function iniciarRealtime() {
     const est = getEstab(); if (!est || est.id === 'demo') return;
     try {
       const { data } = await getSupa().from('pedidos')
-        .select('id,cliente_nome,itens,total,status,created_at')
+        .select('id,cliente_nome,itens,total,status,created_at,endereco')
         .eq('estabelecimento_id', est.id)
         .eq('status', 'novo')
         .order('created_at', { ascending: false })
