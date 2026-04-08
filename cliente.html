@@ -722,30 +722,77 @@
       const btn=document.querySelector('.btn-pedido');
       btn.disabled=true;btn.textContent='Mandando...';
       try{
-        // Insert sem .select() para evitar problemas de RLS em celulares
+        // Insert e busca o ID real logo em seguida
+        const whatsLimpo = whats.replace(/\D/g,'');
         const{error}=await supa.from('pedidos').insert({
           estabelecimento_id:estab.id,
-          cliente_nome:nome,cliente_whats:whats,
+          cliente_nome:nome,
+          cliente_whats:whatsLimpo,
           observacao:document.getElementById('cli-obs')?.value.trim()||'',
           itens,total,status:'novo',
           endereco:enderecoEntrega,
         });
         if(error)throw error;
-        // Gera ID local temporario para tracking
-        const pedidoId='local_'+Date.now();
-        const peds=JSON.parse(localStorage.getItem(`pw_peds_${slug}`)||'[]');
-        peds.unshift({id:pedidoId,itens,total,status:'novo',endereco:enderecoEntrega});
-        localStorage.setItem(`pw_peds_${slug}`,JSON.stringify(peds.slice(0,20)));
+        // Busca o ID real do pedido que acabou de ser inserido
+        const{data:pedNovo}=await supa.from('pedidos')
+          .select('id,status,itens,total,endereco')
+          .eq('estabelecimento_id',estab.id)
+          .eq('cliente_whats',whatsLimpo)
+          .eq('status','novo')
+          .order('created_at',{ascending:false})
+          .limit(1)
+          .maybeSingle();
+        const pedidoId = pedNovo ? pedNovo.id : ('local_'+Date.now());
+        // Garante que o polling use o whatsapp sem máscara
+        pollingWhats = whatsLimpo;
+        pollingEstabId = estab.id;
+        const peds=JSON.parse(localStorage.getItem('pw_peds_'+slug)||'[]');
+        peds.unshift({id:pedidoId, itens, total, status:'novo', endereco:enderecoEntrega});
+        localStorage.setItem('pw_peds_'+slug, JSON.stringify(peds.slice(0,20)));
         carrinho=[];atualizarFab();fecharCarrinho();
         // Inicia polling usando whatsapp
-        // Inicia polling de pedidos
-        pollingWhats = (document.getElementById('cli-whats')||{value:''}).value.replace(/\D/g,'');
+        // Inicia polling de pedidos (whats vazio por enquanto, será preenchido ao finalizar pedido)
         pollingEstabId = estab ? estab.id : null;
+        pollingWhats = '';
         iniciarJogo();
         carregarMeusPedidos();
       }catch(e){ console.error('Erro pedido:',e); alert('Erro ao enviar pedido: '+(e?.message||e?.details||JSON.stringify(e)||'Tente novamente.')); }
       finally{btn.disabled=false;btn.textContent='Mandar o pedido! 🚀';}
     };
+
+    async function sincronizarPedidosCliente(){
+      if(!pollingWhats||!pollingEstabId) return;
+      try {
+        var wh = pollingWhats.replace(/\D/g,'');
+        var res = await supa.from('pedidos')
+          .select('id,status,itens,total,endereco')
+          .eq('estabelecimento_id',pollingEstabId)
+          .eq('cliente_whats',wh)
+          .order('created_at',{ascending:false})
+          .limit(10);
+        if(!res.data||!res.data.length) return;
+        var peds = JSON.parse(localStorage.getItem('pw_peds_'+slug)||'[]');
+        var mudou = false;
+        res.data.forEach(function(pedDb){
+          var local = peds.find(function(x){return x.id===pedDb.id;});
+          if(!local){
+            // Tenta associar um pedido local sem ID real
+            var semId = peds.find(function(x){return x.id&&x.id.startsWith('local_')&&x.status===pedDb.status;});
+            if(semId){ semId.id=pedDb.id; local=semId; mudou=true; }
+            else { peds.unshift({id:pedDb.id,itens:pedDb.itens||[],total:pedDb.total||0,status:pedDb.status,endereco:pedDb.endereco}); mudou=true; return; }
+          }
+          if(local.status!==pedDb.status){
+            var ant=local.status; local.status=pedDb.status; mudou=true;
+            var isEnt=(pedDb.endereco||'')!==''&&(pedDb.endereco||'')!=='Retirada no local';
+            if(pedDb.status==='preparo') mostrarNotif('Pedido aceito! Sendo preparado...','#e05510');
+            if(pedDb.status==='pronto') mostrarNotif(isEnt?'Pedido saiu para entrega!':'Pronto para retirada!','#2e7d32');
+            if(pedDb.status==='recusado') mostrarNotif('Pedido não confirmado pela loja.','#dc2626');
+          }
+          if(local.id!==pedDb.id){ local.id=pedDb.id; mudou=true; }
+        });
+        if(mudou){ localStorage.setItem('pw_peds_'+slug,JSON.stringify(peds)); carregarMeusPedidos(); }
+      } catch(e){ console.log('Sinc pedidos:',e); }
+    }
 
     function carregarMeusPedidos(){
       const peds=JSON.parse(localStorage.getItem(`pw_peds_${slug}`)||'[]');if(!peds.length)return;
@@ -766,7 +813,7 @@
         return `
         <div class="ped-card">
           <div class="ped-top">
-            <span class="ped-id">#${p.id&&!p.id.startsWith('local_')?p.id.slice(-4).toUpperCase():'----'}</span>
+            <span class="ped-id">#${(p.id&&p.id.length>10&&!p.id.startsWith('local_'))?p.id.slice(-4).toUpperCase():'----'}</span>
             <span class="ped-status ${STATUS_COR[p.status||'novo']}">${STATUS_LABEL[p.status||'novo']||'Aguardando'}</span>
           </div>
           <p style="font-size:0.75rem;color:var(--sub);margin-bottom:8px">${STATUS_DESC[p.status||'novo']||''}</p>
@@ -931,11 +978,11 @@
     async function rodarPolling() {
       if (!pollingWhats || !pollingEstabId) return;
       try {
+        var whatsLimpo = pollingWhats.replace(/\D/g,'');
         var res = await supa.from('pedidos')
           .select('id,status,endereco,itens,total,cliente_whats')
           .eq('estabelecimento_id', pollingEstabId)
-          .eq('cliente_whats', pollingWhats)
-          .not('status', 'in', '("recusado")')
+          .eq('cliente_whats', whatsLimpo)
           .order('created_at', { ascending: false })
           .limit(10);
         var data = res.data;
