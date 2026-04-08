@@ -238,7 +238,7 @@
       <div class="loja-desc" id="loja-desc">Cardápio digital</div>
       <div class="loja-meta">
         <div class="meta-item" id="meta-entrega-wrap">⊙ <span id="meta-tempo">30-45 min</span></div>
-        <div class="meta-item">🛵 Entrega disponível</div>
+        <div class="meta-item" id="meta-entrega-wrap2">🛵 Entrega disponível</div>
       </div>
     </div>
   </div>
@@ -883,21 +883,30 @@
       if(tempoEl) tempoEl.textContent = est.tempo_entrega||'30-45 min';
 
       // Entrega / Retirada
+      var temEnt = est.faz_entrega !== false;
+      var temRet = est.faz_retirada !== false;
       var btnEnt = document.getElementById('btn-entrega');
       var btnRet = document.getElementById('btn-retirada');
-      if(btnEnt) btnEnt.style.display = (est.faz_entrega===false) ? 'none' : '';
-      if(btnRet) btnRet.style.display = (est.faz_retirada===false) ? 'none' : '';
-      // Se só retirada disponível, força retirada
-      if(est.faz_entrega===false && est.faz_retirada!==false) {
-        selecionarOpcao('retirada');
-      }
-      // Se só entrega disponível, força entrega
-      if(est.faz_retirada===false && est.faz_entrega!==false) {
-        selecionarOpcao('entrega');
+      if(btnEnt) btnEnt.style.display = temEnt ? '' : 'none';
+      if(btnRet) btnRet.style.display = temRet ? '' : 'none';
+      if(!temEnt && temRet) selecionarOpcao('retirada');
+      if(temEnt && !temRet) selecionarOpcao('entrega');
+
+      // Atualiza texto de entrega no header
+      var ew2 = document.getElementById('meta-entrega-wrap2');
+      if(ew2) {
+        ew2.textContent = (temEnt && temRet) ? '🛵 Entrega e retirada'
+          : (temEnt)  ? '🛵 Entrega disponível'
+          : (temRet)  ? '🏃 Apenas retirada'
+          : 'ⓘ Consulte a loja';
       }
 
+      // Atualiza endereço para retirada
+      var endTxt = document.getElementById('estab-endereco-txt');
+      if(endTxt) endTxt.textContent = est.endereco || 'Endereço não informado';
+
       // Cor primária
-      if(est.cor_primaria) aplicarCorPrimaria(est.cor_primaria);
+      aplicarCorPrimaria(est.cor_primaria || '#C0392B');
 
       // Logo
       var logowrap = document.getElementById('logo-wrap');
