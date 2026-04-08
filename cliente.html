@@ -237,7 +237,7 @@
       <div class="loja-nome" id="loja-nome">Carregando...</div>
       <div class="loja-desc" id="loja-desc">Cardápio digital</div>
       <div class="loja-meta">
-        <div class="meta-item">⊙ 30-45 min</div>
+        <div class="meta-item">⊙ <span id="meta-tempo">30-45 min</span></div>
         <div class="meta-item">⭐ 4.8</div>
         <div class="meta-item">🛵 Entrega disponível</div>
       </div>
@@ -758,7 +758,7 @@
         return `
         <div class="ped-card">
           <div class="ped-top">
-            <span class="ped-id">#${p.id?.slice(-4)?.toUpperCase()||'----'}</span>
+            <span class="ped-id">#${p.id&&!p.id.startsWith('local_')?p.id.slice(-4).toUpperCase():'----'}</span>
             <span class="ped-status ${STATUS_COR[p.status||'novo']}">${STATUS_LABEL[p.status||'novo']||'Aguardando'}</span>
           </div>
           <p style="font-size:0.75rem;color:var(--sub);margin-bottom:8px">${STATUS_DESC[p.status||'novo']||''}</p>
@@ -815,6 +815,48 @@
     let pollingId = null;
     let pollingWhats = null;
     let pollingEstabId = null;
+
+    function aplicarDadosEstab(est) {
+      estab = est;
+      document.getElementById('loja-nome').textContent = est.nome.toUpperCase();
+      document.getElementById('loja-desc').textContent = est.descricao||'Cardápio digital';
+      document.getElementById('estab-endereco-txt').textContent = est.endereco||'Entre em contato para o endereço';
+      // Tempo de entrega no meta
+      const metaTempo = document.getElementById('meta-tempo');
+      if(metaTempo) metaTempo.textContent = est.tempo_entrega||'30-45 min';
+      // Entrega / Retirada — atualiza opções da sacola
+      const btnEnt = document.getElementById('btn-entrega');
+      const btnRet = document.getElementById('btn-retirada');
+      if(btnEnt) btnEnt.style.display = est.faz_entrega===false ? 'none' : '';
+      if(btnRet) btnRet.style.display = est.faz_retirada===false ? 'none' : '';
+      // Se só faz retirada, seleciona retirada
+      if(est.faz_entrega===false && est.faz_retirada!==false) selecionarOpcao('retirada');
+      // Cor
+      if(est.cor_primaria) aplicarCorPrimaria(est.cor_primaria);
+      // Logo
+      if(est.logo_url) {
+        const lw = document.getElementById('logo-wrap');
+        if(lw) lw.innerHTML = '<img src="'+est.logo_url+'" alt="Logo" style="width:100%;height:100%;object-fit:cover">';
+      } else {
+        const le = document.getElementById('logo-emoji');
+        if(le) le.textContent = est.nome.charAt(0);
+      }
+      // Loja fechada
+      const banner = document.getElementById('loja-fechada-banner');
+      if(est.aberto===false) {
+        if(!banner) mostrarLojaFechada();
+        window._lojaFechada = true;
+        const fab = document.getElementById('fab');
+        if(fab) fab.style.display='none';
+      } else {
+        if(banner) banner.remove();
+        window._lojaFechada = false;
+        // Reabilita FAB se tem itens
+        const qtd = carrinho.reduce((s,cc)=>s+cc.qtd,0);
+        const fab = document.getElementById('fab');
+        if(fab && qtd>0) fab.style.display='flex';
+      }
+    }
 
     // Aplica cor do estabelecimento
     function aplicarCorPrimaria(cor) {
@@ -906,7 +948,7 @@
             pedLocal.status = pedDb.status;
             atualizado = true;
             var isEnt = pedDb.endereco && pedDb.endereco !== '' && pedDb.endereco !== 'Retirada no local';
-            if (pedDb.status === 'preparo') mostrarNotif('Pedido confirmado! Sendo preparado...', '#e05510');
+            if (pedDb.status === 'preparo') mostrarNotif('Pedido confirmado pelo restaurante!', '#e05510');
             if (pedDb.status === 'pronto') mostrarNotif(isEnt ? 'Seu pedido saiu para entrega!' : 'Pronto para retirada!', '#2e7d32');
             if (pedDb.status === 'recusado') mostrarNotif('Pedido nao confirmado pela loja.', '#dc2626');
           }
