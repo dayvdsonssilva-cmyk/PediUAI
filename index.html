@@ -242,7 +242,15 @@
         </div>
         <div class="form-group-light">
           <label>Tempo de entrega</label>
-          <input type="text" class="input-light" id="cfg-tempo" placeholder="30-45 min">
+          <select class="input-light" id="cfg-tempo">
+            <option value="10-20 min">10 - 20 min</option>
+            <option value="20-30 min">20 - 30 min</option>
+            <option value="30-45 min" selected>30 - 45 min</option>
+            <option value="40-60 min">40 - 60 min</option>
+            <option value="60-90 min">60 - 90 min</option>
+            <option value="60+ min">60+ min</option>
+            <option value="Retirada apenas">Apenas retirada</option>
+          </select>
         </div>
 
         <!-- Link -->
@@ -302,7 +310,7 @@
   <div class="modal-box">
     <div class="modal-header">
       <h3>Adicionar item</h3>
-      <button class="modal-close" onclick="fecharModal()">x</button>
+      <button class="modal-close" onclick="fecharModal()">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-group-light">
@@ -346,7 +354,7 @@
   <div class="modal-pedido-box">
     <div class="modal-header">
       <h3>Detalhe do pedido</h3>
-      <button class="modal-close" onclick="fecharModalPedido()">x</button>
+      <button class="modal-close" onclick="fecharModalPedido()">✕</button>
     </div>
     <div class="modal-body" id="modal-pedido-body"></div>
   </div>
