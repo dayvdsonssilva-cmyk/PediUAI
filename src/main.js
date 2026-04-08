@@ -27,6 +27,17 @@ window.mascaraDoc = function(input) {
   input.value = v;
 };
 
+window.mascaraWhatsInput = function(input) {
+  let v = input.value.replace(/\D/g,'');
+  if (v.length > 11) v = v.slice(0,11);
+  if (v.length <= 10) {
+    v = v.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+  } else {
+    v = v.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
+  }
+  input.value = v;
+};
+
 window.togglePromo = function(cb) {
   const g = document.getElementById('preco-orig-group');
   if (g) g.style.display = cb.checked ? 'flex' : 'none';
@@ -39,11 +50,22 @@ window.atualizarCfgLink = function(val) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 PEDIWAY iniciado!');
   const saved = localStorage.getItem('pw_estab');
+
   if (saved) {
-    window._estab = JSON.parse(saved);
-    initDashboard();
+    try {
+      window._estab = JSON.parse(saved);
+    } catch(e) {
+      localStorage.removeItem('pw_estab');
+    }
   }
-  goTo('s-landing');
+
+  // Se tinha uma tela salva (ex: dashboard) e tem sessao, vai direto
+  const telaSalva = localStorage.getItem('pw_tela_atual');
+  if (telaSalva === 's-dash' && window._estab) {
+    goTo('s-dash');
+    initDashboard();
+  } else {
+    goTo('s-landing');
+  }
 });
