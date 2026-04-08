@@ -92,12 +92,19 @@ function preencherConfig(estab) {
   if (estab.capa_url) {
     const img  = document.getElementById('capa-preview-img');
     const wrap = document.getElementById('capa-preview-img-wrap');
-    if (img)  img.src = estab.capa_url;
+    if (img)  { img.src = estab.capa_url; img.style.objectPosition = estab.capa_pos||'center center'; }
     if (wrap) wrap.style.display = 'block';
     window._capaUrl = estab.capa_url;
+    window._capaPos = estab.capa_pos || 'center center';
+    // Atualiza sliders se existirem
+    const slX = document.getElementById('capa-pos-x');
+    const slY = document.getElementById('capa-pos-y');
+    if (slX) slX.value = 50;
+    if (slY) slY.value = 50;
   } else {
     const prev = document.getElementById('capa-preview');
     if (prev) prev.style.background = estab.cor_primaria || '#C0392B';
+    window._capaUrl = null;
   }
 }
 
@@ -880,7 +887,7 @@ export async function salvarConfig(){
       nome,slug,whatsapp:whats,descricao:desc,endereco,
       tempo_entrega:tempo,aberto,faz_entrega,faz_retirada,
       cor_primaria:corAtiva,logo_url,
-      capa_url:capaUrl, capa_tipo:capaTipo,
+      capa_url:capaUrl, capa_tipo:capaTipo, capa_pos: window._capaPos||estab.capa_pos||'center center',
     }).eq('id',estab.id);
     if(error)throw new Error(error.message);
     const novoEstab={...estab,nome,slug,whatsapp:whats,descricao:desc,endereco,tempo_entrega:tempo,aberto,faz_entrega,faz_retirada,cor_primaria:corAtiva,logo_url};
@@ -918,6 +925,18 @@ window.renderPedidos     = renderPedidos;
 
 // ── CAPA DO CARDÁPIO ──────────────────────────────────────────────────────────
 window._capaUrl = undefined;
+
+window._capaPos = 'center center';
+
+window.ajustarPosicaoCapa = function() {
+  const x = document.getElementById('capa-pos-x')?.value || 50;
+  const y = document.getElementById('capa-pos-y')?.value || 50;
+  const pos = x + '% ' + y + '%';
+  window._capaPos = pos;
+  const img = document.getElementById('capa-preview-img');
+  if (img) img.style.objectPosition = pos;
+};
+
 
 window.alternarTipoCapa = function(tipo) {
   const imgInput = document.getElementById('capa-imagem-input');
