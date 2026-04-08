@@ -163,20 +163,49 @@ function atualizarBadgePedidos() {
 }
 
 window.aceitarPedido = async function(id) {
-  await getSupa().from('pedidos').update({ status:'preparo' }).eq('id', id);
-  document.getElementById(`pnc-${id}`)?.remove();
-  atualizarBadgePedidos();
-  showToast('Pedido aceito! Cliente foi notificado.');
-  renderPedidos();
+  const btn = document.querySelector(`#pnc-${id} .btn-aceitar`);
+  if (btn) { btn.disabled=true; btn.textContent='Aceitando...'; }
+  const { error } = await getSupa().from('pedidos').update({ status:'preparo' }).eq('id', id);
+  if (error) { showToast('Erro ao aceitar pedido.','error'); if(btn){btn.disabled=false;btn.textContent='Aceitar';} return; }
+  // Remove da area de novos
+  const card = document.getElementById(`pnc-${id}`);
+  if (card) {
+    card.style.transition = 'opacity 0.3s, transform 0.3s';
+    card.style.opacity = '0';
+    card.style.transform = 'scale(0.8)';
+    setTimeout(() => {
+      card.remove();
+      atualizarBadgePedidos();
+      // Se nao tem mais novos, mostra placeholder
+      const lista = document.getElementById('pedidos-novos-lista');
+      if (lista && !lista.querySelector('.pedido-novo-card')) {
+        lista.innerHTML = '<div style="color:#bbb;font-size:0.82rem;margin:auto">Nenhum pedido novo no momento</div>';
+      }
+    }, 300);
+  }
+  showToast('Pedido aceito! Cliente sera notificado.');
+  await renderPedidos();
 };
 
 window.recusarPedido = async function(id) {
   if (!confirm('Recusar este pedido?')) return;
-  await getSupa().from('pedidos').update({ status:'recusado' }).eq('id', id);
-  document.getElementById(`pnc-${id}`)?.remove();
-  atualizarBadgePedidos();
+  const { error } = await getSupa().from('pedidos').update({ status:'recusado' }).eq('id', id);
+  if (error) return showToast('Erro ao recusar pedido.','error');
+  const card = document.getElementById(`pnc-${id}`);
+  if (card) {
+    card.style.transition = 'opacity 0.3s';
+    card.style.opacity = '0';
+    setTimeout(() => {
+      card.remove();
+      atualizarBadgePedidos();
+      const lista = document.getElementById('pedidos-novos-lista');
+      if (lista && !lista.querySelector('.pedido-novo-card')) {
+        lista.innerHTML = '<div style="color:#bbb;font-size:0.82rem;margin:auto">Nenhum pedido novo no momento</div>';
+      }
+    }, 300);
+  }
   showToast('Pedido recusado.');
-  renderPedidos();
+  await renderPedidos();
 };
 
 window.verPedido = async function(id) {
@@ -212,10 +241,11 @@ window.verPedido = async function(id) {
 window.fecharModalPedido = () => document.getElementById('modal-pedido')?.classList.remove('open');
 
 window.marcarPronto = async function(id) {
-  await getSupa().from('pedidos').update({ status:'pronto' }).eq('id', id);
+  const { error } = await getSupa().from('pedidos').update({ status:'pronto' }).eq('id', id);
+  if (error) return showToast('Erro ao atualizar pedido.','error');
   fecharModalPedido();
-  showToast('Pedido marcado como pronto!');
-  renderPedidos();
+  showToast('Pedido marcado como pronto! Cliente sera notificado.');
+  await renderPedidos();
 };
 
 window.imprimirPedido = async function(id) {
