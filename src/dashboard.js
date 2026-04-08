@@ -69,7 +69,7 @@ function preencherConfig(estab) {
   const f = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
   f('cfg-nome', estab.nome);
   f('cfg-slug', estab.slug);
-  f('cfg-wháts', estab.whátsapp || '');
+  f('cfg-whats', estab.whatsapp || '');
   f('cfg-desc', estab.descricao || '');
   f('cfg-endereco', estab.endereco || '');
   // Tempo de entrega — select
@@ -254,7 +254,7 @@ window.verPedido = async function(id) {
         <span class="pedido-status status-${p.status||'novo'}">${{novo:'NOVO',preparo:'PREPARO',pronto:'PRONTO',recusado:'RECUSADO'}[p.status]||'NOVO'}</span>
       </div>
       <div><b>Cliente:</b> ${p.cliente_nome || '-'}</div>
-      <div><b>WhátsApp:</b> ${p.cliente_wháts || '-'}</div>
+      <div><b>WhatsApp:</b> ${p.cliente_whats || '-'}</div>
       <div><b>Tipo:</b> ${p.endereco || 'Retirada'}</div>
       ${p.observacao ? `<div><b>Obs:</b> ${p.observacao}</div>` : ''}
       <hr style="border:none;border-top:1px solid var(--border)">
@@ -262,7 +262,7 @@ window.verPedido = async function(id) {
       <hr style="border:none;border-top:1px solid var(--border)">
       <div style="display:flex;justify-content:space-between;font-weight:800"><span>Total</span><span>R$ ${total.toFixed(2).replace('.',',')}</span></div>
       <div style="display:flex;gap:8px;margin-top:8px">
-        ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}');fechárModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}');fechárModalPedido()">Recusar</button>`:''}
+        ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}');fecharModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}');fecharModalPedido()">Recusar</button>`:''}
         ${p.status==='preparo'?`<button class="btn-ped-aceitar" onclick="marcarPronto('${p.id}')">Marcar como pronto</button>`:''}
         <button class="btn-ped-imprimir" onclick="imprimirPedido('${p.id}')">🖨️ Imprimir</button>
       </div>
@@ -270,12 +270,12 @@ window.verPedido = async function(id) {
   document.getElementById('modal-pedido').classList.add('open');
 };
 
-window.fechárModalPedido = () => document.getElementById('modal-pedido')?.classList.remove('open');
+window.fecharModalPedido = () => document.getElementById('modal-pedido')?.classList.remove('open');
 
 window.marcarPronto = async function(id) {
   const { error } = await getSupa().from('pedidos').update({ status:'pronto' }).eq('id', id);
   if (error) return showToast('Erro ao atualizar pedido.','error');
-  fechárModalPedido();
+  fecharModalPedido();
   showToast('Pedido marcado como pronto! Cliente será notificado.');
   await renderPedidos();
 };
@@ -296,7 +296,7 @@ window.imprimirPedido = async function(id) {
       </div>
       <div class="notinhá-linhá"><span>Pedido</span><strong>#${p.id.slice(-4).toUpperCase()}</strong></div>
       <div class="notinhá-linhá"><span>Cliente</span><span>${p.cliente_nome || '-'}</span></div>
-      <div class="notinhá-linhá"><span>WhátsApp</span><span>${p.cliente_wháts || '-'}</span></div>
+      <div class="notinhá-linhá"><span>WhatsApp</span><span>${p.cliente_whats || '-'}</span></div>
       <div class="notinhá-linhá"><span>Entrega</span><span>${p.endereco || 'Retirada'}</span></div>
       ${p.observacao ? `<div class="notinhá-linhá"><span>Obs</span><span>${p.observacao}</span></div>` : ''}
       <hr class="notinhá-divider">
@@ -491,8 +491,8 @@ export function abrirModalItem() {
   fotosFiles=[]; renderFotosGrid();
   emojiSel='🍔'; renderEmojiGrid();
 }
-export function fechárModal() { document.getElementById('modal-item').classList.remove('open'); }
-export function fechárModalFora(e) { if(e.target.id==='modal-item')fechárModal(); }
+export function fecharModal() { document.getElementById('modal-item').classList.remove('open'); }
+export function fecharModalFora(e) { if(e.target.id==='modal-item')fecharModal(); }
 export function selecionarEmoji(emoji,btn) {
   emojiSel=emoji;
   document.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected'));
@@ -550,7 +550,7 @@ export async function salvarItem() {
       foto_url,emoji:emojiSel,disponivel:true,promocao,
     });
     if(error) throw new Error(error.message);
-    await renderCardapio();fechárModal();showToast('Item adicionado!');
+    await renderCardapio();fecharModal();showToast('Item adicionado!');
   } catch(e){showToast(e.message,'error');}
   finally{if(btn){btn.disabled=false;btn.textContent='Salvar item';}}
 }
@@ -744,7 +744,7 @@ window.aplicarCrop=function(){
   if(img) img.style.transform=`scale(${cropZoom/100}) translate(${cropOffsetX}px,${cropOffsetY}px)`;
 };
 
-window.fechárCrop=function(){ document.getElementById('crop-overlay')?.classList.remove('open'); logoFile=null; };
+window.fecharCrop=function(){ document.getElementById('crop-overlay')?.classList.remove('open'); logoFile=null; };
 
 window.confirmarCrop=function(){
   const img=document.getElementById('logo-preview-img');
@@ -764,7 +764,7 @@ export async function salvarConfig(){
   const estab=getEstab();if(!estab)return;
   const nome=document.getElementById('cfg-nome')?.value.trim();
   const slug=document.getElementById('cfg-slug')?.value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');
-  const wháts=document.getElementById('cfg-wháts')?.value.trim();
+  const whats=document.getElementById('cfg-whats')?.value.trim();
   const desc=document.getElementById('cfg-desc')?.value.trim();
   const endereco=document.getElementById('cfg-endereco')?.value.trim();
   const tempo=document.getElementById('cfg-tempo')?.value.trim();
@@ -793,12 +793,12 @@ export async function salvarConfig(){
       logoFile=null;
     }
     const{error}=await getSupa().from('estabelecimentos').update({
-      nome,slug,whátsapp:wháts,descricao:desc,endereco,
+      nome,slug,whatsapp:whats,descricao:desc,endereco,
       tempo_entrega:tempo,aberto,faz_entrega,faz_retirada,
       cor_primaria:corAtiva,logo_url,
     }).eq('id',estab.id);
     if(error)throw new Error(error.message);
-    const novoEstab={...estab,nome,slug,whátsapp:wháts,descricao:desc,endereco,tempo_entrega:tempo,aberto,faz_entrega,faz_retirada,cor_primaria:corAtiva,logo_url};
+    const novoEstab={...estab,nome,slug,whatsapp:whats,descricao:desc,endereco,tempo_entrega:tempo,aberto,faz_entrega,faz_retirada,cor_primaria:corAtiva,logo_url};
     window._estab=novoEstab;localStorage.setItem('pw_estab',JSON.stringify(novoEstab));
     document.getElementById('dash-store-name').textContent=nome;
     document.getElementById('link-url').textContent=`${BASE}/${slug}`;
@@ -811,8 +811,11 @@ export async function salvarConfig(){
 
 // ── GLOBAIS ───────────────────────────────────────────────
 window.abrirModalItem    = abrirModalItem;
-window.fechárModal       = fechárModal;
-window.fechárModalFora   = fechárModalFora;
+window.fecharModal       = fecharModal;
+window.fecharModalFora   = fecharModalFora;
+window.fecharModalPedido = fecharModalPedido;
+window.fecharModal       = fecharModal;
+window.fecharModalFora   = fecharModalFora;
 window.previewFotos      = previewFotos;
 window.previewFoto       = previewFoto;
 window.selecionarEmoji   = selecionarEmoji;
@@ -825,7 +828,3 @@ window.salvarConfig      = salvarConfig;
 window.initDashboard     = initDashboard;
 window.previewLogo       = previewLogo;
 window.renderPedidos     = renderPedidos;
-
-window.fecharModal = fecharModal;
-window.fecharModalFora = fecharModalFora;
-window.fecharModalPedido = fecharModalPedido;
