@@ -797,31 +797,16 @@
         const peds=JSON.parse(localStorage.getItem('pw_peds_'+slug)||'[]');
         peds.unshift({id:pedidoId, itens, total, status:'novo', endereco:enderecoEntrega, cliente_whats:whatsLimpo});
         localStorage.setItem('pw_peds_'+slug, JSON.stringify(peds.slice(0,20)));
-        // Garante polling ativo
-        if (!pollingId) {
-          pollingWhats = whatsLimpo;
-          pollingId = setInterval(rodarPolling, 5000);
-        }
+        // Atualiza whats para polling
+        pollingWhats = whatsLimpo;
         carrinho=[];atualizarFab();fecharCarrinho();
-        // Inicia polling usando whatsapp
-        // Inicia polling de pedidos
-        pollingEstabId = estab ? estab.id : null;
-        // Tenta recuperar whats do último pedido salvo
-        var pedsLocal = JSON.parse(localStorage.getItem('pw_peds_' + slug) || '[]');
-        if (pedsLocal.length && pedsLocal[0].cliente_whats) {
-          pollingWhats = pedsLocal[0].cliente_whats;
-        } else {
-          pollingWhats = '';
-        }
-        // Inicia polling imediatamente se tiver whats
-        if (pollingWhats && pollingEstabId) {
-          setInterval(rodarPolling, 5000);
-        }
         iniciarJogo();
         carregarMeusPedidos();
       }catch(e){ console.error('Erro pedido:',e); alert('Erro ao enviar pedido: '+(e?.message||e?.details||JSON.stringify(e)||'Tente novamente.')); }
       finally{btn.disabled=false;btn.textContent='Mandar o pedido! 🚀';}
     };
+
+    var _statusAnterior = {}; // id -> status (rastreia mudanças)
 
     async function sincronizarPedidosCliente(){
       if(!pollingWhats||!pollingEstabId) return;
@@ -980,7 +965,8 @@
         if (est.capa_tipo === 'imagem' && est.capa_url) {
           var pos = est.capa_pos || 'center center';
           hdr.style.cssText = hdr.style.cssText; // preserva outros estilos
-          hdr.style.setProperty('background-image',    'url(' + est.capa_url + ')', 'important');
+          var capaUrlFinal = est.capa_url + (est.capa_url.includes('?') ? '&' : '?') + 'v=' + (est.updated_at||Date.now()).toString().slice(-6);
+          hdr.style.setProperty('background-image', 'url(' + capaUrlFinal + ')', 'important');
           hdr.style.setProperty('background-size',     'cover',                    'important');
           hdr.style.setProperty('background-position', pos,                        'important');
           hdr.style.setProperty('background-repeat',   'no-repeat',                'important');
@@ -1074,7 +1060,7 @@
       pollingEstabId = estab ? estab.id : null;
       if (!pollingWhats || !pollingEstabId) return;
       clearInterval(pollingId);
-      pollingId = setInterval(rodarPolling, 5000);
+      pollingId = setInterval(rodarPolling, 4000);
     }
 
     async function rodarPolling() {
