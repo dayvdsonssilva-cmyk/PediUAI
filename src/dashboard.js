@@ -631,9 +631,23 @@ export async function postarFresquinho(event) {
   const estab = getEstab(); const file = event.target.files[0];
   if (!file || !estab) return;
   if (file.size > 50 * 1024 * 1024) return showToast('Máx. 50MB','error');
-  showToast('Enviando...');
+
   const tipo = file.type.startsWith('video') ? 'video' : 'foto';
-  const url  = await uploadFile('fotos', `${estab.id}/fresh_${Date.now()}.${file.name.split('.').pop()}`, file);
+
+  // Valida duração do vídeo (máx 30s)
+  if (tipo === 'video') {
+    const durOk = await new Promise(resolve => {
+      const v = document.createElement('video');
+      v.preload = 'metadata';
+      v.onloadedmetadata = () => resolve(v.duration <= 30);
+      v.onerror = () => resolve(true); // se não conseguir checar, deixa passar
+      v.src = URL.createObjectURL(file);
+    });
+    if (!durOk) return showToast('Vídeo deve ter no máximo 30 segundos.', 'error');
+  }
+
+  showToast('Enviando...');
+  const url = await uploadFile('fotos', `${estab.id}/fresh_${Date.now()}.${file.name.split('.').pop()}`, file);
   await getSupa().from('fresquinhos').insert({
     estabelecimento_id: estab.id, url, tipo,
     expires_at: new Date(Date.now() + 4*60*60*1000).toISOString(),
