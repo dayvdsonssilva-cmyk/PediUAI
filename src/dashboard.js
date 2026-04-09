@@ -885,7 +885,14 @@ export async function salvarConfig(){
   const aberto=document.getElementById('cfg-aberto')?.checked;
   const faz_entrega=document.getElementById('cfg-entrega')?.checked;
   const faz_retirada=document.getElementById('cfg-retirada')?.checked;
-  const corAtiva=document.querySelector('.cor-opcao.ativa')?.dataset.hex||estab.cor_primaria||'#C0392B';
+  // Pega a cor sempre como hex
+  var _elAtiva = document.querySelector('.cor-opcao.ativa');
+  var corAtiva = (_elAtiva ? _elAtiva.getAttribute('data-hex') : null) || estab.cor_primaria || '#C0392B';
+  // Garante hex
+  if (corAtiva.startsWith('rgb')) {
+    var _m = corAtiva.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (_m) corAtiva = '#' + [_m[1],_m[2],_m[3]].map(function(n){return (+n).toString(16).padStart(2,'0');}).join('');
+  }
 
   if(!nome||!slug)return showToast('Preenchá nome e link.','error');
 
