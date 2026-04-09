@@ -413,36 +413,87 @@ export function previewFoto(e) { previewFotos(e); }
 
 function renderFotosGrid() {
   const grid = $('fotos-grid'); if (!grid) return;
-  let html = fotosFiles.map((f, i) => `
-    <div class="foto-thumb-item" style="position:relative;cursor:grab" id="foto-drag-${i}">
-      <div style="width:80px;height:80px;border-radius:10px;overflow:hidden;border:2px solid var(--border)">
-        <img src="${URL.createObjectURL(f)}"
-             style="width:100%;height:100%;object-fit:cover;object-position:${fotosPosX[i]}% ${fotosPosY[i]}%"
-             id="foto-img-${i}" draggable="false">
+  let html = fotosFiles.map((f, i) => {
+    const url = URL.createObjectURL(f);
+    const px  = fotosPosX[i], py = fotosPosY[i];
+    return `
+    <div class="foto-thumb-wrap" id="foto-wrap-${i}">
+      <!-- Preview grande com drag -->
+      <div style="position:relative;width:100%;height:160px;border-radius:12px;overflow:hidden;background:#f0ebe4;cursor:grab;border:2px solid var(--border);margin-bottom:6px"
+           id="foto-drag-${i}"
+           onmousedown="iniciarDragFoto(event,${i})"
+           ontouchstart="iniciarDragFoto(event,${i})">
+        <img src="${url}" id="foto-img-${i}" draggable="false"
+             style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:${px}% ${py}%;pointer-events:none">
+        ${i===0?`<div style="position:absolute;top:6px;left:6px;background:var(--red);color:#fff;font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:50px">PRINCIPAL</div>`:''}
+        <!-- Minimap -->
+        <div style="position:absolute;bottom:8px;right:8px;width:44px;height:44px;border-radius:8px;background:rgba(0,0,0,0.55);overflow:hidden;border:1.5px solid rgba(255,255,255,0.3)">
+          <img src="${url}" style="width:100%;height:100%;object-fit:cover;opacity:0.7">
+          <div id="foto-pin-${i}" style="position:absolute;width:8px;height:8px;background:#fff;border-radius:50%;border:1.5px solid var(--red);transform:translate(-50%,-50%);left:${px}%;top:${py}%;transition:left 0.1s,top 0.1s"></div>
+        </div>
+        <!-- Instrução -->
+        <div style="position:absolute;bottom:8px;left:8px;font-size:0.58rem;color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.45);padding:2px 7px;border-radius:50px">✋ Arraste para enquadrar</div>
       </div>
-      ${i === 0 ? `<div style="position:absolute;top:2px;left:2px;background:var(--red);color:#fff;font-size:0.5rem;font-weight:700;padding:2px 5px;border-radius:4px">PRINCIPAL</div>` : ''}
-      <button onclick="removerFotoItem(${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.65);border:none;color:#fff;width:18px;height:18px;border-radius:50%;font-size:0.6rem;cursor:pointer">✕</button>
-      <div style="display:flex;justify-content:center;gap:4px;margin-top:3px">
-        <input type="range" min="0" max="100" value="${fotosPosX[i]}" style="width:36px;accent-color:var(--red)"
-               title="Horizontal" oninput="ajustarFoto(${i},'x',this.value)">
-        <input type="range" min="0" max="100" value="${fotosPosY[i]}" style="width:36px;accent-color:var(--red)"
-               title="Vertical" oninput="ajustarFoto(${i},'y',this.value)">
+      <div style="display:flex;justify-content:flex-end">
+        <button onclick="removerFotoItem(${i})" style="background:none;border:1px solid #ddd;color:#aaa;padding:4px 12px;border-radius:8px;font-size:0.72rem;font-weight:600;cursor:pointer">🗑 Remover</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   if (fotosFiles.length < 5) html += `
     <div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
       <span style="font-size:1.5rem">📷</span>
-      <span style="font-size:0.72rem;color:#aaa">Adicionar</span>
+      <span style="font-size:0.72rem;color:#aaa">Adicionar foto</span>
     </div>`;
   grid.innerHTML = html;
+  // Reinicia drag nos novos elementos
+  fotosFiles.forEach((_, i) => iniciarDragFoto(null, i, true));
 }
 
-window.ajustarFoto = function(i, axis, val) {
-  if (axis === 'x') fotosPosX[i] = +val;
-  if (axis === 'y') fotosPosY[i] = +val;
+let _fotoDrag = { ativo:false, idx:-1, startX:0, startY:0 };
+
+function iniciarDragFoto(event, i, apenasSetup) {
+  const area = $(`foto-drag-${i}`); if (!area) return;
+  if (apenasSetup) {
+    // Apenas configura eventos
+    area.onmousedown  = e => _startDragFoto(e, i);
+    area.ontouchstart = e => _startDragFoto(e, i);
+    return;
+  }
+  _startDragFoto(event, i);
+}
+
+function _startDragFoto(e, i) {
+  _fotoDrag.ativo = true; _fotoDrag.idx = i;
+  const t = e.touches ? e.touches[0] : e;
+  _fotoDrag.startX = t.clientX; _fotoDrag.startY = t.clientY;
+  e.preventDefault();
+}
+
+document.addEventListener('mousemove', _moveDragFoto);
+document.addEventListener('touchmove', _moveDragFoto, { passive:false });
+document.addEventListener('mouseup',   () => _fotoDrag.ativo = false);
+document.addEventListener('touchend',  () => _fotoDrag.ativo = false);
+
+function _moveDragFoto(e) {
+  if (!_fotoDrag.ativo) return;
+  const i = _fotoDrag.idx;
+  const t = e.touches ? e.touches[0] : e;
+  const area = $(`foto-drag-${i}`); if (!area) return;
+  const dx = (t.clientX - _fotoDrag.startX) / area.offsetWidth  * 100;
+  const dy = (t.clientY - _fotoDrag.startY) / area.offsetHeight * 100;
+  _fotoDrag.startX = t.clientX; _fotoDrag.startY = t.clientY;
+  fotosPosX[i] = Math.max(0, Math.min(100, fotosPosX[i] - dx * 0.5));
+  fotosPosY[i] = Math.max(0, Math.min(100, fotosPosY[i] - dy * 0.5));
   const img = $(`foto-img-${i}`);
   if (img) img.style.objectPosition = `${fotosPosX[i]}% ${fotosPosY[i]}%`;
+  const pin = $(`foto-pin-${i}`);
+  if (pin) { pin.style.left = fotosPosX[i] + '%'; pin.style.top = fotosPosY[i] + '%'; }
+  e.preventDefault();
+}
+window.removerFotoExistente = function(btn) {
+  btn.closest('.foto-thumb-item').remove();
 };
+
 window.removerFotoItem = function(i) { fotosFiles.splice(i,1); fotosPosX.splice(i,1); fotosPosY.splice(i,1); renderFotosGrid(); };
 
 export async function salvarItem() {
@@ -456,11 +507,14 @@ export async function salvarItem() {
   if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
 
   try {
-    let foto_url = null;
-    if (fotosFiles.length > 0) {
-      const file = fotosFiles[0];
-      foto_url = await uploadFile('fotos', `${estab.id}/${Date.now()}.${file.name.split('.').pop()}`, file);
+    // Upload de todas as fotos
+    const fotos_urls = [];
+    for (let fi = 0; fi < fotosFiles.length; fi++) {
+      const file = fotosFiles[fi];
+      const url  = await uploadFile('fotos', `${estab.id}/${Date.now()}_${fi}.${file.name.split('.').pop()}`, file);
+      fotos_urls.push(url);
     }
+    const foto_url = fotos_urls[0] || null;
     const promocao   = $('item-promocao')?.checked || false;
     const preco_orig = parseFloat($('item-preco-orig')?.value) || null;
     const { error } = await getSupa().from('produtos').insert({
@@ -468,7 +522,7 @@ export async function salvarItem() {
       descricao:    $('item-desc')?.value.trim(),
       categoria:    $('item-cat')?.value.trim().toUpperCase(),
       preco, preco_original: promocao ? preco_orig : null,
-      foto_url, emoji: emojiSel, disponivel: true, promocao,
+      foto_url, fotos_urls, emoji: emojiSel, disponivel: true, promocao,
     });
     if (error) throw new Error(error.message);
     await renderCardapio(); fecharModal(); showToast('Item adicionado! ✅');
@@ -489,16 +543,21 @@ export async function editarItem(id) {
     set('item-preco-orig', p.preco_original||'');
     const pr = $('item-promocao'); if (pr) { pr.checked = !!p.promocao; const g=$('preco-orig-group'); if(g) g.style.display=p.promocao?'flex':'none'; }
     emojiSel = p.emoji || '🍔'; renderEmojiGrid();
-    // Foto atual
-    if (p.foto_url) {
+    // Fotos existentes no modal
+    const fotosExist = (p.fotos_urls && p.fotos_urls.length) ? p.fotos_urls : (p.foto_url ? [p.foto_url] : []);
+    if (fotosExist.length) {
       const grid = $('fotos-grid');
-      if (grid) grid.insertAdjacentHTML('afterbegin', `
-        <div class="foto-thumb-item" style="position:relative">
-          <div style="width:80px;height:80px;border-radius:10px;overflow:hidden;border:2px solid var(--red)">
-            <img src="${p.foto_url}" style="width:100%;height:100%;object-fit:cover">
-          </div>
-          <div style="position:absolute;top:2px;left:2px;background:var(--red);color:#fff;font-size:0.5rem;font-weight:700;padding:2px 5px;border-radius:4px">ATUAL</div>
-        </div>`);
+      if (grid) {
+        const html = fotosExist.map((url, idx) => `
+          <div class="foto-thumb-item" style="position:relative" data-exist-url="${url}">
+            <div style="width:80px;height:80px;border-radius:10px;overflow:hidden;border:2px solid var(--red)">
+              <img src="${url}" style="width:100%;height:100%;object-fit:cover">
+            </div>
+            ${idx===0?`<div style="position:absolute;top:2px;left:2px;background:var(--red);color:#fff;font-size:0.5rem;font-weight:700;padding:2px 5px;border-radius:4px">PRINCIPAL</div>`:''}
+            <button onclick="removerFotoExistente(this)" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.65);border:none;color:#fff;width:18px;height:18px;border-radius:50%;font-size:0.6rem;cursor:pointer">✕</button>
+          </div>`).join('');
+        grid.insertAdjacentHTML('afterbegin', html);
+      }
     }
     // Botão salvar
     const btn = document.querySelector('#modal-item .btn-primary');
@@ -507,11 +566,17 @@ export async function editarItem(id) {
       btn.onclick = async () => {
         btn.disabled = true; btn.textContent = 'Salvando...';
         try {
-          let foto_url = p.foto_url || null;
-          if (fotosFiles.length > 0) {
-            const file = fotosFiles[0];
-            foto_url = await uploadFile('fotos', `${estab.id}/${Date.now()}.${file.name.split('.').pop()}`, file);
+          // Upload novas fotos
+          const novas_urls = [];
+          for (let fi = 0; fi < fotosFiles.length; fi++) {
+            const file = fotosFiles[fi];
+            const url  = await uploadFile('fotos', `${estab.id}/${Date.now()}_${fi}.${file.name.split('.').pop()}`, file);
+            novas_urls.push(url);
           }
+          // Mantém fotos existentes + adiciona novas
+          const fotos_existentes = (p.fotos_urls && p.fotos_urls.length) ? p.fotos_urls : (p.foto_url ? [p.foto_url] : []);
+          const fotos_urls = [...fotos_existentes, ...novas_urls].slice(0, 5);
+          const foto_url   = fotos_urls[0] || null;
           const promocao   = $('item-promocao')?.checked || false;
           const preco_orig = parseFloat($('item-preco-orig')?.value) || null;
           const { error } = await getSupa().from('produtos').update({
@@ -520,7 +585,7 @@ export async function editarItem(id) {
             categoria:    $('item-cat')?.value.trim().toUpperCase(),
             preco:        parseFloat($('item-preco')?.value),
             preco_original: promocao ? preco_orig : null,
-            foto_url, emoji: emojiSel, promocao,
+            foto_url, fotos_urls, emoji: emojiSel, promocao,
           }).eq('id', id);
           if (error) throw new Error(error.message);
           await renderCardapio(); fecharModal(); showToast('Item atualizado!');
