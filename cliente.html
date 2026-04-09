@@ -1210,6 +1210,20 @@
     };
 
     init();
+
+    // ── RETOMA POLLING AO VOLTAR AO TAB ──────────────────
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        // Usuário voltou ao tab — roda polling imediatamente
+        rodarPolling();
+        // Recarrega dados do estab
+        if (estab && estab.slug) {
+          supa.from('estabelecimentos').select('*').eq('slug', slug).maybeSingle()
+            .then(function(res) { if (res.data) aplicarDadosEstab(res.data); });
+        }
+      }
+    });
+
   </script>
 </body>
 </html>
