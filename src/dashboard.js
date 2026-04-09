@@ -887,4 +887,3 @@ window.deletarItem       = deletarItem;
 window.postarFresquinho  = postarFresquinho;
 window.removerFresquinho = removerFresquinho;
 window.renderPedidos     = renderPedidos;
-export { initDashboard };
