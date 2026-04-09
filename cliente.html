@@ -168,15 +168,46 @@
     .ped-empty { text-align: center; padding: 60px 20px; color: var(--muted); }
     .ped-empty span { font-size: 2.5rem; display: block; margin-bottom: 10px; }
 
+    /* ── NOTINHA DO PEDIDO ── */
+    #modal-notinha-bg { position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s; }
+    #modal-notinha-bg.open { opacity:1;pointer-events:all; }
+    #modal-notinha-sheet { background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideUp 0.25s ease;padding:24px 20px 36px; }
+    .notinha-logo { font-size:1rem;font-weight:800;letter-spacing:0.05em;text-align:center;margin-bottom:2px; }
+    .notinha-logo span { color:var(--red); }
+    .notinha-loja { font-size:0.72rem;color:var(--muted);text-align:center;margin-bottom:16px; }
+    .notinha-divider { border:none;border-top:1px dashed #ddd;margin:12px 0; }
+    .notinha-row { display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;padding:3px 0; }
+    .notinha-row.bold { font-weight:800;font-size:0.95rem; }
+    .notinha-item-row { display:flex;justify-content:space-between;font-size:0.82rem;padding:4px 0; }
+    .notinha-item-qtd { color:var(--red);font-weight:700;min-width:28px; }
+    .notinha-total-row { display:flex;justify-content:space-between;font-size:1.05rem;font-weight:800;padding:8px 0; }
+    .notinha-total-row span:last-child { color:var(--red); }
+    .notinha-status { text-align:center;margin:14px 0 4px;font-size:0.82rem;font-weight:700;padding:8px 16px;border-radius:50px;display:inline-block; }
+    .notinha-footer { text-align:center;font-size:0.65rem;color:#ccc;margin-top:16px; }
+    .notinha-close { width:100%;padding:13px;background:var(--red);color:#fff;border:none;border-radius:14px;font-family:'Poppins',sans-serif;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:16px; }
+
     /* ── NOTIF TOAST ── */
     .notif-toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; padding: 12px 22px; border-radius: 50px; font-size: 0.85rem; font-weight: 700; z-index: 9000; box-shadow: 0 8px 24px rgba(0,0,0,0.25); animation: toastIn 0.3s ease; pointer-events: none; white-space: nowrap; }
     @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 
-    /* ── STORY FULLSCREEN ── */
-    #story-full { position: fixed; inset: 0; background: #000; z-index: 999; display: none; align-items: center; justify-content: center; }
-    #story-full.open { display: flex; }
-    #story-full img, #story-full video { max-width: 100%; max-height: 100%; object-fit: contain; }
-    .story-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.15); border: none; color: #fff; width: 38px; height: 38px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; }
+    /* ── STORY VIEWER ESTILO INSTAGRAM ── */
+    #story-viewer { position:fixed;inset:0;background:#000;z-index:999;display:none;flex-direction:column; }
+    #story-viewer.open { display:flex; }
+    /* Barras de progresso */
+    #story-bars { display:flex;gap:3px;padding:10px 12px 6px;position:absolute;top:0;left:0;right:0;z-index:2; }
+    .story-bar-bg { flex:1;height:2.5px;background:rgba(255,255,255,0.35);border-radius:2px;overflow:hidden; }
+    .story-bar-fill { height:100%;background:#fff;border-radius:2px;width:0%;transition:width linear; }
+    /* Header */
+    #story-header { position:absolute;top:28px;left:0;right:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:0 14px; }
+    #story-loja-nome { color:#fff;font-size:0.82rem;font-weight:700; }
+    .story-close-btn { background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;line-height:1; }
+    /* Mídia */
+    #story-media { position:absolute;inset:0;display:flex;align-items:center;justify-content:center; }
+    #story-media img { width:100%;height:100%;object-fit:contain; }
+    #story-media video { width:100%;height:100%;object-fit:contain; }
+    /* Áreas de toque */
+    .story-touch-left  { position:absolute;left:0;top:0;width:35%;height:100%;z-index:3;cursor:pointer; }
+    .story-touch-right { position:absolute;right:0;top:0;width:35%;height:100%;z-index:3;cursor:pointer; }
 
     /* ── LOJA FECHADA ── */
     #banner-fechada { display: none; background: rgba(0,0,0,0.8); color: #fff; text-align: center; padding: 16px; font-size: 0.9rem; font-weight: 700; }
@@ -246,6 +277,23 @@
 </button>
 
 
+<!-- MODAL NOTINHA PEDIDO -->
+<div id="modal-notinha-bg" onclick="if(event.target===this)fecharNotinha()">
+  <div id="modal-notinha-sheet">
+    <div class="notinha-logo">PEDI<span>WAY</span></div>
+    <div class="notinha-loja" id="notinha-loja-nome"></div>
+    <hr class="notinha-divider">
+    <div id="notinha-conteudo"></div>
+    <button class="notinha-close" onclick="fecharNotinha()">Fechar</button>
+    <div class="notinha-footer">Feito com PEDIWAY ❤️</div>
+  </div>
+</div>
+
+<!-- MODAL IMAGEM FULL -->
+<div id="modal-img-full" onclick="this.classList.remove('open')" style="position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:400;display:none;align-items:center;justify-content:center;cursor:zoom-out;">
+  <img id="modal-img-full-src" style="max-width:96vw;max-height:96vh;object-fit:contain;border-radius:10px">
+</div>
+
 <!-- MODAL PRODUTO -->
 <div class="modal-bg" id="modal-prod" onclick="if(event.target===this)fecharModal()">
   <div class="modal-sheet" style="position:relative">
@@ -309,10 +357,16 @@
   </div>
 </div>
 
-<!-- STORY FULLSCREEN -->
-<div id="story-full">
-  <button class="story-close" onclick="fecharStory()">✕</button>
-  <div id="story-full-media"></div>
+<!-- STORY VIEWER INSTAGRAM -->
+<div id="story-viewer">
+  <div id="story-bars"></div>
+  <div id="story-header">
+    <div id="story-loja-nome"></div>
+    <button class="story-close-btn" onclick="fecharStory()">✕</button>
+  </div>
+  <div id="story-media"></div>
+  <div class="story-touch-left"  onclick="storyAnterior()"></div>
+  <div class="story-touch-right" onclick="storyProximo()"></div>
 </div>
 
 <script type="module">
@@ -486,17 +540,79 @@ async function carregarFresquinho() {
   }).join('');
 }
 
+// ── STORY VIEWER ESTILO INSTAGRAM ────────────────────────────────────────────
+let _stories      = [];  // [{url, tipo}]
+let _storyIdx     = 0;
+let _storyTimer   = null;
+const STORY_DUR   = 5000; // ms por story
+
 window.abrirStory = function(url, tipo) {
-  const m = $('story-full-media');
-  if (!m) return;
-  m.innerHTML = tipo === 'video'
-    ? `<video src="${url}" autoplay controls style="max-width:100vw;max-height:100vh"></video>`
-    : `<img src="${url}" style="max-width:100vw;max-height:100vh;object-fit:contain">`;
-  $('story-full').classList.add('open');
+  // Monta lista de todos os stories na ordem
+  const thumbs = document.querySelectorAll('.story-thumb');
+  _stories = Array.from(thumbs).map(t => ({
+    url:  t.dataset.url,
+    tipo: t.dataset.tipo || 'foto',
+  }));
+  // Acha o índice clicado
+  _storyIdx = _stories.findIndex(s => s.url === url);
+  if (_storyIdx < 0) _storyIdx = 0;
+  // Abre viewer
+  $('story-viewer').classList.add('open');
+  $('story-loja-nome').textContent = estab?.nome || '';
+  renderStory();
 };
+
+function renderStory() {
+  clearTimeout(_storyTimer);
+  const s   = _stories[_storyIdx];
+  if (!s) { fecharStory(); return; }
+
+  // Mídia
+  const media = $('story-media');
+  media.innerHTML = s.tipo === 'video'
+    ? `<video src="${s.url}" autoplay playsinline style="width:100%;height:100%;object-fit:contain"></video>`
+    : `<img src="${s.url}" style="width:100%;height:100%;object-fit:contain">`;
+
+  // Barras
+  const bars = $('story-bars');
+  bars.innerHTML = _stories.map((_, i) =>
+    `<div class="story-bar-bg"><div class="story-bar-fill" id="sbar-${i}"></div></div>`
+  ).join('');
+
+  // Preenche barras anteriores
+  for (let i = 0; i < _storyIdx; i++) {
+    const b = $(`sbar-${i}`); if (b) b.style.width = '100%';
+  }
+
+  // Anima barra atual
+  const barAtual = $(`sbar-${_storyIdx}`);
+  if (barAtual) {
+    barAtual.style.transition = 'none';
+    barAtual.style.width = '0%';
+    requestAnimationFrame(() => {
+      barAtual.style.transition = `width ${STORY_DUR}ms linear`;
+      barAtual.style.width = '100%';
+    });
+  }
+
+  // Avança automaticamente
+  _storyTimer = setTimeout(() => storyProximo(), STORY_DUR);
+}
+
+window.storyProximo = function() {
+  if (_storyIdx < _stories.length - 1) { _storyIdx++; renderStory(); }
+  else fecharStory();
+};
+
+window.storyAnterior = function() {
+  if (_storyIdx > 0) { _storyIdx--; renderStory(); }
+};
+
 window.fecharStory = function() {
-  $('story-full').classList.remove('open');
-  const v = $('story-full-media').querySelector('video'); if (v) v.pause();
+  clearTimeout(_storyTimer);
+  $('story-viewer').classList.remove('open');
+  const v = $('story-media')?.querySelector('video');
+  if (v) v.pause();
 };
 
 // ── PRODUTOS ──────────────────────────────────────────────────────────────────
@@ -575,7 +691,7 @@ window.abrirProduto = function(p) {
   prodAtual = p; qtdAtual = 1; $('modal-qtd').textContent = 1;
   const media = $('modal-prod-media');
   media.innerHTML = p.foto_url
-    ? `<img class="modal-img" src="${p.foto_url}" alt="${p.nome}">`
+    ? `<img class="modal-img" src="${p.foto_url}" alt="${p.nome}" style="cursor:zoom-in" onclick="abrirImagemFull('${p.foto_url}')">`
     : `<div class="modal-emoji">${p.emoji||'🍔'}</div>`;
   $('modal-cat').textContent  = p.categoria || '';
   $('modal-nome').textContent = p.nome;
@@ -584,6 +700,18 @@ window.abrirProduto = function(p) {
   $('modal-prod').classList.add('open');
 };
 window.fecharModal = function() { $('modal-prod').classList.remove('open'); prodAtual = null; };
+
+window.abrirImagemFull = function(url) {
+  const m = $('modal-img-full');
+  const i = $('modal-img-full-src');
+  if (!m || !i) return;
+  i.src = url;
+  m.style.display = 'flex';
+};
+document.addEventListener('click', e => {
+  const m = $('modal-img-full');
+  if (m && e.target === m) m.style.display = 'none';
+});
 window.mudaQtd = function(d) {
   qtdAtual = Math.max(1, qtdAtual + d);
   $('modal-qtd').textContent = qtdAtual;
@@ -749,9 +877,39 @@ function renderPedidosCliente() {
 }
 
 window.verDetalhesPedido = function(p) {
-  const itens = Array.isArray(p.itens) ? p.itens.map(i=>`${i.qtd}x ${i.nome} — ${fmt(i.preco*i.qtd)}`).join('\n') : '';
-  alert(`Pedido #${p.id?.slice(-4)||'----'}\n\n${itens}\n\nTotal: ${fmt(p.total)}\nEntrega: ${p.endereco||'Retirada'}`);
+  const statusMap = {
+    novo:     { cls:'s-novo',    lbl:'⏳ Aguardando confirmação' },
+    preparo:  { cls:'s-preparo', lbl:'🔥 Aceito — preparando'   },
+    pronto:   { cls:'s-pronto',  lbl: (p.endereco && p.endereco !== 'Retirada no local') ? '🛵 Saiu para entrega!' : '✅ Pronto para retirada!' },
+    recusado: { cls:'s-recusado',lbl:'❌ Não confirmado' },
+  };
+  const st    = statusMap[p.status] || statusMap.novo;
+  const itens = Array.isArray(p.itens) ? p.itens : [];
+  const pedId = p.id && !p.id.startsWith('local_') ? p.id.slice(-4).toUpperCase() : '----';
+
+  const el = $('notinha-conteudo'); if (!el) return;
+  const lojaEl = $('notinha-loja-nome');
+  if (lojaEl) lojaEl.textContent = estab?.nome || '';
+
+  el.innerHTML = `
+    <div class="notinha-row"><span>Pedido</span><strong>#${pedId}</strong></div>
+    <div class="notinha-row"><span>Entrega</span><span>${p.endereco || 'Retirada no local'}</span></div>
+    <div style="text-align:center;margin:10px 0">
+      <span class="ped-status-badge ${st.cls}" style="display:inline-block">${st.lbl}</span>
+    </div>
+    <hr class="notinha-divider">
+    ${itens.map(i => `
+      <div class="notinha-item-row">
+        <span><span class="notinha-item-qtd">${i.qtd}x</span> ${i.nome}</span>
+        <span>${fmt(i.preco * i.qtd)}</span>
+      </div>`).join('')}
+    <hr class="notinha-divider">
+    <div class="notinha-total-row"><span>Total</span><span>${fmt(p.total)}</span></div>`;
+
+  $('modal-notinha-bg').classList.add('open');
 };
+
+window.fecharNotinha = function() { $('modal-notinha-bg').classList.remove('open'); };
 
 // ── POLLING DE STATUS ─────────────────────────────────────────────────────────
 async function rodarPolling() {
