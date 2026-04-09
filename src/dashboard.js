@@ -331,10 +331,10 @@ async function renderCardapio() {
           ? `<img class="item-img" src="${p.foto_url}" alt="${p.nome}">`
           : `<div class="item-emoji-bg">${p.emoji || '🍔'}</div>`}
         <span class="item-disponivel">${p.disponivel ? 'Disponível' : 'Indisponível'}</span>
+        ${p.promocao ? `<span class="item-promo-badge">🔥 Promoção</span>` : ''}
 
       </div>
       <div class="item-body">
-        ${p.promocao ? `<span style="display:inline-block;background:#fff3f0;color:var(--red);font-size:0.6rem;font-weight:800;padding:2px 8px;border-radius:50px;border:1px solid rgba(192,57,43,0.2);margin-bottom:4px">🔥 PROMOÇÃO</span>` : ''}
         <div class="item-categoria">${p.categoria || 'SEM CATEGORIA'}</div>
         <div class="item-nome">${p.nome}</div>
         <div class="item-desc-text">${p.descricao || ''}</div>
@@ -405,12 +405,89 @@ export function selecionarEmoji(emoji, btn) {
 
 // ─── Fotos com drag de posição ───────────────────────────────────────────────
 export function previewFotos(event) {
-  const files = Array.from(event.target.files).slice(0, 5 - fotosFiles.length);
-  files.forEach(f => { if (fotosFiles.length < 5) { fotosFiles.push(f); fotosPosX.push(50); fotosPosY.push(50); } });
-  renderFotosGrid();
+  const file = event.target.files[0]; if (!file) return;
   event.target.value = '';
+  // Abre modal de crop para ajuste antes de adicionar
+  abrirCropFoto(file);
 }
 export function previewFoto(e) { previewFotos(e); }
+
+
+
+// ── CROP DE FOTO DO PRODUTO ────────────────────────────────────────────────
+let _cropFotoFile  = null;
+let _cropFotoUrl   = null;
+let _cropFotoPosX  = 50;
+let _cropFotoPosY  = 50;
+let _cropFotoDragAtivo = false;
+let _cropFotoDragX = 0, _cropFotoDragY = 0;
+
+window.abrirCropFoto = function(file) {
+  _cropFotoFile = file;
+  _cropFotoPosX = 50; _cropFotoPosY = 50;
+  _cropFotoUrl  = URL.createObjectURL(file);
+
+  const modal = $('modal-crop-foto'); if (!modal) return;
+  const img   = $('crop-foto-img');
+  const mini  = $('crop-foto-mini');
+  if (img)  { img.src  = _cropFotoUrl; img.style.objectPosition  = '50% 50%'; }
+  if (mini) { mini.src = _cropFotoUrl; }
+
+  // Atualiza pin do minimap
+  const pin = $('crop-foto-pin');
+  if (pin) { pin.style.left = '50%'; pin.style.top = '50%'; }
+
+  modal.classList.add('open');
+};
+
+window.confirmarCropFoto = function() {
+  if (!_cropFotoFile) return;
+  fotosFiles.push(_cropFotoFile);
+  fotosPosX.push(_cropFotoPosX);
+  fotosPosY.push(_cropFotoPosY);
+  $('modal-crop-foto').classList.remove('open');
+  renderFotosGrid();
+};
+
+window.fecharCropFoto = function() {
+  $('modal-crop-foto').classList.remove('open');
+  _cropFotoFile = null;
+};
+
+// Drag no modal de crop
+document.addEventListener('DOMContentLoaded', function() {
+  const area = $('crop-foto-area'); if (!area) return;
+
+  const start = function(e) {
+    _cropFotoDragAtivo = true;
+    const t = e.touches ? e.touches[0] : e;
+    _cropFotoDragX = t.clientX; _cropFotoDragY = t.clientY;
+    area.style.cursor = 'grabbing';
+    e.preventDefault();
+  };
+  const move = function(e) {
+    if (!_cropFotoDragAtivo) return;
+    const t = e.touches ? e.touches[0] : e;
+    const dx = (t.clientX - _cropFotoDragX) / area.offsetWidth  * 100;
+    const dy = (t.clientY - _cropFotoDragY) / area.offsetHeight * 100;
+    _cropFotoDragX = t.clientX; _cropFotoDragY = t.clientY;
+    _cropFotoPosX = Math.max(0, Math.min(100, _cropFotoPosX - dx * 0.6));
+    _cropFotoPosY = Math.max(0, Math.min(100, _cropFotoPosY - dy * 0.6));
+    const img = $('crop-foto-img');
+    if (img) img.style.objectPosition = _cropFotoPosX + '% ' + _cropFotoPosY + '%';
+    const pin = $('crop-foto-pin');
+    if (pin) { pin.style.left = _cropFotoPosX + '%'; pin.style.top = _cropFotoPosY + '%'; }
+    e.preventDefault();
+  };
+  const end = function() { _cropFotoDragAtivo = false; area.style.cursor = 'grab'; };
+
+  area.addEventListener('mousedown',  start, {passive:false});
+  area.addEventListener('touchstart', start, {passive:false});
+  document.addEventListener('mousemove',  move, {passive:false});
+  document.addEventListener('touchmove',  move, {passive:false});
+  document.addEventListener('mouseup',  end);
+  document.addEventListener('touchend', end);
+});
 
 function renderFotosGrid() {
   const grid = $('fotos-grid'); if (!grid) return;
