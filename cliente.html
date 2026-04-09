@@ -381,6 +381,7 @@ const supa = createClient(SUPA_URL, SUPA_KEY);
 const slug    = location.pathname.replace('/','').split('/')[0] || 'demo';
 let estab     = null;
 let produtos  = [];
+const _prodMap = new Map(); // id -> produto (evita JSON no onclick)
 let carrinho  = [];
 let prodAtual = null;
 let qtdAtual  = 1;
@@ -647,6 +648,7 @@ function renderProdutos(cat) {
   const lista = $('lista-produtos'); if (!lista) return;
   const filtrados = cat === 'Todos' ? produtos : produtos.filter(p => p.categoria === cat);
   if (!filtrados.length) { lista.innerHTML = '<div class="empty-msg"><span>🍽️</span>Nenhum item nesta categoria.</div>'; return; }
+  filtrados.forEach(p => _prodMap.set(p.id, p));
   lista.innerHTML = filtrados.map(p => cardProdutoHTML(p)).join('');
 }
 
@@ -655,6 +657,7 @@ function renderPromos() {
   const promos = produtos.filter(p => p.promocao);
   const dot = $('promo-dot'); if (dot) dot.style.display = promos.length ? '' : 'none';
   if (!promos.length) { lista.innerHTML = '<div class="empty-msg"><span>🔥</span>Sem promoções no momento.</div>'; return; }
+  promos.forEach(p => _prodMap.set(p.id, p));
   lista.innerHTML = promos.map(p => cardProdutoHTML(p)).join('');
 }
 
@@ -678,8 +681,8 @@ function cardProdutoHTML(p) {
           <div class="produto-preco">${fmt(p.preco)}</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
-          <button class="btn-ver" onclick='abrirProduto(${JSON.stringify(p)})'>Ver mais</button>
-          <button class="btn-mais" onclick='adicionarDireto(${JSON.stringify(p)})'>+</button>
+          <button class="btn-ver" onclick="abrirProdutoId('${p.id}')">Ver mais</button>
+          <button class="btn-mais" onclick="adicionarDiretoId('${p.id}')">+</button>
         </div>
       </div>
     </div>
@@ -687,6 +690,9 @@ function cardProdutoHTML(p) {
 }
 
 // ── MODAL PRODUTO ─────────────────────────────────────────────────────────────
+window.abrirProdutoId  = function(id) { const p = _prodMap.get(id); if(p) abrirProduto(p); };
+window.adicionarDiretoId = function(id) { const p = _prodMap.get(id); if(p) adicionarDireto(p); };
+
 window.abrirProduto = function(p) {
   prodAtual = p; qtdAtual = 1; $('modal-qtd').textContent = 1;
   const media = $('modal-prod-media');
@@ -869,7 +875,7 @@ function renderPedidosCliente() {
       <div class="ped-itens">${itensStr}</div>
       <div class="ped-total">${fmt(p.total)}</div>
       <div class="ped-actions">
-        <button class="btn-ped-det" onclick='verDetalhesPedido(${JSON.stringify(p)})'>Ver detalhes</button>
+        <button class="btn-ped-det" onclick="verDetalhesPedido(${JSON.stringify(p).replace(/"/g,'&quot;')})">Ver detalhes</button>
         ${estab?.whatsapp ? `<a class="btn-ped-wpp" href="https://wa.me/55${estab.whatsapp.replace(/\D/g,'')}?text=Olá!%20Meu%20pedido%20%23${pedId4}" target="_blank">💬 Falar</a>` : ''}
       </div>
     </div>`;
