@@ -92,19 +92,26 @@ function preencherConfig(estab) {
   if (estab.capa_url) {
     const img  = document.getElementById('capa-preview-img');
     const wrap = document.getElementById('capa-preview-img-wrap');
-    if (img)  { img.src = estab.capa_url; img.style.objectPosition = estab.capa_pos||'center center'; }
+    const ph   = document.getElementById('capa-placeholder');
+    const pos  = document.getElementById('capa-pos-controls');
+    // Cache-bust para forçar nova imagem
+    const src  = estab.capa_url + '?t=' + Date.now();
+    if (img)  { img.src = src; img.style.objectPosition = estab.capa_pos || '50% 50%'; }
     if (wrap) wrap.style.display = 'block';
+    if (ph)   ph.style.display = 'none';
+    if (pos)  pos.style.display = 'flex';
     window._capaUrl = estab.capa_url;
-    window._capaPos = estab.capa_pos || 'center center';
-    // Atualiza sliders se existirem
+    window._capaPos = estab.capa_pos || '50% 50%';
+    // Converte posição salva para valor dos sliders
+    const parts = (estab.capa_pos || '50% 50%').split(' ');
     const slX = document.getElementById('capa-pos-x');
     const slY = document.getElementById('capa-pos-y');
-    if (slX) slX.value = 50;
-    if (slY) slY.value = 50;
+    if (slX) slX.value = parseInt(parts[0]) || 50;
+    if (slY) slY.value = parseInt(parts[1]) || 50;
   } else {
+    window._capaUrl = null;
     const prev = document.getElementById('capa-preview');
     if (prev) prev.style.background = estab.cor_primaria || '#C0392B';
-    window._capaUrl = null;
   }
 }
 
@@ -890,11 +897,7 @@ export async function salvarConfig(){
       const{data:existe}=await getSupa().from('estabelecimentos').select('id').eq('slug',slug).maybeSingle();
       if(existe)throw new Error('Esse link já está em uso.');
     }
-    // Upload da capa se tiver arquivo novo
-    if (window._capaFile) {
-      const capaUploaded = await window._uploadCapaSeNecessario(estab.id);
-      if (capaUploaded) window._capaUrl = capaUploaded;
-    }
+
     let logo_url=estab.logo_url||null;
     if(logoFile){
       const ext=logoFile.name.split('.').pop();
@@ -904,9 +907,13 @@ export async function salvarConfig(){
       logo_url=getSupa().storage.from('fotos').getPublicUrl(path).data.publicUrl;
       logoFile=null;
     }
-    const capaUrl = window._capaUrl !== undefined ? window._capaUrl : (estab.capa_url||null);
-    const capaCor = document.querySelector('.cor-opcao.ativa')?.style.background || corAtiva;
-    const capaTipo = document.querySelector('input[name="capa-tipo"]:checked')?.value || estab.capa_tipo || 'cor';
+    // Upload da nova imagem se existir
+    if (window._capaFile) {
+      const capaUploaded = await window._uploadCapaSeNecessario(estab.id);
+      if (capaUploaded) window._capaUrl = capaUploaded;
+    }
+    const capaUrl  = (window._capaUrl !== undefined && window._capaUrl !== null) ? window._capaUrl : (estab.capa_url||null);
+    const capaTipo = capaUrl ? 'imagem' : 'cor';
     const{error}=await getSupa().from('estabelecimentos').update({
       nome,slug,whatsapp:whats,descricao:desc,endereco,
       tempo_entrega:tempo,aberto,faz_entrega,faz_retirada,
