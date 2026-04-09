@@ -111,8 +111,8 @@ function preencherConfig(estab) {
 function atualizarBadgeLoja(aberto) {
   const b = document.getElementById('loja-status-badge');
   if (!b) return;
-  b.className = 'loja-status-badge ' + (aberto ? 'loja-aberta' : 'loja-fecháda');
-  b.textContent = aberto ? 'Aberta' : 'Fecháda';
+  b.className = 'loja-status-badge ' + (aberto ? 'loja-aberta' : 'loja-fechada');
+  b.textContent = aberto ? 'Aberta' : 'Fechada';
 }
 
 window.atualizarStatusLoja = function(aberto) {
@@ -169,7 +169,7 @@ function iniciarRealtime() {
         }
       });
     } catch(e) { console.error('Polling erro:', e); }
-  }, 6000);
+  }, 4000);
 }
 
 let notifLoop = null;
@@ -410,6 +410,7 @@ async function renderPedidos() {
   if (lista) {
     if (novos.length) {
       // Marca todos os novos já carregados como conhecidos
+      // Marca todos como conhecidos para o polling não duplicar
       novos.forEach(p => _ultimosPedidosIds.add(p.id));
       lista.innerHTML = novos.map(p => {
         const itens = Array.isArray(p.itens) ? p.itens.map(i=>`${i.qtd}x ${i.nome}`).join(', ') : '';
@@ -534,7 +535,7 @@ export function abrirModalItem() {
   ['item-nome','item-desc','item-cat','item-preco','item-preco-orig'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const promo=document.getElementById('item-promocao'); if(promo)promo.checked=false;
   const grp=document.getElementById('preco-orig-group'); if(grp)grp.style.display='none';
-  fotosFiles=[]; renderFotosGrid();
+  fotosFiles=[]; fotosPosX=[]; fotosPosY=[]; renderFotosGrid();
   emojiSel='🍔'; renderEmojiGrid();
 }
 export function fecharModal() { document.getElementById('modal-item').classList.remove('open'); }
@@ -553,14 +554,37 @@ export function previewFotos(event) {
   event.target.value='';
 }
 
+// Posição de cada foto (para crop)
+let fotosPosX = [];
+let fotosPosY = [];
+
+window.ajustarPosicaoFoto = function(idx, axis, val) {
+  if (axis === 'x') fotosPosX[idx] = val;
+  if (axis === 'y') fotosPosY[idx] = val;
+  const thumb = document.querySelector('#fotos-grid .foto-thumb-item:nth-child(' + (idx+1) + ') img');
+  const px = fotosPosX[idx] || 50;
+  const py = fotosPosY[idx] || 50;
+  if (thumb) thumb.style.objectPosition = px + '% ' + py + '%';
+};
+
 function renderFotosGrid() {
   const grid=document.getElementById('fotos-grid'); if(!grid) return;
-  let html=fotosFiles.map((f,i)=>`
-    <div class="foto-thumb-item">
-      <img src="${URL.createObjectURL(f)}" style="width:80px;height:80px;object-fit:cover;border-radius:10px;display:block">
+  let html=fotosFiles.map((f,i)=>{
+    const url = URL.createObjectURL(f);
+    const px = fotosPosX[i]||50, py = fotosPosY[i]||50;
+    return `
+    <div class="foto-thumb-item" style="position:relative;margin-bottom:4px">
+      <div style="width:80px;height:80px;border-radius:10px;overflow:hidden;border:2px solid var(--border)">
+        <img src="${url}" style="width:100%;height:100%;object-fit:cover;object-position:${px}% ${py}%;display:block" id="foto-thumb-${i}">
+      </div>
       ${i===0?`<div style="position:absolute;top:3px;left:3px;background:var(--red);color:#fff;font-size:0.55rem;font-weight:700;padding:2px 5px;border-radius:4px">PRINCIPAL</div>`:''}
-      <button onclick="removerFotoItem(${i})" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);border:none;color:#fff;width:20px;height:20px;border-radius:50%;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center">x</button>
-    </div>`).join('');
+      <button onclick="removerFotoItem(${i})" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.7);border:none;color:#fff;width:18px;height:18px;border-radius:50%;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+      <div style="display:flex;gap:4px;margin-top:4px">
+        <input type="range" min="0" max="100" value="${px}" style="width:38px;accent-color:var(--red)" title="Horizontal" oninput="ajustarPosicaoFoto(${i},'x',this.value)">
+        <input type="range" min="0" max="100" value="${py}" style="width:38px;accent-color:var(--red)" title="Vertical" oninput="ajustarPosicaoFoto(${i},'y',this.value)">
+      </div>
+    </div>`;
+  }).join('');
   if(fotosFiles.length<5) html+=`<div class="foto-add-btn" onclick="document.getElementById('foto-input').click()"><span style="font-size:1.5rem">📷</span><span style="font-size:0.75rem;color:#aaa">Adicionar</span></div>`;
   grid.innerHTML=html;
 }
@@ -967,15 +991,7 @@ window.previewCapa = function(event) {
 };
 
 // Atualiza preview da capa quando muda a cor
-const _origSelecionarCor = window.selecionarCor;
-window.selecionarCor = function(cor, el) {
-  if (_origSelecionarCor) _origSelecionarCor(cor, el);
-  const tipo = document.querySelector('input[name="capa-tipo"]:checked')?.value || 'cor';
-  if (tipo === 'cor') {
-    const preview = document.getElementById('capa-preview');
-    if (preview) preview.style.background = cor;
-  }
-};
+
 
 // Upload da capa durante salvarConfig
 window._uploadCapaSeNecessario = async function(estabId) {
