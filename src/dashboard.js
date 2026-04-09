@@ -6,7 +6,24 @@ import { showToast } from './utils.js';
 // CONSTANTES
 // ─────────────────────────────────────────────────────────────────────────────
 const BASE_URL = 'https://pediway.vercel.app';
-const CORES    = ['#C0392B','#E74C3C','#E67E22','#F39C12','#27AE60','#16A085','#2980B9','#8E44AD','#2C3E50','#7F8C8D'];
+const CORES = [
+  // Cores sólidas
+  '#C0392B','#E74C3C','#E67E22','#F39C12','#F1C40F',
+  '#27AE60','#16A085','#1ABC9C','#2980B9','#3498DB',
+  '#8E44AD','#9B59B6','#2C3E50','#34495E','#7F8C8D',
+  '#D35400','#C0392B','#1A252F','#6C3483','#1B4F72',
+  // Gradientes (salvos como string especial)
+  'grad:linear-gradient(135deg,#C0392B,#E74C3C)',
+  'grad:linear-gradient(135deg,#E67E22,#F39C12)',
+  'grad:linear-gradient(135deg,#27AE60,#1ABC9C)',
+  'grad:linear-gradient(135deg,#2980B9,#8E44AD)',
+  'grad:linear-gradient(135deg,#2C3E50,#4CA1AF)',
+  'grad:linear-gradient(135deg,#C0392B,#8E44AD)',
+  'grad:linear-gradient(135deg,#F39C12,#27AE60)',
+  'grad:linear-gradient(135deg,#2980B9,#16A085)',
+  'grad:linear-gradient(135deg,#1A252F,#C0392B)',
+  'grad:linear-gradient(135deg,#D35400,#F39C12)',
+];
 const EMOJIS   = ['🍔','🍕','🌮','🥪','🍜','🥗','🍗','🥩','🫕','🥘','🍱','🧆','🍣','🍦','🧁','🎂','🥤','🧃','☕','🧋'];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -17,8 +34,6 @@ let fotosFiles  = [];
 let fotosPosX   = [];
 let fotosPosY   = [];
 let logoFile    = null;
-let capaFile    = null;
-let capaPos     = '50% 50%';
 let corAtiva    = '#C0392B';
 let realtimeSub = null;
 let pollingId   = null;
@@ -32,10 +47,18 @@ const getEstab = () => window._estab || JSON.parse(localStorage.getItem('pw_esta
 
 function normalizeHex(cor) {
   if (!cor) return '#C0392B';
+  if (cor.startsWith('grad:')) return cor.replace('grad:', ''); // gradiente
   if (cor.startsWith('#')) return cor;
+  if (cor.startsWith('linear-gradient')) return cor;
   const m = cor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
   if (m) return '#' + [m[1],m[2],m[3]].map(n => (+n).toString(16).padStart(2,'0')).join('');
   return '#C0392B';
+}
+function isGradient(cor) { return cor && (cor.startsWith('grad:') || cor.startsWith('linear-gradient')); }
+function gradToHex(cor) {
+  // Extrai a primeira cor do gradiente para uso em contextos que precisam de hex
+  const m = (cor || '').match(/#[0-9a-fA-F]{6}/);
+  return m ? m[0] : '#C0392B';
 }
 
 async function uploadFile(bucket, path, file) {
@@ -63,13 +86,14 @@ export async function initDashboard() {
   // Logo preview
   if (estab.logo_url) mostrarLogoPreview(estab.logo_url);
 
-  // Capa preview
-  if (estab.capa_url) mostrarCapaPreview(estab.capa_url, estab.capa_pos || '50% 50%');
+  // Capa preview (cor)
+  mostrarCapaPreview(corAtiva);
 
   // Cor
   corAtiva = normalizeHex(estab.cor_primaria || '#C0392B');
   renderCores(corAtiva);
   aplicarCorDash(corAtiva);
+  mostrarCapaPreview(corAtiva);
 
   // Status loja
   atualizarBadgeLoja(estab.aberto !== false);
@@ -106,7 +130,8 @@ function preencherConfig(estab) {
   const cr = $('cfg-retirada'); if (cr) cr.checked = estab.faz_retirada !== false;
 }
 
-function aplicarCorDash(hex) {
+function aplicarCorDash(cor) {
+  const hex = isGradient(cor) ? gradToHex(cor) : cor;
   const dash = document.querySelector('[data-screen="s-dash"]');
   if (dash) dash.style.setProperty('--red', hex);
   document.querySelectorAll('.dash-nav,.tab-content,.config-card').forEach(el => el.style.setProperty('--red', hex));
@@ -129,7 +154,7 @@ window.selecionarCor = function(hex, el) {
   aplicarCorDash(hex);
   // Atualiza preview da capa se não tiver imagem
   const prev = $('capa-preview');
-  if (prev && !capaFile && !getEstab()?.capa_url) prev.style.background = hex;
+  if (prev) prev.style.background = isGradient(hex) ? hex : hex;
 };
 
 function atualizarBadgeLoja(aberto) {
@@ -203,71 +228,12 @@ window.confirmarCrop = function() {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CAPA
+// CAPA — apenas cor/gradiente (sem upload de imagem)
 // ─────────────────────────────────────────────────────────────────────────────
-function mostrarCapaPreview(url, pos) {
-  const img  = $('capa-preview-img');
-  const wrap = $('capa-preview-img-wrap');
-  const ph   = $('capa-placeholder');
-  const ctrl = $('capa-pos-controls');
-  if (img)  { img.src = url + '?v=' + Date.now(); img.style.objectPosition = pos || '50% 50%'; }
-  if (wrap) wrap.style.display = 'block';
-  if (ph)   ph.style.display = 'none';
-  if (ctrl) ctrl.style.display = 'flex';
-  // Inicia drag
-  iniciarDragCapa();
+function mostrarCapaPreview(cor) {
+  const prev = $('capa-preview');
+  if (prev) prev.style.background = isGradient(cor) ? cor : cor;
 }
-
-let _capaDragAtivo = false, _capaDragX = 0, _capaDragY = 0, _capaPosX = 50, _capaPosY = 50;
-
-function iniciarDragCapa() {
-  const wrap = $('capa-preview-img-wrap'); if (!wrap || wrap._dragIniciado) return;
-  wrap._dragIniciado = true;
-  wrap.style.cursor = 'grab';
-  const start = e => {
-    _capaDragAtivo = true; wrap.style.cursor = 'grabbing';
-    const t = e.touches ? e.touches[0] : e;
-    _capaDragX = t.clientX; _capaDragY = t.clientY;
-    e.preventDefault();
-  };
-  const move = e => {
-    if (!_capaDragAtivo) return;
-    const t = e.touches ? e.touches[0] : e;
-    _capaPosX = Math.max(0, Math.min(100, _capaPosX - (t.clientX - _capaDragX) * 0.3));
-    _capaPosY = Math.max(0, Math.min(100, _capaPosY - (t.clientY - _capaDragY) * 0.3));
-    _capaDragX = t.clientX; _capaDragY = t.clientY;
-    capaPos = `${_capaPosX}% ${_capaPosY}%`;
-    const img = $('capa-preview-img');
-    if (img) img.style.objectPosition = capaPos;
-    e.preventDefault();
-  };
-  const end = () => { _capaDragAtivo = false; wrap.style.cursor = 'grab'; };
-  wrap.addEventListener('mousedown',  start, {passive:false});
-  wrap.addEventListener('touchstart', start, {passive:false});
-  document.addEventListener('mousemove',  move, {passive:false});
-  document.addEventListener('touchmove',  move, {passive:false});
-  document.addEventListener('mouseup',  end);
-  document.addEventListener('touchend', end);
-}
-
-window.previewCapa = function(event) {
-  const file = event.target.files[0]; if (!file) return;
-  capaFile = file; capaPos = '50% 50%'; _capaPosX = 50; _capaPosY = 50;
-  mostrarCapaPreview(URL.createObjectURL(file), '50% 50%');
-  event.target.value = '';
-};
-
-window.removerCapa = function() {
-  capaFile = null;
-  const wrap = $('capa-preview-img-wrap');
-  const ph   = $('capa-placeholder');
-  const ctrl = $('capa-pos-controls');
-  if (wrap) wrap.style.display = 'none';
-  if (ph)   ph.style.display = 'flex';
-  if (ctrl) ctrl.style.display = 'none';
-  // Marca para remover no banco
-  window._removerCapa = true;
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SALVAR CONFIG
@@ -305,23 +271,14 @@ export async function salvarConfig() {
       logoFile = null;
     }
 
-    // Upload capa
-    let capa_url  = estab.capa_url || null;
-    let capa_tipo = estab.capa_tipo || 'cor';
-    if (capaFile) {
-      capa_url  = await uploadFile('fotos', `${estab.id}/capa_${Date.now()}.${capaFile.name.split('.').pop()}`, capaFile);
-      capa_tipo = 'imagem';
-      capaFile  = null;
-    }
-    if (window._removerCapa) { capa_url = null; capa_tipo = 'cor'; window._removerCapa = false; }
-
-    // Garante que a cor seja salva como hex
+    // Cor — suporta gradientes
     const cor_primaria = normalizeHex(corAtiva);
 
     const updates = {
       nome, slug, whatsapp: whats, descricao: desc, endereco,
       tempo_entrega: tempo, aberto, faz_entrega: entrega, faz_retirada: retirada,
-      cor_primaria, logo_url, capa_url, capa_tipo, capa_pos: capaPos,
+      cor_primaria, logo_url,
+      capa_url: null, capa_tipo: 'cor', // capa sempre por cor
     };
 
     const { error } = await getSupa().from('estabelecimentos').update(updates).eq('id', estab.id);
