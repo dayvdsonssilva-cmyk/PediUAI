@@ -191,18 +191,41 @@
     @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 
     /* ── STORY VIEWER ── */
-    #story-viewer { position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:9999;display:none;overflow:hidden; }
-    #story-viewer.open { display:block; }
-    #story-img  { position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1; }
-    #story-vid  { position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1; display:none; }
-    #story-bars { position:absolute;top:12px;left:10px;right:10px;z-index:20;display:flex;gap:3px; }
+    #story-viewer {
+      position:fixed;top:0;left:0;width:100vw;height:100vh;
+      background:#000;z-index:9999;display:none;overflow:hidden;
+    }
+    #story-viewer.open { display:flex;flex-direction:column; }
+    #story-bg {
+      position:absolute;inset:0;
+      background-size:cover;background-position:center;background-repeat:no-repeat;
+    }
+    #story-vid-el {
+      position:absolute;inset:0;width:100%;height:100%;
+      object-fit:cover;display:none;
+    }
+    #story-bars {
+      position:relative;z-index:20;
+      display:flex;gap:3px;padding:12px 12px 0;
+    }
     .story-bar-bg   { flex:1;height:3px;background:rgba(255,255,255,0.4);border-radius:3px;overflow:hidden; }
     .story-bar-fill { height:100%;background:#fff;border-radius:3px;width:0%; }
-    #story-header   { position:absolute;top:26px;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:0 14px; }
-    #story-loja-nome{ color:#fff;font-size:0.85rem;font-weight:700;text-shadow:0 1px 6px rgba(0,0,0,0.7); }
-    .story-close-btn{ background:rgba(0,0,0,0.45);border:none;color:#fff;font-size:1.1rem;cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center; }
-    #story-prev     { position:absolute;left:0;top:0;width:35%;height:100%;z-index:10;cursor:pointer; }
-    #story-next     { position:absolute;right:0;top:0;width:35%;height:100%;z-index:10;cursor:pointer; }
+    #story-header {
+      position:relative;z-index:20;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:8px 14px;
+    }
+    #story-loja-nome { color:#fff;font-size:0.85rem;font-weight:700;text-shadow:0 1px 6px #000; }
+    .story-close-btn {
+      background:rgba(0,0,0,0.5);border:none;color:#fff;
+      font-size:1.1rem;cursor:pointer;width:34px;height:34px;
+      border-radius:50%;display:flex;align-items:center;justify-content:center;
+    }
+    #story-touches {
+      position:absolute;inset:0;z-index:10;display:flex;
+    }
+    #story-prev { flex:0 0 35%;height:100%;cursor:pointer; }
+    #story-next { flex:1;height:100%;cursor:pointer; }
 
     /* ── LOJA FECHADA ── */
     #banner-fechada { display: none; background: rgba(0,0,0,0.8); color: #fff; text-align: center; padding: 16px; font-size: 0.9rem; font-weight: 700; }
@@ -354,15 +377,17 @@
 
 <!-- STORY VIEWER -->
 <div id="story-viewer">
-  <img  id="story-img" src="" alt="">
-  <video id="story-vid" src="" playsinline></video>
+  <div id="story-bg"></div>
+  <video id="story-vid-el" playsinline></video>
   <div id="story-bars"></div>
   <div id="story-header">
     <div id="story-loja-nome"></div>
     <button class="story-close-btn" onclick="fecharStory()">✕</button>
   </div>
-  <div id="story-prev" onclick="storyAnterior()"></div>
-  <div id="story-next" onclick="storyProximo()"></div>
+  <div id="story-touches">
+    <div id="story-prev" onclick="storyAnterior()"></div>
+    <div id="story-next" onclick="storyProximo()"></div>
+  </div>
 </div>
 
 <script type="module">
@@ -528,7 +553,7 @@ async function carregarFresquinho() {
   lst.innerHTML = data.map(f => {
     const rest = new Date(f.expires_at) - new Date();
     const h = Math.floor(rest/3600000), mn = Math.floor((rest%3600000)/60000);
-    return `<div class="story-thumb" onclick="abrirStory('${f.url}','${f.tipo||'foto'}')">
+    return `<div class="story-thumb" data-url="${f.url}" data-tipo="${f.tipo||'foto'}" onclick="abrirStory('${f.url}','${f.tipo||'foto'}')">
       ${f.tipo === 'video'
         ? `<video src="${f.url}" muted playsinline loop></video>`
         : `<img src="${f.url}" alt="">`}
@@ -544,16 +569,16 @@ let _storyTimer   = null;
 const STORY_DUR   = 5000; // ms por story
 
 window.abrirStory = function(url, tipo) {
-  // Monta lista de todos os stories na ordem
-  const thumbs = document.querySelectorAll('.story-thumb');
+  // Monta lista a partir dos data attributes dos thumbnails
+  const thumbs = document.querySelectorAll('.story-thumb[data-url]');
   _stories = Array.from(thumbs).map(t => ({
-    url:  t.dataset.url,
-    tipo: t.dataset.tipo || 'foto',
+    url:  t.getAttribute('data-url'),
+    tipo: t.getAttribute('data-tipo') || 'foto',
   }));
-  // Acha o índice clicado
+  // Se não achou nenhum com data-url, cria com o que foi clicado
+  if (!_stories.length) _stories = [{ url, tipo }];
   _storyIdx = _stories.findIndex(s => s.url === url);
   if (_storyIdx < 0) _storyIdx = 0;
-  // Abre viewer
   $('story-viewer').classList.add('open');
   $('story-loja-nome').textContent = estab?.nome || '';
   renderStory();
@@ -564,22 +589,18 @@ function renderStory() {
   const s = _stories[_storyIdx];
   if (!s) { fecharStory(); return; }
 
-  const imgEl = $('story-img');
-  const vidEl = $('story-vid');
+  const bg  = $('story-bg');
+  const vid = $('story-vid-el');
 
   if (s.tipo === 'video') {
-    imgEl.style.display = 'none';
-    vidEl.style.display = 'block';
-    vidEl.src = s.url;
-    vidEl.load();
-    vidEl.play().catch(()=>{});
+    if (bg)  { bg.style.backgroundImage = 'none'; bg.style.display = 'none'; }
+    if (vid) { vid.style.display = 'block'; vid.src = s.url; vid.load(); vid.play().catch(()=>{}); }
   } else {
-    vidEl.pause(); vidEl.src = ''; vidEl.style.display = 'none';
-    imgEl.style.display = 'block';
-    imgEl.src = s.url;
+    if (vid) { vid.pause(); vid.src = ''; vid.style.display = 'none'; }
+    if (bg)  { bg.style.display = 'block'; bg.style.backgroundImage = `url("${s.url}")`; }
   }
 
-  // Barras
+  // Barras de progresso
   const bars = $('story-bars');
   bars.innerHTML = _stories.map((_, i) =>
     `<div class="story-bar-bg"><div class="story-bar-fill" id="sbar-${i}"></div></div>`
@@ -591,12 +612,10 @@ function renderStory() {
   if (barAtual) {
     barAtual.style.transition = 'none';
     barAtual.style.width = '0%';
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        barAtual.style.transition = `width ${STORY_DUR}ms linear`;
-        barAtual.style.width = '100%';
-      });
-    });
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      barAtual.style.transition = `width ${STORY_DUR}ms linear`;
+      barAtual.style.width = '100%';
+    }));
   }
   _storyTimer = setTimeout(() => storyProximo(), STORY_DUR);
 }
@@ -613,8 +632,8 @@ window.storyAnterior = function() {
 window.fecharStory = function() {
   clearTimeout(_storyTimer);
   $('story-viewer').classList.remove('open');
-  const v = $('story-vid'); if (v) { v.pause(); v.src = ''; }
-  const i = $('story-img'); if (i) i.src = '';
+  const v = $('story-vid-el'); if (v) { v.pause(); v.src = ''; }
+  const b = $('story-bg'); if (b) b.style.backgroundImage = 'none';
 };
 
 // ── PRODUTOS ──────────────────────────────────────────────────────────────────
@@ -697,9 +716,30 @@ window.adicionarDiretoId = function(id) { const p = _prodMap.get(id); if(p) adic
 window.abrirProduto = function(p) {
   prodAtual = p; qtdAtual = 1; $('modal-qtd').textContent = 1;
   const media = $('modal-prod-media');
-  media.innerHTML = p.foto_url
-    ? `<img class="modal-img" src="${p.foto_url}" alt="${p.nome}" style="cursor:zoom-in" onclick="abrirImagemFull('${p.foto_url}')">`
-    : `<div class="modal-emoji">${p.emoji||'🍔'}</div>`;
+  // fotos_urls é array de fotos extras (futuro), por ora usa foto_url
+  const fotos = (p.fotos_urls && p.fotos_urls.length) ? p.fotos_urls : (p.foto_url ? [p.foto_url] : []);
+  if (fotos.length) {
+    let fIdx = 0;
+    const renderModalImg = () => {
+      media.innerHTML = `
+        <div style="position:relative">
+          <img class="modal-img" id="modal-foto-atual" src="${fotos[fIdx]}" alt="${p.nome}" style="cursor:zoom-in" onclick="abrirImagemFull('${fotos[fIdx]}')">
+          ${fotos.length > 1 ? `
+            <button onclick="mudaFotoModal(-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer;z-index:5">‹</button>
+            <button onclick="mudaFotoModal(1)"  style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer;z-index:5">›</button>
+            <div style="position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:5px">
+              ${fotos.map((_,i)=>`<div style="width:6px;height:6px;border-radius:50%;background:${i===fIdx?'#fff':'rgba(255,255,255,0.4)'}"></div>`).join('')}
+            </div>` : ''}
+        </div>`;
+    };
+    window.mudaFotoModal = function(dir) {
+      fIdx = (fIdx + dir + fotos.length) % fotos.length;
+      renderModalImg();
+    };
+    renderModalImg();
+  } else {
+    media.innerHTML = `<div class="modal-emoji">${p.emoji||'🍔'}</div>`;
+  }
   $('modal-cat').textContent  = p.categoria || '';
   $('modal-nome').textContent = p.nome;
   $('modal-desc').textContent = p.descricao || '';
