@@ -627,7 +627,16 @@ function renderStory() {
       barAtual.style.width = '100%';
     }));
   }
-  _storyTimer = setTimeout(() => storyProximo(), STORY_DUR);
+  if (s.tipo === 'video') {
+    const v = $('story-vid-el');
+    if (v) {
+      const onEnd = () => { v.removeEventListener('ended', onEnd); storyProximo(); };
+      v.addEventListener('ended', onEnd);
+      _storyTimer = setTimeout(() => storyProximo(), 31000);
+    } else { _storyTimer = setTimeout(() => storyProximo(), STORY_DUR); }
+  } else {
+    _storyTimer = setTimeout(() => storyProximo(), STORY_DUR);
+  }
 }
 
 window.storyProximo = function() {
