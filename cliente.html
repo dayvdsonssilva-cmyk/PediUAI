@@ -60,6 +60,9 @@
     .stories-scroll::-webkit-scrollbar { display: none; }
     .story-thumb { width: 88px; height: 120px; border-radius: 14px; overflow: hidden; position: relative; flex-shrink: 0; cursor: pointer; border: 2.5px solid var(--red); }
     .story-thumb img, .story-thumb video { width: 100%; height: 100%; object-fit: cover; }
+    .story-thumb video { background: #1a1a1a; }
+    .story-thumb .video-thumb-img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover; }
+    .story-thumb .play-icon { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;pointer-events:none; }
     .story-timer { position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; font-size: 0.58rem; font-weight: 700; color: #fff; background: rgba(0,0,0,0.45); padding: 2px 0; }
 
     /* ── ABAS ── */
@@ -308,8 +311,14 @@
 </div>
 
 <!-- MODAL IMAGEM FULL -->
-<div id="modal-img-full" onclick="this.classList.remove('open')" style="position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:400;display:none;align-items:center;justify-content:center;cursor:zoom-out;">
-  <img id="modal-img-full-src" style="max-width:96vw;max-height:96vh;object-fit:contain;border-radius:10px">
+<div id="modal-img-full" style="position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:400;display:none;align-items:center;justify-content:center;flex-direction:column;">
+  <button onclick="$('modal-img-full').style.display='none'" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:1.2rem;cursor:pointer;z-index:5">✕</button>
+  <img id="modal-img-full-src" style="max-width:96vw;max-height:88vh;object-fit:contain;border-radius:8px;display:block">
+  <div id="modal-full-controls" style="display:none;align-items:center;gap:16px;margin-top:14px">
+    <button id="modal-full-prev" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:1.3rem;cursor:pointer">‹</button>
+    <div id="modal-full-dots" style="display:flex;gap:6px"></div>
+    <button id="modal-full-next" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:1.3rem;cursor:pointer">›</button>
+  </div>
 </div>
 
 <!-- MODAL PRODUTO -->
@@ -553,10 +562,11 @@ async function carregarFresquinho() {
   lst.innerHTML = data.map(f => {
     const rest = new Date(f.expires_at) - new Date();
     const h = Math.floor(rest/3600000), mn = Math.floor((rest%3600000)/60000);
+    const thumbContent = f.tipo === 'video'
+      ? `<video src="${f.url}" muted playsinline loop preload="metadata" style="width:100%;height:100%;object-fit:cover"></video><div class="play-icon">▶️</div>`
+      : `<img src="${f.url}" alt="" style="width:100%;height:100%;object-fit:cover">`;
     return `<div class="story-thumb" data-url="${f.url}" data-tipo="${f.tipo||'foto'}" onclick="abrirStory('${f.url}','${f.tipo||'foto'}')">
-      ${f.tipo === 'video'
-        ? `<video src="${f.url}" muted playsinline loop></video>`
-        : `<img src="${f.url}" alt="">`}
+      ${thumbContent}
       <div class="story-timer">⏱ ${h>0?h+'h ':''} ${mn}min</div>
     </div>`;
   }).join('');
@@ -726,7 +736,7 @@ window.abrirProduto = function(p) {
       media.innerHTML = `
         <div style="position:relative;background:#000">
           <img class="modal-img" src="${fotos[fIdx]}" alt="${p.nome}" style="cursor:zoom-in;display:block"
-               onclick="abrirImagemFull('${fotos[fIdx]}')">
+               onclick="abrirImagemFull('${fotos[fIdx]}', fotos, fIdx)">
           ${fotos.length > 1 ? `
             <button onclick="_modalFoto(-1)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.55);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.3rem;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center">‹</button>
             <button onclick="_modalFoto(1)"  style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.55);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.3rem;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center">›</button>
@@ -750,17 +760,36 @@ window.abrirProduto = function(p) {
 };
 window.fecharModal = function() { $('modal-prod').classList.remove('open'); prodAtual = null; };
 
-window.abrirImagemFull = function(url) {
-  const m = $('modal-img-full');
-  const i = $('modal-img-full-src');
-  if (!m || !i) return;
-  i.src = url;
+window.abrirImagemFull = function(url, fotosArr, startIdx) {
+  const m = $('modal-img-full'); if (!m) return;
+  const img = $('modal-img-full-src');
+  const ctrl = $('modal-full-controls');
+  const dots = $('modal-full-dots');
+  const prev = $('modal-full-prev');
+  const next = $('modal-full-next');
+
+  const fotos = fotosArr || [url];
+  let idx = startIdx !== undefined ? startIdx : fotos.indexOf(url);
+  if (idx < 0) idx = 0;
+
+  const render = () => {
+    img.src = fotos[idx];
+    if (dots) dots.innerHTML = fotos.map((_,i) =>
+      `<div style="width:7px;height:7px;border-radius:50%;background:${i===idx?'#fff':'rgba(255,255,255,0.35)'}"></div>`
+    ).join('');
+  };
+
+  if (fotos.length > 1) {
+    if (ctrl) ctrl.style.display = 'flex';
+    if (prev) prev.onclick = () => { idx = (idx - 1 + fotos.length) % fotos.length; render(); };
+    if (next) next.onclick = () => { idx = (idx + 1) % fotos.length; render(); };
+  } else {
+    if (ctrl) ctrl.style.display = 'none';
+  }
+
+  render();
   m.style.display = 'flex';
 };
-document.addEventListener('click', e => {
-  const m = $('modal-img-full');
-  if (m && e.target === m) m.style.display = 'none';
-});
 window.mudaQtd = function(d) {
   qtdAtual = Math.max(1, qtdAtual + d);
   $('modal-qtd').textContent = qtdAtual;
