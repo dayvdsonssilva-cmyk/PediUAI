@@ -191,17 +191,18 @@
     @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 
     /* ── STORY VIEWER ── */
-    #story-viewer { position:fixed;top:0;left:0;right:0;bottom:0;background:#000;z-index:9999;display:none; }
+    #story-viewer { position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:9999;display:none;overflow:hidden; }
     #story-viewer.open { display:block; }
-    #story-viewer img, #story-viewer video { position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover; }
-    #story-bars { position:absolute;top:12px;left:10px;right:10px;z-index:10;display:flex;gap:3px; }
-    .story-bar-bg { flex:1;height:3px;background:rgba(255,255,255,0.4);border-radius:3px;overflow:hidden; }
+    #story-img  { position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1; }
+    #story-vid  { position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1; display:none; }
+    #story-bars { position:absolute;top:12px;left:10px;right:10px;z-index:20;display:flex;gap:3px; }
+    .story-bar-bg   { flex:1;height:3px;background:rgba(255,255,255,0.4);border-radius:3px;overflow:hidden; }
     .story-bar-fill { height:100%;background:#fff;border-radius:3px;width:0%; }
-    #story-header { position:absolute;top:26px;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:0 14px; }
-    #story-loja-nome { color:#fff;font-size:0.85rem;font-weight:700;text-shadow:0 1px 6px rgba(0,0,0,0.7); }
-    .story-close-btn { background:rgba(0,0,0,0.45);border:none;color:#fff;font-size:1.1rem;cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center; }
-    .story-touch-left { position:absolute;left:0;top:0;width:35%;height:100%;z-index:5; }
-    .story-touch-right { position:absolute;right:0;top:0;width:35%;height:100%;z-index:5; }
+    #story-header   { position:absolute;top:26px;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:0 14px; }
+    #story-loja-nome{ color:#fff;font-size:0.85rem;font-weight:700;text-shadow:0 1px 6px rgba(0,0,0,0.7); }
+    .story-close-btn{ background:rgba(0,0,0,0.45);border:none;color:#fff;font-size:1.1rem;cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center; }
+    #story-prev     { position:absolute;left:0;top:0;width:35%;height:100%;z-index:10;cursor:pointer; }
+    #story-next     { position:absolute;right:0;top:0;width:35%;height:100%;z-index:10;cursor:pointer; }
 
     /* ── LOJA FECHADA ── */
     #banner-fechada { display: none; background: rgba(0,0,0,0.8); color: #fff; text-align: center; padding: 16px; font-size: 0.9rem; font-weight: 700; }
@@ -351,15 +352,17 @@
   </div>
 </div>
 
-<!-- STORY VIEWER INSTAGRAM -->
+<!-- STORY VIEWER -->
 <div id="story-viewer">
+  <img  id="story-img" src="" alt="">
+  <video id="story-vid" src="" playsinline></video>
   <div id="story-bars"></div>
   <div id="story-header">
     <div id="story-loja-nome"></div>
     <button class="story-close-btn" onclick="fecharStory()">✕</button>
   </div>
-  <div class="story-touch-left"  onclick="storyAnterior()"></div>
-  <div class="story-touch-right" onclick="storyProximo()"></div>
+  <div id="story-prev" onclick="storyAnterior()"></div>
+  <div id="story-next" onclick="storyProximo()"></div>
 </div>
 
 <script type="module">
@@ -561,15 +564,20 @@ function renderStory() {
   const s = _stories[_storyIdx];
   if (!s) { fecharStory(); return; }
 
-  // Limpa mídia anterior
-  const viewer = $('story-viewer');
-  viewer.querySelectorAll('img, video').forEach(el => el.remove());
+  const imgEl = $('story-img');
+  const vidEl = $('story-vid');
 
-  // Cria elemento de mídia diretamente no viewer
-  const el = document.createElement(s.tipo === 'video' ? 'video' : 'img');
-  el.src = s.url;
-  if (s.tipo === 'video') { el.autoplay = true; el.playsInline = true; el.loop = false; }
-  viewer.appendChild(el);
+  if (s.tipo === 'video') {
+    imgEl.style.display = 'none';
+    vidEl.style.display = 'block';
+    vidEl.src = s.url;
+    vidEl.load();
+    vidEl.play().catch(()=>{});
+  } else {
+    vidEl.pause(); vidEl.src = ''; vidEl.style.display = 'none';
+    imgEl.style.display = 'block';
+    imgEl.src = s.url;
+  }
 
   // Barras
   const bars = $('story-bars');
@@ -604,10 +612,9 @@ window.storyAnterior = function() {
 
 window.fecharStory = function() {
   clearTimeout(_storyTimer);
-  const viewer = $('story-viewer');
-  viewer.classList.remove('open');
-  viewer.querySelectorAll('video').forEach(v => v.pause());
-  viewer.querySelectorAll('img, video').forEach(el => el.remove());
+  $('story-viewer').classList.remove('open');
+  const v = $('story-vid'); if (v) { v.pause(); v.src = ''; }
+  const i = $('story-img'); if (i) i.src = '';
 };
 
 // ── PRODUTOS ──────────────────────────────────────────────────────────────────
