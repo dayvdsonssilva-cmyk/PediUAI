@@ -490,7 +490,12 @@
         document.title=estab.nome+' | PEDIWAY';
         document.getElementById('loja-nome').textContent=estab.nome.toUpperCase();
         // Aplica todos os dados do estab de uma vez
+        // Aplica dados salvos localmente primeiro (resposta rápida)
         aplicarDadosEstab(estab);
+        // Depois busca dados frescos do banco (garante sincronizado)
+        supa.from('estabelecimentos').select('*').eq('slug',slug).maybeSingle().then(function(r){
+          if(r.data){ estab=r.data; aplicarDadosEstab(r.data); }
+        });
 
         await Promise.all([carregarProdutos(), carregarFresquinho()]);
         carregarMeusPedidos();
@@ -919,74 +924,66 @@
     let pollingWhats = null;
     let pollingEstabId = null;
 
+    var _capaAtual = null; // rastreia URL da capa aplicada
+
     function aplicarDadosEstab(est) {
       if (!est) return;
       estab = est;
 
-      // Nome e descrição
-      var nomeEl = document.getElementById('loja-nome');
-      if(nomeEl) nomeEl.textContent = (est.nome||'').toUpperCase();
-      var descEl = document.getElementById('loja-desc');
-      if(descEl) descEl.textContent = est.descricao||'Cardapio digital';
-
-      // Tempo de entrega
-      var tempoEl = document.getElementById('meta-tempo');
-      if(tempoEl) tempoEl.textContent = est.tempo_entrega||'30-45 min';
+      // Textos
+      var el; 
+      el = document.getElementById('loja-nome');   if(el) el.textContent = (est.nome||'').toUpperCase();
+      el = document.getElementById('loja-desc');   if(el) el.textContent = est.descricao||'Cardápio digital';
+      el = document.getElementById('meta-tempo');  if(el) el.textContent = est.tempo_entrega||'30-45 min';
+      el = document.getElementById('estab-endereco-txt'); if(el) el.textContent = est.endereco||'';
 
       // Entrega / Retirada
       var temEnt = est.faz_entrega !== false;
       var temRet = est.faz_retirada !== false;
-      var btnEnt = document.getElementById('btn-entrega');
-      var btnRet = document.getElementById('btn-retirada');
-      if(btnEnt) btnEnt.style.display = temEnt ? '' : 'none';
-      if(btnRet) btnRet.style.display = temRet ? '' : 'none';
+      el = document.getElementById('btn-entrega');  if(el) el.style.display = temEnt ? '' : 'none';
+      el = document.getElementById('btn-retirada'); if(el) el.style.display = temRet ? '' : 'none';
       if(!temEnt && temRet) selecionarOpcao('retirada');
       if(temEnt && !temRet) selecionarOpcao('entrega');
+      el = document.getElementById('meta-entrega-wrap2');
+      if(el) el.textContent = (temEnt && temRet) ? '🛵 Entrega e retirada'
+        : temEnt ? '🛵 Entrega disponível'
+        : temRet ? '🏃 Apenas retirada' : 'ⓘ Consulte a loja';
 
-      // Atualiza texto de entrega no header
-      var ew2 = document.getElementById('meta-entrega-wrap2');
-      if(ew2) {
-        ew2.textContent = (temEnt && temRet) ? '🛵 Entrega e retirada'
-          : (temEnt)  ? '🛵 Entrega disponível'
-          : (temRet)  ? '🏃 Apenas retirada'
-          : 'ⓘ Consulte a loja';
-      }
+      // Cor
+      var cor = normalizarCor(est.cor_primaria || '#C0392B');
+      aplicarCorPrimaria(cor);
 
-      // Atualiza endereço para retirada
-      var endTxt = document.getElementById('estab-endereco-txt');
-      if(endTxt) endTxt.textContent = est.endereco || 'Endereço não informado';
-
-      // Cor primária
-      // Aplica cor base primeiro
-      aplicarCorPrimaria(est.cor_primaria || '#C0392B');
-      // Aplica capa por cima (tem precedência sobre a cor)
+      // Capa — só aplica se mudou
       var hdr = document.querySelector('.header');
-      if (hdr) {
-        if (est.capa_tipo === 'imagem' && est.capa_url) {
+      if (!hdr) return;
+      var novaUrl = (est.capa_tipo === 'imagem' && est.capa_url) ? est.capa_url : null;
+      if (novaUrl !== _capaAtual) {
+        _capaAtual = novaUrl;
+        if (novaUrl) {
           var pos = est.capa_pos || 'center center';
-          hdr.style.cssText = hdr.style.cssText; // preserva outros estilos
-          var capaUrlFinal = est.capa_url + (est.capa_url.includes('?') ? '&' : '?') + 'v=' + (est.updated_at||Date.now()).toString().slice(-6);
-          hdr.style.setProperty('background-image', 'url(' + capaUrlFinal + ')', 'important');
-          hdr.style.setProperty('background-size',     'cover',                    'important');
-          hdr.style.setProperty('background-position', pos,                        'important');
-          hdr.style.setProperty('background-repeat',   'no-repeat',                'important');
+          hdr.style.backgroundImage    = 'url(' + novaUrl + '?v=' + Date.now() + ')';
+          hdr.style.backgroundSize     = 'cover';
+          hdr.style.backgroundPosition = pos;
+          hdr.style.backgroundRepeat   = 'no-repeat';
           var ov = document.getElementById('header-overlay');
           if (!ov) {
             ov = document.createElement('div');
             ov.id = 'header-overlay';
-            ov.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(160deg,rgba(0,0,0,0.6) 0%,rgba(0,0,0,0.3) 100%)';
+            ov.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(160deg,rgba(0,0,0,0.55)0%,rgba(0,0,0,0.25)100%)';
             hdr.insertBefore(ov, hdr.firstChild);
           }
         } else {
-          // Sem imagem — usa cor (só remove se tinha imagem antes)
-          if (hdr.style.backgroundImage) {
-            hdr.style.removeProperty('background-image');
-            hdr.style.removeProperty('background-size');
-            hdr.style.removeProperty('background-position');
-            var ov2 = document.getElementById('header-overlay');
-            if (ov2) ov2.remove();
-          }
+          hdr.style.backgroundImage = '';
+          var ov2 = document.getElementById('header-overlay');
+          if (ov2) ov2.remove();
         }
+      }
+
+      // Logo
+      var lw = document.getElementById('logo-wrap');
+      if (lw) {
+        if (est.logo_url) lw.innerHTML = '<img src="'+est.logo_url+'" style="width:100%;height:100%;object-fit:cover">';
+        else { var le=document.getElementById('logo-emoji'); if(le) le.textContent=(est.nome||'L').charAt(0).toUpperCase(); }
       }
 
       // Logo
@@ -1021,6 +1018,14 @@
     }
 
     // Aplica cor do estabelecimento
+    function normalizarCor(cor) {
+      if (!cor) return '#C0392B';
+      if (cor.startsWith('#')) return cor;
+      var m = cor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+      if (m) return '#' + [m[1],m[2],m[3]].map(function(n){ return (+n).toString(16).padStart(2,'0'); }).join('');
+      return '#C0392B';
+    }
+
     function aplicarCorPrimaria(cor) {
       // CSS vars globais
       document.documentElement.style.setProperty('--red', cor);
