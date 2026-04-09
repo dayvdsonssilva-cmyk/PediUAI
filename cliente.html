@@ -62,7 +62,6 @@
     .story-thumb img, .story-thumb video { width: 100%; height: 100%; object-fit: cover; }
     .story-thumb video { background: #1a1a1a; }
     .story-thumb .video-thumb-img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover; }
-    .story-thumb .play-icon { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;pointer-events:none; }
     .story-timer { position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; font-size: 0.58rem; font-weight: 700; color: #fff; background: rgba(0,0,0,0.45); padding: 2px 0; }
 
     /* ── ABAS ── */
@@ -563,7 +562,7 @@ async function carregarFresquinho() {
     const rest = new Date(f.expires_at) - new Date();
     const h = Math.floor(rest/3600000), mn = Math.floor((rest%3600000)/60000);
     const thumbContent = f.tipo === 'video'
-      ? `<video src="${f.url}" muted playsinline loop preload="metadata" style="width:100%;height:100%;object-fit:cover"></video><div class="play-icon">▶️</div>`
+      ? `<video src="${f.url}" muted playsinline loop preload="metadata" style="width:100%;height:100%;object-fit:cover;background:#000"></video>`
       : `<img src="${f.url}" alt="" style="width:100%;height:100%;object-fit:cover">`;
     return `<div class="story-thumb" data-url="${f.url}" data-tipo="${f.tipo||'foto'}" onclick="abrirStory('${f.url}','${f.tipo||'foto'}')">
       ${thumbContent}
@@ -706,12 +705,13 @@ function cardProdutoHTML(p) {
       ${p.foto_url
         ? `<img src="${p.foto_url}" alt="${p.nome}" loading="lazy">`
         : `<div class="produto-emoji-bg">${p.emoji||'🍔'}</div>`}
-      ${p.promocao ? '<div class="promo-badge">🔥 PROMO</div>' : ''}
+
     </div>
     <div class="produto-body">
       <div>
         <div class="produto-cat">${p.categoria||''}</div>
-        <div class="produto-nome">${p.nome}</div>
+        ${p.promocao ? `<span style="display:inline-block;background:#fff3f0;color:var(--red);font-size:0.6rem;font-weight:800;padding:2px 8px;border-radius:50px;border:1px solid rgba(192,57,43,0.15);margin-bottom:3px">🔥 PROMOÇÃO</span>` : ''}
+      <div class="produto-nome">${p.nome}</div>
         <div class="produto-desc">${(p.descricao||'').slice(0,80)}${p.descricao?.length>80?'...':''}</div>
       </div>
       <div class="produto-footer">
