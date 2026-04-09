@@ -331,9 +331,10 @@ async function renderCardapio() {
           ? `<img class="item-img" src="${p.foto_url}" alt="${p.nome}">`
           : `<div class="item-emoji-bg">${p.emoji || '🍔'}</div>`}
         <span class="item-disponivel">${p.disponivel ? 'Disponível' : 'Indisponível'}</span>
-        ${p.promocao ? `<span class="item-promo-badge">🔥 Promoção</span>` : ''}
+
       </div>
       <div class="item-body">
+        ${p.promocao ? `<span style="display:inline-block;background:#fff3f0;color:var(--red);font-size:0.6rem;font-weight:800;padding:2px 8px;border-radius:50px;border:1px solid rgba(192,57,43,0.2);margin-bottom:4px">🔥 PROMOÇÃO</span>` : ''}
         <div class="item-categoria">${p.categoria || 'SEM CATEGORIA'}</div>
         <div class="item-nome">${p.nome}</div>
         <div class="item-desc-text">${p.descricao || ''}</div>
@@ -419,20 +420,23 @@ function renderFotosGrid() {
     return `
     <div class="foto-thumb-wrap" id="foto-wrap-${i}">
       <!-- Preview grande com drag -->
-      <div style="position:relative;width:100%;height:160px;border-radius:12px;overflow:hidden;background:#f0ebe4;cursor:grab;border:2px solid var(--border);margin-bottom:6px"
-           id="foto-drag-${i}"
-           onmousedown="iniciarDragFoto(event,${i})"
-           ontouchstart="iniciarDragFoto(event,${i})">
+      <!-- Preview grande estilo crop da logo -->
+      <div style="position:relative;width:100%;aspect-ratio:1/1;max-height:280px;border-radius:14px;overflow:hidden;background:#f0ebe4;border:2px solid var(--border);margin-bottom:8px;touch-action:none"
+           id="foto-drag-${i}">
+        <!-- Imagem draggável -->
         <img src="${url}" id="foto-img-${i}" draggable="false"
-             style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:${px}% ${py}%;pointer-events:none">
-        ${i===0?`<div style="position:absolute;top:6px;left:6px;background:var(--red);color:#fff;font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:50px">PRINCIPAL</div>`:''}
-        <!-- Minimap -->
-        <div style="position:absolute;bottom:8px;right:8px;width:44px;height:44px;border-radius:8px;background:rgba(0,0,0,0.55);overflow:hidden;border:1.5px solid rgba(255,255,255,0.3)">
-          <img src="${url}" style="width:100%;height:100%;object-fit:cover;opacity:0.7">
-          <div id="foto-pin-${i}" style="position:absolute;width:8px;height:8px;background:#fff;border-radius:50%;border:1.5px solid var(--red);transform:translate(-50%,-50%);left:${px}%;top:${py}%;transition:left 0.1s,top 0.1s"></div>
+             style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:${px}% ${py}%;pointer-events:none;user-select:none">
+        <!-- Badge principal -->
+        ${i===0?`<div style="position:absolute;top:10px;left:10px;background:var(--red);color:#fff;font-size:0.65rem;font-weight:800;padding:3px 10px;border-radius:50px;z-index:2">PRINCIPAL</div>`:''}
+        <!-- Instrução centralizada -->
+        <div style="position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;pointer-events:none">
+          <div style="background:rgba(0,0,0,0.5);color:#fff;font-size:0.65rem;font-weight:600;padding:4px 12px;border-radius:50px;backdrop-filter:blur(4px)">✋ Arraste para ajustar</div>
         </div>
-        <!-- Instrução -->
-        <div style="position:absolute;bottom:8px;left:8px;font-size:0.58rem;color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.45);padding:2px 7px;border-radius:50px">✋ Arraste para enquadrar</div>
+        <!-- Minimap canto inferior direito -->
+        <div style="position:absolute;bottom:10px;right:10px;width:48px;height:48px;border-radius:8px;background:rgba(0,0,0,0.6);overflow:hidden;border:2px solid rgba(255,255,255,0.4);z-index:2">
+          <img src="${url}" style="width:100%;height:100%;object-fit:cover;opacity:0.75">
+          <div id="foto-pin-${i}" style="position:absolute;width:9px;height:9px;background:#fff;border-radius:50%;border:2px solid var(--red);transform:translate(-50%,-50%);left:${px}%;top:${py}%;box-shadow:0 1px 4px rgba(0,0,0,0.5)"></div>
+        </div>
       </div>
       <div style="display:flex;justify-content:flex-end">
         <button onclick="removerFotoItem(${i})" style="background:none;border:1px solid #ddd;color:#aaa;padding:4px 12px;border-radius:8px;font-size:0.72rem;font-weight:600;cursor:pointer">🗑 Remover</button>
@@ -453,13 +457,14 @@ let _fotoDrag = { ativo:false, idx:-1, startX:0, startY:0 };
 
 function iniciarDragFoto(event, i, apenasSetup) {
   const area = $(`foto-drag-${i}`); if (!area) return;
-  if (apenasSetup) {
-    // Apenas configura eventos
-    area.onmousedown  = e => _startDragFoto(e, i);
-    area.ontouchstart = e => _startDragFoto(e, i);
-    return;
-  }
-  _startDragFoto(event, i);
+  // Sempre configura via addEventListener (funciona melhor no mobile)
+  area.removeEventListener('mousedown',  area._onMD);
+  area.removeEventListener('touchstart', area._onTS);
+  area._onMD = e => _startDragFoto(e, i);
+  area._onTS = e => { e.preventDefault(); _startDragFoto(e, i); };
+  area.addEventListener('mousedown',  area._onMD);
+  area.addEventListener('touchstart', area._onTS, { passive:false });
+  if (!apenasSetup && event) _startDragFoto(event, i);
 }
 
 function _startDragFoto(e, i) {
