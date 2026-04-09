@@ -1004,8 +1004,9 @@ window.previewCapa = function(event) {
 window._uploadCapaSeNecessario = async function(estabId) {
   if (!window._capaFile) return window._capaUrl;
   const ext  = window._capaFile.name.split('.').pop();
-  const path = `${estabId}/capa.${ext}`;
-  const { error } = await getSupa().storage.from('fotos').upload(path, window._capaFile, { upsert: true });
+  // Usa timestamp no nome para forçar nova URL (sem cache)
+  const path = `${estabId}/capa_${Date.now()}.${ext}`;
+  const { error } = await getSupa().storage.from('fotos').upload(path, window._capaFile, { upsert: false });
   if (error) { showToast('Erro no upload da capa: ' + error.message, 'error'); return null; }
   const url = getSupa().storage.from('fotos').getPublicUrl(path).data.publicUrl;
   window._capaUrl  = url;
