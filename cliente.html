@@ -2,18 +2,29 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="color-scheme" content="only light">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
   <title>Cardápio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    /* ── FORÇA MODO CLARO ── */
+    :root { color-scheme: only light; }
+    @media (prefers-color-scheme: dark) { :root { color-scheme: only light; } }
+
     /* ── RESET ── */
+    html { touch-action: pan-y; }
+    body { touch-action: pan-y; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html { scroll-behavior: smooth; }
     body { font-family: 'Poppins', sans-serif; background: #f0e9e0; color: #1a1a1a; max-width: 540px; margin: 0 auto; min-height: 100vh; position: relative; overflow-x: hidden; }
 
     /* ── VARIÁVEIS ── */
-    :root { --red: #C0392B; --red2: #a93226; --bg: #f0e9e0; --card: #fff; --border: #ede8e0; --text: #1a1a1a; --muted: #888; }
+    :root { --red: #C0392B; --red2: #a93226; --bg: #f0e9e0; --card: #fff; --border: #ede8e0; --text: #1a1a1a; --muted: #888; color-scheme: only light; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #f0e9e0 !important; --card: #fff !important; --text: #1a1a1a !important; --muted: #888 !important; --border: #ede8e0 !important; }
+      body { background: #f0e9e0 !important; color: #1a1a1a !important; }
+    }
 
     /* ── HEADER ── */
     #main-header {
@@ -171,14 +182,12 @@
     #banner-fechada { display: none; background: rgba(0,0,0,0.8); color: #fff; text-align: center; padding: 16px; font-size: 0.9rem; font-weight: 700; }
     #banner-fechada.show { display: block; }
 
-    /* ── WHATSAPP SUPORTE ── */
-    #btn-suporte { position: fixed; bottom: 82px; right: 16px; z-index: 99; background: #25d366; border-radius: 50%; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(37,211,102,0.45); text-decoration: none; }
 
     /* ── RESPONSIVO PC ── */
     @media (min-width: 540px) {
       body { box-shadow: 0 0 60px rgba(0,0,0,0.12); }
       #fab { right: calc(50% - 270px + 20px); }
-      #btn-suporte { right: calc(50% - 270px + 16px); }
+  
       #carr-bg, .modal-bg { background: rgba(0,0,0,0.6); }
     }
   </style>
@@ -233,13 +242,9 @@
 
 <!-- FAB -->
 <button id="fab" onclick="abrirCarrinho()">
-  🛒 Ver sacola <div id="fab-count">0</div>
+  Ver sacola <div id="fab-count">0</div>
 </button>
 
-<!-- SUPORTE -->
-<a id="btn-suporte" href="#" target="_blank" title="Falar com suporte PEDIWAY">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.554 4.118 1.523 5.85L0 24l6.335-1.509A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.65-.49-5.188-1.346l-.372-.216-3.76.896.944-3.663-.237-.388A9.937 9.937 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-</a>
 
 <!-- MODAL PRODUTO -->
 <div class="modal-bg" id="modal-prod" onclick="if(event.target===this)fecharModal()">
@@ -837,9 +842,6 @@ async function init() {
 
   renderPedidosCliente();
 
-  // Botão suporte
-  const btnSup = $('btn-suporte');
-  if (btnSup) btnSup.href = 'https://wa.me/5500000000000?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20PEDIWAY';
 }
 
 init();
