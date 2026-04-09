@@ -230,48 +230,43 @@
 
         <!-- Capa do cardápio -->
         <div class="form-group-light">
-          <label>Capa do cardápio</label>
-          <p style="font-size:0.75rem;color:#aaa;margin-bottom:10px">Aparece atrás do nome e logo no cardápio dos clientes</p>
-          <div style="display:flex;gap:10px;margin-bottom:14px">
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;font-weight:600;color:#555">
-              <input type="radio" name="capa-tipo" value="cor" checked onchange="alternarTipoCapa('cor')" style="accent-color:var(--red)">
-              Cor sólida
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;font-weight:600;color:#555">
-              <input type="radio" name="capa-tipo" value="imagem" onchange="alternarTipoCapa('imagem')" style="accent-color:var(--red)">
-              Imagem de fundo
-            </label>
-          </div>
-          <!-- Preview da capa -->
-          <div id="capa-preview" style="width:100%;height:100px;border-radius:12px;background:var(--red);position:relative;overflow:hidden;margin-bottom:10px;transition:all 0.3s">
+          <label>Imagem de capa do cardápio</label>
+          <p style="font-size:0.75rem;color:#aaa;margin-bottom:10px">Aparece atrás do nome e logo. Se não tiver imagem, usa a cor escolhida abaixo.</p>
+
+          <!-- Preview grande e interativo -->
+          <div id="capa-preview" onclick="document.getElementById('capa-input').click()"
+            style="width:100%;height:140px;border-radius:14px;background:var(--red);position:relative;overflow:hidden;margin-bottom:12px;cursor:pointer;transition:all 0.3s;border:2px dashed rgba(0,0,0,0.1)">
             <div id="capa-preview-img-wrap" style="display:none;position:absolute;inset:0">
-              <img id="capa-preview-img" style="width:100%;height:100%;object-fit:cover;filter:blur(3px) brightness(0.6)">
+              <img id="capa-preview-img" style="width:100%;height:100%;object-fit:cover;transition:object-position 0.2s">
+            </div>
+            <div id="capa-placeholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:rgba(255,255,255,0.8)">
+              <span style="font-size:1.8rem">📷</span>
+              <span style="font-size:0.78rem;font-weight:600">Clique para adicionar capa</span>
             </div>
           </div>
-          <!-- Input imagem da capa -->
-          <div id="capa-imagem-input" style="display:none;flex-direction:column;gap:12px">
-            <button onclick="document.getElementById('capa-input').click()"
-              style="background:#f0ebe4;border:1.5px solid var(--border);padding:9px 18px;border-radius:8px;font-family:Poppins,sans-serif;font-size:0.85rem;font-weight:600;color:#555;cursor:pointer;width:fit-content">
-              📷 Escolher imagem de fundo
+          <input type="file" id="capa-input" accept="image/*" style="display:none" onchange="previewCapa(event)">
+
+          <!-- Controles de posição — aparecem após escolher imagem -->
+          <div id="capa-pos-controls" style="display:none;flex-direction:column;gap:10px;background:#faf6f1;border-radius:10px;padding:12px;margin-bottom:8px">
+            <div style="display:flex;gap:12px;align-items:center">
+              <span style="font-size:1.2rem">↔</span>
+              <div style="flex:1">
+                <label style="font-size:0.72rem;font-weight:600;color:#888;display:block;margin-bottom:4px">Horizontal</label>
+                <input type="range" id="capa-pos-x" min="0" max="100" value="50" style="width:100%;accent-color:var(--red)" oninput="ajustarPosicaoCapa()">
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center">
+              <span style="font-size:1.2rem">↕</span>
+              <div style="flex:1">
+                <label style="font-size:0.72rem;font-weight:600;color:#888;display:block;margin-bottom:4px">Vertical</label>
+                <input type="range" id="capa-pos-y" min="0" max="100" value="50" style="width:100%;accent-color:var(--red)" oninput="ajustarPosicaoCapa()">
+              </div>
+            </div>
+            <button onclick="removerCapa()" style="background:none;border:1px solid #ddd;color:#aaa;padding:6px 14px;border-radius:8px;font-family:Poppins,sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;width:fit-content">
+              🗑 Remover imagem
             </button>
-            <input type="file" id="capa-input" accept="image/*" style="display:none" onchange="previewCapa(event)">
-            <!-- Ajuste de posição -->
-            <div id="capa-pos-controls" style="display:flex;flex-direction:column;gap:8px">
-              <div>
-                <label style="font-size:0.75rem;font-weight:600;color:#888;display:block;margin-bottom:4px">Posição horizontal</label>
-                <input type="range" id="capa-pos-x" min="0" max="100" value="50"
-                  style="width:100%;accent-color:var(--red)"
-                  oninput="ajustarPosicaoCapa()">
-              </div>
-              <div>
-                <label style="font-size:0.75rem;font-weight:600;color:#888;display:block;margin-bottom:4px">Posição vertical</label>
-                <input type="range" id="capa-pos-y" min="0" max="100" value="50"
-                  style="width:100%;accent-color:var(--red)"
-                  oninput="ajustarPosicaoCapa()">
-              </div>
-              <p style="font-size:0.72rem;color:#aaa">Arraste os controles para ajustar o enquadramento da capa</p>
-            </div>
           </div>
+          <p style="font-size:0.72rem;color:#aaa">Arraste os controles para enquadrar. Sem imagem, o fundo usa a cor abaixo.</p>
         </div>
 
         <!-- Status loja -->
