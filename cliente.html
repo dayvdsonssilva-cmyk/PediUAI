@@ -498,7 +498,7 @@
         // ── POLLING ESTAB a cada 8s ──────────────────────────
         setInterval(function() {
           supa.from('estabelecimentos')
-            .select('nome,descricao,cor_primaria,logo_url,aberto,faz_entrega,faz_retirada,tempo_entrega,endereco,whatsapp')
+            .select('*')
             .eq('slug', slug)
             .maybeSingle()
             .then(function(res) {
@@ -795,13 +795,28 @@
         pollingWhats = whatsLimpo;
         pollingEstabId = estab.id;
         const peds=JSON.parse(localStorage.getItem('pw_peds_'+slug)||'[]');
-        peds.unshift({id:pedidoId, itens, total, status:'novo', endereco:enderecoEntrega});
+        peds.unshift({id:pedidoId, itens, total, status:'novo', endereco:enderecoEntrega, cliente_whats:whatsLimpo});
         localStorage.setItem('pw_peds_'+slug, JSON.stringify(peds.slice(0,20)));
+        // Garante polling ativo
+        if (!pollingId) {
+          pollingWhats = whatsLimpo;
+          pollingId = setInterval(rodarPolling, 5000);
+        }
         carrinho=[];atualizarFab();fecharCarrinho();
         // Inicia polling usando whatsapp
-        // Inicia polling de pedidos (whats vazio por enquanto, será preenchido ao finalizar pedido)
+        // Inicia polling de pedidos
         pollingEstabId = estab ? estab.id : null;
-        pollingWhats = '';
+        // Tenta recuperar whats do último pedido salvo
+        var pedsLocal = JSON.parse(localStorage.getItem('pw_peds_' + slug) || '[]');
+        if (pedsLocal.length && pedsLocal[0].cliente_whats) {
+          pollingWhats = pedsLocal[0].cliente_whats;
+        } else {
+          pollingWhats = '';
+        }
+        // Inicia polling imediatamente se tiver whats
+        if (pollingWhats && pollingEstabId) {
+          setInterval(rodarPolling, 5000);
+        }
         iniciarJogo();
         carregarMeusPedidos();
       }catch(e){ console.error('Erro pedido:',e); alert('Erro ao enviar pedido: '+(e?.message||e?.details||JSON.stringify(e)||'Tente novamente.')); }
@@ -849,16 +864,16 @@
       document.getElementById('ped-lista').innerHTML=peds.map(p=>{
         const isEntrega = p.endereco && p.endereco !== 'Retirada no local';
         const STATUS_LABEL = {
-          novo:     '⏳ Aguardando',
-          preparo:  '🔥 Aceito — preparando',
+          novo:     '⏳ Aguardando confirmação',
+          preparo:  '🔥 Pedido aceito — preparando',
           pronto:   isEntrega ? '🛵 Saiu para entrega!' : '✅ Pronto para retirada!',
-          recusado: '❌ Não confirmado',
+          recusado: '❌ Pedido não confirmado',
         };
         const STATUS_DESC = {
-          novo:     'Aguardando confirmação da loja. Isso leva poucos segundos.',
-          preparo:  'Ótima notícia! Seu pedido foi aceito e está sendo preparado.',
-          pronto:   isEntrega ? 'Seu pedido está a caminho! Fique de olho.' : 'Pode vir buscar — seu pedido está pronto!',
-          recusado: 'A loja não pôde confirmar este pedido. Tente novamente.',
+          novo:     'Seu pedido chegou! Aguardando a loja confirmar.',
+          preparo:  'A loja aceitou seu pedido e já está preparando tudo!',
+          pronto:   isEntrega ? 'Seu pedido saiu para entrega. Logo chega!' : 'Pronto! Já pode vir buscar seu pedido.',
+          recusado: 'A loja não pôde atender este pedido agora.',
         };
         return `
         <div class="ped-card">
@@ -957,31 +972,30 @@
       if(endTxt) endTxt.textContent = est.endereco || 'Endereço não informado';
 
       // Cor primária
+      // Aplica cor base primeiro
       aplicarCorPrimaria(est.cor_primaria || '#C0392B');
-      // Aplica capa (imagem ou cor)
+      // Aplica capa por cima (tem precedência sobre a cor)
       var hdr = document.querySelector('.header');
       if (hdr) {
         if (est.capa_tipo === 'imagem' && est.capa_url) {
           var pos = est.capa_pos || 'center center';
-          hdr.style.backgroundImage    = 'url(' + est.capa_url + ')';
-          hdr.style.backgroundSize     = 'cover';
-          hdr.style.backgroundPosition = pos;
-          hdr.style.backgroundRepeat   = 'no-repeat';
-          // Overlay: escurece + blur sutil para legibilidade
+          hdr.style.cssText = hdr.style.cssText; // preserva outros estilos
+          hdr.style.setProperty('background-image',    'url(' + est.capa_url + ')', 'important');
+          hdr.style.setProperty('background-size',     'cover',                    'important');
+          hdr.style.setProperty('background-position', pos,                        'important');
+          hdr.style.setProperty('background-repeat',   'no-repeat',                'important');
           var ov = document.getElementById('header-overlay');
           if (!ov) {
             ov = document.createElement('div');
             ov.id = 'header-overlay';
-            ov.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;';
+            ov.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(160deg,rgba(0,0,0,0.6) 0%,rgba(0,0,0,0.3) 100%)';
             hdr.insertBefore(ov, hdr.firstChild);
           }
-          // Degradê escuro sobreposto à imagem
-          ov.style.background = 'linear-gradient(160deg,rgba(0,0,0,0.65) 0%,rgba(0,0,0,0.35) 100%)';
-          ov.style.backdropFilter = 'blur(1px)';
         } else {
-          // Cor sólida com degradê baseado na cor escolhida
-          hdr.style.backgroundImage = '';
-          hdr.style.backgroundPosition = '';
+          // Cor sólida — remove imagem de fundo
+          hdr.style.removeProperty('background-image');
+          hdr.style.removeProperty('background-size');
+          hdr.style.removeProperty('background-position');
           var ov2 = document.getElementById('header-overlay');
           if (ov2) ov2.remove();
         }
@@ -1064,6 +1078,11 @@
     }
 
     async function rodarPolling() {
+      // Tenta pegar whats do localStorage se ainda não tiver
+      if (!pollingWhats) {
+        var pl = JSON.parse(localStorage.getItem('pw_peds_' + slug) || '[]');
+        if (pl.length && pl[0].cliente_whats) pollingWhats = pl[0].cliente_whats;
+      }
       if (!pollingWhats || !pollingEstabId) return;
       try {
         var whatsLimpo = pollingWhats.replace(/\D/g,'');
