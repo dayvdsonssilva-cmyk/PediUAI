@@ -504,7 +504,7 @@ function renderEmojiGrid() {
 function renderCores(corAtiva) {
   const grid = document.getElementById('cores-grid'); if (!grid) return;
   grid.innerHTML = CORES.map(cor=>`
-    <div class="cor-opcao ${cor===corAtiva?'ativa':''}" style="background:${cor}" onclick="selecionarCor('${cor}',this)" title="${cor}"></div>`).join('');
+    <div class="cor-opcao ${cor===corAtiva?'ativa':''}" style="background:${cor}" data-hex="${cor}" onclick="selecionarCor('${cor}',this)" title="${cor}"></div>`).join('');
   aplicarCorDash(corAtiva);
 }
 
@@ -522,11 +522,11 @@ function aplicarCorDash(cor) {
   });
 }
 
-function hexToRgba(hex, alphá) {
+function hexToRgba(hex, alpha) {
   const r = parseInt(hex.slice(1,3),16);
   const g = parseInt(hex.slice(3,5),16);
   const b = parseInt(hex.slice(5,7),16);
-  return `rgba(${r},${g},${b},${alphá})`;
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 window.selecionarCor = function(cor, el) {
@@ -885,7 +885,7 @@ export async function salvarConfig(){
   const aberto=document.getElementById('cfg-aberto')?.checked;
   const faz_entrega=document.getElementById('cfg-entrega')?.checked;
   const faz_retirada=document.getElementById('cfg-retirada')?.checked;
-  const corAtiva=document.querySelector('.cor-opcao.ativa')?.style.background||estab.cor_primaria||'#C0392B';
+  const corAtiva=document.querySelector('.cor-opcao.ativa')?.dataset.hex||estab.cor_primaria||'#C0392B';
 
   if(!nome||!slug)return showToast('Preenchá nome e link.','error');
 
