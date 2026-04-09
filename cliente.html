@@ -716,27 +716,29 @@ window.adicionarDiretoId = function(id) { const p = _prodMap.get(id); if(p) adic
 window.abrirProduto = function(p) {
   prodAtual = p; qtdAtual = 1; $('modal-qtd').textContent = 1;
   const media = $('modal-prod-media');
-  // fotos_urls é array de fotos extras (futuro), por ora usa foto_url
-  const fotos = (p.fotos_urls && p.fotos_urls.length) ? p.fotos_urls : (p.foto_url ? [p.foto_url] : []);
+  const fotos  = (p.fotos_urls && p.fotos_urls.length) ? p.fotos_urls : (p.foto_url ? [p.foto_url] : []);
   if (fotos.length) {
     let fIdx = 0;
-    const renderModalImg = () => {
+    const dots = () => fotos.map((_,i) =>
+      `<div style="width:7px;height:7px;border-radius:50%;background:${i===fIdx?'#fff':'rgba(255,255,255,0.4)'};transition:background 0.2s"></div>`
+    ).join('');
+    const render = () => {
       media.innerHTML = `
-        <div style="position:relative">
-          <img class="modal-img" id="modal-foto-atual" src="${fotos[fIdx]}" alt="${p.nome}" style="cursor:zoom-in" onclick="abrirImagemFull('${fotos[fIdx]}')">
+        <div style="position:relative;background:#000">
+          <img class="modal-img" src="${fotos[fIdx]}" alt="${p.nome}" style="cursor:zoom-in;display:block"
+               onclick="abrirImagemFull('${fotos[fIdx]}')">
           ${fotos.length > 1 ? `
-            <button onclick="mudaFotoModal(-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer;z-index:5">‹</button>
-            <button onclick="mudaFotoModal(1)"  style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer;z-index:5">›</button>
-            <div style="position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:5px">
-              ${fotos.map((_,i)=>`<div style="width:6px;height:6px;border-radius:50%;background:${i===fIdx?'#fff':'rgba(255,255,255,0.4)'}"></div>`).join('')}
-            </div>` : ''}
+            <button onclick="_modalFoto(-1)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.55);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.3rem;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center">‹</button>
+            <button onclick="_modalFoto(1)"  style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.55);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.3rem;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center">›</button>
+            <div id="modal-dots" style="position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px">${dots()}</div>` : ''}
         </div>`;
     };
-    window.mudaFotoModal = function(dir) {
+    window._modalFoto = function(dir) {
       fIdx = (fIdx + dir + fotos.length) % fotos.length;
-      renderModalImg();
+      const img = media.querySelector('img'); if (img) img.src = fotos[fIdx];
+      const d = $('modal-dots'); if (d) d.innerHTML = dots();
     };
-    renderModalImg();
+    render();
   } else {
     media.innerHTML = `<div class="modal-emoji">${p.emoji||'🍔'}</div>`;
   }
