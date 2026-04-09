@@ -442,6 +442,14 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 }
 
 
+/* ── BOTÕES TOUCH MOBILE ── */
+@media(max-width:600px) {
+  .btn-icon, .btn-aceitar, .btn-recusar, .btn-ver-ped,
+  .btn-ped-aceitar, .btn-ped-recusar, .btn-ped-imprimir,
+  .btn-primary, .btn-secondary, .btn-ghost,
+  .tab-btn { min-height: 44px; }
+}
+
 /* ═══ OTIMIZAÇÕES MOBILE DASHBOARD ════════════════════════════ */
 @media(max-width:600px) {
   .pedido-novo-card { width:calc(50% - 8px); min-width:140px; }
