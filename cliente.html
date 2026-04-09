@@ -706,12 +706,12 @@ function cardProdutoHTML(p) {
         ? `<img src="${p.foto_url}" alt="${p.nome}" loading="lazy">`
         : `<div class="produto-emoji-bg">${p.emoji||'🍔'}</div>`}
 
+      ${p.promocao ? '<div class="promo-badge">🔥 PROMO</div>' : ''}
     </div>
     <div class="produto-body">
       <div>
         <div class="produto-cat">${p.categoria||''}</div>
-        ${p.promocao ? `<span style="display:inline-block;background:#fff3f0;color:var(--red);font-size:0.6rem;font-weight:800;padding:2px 8px;border-radius:50px;border:1px solid rgba(192,57,43,0.15);margin-bottom:3px">🔥 PROMOÇÃO</span>` : ''}
-      <div class="produto-nome">${p.nome}</div>
+        <div class="produto-nome">${p.nome}</div>
         <div class="produto-desc">${(p.descricao||'').slice(0,80)}${p.descricao?.length>80?'...':''}</div>
       </div>
       <div class="produto-footer">
