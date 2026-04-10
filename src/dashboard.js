@@ -117,6 +117,7 @@ export async function initDashboard() {
     await renderCardapio();
     await renderFresquinho();
     await renderPedidos();
+    await carregarFinanceiro();
     iniciarRealtime();
     renderEmojiGrid();
   } else {
