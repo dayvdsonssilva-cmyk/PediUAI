@@ -128,6 +128,10 @@ function preencherConfig(estab) {
   if (cfgLink) cfgLink.textContent = `${BASE_URL}/${estab.slug}`;
   const ce = $('cfg-entrega');  if (ce) ce.checked = estab.faz_entrega  !== false;
   const cr = $('cfg-retirada'); if (cr) cr.checked = estab.faz_retirada !== false;
+  const ct = $('cfg-taxa');     if (ct) ct.value   = estab.taxa_entrega || '';
+  const cp = $('cfg-pix');      if (cp) cp.checked = estab.aceita_pix      !== false;
+  const cc = $('cfg-cartao');   if (cc) cc.checked = estab.aceita_cartao   !== false;
+  const cd = $('cfg-dinheiro'); if (cd) cd.checked = estab.aceita_dinheiro !== false;
 }
 
 function aplicarCorDash(cor) {
@@ -274,11 +278,17 @@ export async function salvarConfig() {
     // Cor — suporta gradientes
     const cor_primaria = normalizeHex(corAtiva);
 
+    const taxa_entrega   = parseFloat($('cfg-taxa')?.value)     || 0;
+    const aceita_pix     = $('cfg-pix')?.checked      !== false;
+    const aceita_cartao  = $('cfg-cartao')?.checked   !== false;
+    const aceita_dinheiro= $('cfg-dinheiro')?.checked !== false;
+
     const updates = {
       nome, slug, whatsapp: whats, descricao: desc, endereco,
       tempo_entrega: tempo, aberto, faz_entrega: entrega, faz_retirada: retirada,
       cor_primaria, logo_url,
-      capa_url: null, capa_tipo: 'cor', // capa sempre por cor
+      capa_url: null, capa_tipo: 'cor',
+      taxa_entrega, aceita_pix, aceita_cartao, aceita_dinheiro,
     };
 
     const { error } = await getSupa().from('estabelecimentos').update(updates).eq('id', estab.id);
