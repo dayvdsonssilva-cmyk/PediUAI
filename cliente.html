@@ -54,7 +54,7 @@
     #fresquinho-section { background: var(--card); padding: 14px 0 14px 16px; border-bottom: 1px solid var(--border); display: none; }
     #fresquinho-section.show { display: block; }
     .fresh-label { font-size: 0.72rem; font-weight: 700; color: var(--red); letter-spacing: 0.06em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-    .fresh-dot { width: 7px; height: 7px; background: var(--red); border-radius: 50%; animation: pulse 1.5s infinite; }
+    .fresh-dot { width: 7px; height: 7px; background: #C0392B !important; border-radius: 50%; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
     .stories-scroll { display: flex; gap: 12px; overflow-x: auto; padding-right: 16px; scrollbar-width: none; }
     .stories-scroll::-webkit-scrollbar { display: none; }
@@ -68,7 +68,7 @@
     .abas { display: flex; background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
     .aba-btn { flex: 1; padding: 13px 8px; font-family: 'Poppins',sans-serif; font-size: 0.78rem; font-weight: 700; color: var(--muted); background: none; border: none; border-bottom: 2.5px solid transparent; cursor: pointer; letter-spacing: 0.04em; text-transform: uppercase; transition: all 0.2s; }
     .aba-btn.ativa { color: var(--red); border-bottom-color: var(--red); }
-    .promo-dot { display: inline-block; width: 6px; height: 6px; background: var(--red); border-radius: 50%; margin-left: 4px; vertical-align: middle; }
+    .promo-dot { display: inline-block; width: 6px; height: 6px; background: #C0392B !important; border-radius: 50%; margin-left: 4px; vertical-align: middle; }
 
     /* ── FILTROS ── */
     .filtros-wrap { background: var(--card); padding: 10px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 43px; z-index: 40; }
@@ -319,7 +319,7 @@
 
 <!-- MODAL IMAGEM FULL -->
 <div id="modal-img-full" style="position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:400;display:none;align-items:center;justify-content:center;flex-direction:column;">
-  <button onclick="$('modal-img-full').style.display='none'" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:1.2rem;cursor:pointer;z-index:5">✕</button>
+  <button id="btn-fechar-full" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:1.3rem;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center">✕</button>
   <img id="modal-img-full-src" style="max-width:96vw;max-height:88vh;object-fit:contain;border-radius:8px;display:block">
   <div id="modal-full-controls" style="display:none;align-items:center;gap:16px;margin-top:14px">
     <button id="modal-full-prev" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:1.3rem;cursor:pointer">‹</button>
@@ -800,6 +800,19 @@ window.abrirProduto = function(p) {
 };
 window.fecharModal = function() { $('modal-prod').classList.remove('open'); prodAtual = null; };
 
+// Fecha fullscreen via listener (funciona mobile)
+document.addEventListener('DOMContentLoaded', function() {
+  const btn = document.getElementById('btn-fechar-full');
+  if (btn) btn.addEventListener('click', function() {
+    var m = document.getElementById('modal-img-full');
+    if (m) m.style.display = 'none';
+  });
+  var mFull = document.getElementById('modal-img-full');
+  if (mFull) mFull.addEventListener('click', function(e) {
+    if (e.target === mFull) mFull.style.display = 'none';
+  });
+});
+
 window.abrirImagemFull = function(url, fotosArr, startIdx) {
   const m = $('modal-img-full'); if (!m) return;
   const img = $('modal-img-full-src');
@@ -1003,6 +1016,23 @@ window.finalizarPedido = async function() {
 };
 
 // ── MEUS PEDIDOS (cliente) ────────────────────────────────────────────────────
+function gerarLinkWpp(p, pedId4) {
+  if (!estab?.whatsapp) return '#';
+  const itensStr = Array.isArray(p.itens) ? p.itens.map(i => i.qtd + 'x ' + i.nome).join(', ') : '';
+  const pag = p.pagamento ? ('Pagamento: ' + p.pagamento.toUpperCase()) : '';
+  const msg = [
+    'Olá! Fiz um pedido pelo PEDIWAY 🎉',
+    'Pedido #' + pedId4,
+    'Nome: ' + (p.cliente_nome || ''),
+    'Telefone: ' + (p.cliente_whats || ''),
+    'Entrega: ' + (p.endereco || 'Retirada no local'),
+    'Itens: ' + itensStr,
+    pag,
+    'Total: R$ ' + Number(p.total || 0).toFixed(2).replace('.', ','),
+  ].filter(Boolean).join('%0A');
+  return 'https://wa.me/55' + estab.whatsapp.replace(/\D/g,'') + '?text=' + msg;
+}
+
 function renderPedidosCliente() {
   const lista = $('lista-pedidos'); if (!lista) return;
   const peds  = JSON.parse(localStorage.getItem('pw_peds_' + slug) || '[]');
@@ -1029,7 +1059,7 @@ function renderPedidosCliente() {
       <div class="ped-total">${fmt(p.total)}</div>
       <div class="ped-actions">
         <button class="btn-ped-det" onclick="verDetalhesPedido(${JSON.stringify(p).replace(/"/g,'&quot;')})">Ver detalhes</button>
-        ${estab?.whatsapp ? `<a class="btn-ped-wpp" href="https://wa.me/55${estab.whatsapp.replace(/\D/g,'')}?text=Olá!%20Meu%20pedido%20%23${pedId4}" target="_blank">💬 Falar</a>` : ''}
+        ${estab?.whatsapp ? `<a class="btn-ped-wpp" href="${gerarLinkWpp(p, pedId4)}" target="_blank">💬 Falar</a>` : ''}
       </div>
     </div>`;
   }).join('');
