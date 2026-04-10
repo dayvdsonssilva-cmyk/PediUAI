@@ -182,11 +182,11 @@
 
   <!-- FINANCEIRO -->
   <div class="ceo-aba" id="aba-financeiro">
-    <div class="fin-periodo">
-      <button class="periodo-btn ativo" onclick="setPeriodo('hoje',this)">Hoje</button>
-      <button class="periodo-btn" onclick="setPeriodo('semana',this)">Semana</button>
-      <button class="periodo-btn" onclick="setPeriodo('mes',this)">Mês</button>
-      <button class="periodo-btn" onclick="setPeriodo('tudo',this)">Tudo</button>
+    <div class="fin-periodo" id="fin-periodo-btns">
+      <button class="periodo-btn ativo" data-periodo="hoje">Hoje</button>
+      <button class="periodo-btn" data-periodo="semana">Semana</button>
+      <button class="periodo-btn" data-periodo="mes">Mês</button>
+      <button class="periodo-btn" data-periodo="tudo">Tudo</button>
     </div>
     <div class="fin-resumo">
       <div class="fin-card"><div class="fin-label">Faturamento</div><div class="fin-val green" id="fin-fat">--</div></div>
@@ -299,7 +299,7 @@ window.irAba = (nome, btn) => {
 async function carregar() {
   const [r1, r2] = await Promise.all([
     supa.from('estabelecimentos').select('*').order('created_at',{ascending:false}),
-    supa.from('pedidos').select('*,estabelecimentos(nome,slug)').order('created_at',{ascending:false}).limit(500),
+    supa.from('pedidos').select('*,estabelecimentos(nome,slug)').order('created_at',{ascending:false}).limit(1000),
   ]);
   lojas   = r1.data || [];
   pedidos = r2.data || [];
@@ -450,6 +450,21 @@ window.verPed = id => {
 };
 
 // ── FINANCEIRO ────────────────────────────────────────────────────────────
+// Listeners dos botões de período
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('fin-periodo-btns');
+  if (container) {
+    container.addEventListener('click', e => {
+      const btn = e.target.closest('[data-periodo]');
+      if (!btn) return;
+      periodo = btn.dataset.periodo;
+      container.querySelectorAll('.periodo-btn').forEach(b => b.classList.remove('ativo'));
+      btn.classList.add('ativo');
+      renderFin(periodo);
+    });
+  }
+});
+
 window.setPeriodo = (p,btn) => {
   periodo = p;
   document.querySelectorAll('.periodo-btn').forEach(b=>b.classList.remove('ativo'));
