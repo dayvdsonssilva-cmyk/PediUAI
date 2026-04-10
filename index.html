@@ -199,10 +199,10 @@
     <div class="dash-container">
       <!-- Período -->
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
-        <button class="btn-ghost" id="fin-hoje"   onclick="setFinPeriodo('hoje',this)"   style="padding:8px 16px;border-radius:50px;font-size:0.78rem;font-weight:700;border:1.5px solid var(--border);background:var(--red);color:#fff">Hoje</button>
-        <button class="btn-ghost" id="fin-semana" onclick="setFinPeriodo('semana',this)" style="padding:8px 16px;border-radius:50px;font-size:0.78rem;font-weight:700;border:1.5px solid var(--border)">Semana</button>
-        <button class="btn-ghost" id="fin-mes"    onclick="setFinPeriodo('mes',this)"    style="padding:8px 16px;border-radius:50px;font-size:0.78rem;font-weight:700;border:1.5px solid var(--border)">Mês</button>
-        <button class="btn-ghost" id="fin-tudo"   onclick="setFinPeriodo('tudo',this)"   style="padding:8px 16px;border-radius:50px;font-size:0.78rem;font-weight:700;border:1.5px solid var(--border)">Tudo</button>
+        <button class="filtro-pill ativo" id="fin-hoje"   onclick="setFinPeriodo('hoje',this)">Hoje</button>
+        <button class="filtro-pill"       id="fin-semana" onclick="setFinPeriodo('semana',this)">Semana</button>
+        <button class="filtro-pill"       id="fin-mes"    onclick="setFinPeriodo('mes',this)">Mês</button>
+        <button class="filtro-pill"       id="fin-tudo"   onclick="setFinPeriodo('tudo',this)">Tudo</button>
       </div>
       <!-- Cards resumo -->
       <div class="stats-grid" style="margin-bottom:20px">
