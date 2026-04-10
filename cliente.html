@@ -28,9 +28,9 @@
 
     /* ── HEADER ── */
     #main-header {
-      position: relative; overflow: hidden; min-height: 200px;
+      position: relative; overflow: hidden; min-height: 210px;
       display: flex; flex-direction: column; justify-content: flex-end;
-      padding: 24px 20px 22px;
+      padding: 24px 20px 20px;
       background: var(--header-bg, linear-gradient(160deg,#1e0a02,#2e1208));
       transition: background 0.4s ease;
     }
@@ -38,14 +38,14 @@
     .header-info { position: relative; z-index: 2; }
     #logo-wrap {
       position: absolute; top: 14px; right: 14px; z-index: 3;
-      width: 110px; height: 110px; border-radius: 20px; overflow: hidden;
+      width: 130px; height: 130px; border-radius: 22px; overflow: hidden;
       background: var(--logo-bg, rgba(255,255,255,0.12));
-      border: 2.5px solid rgba(255,255,255,0.2);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      border: 3px solid rgba(255,255,255,0.25);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     }
     #logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
     #logo-emoji { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; }
-    #loja-nome { font-size: 1.6rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.1; max-width: 65%; margin-bottom: 4px; }
+    #loja-nome { font-size: 1.5rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.15; max-width: 60%; margin-bottom: 4px; word-break: break-word; }
     #loja-desc { font-size: 0.78rem; color: rgba(255,255,255,0.65); margin-bottom: 12px; }
     .loja-meta { display: flex; gap: 14px; flex-wrap: wrap; }
     .meta-item { font-size: 0.73rem; font-weight: 500; color: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 4px; }
@@ -376,8 +376,12 @@
         </div>
       </div>
       <div id="campos-entrega" class="show">
-        <label>Endereço de entrega</label>
-        <input class="carr-input" id="cli-endereco" placeholder="Rua, número, bairro...">
+        <label>Endereço de entrega *</label>
+        <input class="carr-input" id="cli-rua" placeholder="Rua / Avenida..." style="margin-bottom:8px">
+        <div style="display:flex;gap:8px">
+          <input class="carr-input" id="cli-numero" placeholder="Nº *" style="width:80px;flex-shrink:0">
+          <input class="carr-input" id="cli-complemento" placeholder="Bairro, complemento...">
+        </div>
       </div>
       <div id="campos-retirada">
         <div style="font-size:0.82rem;color:var(--muted);padding:10px;background:#f5f0eb;border-radius:10px">
@@ -930,6 +934,8 @@ window.selecionarOpcao = function(op) {
   $('btn-retirada').classList.toggle('ativo', op === 'retirada');
   $('campos-entrega').classList.toggle('show', op === 'entrega');
   $('campos-retirada').classList.toggle('show', op === 'retirada');
+  // Atualiza total com/sem taxa
+  renderCarrinho();
 };
 
 let opcaoPag = 'pix';
@@ -958,10 +964,18 @@ window.finalizarPedido = async function() {
   if (!carrinho.length) return mostrarToast('Sua sacola está vazia.', '#333');
   const nome  = $('cli-nome')?.value.trim();
   const whats = $('cli-whats')?.value.replace(/\D/g,'');
-  const endereco = opcaoEntrega === 'entrega' ? $('cli-endereco')?.value.trim() : 'Retirada no local';
+  const rua    = ($('cli-rua')?.value || '').trim();
+  const numero = ($('cli-numero')?.value || '').trim();
+  const compl  = ($('cli-complemento')?.value || '').trim();
+  const endereco = opcaoEntrega === 'entrega'
+    ? [rua, numero ? 'Nº '+numero : '', compl].filter(Boolean).join(', ')
+    : 'Retirada no local';
   if (!nome) return mostrarToast('Digite seu nome.', '#c0392b');
   if (!whats || whats.length < 10) return mostrarToast('Digite seu WhatsApp.', '#c0392b');
-  if (opcaoEntrega === 'entrega' && !endereco) return mostrarToast('Digite o endereço de entrega.', '#c0392b');
+  if (opcaoEntrega === 'entrega') {
+    if (!rua)    return mostrarToast('Digite a rua/avenida.', '#c0392b');
+    if (!numero) return mostrarToast('Digite o número da casa/apt.', '#c0392b');
+  }
 
   const btn = $('btn-finalizar');
   if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
@@ -1020,10 +1034,11 @@ function gerarLinkWpp(p, pedId4) {
   if (!estab?.whatsapp) return '#';
   const itensStr = Array.isArray(p.itens) ? p.itens.map(i => i.qtd + 'x ' + i.nome).join(', ') : '';
   const pag = p.pagamento ? ('Pagamento: ' + p.pagamento.toUpperCase()) : '';
+  const nomeCliente = p.cliente_nome || document.getElementById('cli-nome')?.value?.trim() || '';
   const msg = [
     'Olá! Fiz um pedido pelo PEDIWAY 🎉',
     'Pedido #' + pedId4,
-    'Nome: ' + (p.cliente_nome || ''),
+    'Nome: ' + nomeCliente,
     'Telefone: ' + (p.cliente_whats || ''),
     'Entrega: ' + (p.endereco || 'Retirada no local'),
     'Itens: ' + itensStr,
