@@ -119,9 +119,14 @@
     .modal-close { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 50%; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
     /* ── FAB SACOLA ── */
-    #fab { position: fixed; bottom: 24px; right: 20px; z-index: 100; background: var(--red); color: #fff; border: none; border-radius: 50px; padding: 14px 22px; font-family: 'Poppins',sans-serif; font-size: 0.9rem; font-weight: 800; cursor: pointer; box-shadow: 0 6px 24px rgba(192,57,43,0.45); display: none; align-items: center; gap: 10px; transition: transform 0.15s; }
-    #fab:active { transform: scale(0.95); }
-    #fab-count { background: #fff; color: var(--red); border-radius: 50%; width: 22px; height: 22px; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+    /* FAB fica na barra inferior fixa — não sobrepõe itens */
+    #fab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 540px; z-index: 100; padding: 10px 16px 16px; background: linear-gradient(to top, var(--bg) 70%, transparent); display: none; pointer-events: none; }
+    #fab-bar.show { display: block; }
+    #fab { width: 100%; background: var(--red); color: #fff; border: none; border-radius: 16px; padding: 15px 22px; font-family: 'Poppins',sans-serif; font-size: 1rem; font-weight: 800; cursor: pointer; box-shadow: 0 6px 24px rgba(192,57,43,0.4); display: flex; align-items: center; justify-content: space-between; pointer-events: all; transition: transform 0.12s; }
+    #fab:active { transform: scale(0.98); }
+    #fab-count { background: #fff; color: var(--red); border-radius: 50px; padding: 2px 10px; font-size: 0.82rem; font-weight: 800; }
+    /* Espaço no final da página para o FAB não cobrir o último item */
+    body { padding-bottom: 80px; }
 
     /* ── CARRINHO ── */
     #carr-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
@@ -292,9 +297,12 @@
 </div>
 
 <!-- FAB -->
-<button id="fab" onclick="abrirCarrinho()">
-  Ver sacola <div id="fab-count">0</div>
-</button>
+<div id="fab-bar">
+  <button id="fab" onclick="abrirCarrinho()">
+    <span>🛒 Ver sacola</span>
+    <span id="fab-count">0</span>
+  </button>
+</div>
 
 
 <!-- MODAL NOTINHA PEDIDO -->
@@ -348,6 +356,8 @@
       <button class="carr-close" onclick="fecharCarrinho()">✕</button>
     </div>
     <div id="carr-itens"></div>
+    <div class="carr-total-row" id="carr-subtotal-row" style="display:none"><span style="color:var(--muted);font-size:0.85rem">Subtotal</span><span style="color:var(--muted);font-size:0.85rem" id="carr-subtotal">R$ 0,00</span></div>
+    <div class="carr-total-row" id="carr-taxa-row" style="display:none"><span style="color:var(--muted);font-size:0.85rem">Taxa de entrega</span><span style="color:var(--muted);font-size:0.85rem" id="carr-taxa">R$ 0,00</span></div>
     <div class="carr-total-row"><span>Total</span><span class="carr-total-val" id="carr-total">R$ 0,00</span></div>
     <div class="carr-form">
       <div>
@@ -372,6 +382,25 @@
       <div id="campos-retirada">
         <div style="font-size:0.82rem;color:var(--muted);padding:10px;background:#f5f0eb;border-radius:10px">
           📍 Endereço: <span id="estab-endereco-txt">Consulte a loja</span>
+        </div>
+      </div>
+      <div>
+        <label>Forma de pagamento *</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="carr-opt-btn ativo" id="pag-pix"    onclick="selecionarPag('pix')">💳 PIX</button>
+          <button class="carr-opt-btn"       id="pag-cartao" onclick="selecionarPag('cartao')">💳 Cartão</button>
+          <button class="carr-opt-btn"       id="pag-dinheiro" onclick="selecionarPag('dinheiro')">💵 Dinheiro</button>
+        </div>
+      </div>
+      <div id="campos-troco" style="display:none">
+        <label>Precisa de troco?</label>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <button class="carr-opt-btn ativo" id="troco-nao" onclick="selecionarTroco(false)">Não</button>
+          <button class="carr-opt-btn"       id="troco-sim" onclick="selecionarTroco(true)">Sim</button>
+        </div>
+        <div id="campo-troco-valor" style="display:none">
+          <label>Troco para quanto?</label>
+          <input class="carr-input" id="cli-troco" placeholder="Ex: R$ 50,00">
         </div>
       </div>
       <div>
@@ -534,7 +563,7 @@ function aplicarEstab(est) {
   const btnFin = $('btn-finalizar');
   if (est.aberto === false) {
     if (banner) banner.classList.add('show');
-    if (fab)    fab.style.display = 'none';
+    const fabBar = $('fab-bar'); if (fabBar) fabBar.classList.remove('show');
     if (btnFin) btnFin.disabled = true;
   } else {
     if (banner) banner.classList.remove('show');
@@ -744,13 +773,15 @@ window.abrirProduto = function(p) {
     const render = () => {
       media.innerHTML = `
         <div style="position:relative;background:#000">
-          <img class="modal-img" src="${fotos[fIdx]}" alt="${p.nome}" style="cursor:zoom-in;display:block"
-               onclick="abrirImagemFull('${fotos[fIdx]}', fotos, fIdx)">
+          <img class="modal-img" src="${fotos[fIdx]}" alt="${p.nome}"
+               style="cursor:zoom-in;display:block"
+               onclick="abrirImagemFull('${fotos[fIdx]}',window._fotosAbertas,${fIdx})">
           ${fotos.length > 1 ? `
             <button onclick="_modalFoto(-1)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.55);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.3rem;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center">‹</button>
             <button onclick="_modalFoto(1)"  style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.55);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.3rem;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center">›</button>
             <div id="modal-dots" style="position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px">${dots()}</div>` : ''}
         </div>`;
+      window._fotosAbertas = fotos;
     };
     window._modalFoto = function(dir) {
       fIdx = (fIdx + dir + fotos.length) % fotos.length;
@@ -824,10 +855,15 @@ function adicionarItem(p, qtd) {
 
 function atualizarFab() {
   const total = carrinho.reduce((s, c) => s + c.qtd, 0);
-  const fab = $('fab');
-  if (!fab) return;
-  if (total > 0 && estab?.aberto !== false) { fab.style.display = 'flex'; $('fab-count').textContent = total; }
-  else fab.style.display = 'none';
+  const bar = $('fab-bar');
+  const count = $('fab-count');
+  if (!bar) return;
+  if (total > 0 && estab?.aberto !== false) {
+    bar.classList.add('show');
+    if (count) count.textContent = total + (total === 1 ? ' item' : ' itens');
+  } else {
+    bar.classList.remove('show');
+  }
 }
 
 window.abrirCarrinho = function() {
@@ -854,8 +890,19 @@ function renderCarrinho() {
         </div>
       </div>`).join('');
   }
-  const total = carrinho.reduce((s, c) => s + c.preco * c.qtd, 0);
-  $('carr-total').textContent = fmt(total);
+  const sub  = carrinho.reduce((s, c) => s + c.preco * c.qtd, 0);
+  const taxa = (opcaoEntrega === 'entrega' && estab?.taxa_entrega) ? Number(estab.taxa_entrega) : 0;
+  const tot  = sub + taxa;
+  if (taxa > 0) {
+    $('carr-subtotal-row').style.display = 'flex';
+    $('carr-taxa-row').style.display     = 'flex';
+    $('carr-subtotal').textContent = fmt(sub);
+    $('carr-taxa').textContent     = fmt(taxa);
+  } else {
+    $('carr-subtotal-row').style.display = 'none';
+    $('carr-taxa-row').style.display     = 'none';
+  }
+  $('carr-total').textContent = fmt(tot);
 }
 
 window.mudarQtdCarr = function(i, d) {
@@ -870,6 +917,26 @@ window.selecionarOpcao = function(op) {
   $('btn-retirada').classList.toggle('ativo', op === 'retirada');
   $('campos-entrega').classList.toggle('show', op === 'entrega');
   $('campos-retirada').classList.toggle('show', op === 'retirada');
+};
+
+let opcaoPag = 'pix';
+let precisaTroco = false;
+
+window.selecionarPag = function(pag) {
+  opcaoPag = pag;
+  ['pix','cartao','dinheiro'].forEach(p => {
+    const b = $('pag-' + p); if (b) b.classList.toggle('ativo', p === pag);
+  });
+  const ct = $('campos-troco');
+  if (ct) ct.style.display = pag === 'dinheiro' ? 'block' : 'none';
+};
+
+window.selecionarTroco = function(sim) {
+  precisaTroco = sim;
+  $('troco-nao').classList.toggle('ativo', !sim);
+  $('troco-sim').classList.toggle('ativo', sim);
+  const cv = $('campo-troco-valor');
+  if (cv) cv.style.display = sim ? 'block' : 'none';
 };
 
 // ── FINALIZAR PEDIDO ──────────────────────────────────────────────────────────
@@ -888,12 +955,17 @@ window.finalizarPedido = async function() {
 
   try {
     const itens = carrinho.map(c => ({ id: c.id, nome: c.nome, preco: c.preco, qtd: c.qtd, emoji: c.emoji }));
-    const total = carrinho.reduce((s, c) => s + c.preco * c.qtd, 0);
+    const subtotal    = carrinho.reduce((s, c) => s + c.preco * c.qtd, 0);
+    const taxaEntrega = (opcaoEntrega === 'entrega' && estab?.taxa_entrega) ? Number(estab.taxa_entrega) : 0;
+    const total       = subtotal + taxaEntrega;
+    const pagamento   = opcaoPag;
+    const troco       = (opcaoPag === 'dinheiro' && precisaTroco) ? ($('cli-troco')?.value.trim() || '') : '';
 
     const { error } = await supa.from('pedidos').insert({
       estabelecimento_id: estab.id, cliente_nome: nome,
       cliente_whats: whats, observacao: $('cli-obs')?.value.trim() || '',
       itens, total, status: 'novo', endereco,
+      pagamento, troco, taxa_entrega: taxaEntrega,
     });
     if (error) throw error;
 
