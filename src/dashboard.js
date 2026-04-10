@@ -43,7 +43,10 @@ let pedidosConhecidos = new Set();
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
-const getEstab = () => window._estab || JSON.parse(localStorage.getItem('pw_estab') || 'null');
+const getEstab = () => {
+  if (window._estab) return window._estab;
+  try { return JSON.parse(localStorage.getItem('pw_estab') || 'null'); } catch(e) { return null; }
+};
 
 function normalizeHex(cor) {
   if (!cor) return '#C0392B';
@@ -71,25 +74,31 @@ async function uploadFile(bucket, path, file) {
 // INIT
 // ─────────────────────────────────────────────────────────────────────────────
 export async function initDashboard() {
-  const estab = getEstab();
+  let estab = getEstab();
   if (!estab) return;
 
+  // SEMPRE busca dados frescos do banco — garante sync entre mobile e desktop
+  if (!window._isDemo) {
+    try {
+      const { data: fresh } = await getSupa()
+        .from('estabelecimentos').select('*').eq('id', estab.id).maybeSingle();
+      if (fresh) {
+        estab = fresh;
+        window._estab = fresh;
+        localStorage.setItem('pw_estab', JSON.stringify(fresh));
+      }
+    } catch(e) { console.log('Sync estab:', e); }
+  }
+
   // Textos do header
-  const sn = $('dash-store-name');
-  if (sn) sn.textContent = estab.nome;
-  const lu = $('link-url');
-  if (lu) lu.textContent = `${BASE_URL}/${estab.slug}`;
+  const sn = $('dash-store-name'); if (sn) sn.textContent = estab.nome;
+  const lu = $('link-url');        if (lu) lu.textContent = `${BASE_URL}/${estab.slug}`;
 
   // Preenche configurações
   preencherConfig(estab);
-
-  // Logo preview
   if (estab.logo_url) mostrarLogoPreview(estab.logo_url);
 
-  // Capa preview (cor)
-  mostrarCapaPreview(corAtiva);
-
-  // Cor
+  // Cor e capa
   corAtiva = normalizeHex(estab.cor_primaria || '#C0392B');
   renderCores(corAtiva);
   aplicarCorDash(corAtiva);
@@ -99,6 +108,9 @@ export async function initDashboard() {
   atualizarBadgeLoja(estab.aberto !== false);
   const cbAberto = $('cfg-aberto');
   if (cbAberto) cbAberto.checked = estab.aberto !== false;
+  // Taxa entrega
+  const tw = document.getElementById('taxa-entrega-wrap');
+  if (tw) tw.style.display = estab.faz_entrega !== false ? 'block' : 'none';
 
   // Dados
   if (!window._isDemo) {
@@ -1015,3 +1027,8 @@ window.deletarItem       = deletarItem;
 window.postarFresquinho  = postarFresquinho;
 window.removerFresquinho = removerFresquinho;
 window.renderPedidos     = renderPedidos;
+
+window.toggleTaxaEntrega = function(ativo) {
+  const w = document.getElementById('taxa-entrega-wrap');
+  if (w) w.style.display = ativo ? 'block' : 'none';
+};
