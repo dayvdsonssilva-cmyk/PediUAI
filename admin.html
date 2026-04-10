@@ -3,310 +3,396 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>PEDIWAY — CEO</title>
+  <title>PEDIWAY CEO</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    :root{color-scheme:only light}
-    body{font-family:'Poppins',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;overflow-x:hidden;touch-action:pan-y}
-    .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-    .login-box{background:#141414;border:1px solid #222;border-radius:24px;padding:48px 36px;width:360px;max-width:100%;text-align:center}
-    .logo-big{font-size:1.8rem;font-weight:800;margin-bottom:6px}
-    .logo-big span{color:#C0392B}
-    .logo-sub{font-size:0.72rem;color:#444;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:40px}
-    .pin-input{width:100%;background:#1c1c1c;border:1px solid #2a2a2a;border-radius:14px;padding:16px;color:#fff;font-family:'Poppins',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:0.4em;text-align:center;outline:none;transition:border-color 0.2s}
-    .pin-input:focus{border-color:#C0392B}
-    .pin-input.erro{border-color:#dc2626;animation:shake 0.3s}
+    html,body{height:100%;overflow:hidden}
+    body{font-family:'Poppins',sans-serif;background:#0a0a0a;color:#fff;display:flex;flex-direction:column;touch-action:pan-y}
+
+    /* LOGIN */
+    #login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0a0a0a;padding:20px;z-index:1000}
+    .lbox{background:#141414;border:1px solid #222;border-radius:24px;padding:44px 32px;width:100%;max-width:340px;text-align:center}
+    .llogo{font-size:1.8rem;font-weight:800;margin-bottom:4px}
+    .llogo b{color:#C0392B;font-weight:800}
+    .lsub{font-size:.7rem;color:#555;text-transform:uppercase;letter-spacing:.1em;margin-bottom:36px}
+    .lpin{width:100%;background:#1c1c1e;border:2px solid #2a2a2a;border-radius:14px;padding:16px;color:#fff;font-family:'Poppins',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:.4em;text-align:center;outline:none;transition:border-color .2s}
+    .lpin:focus{border-color:#C0392B}
+    .lpin.err{border-color:#ef4444;animation:shake .3s}
     @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-    .btn-login{width:100%;margin-top:14px;background:#C0392B;color:#fff;border:none;border-radius:14px;padding:15px;font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;min-height:48px}
-    .erro-msg{color:#dc2626;font-size:0.8rem;margin-top:10px;display:none}
-    #painel{display:none}
-    .ceo-header{background:#111;border-bottom:1px solid #1e1e1e;padding:0 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center}
-    .ceo-logo{font-size:1rem;font-weight:800;padding:15px 14px 15px 0;border-right:1px solid #222;margin-right:12px;white-space:nowrap;flex-shrink:0}
-    .ceo-logo span{color:#C0392B}
-    .ceo-nav{display:flex;overflow-x:auto;scrollbar-width:none;flex:1}
-    .ceo-nav::-webkit-scrollbar{display:none}
-    .nav-btn{padding:15px 12px;font-family:'Poppins',sans-serif;font-size:0.74rem;font-weight:700;color:#555;background:none;border:none;border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;transition:all 0.2s;min-height:52px;flex-shrink:0}
-    .nav-btn.ativa{color:#C0392B;border-bottom-color:#C0392B}
-    .btn-sair{margin-left:8px;padding:8px 14px;background:#1e1e1e;border:1px solid #2a2a2a;color:#777;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.74rem;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;min-height:36px}
-    .ceo-aba{display:none;padding:20px 16px;max-width:1400px;margin:0 auto}
-    .ceo-aba.ativa{display:block}
-    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-    .stat-card{background:#141414;border:1px solid #1e1e1e;border-radius:14px;padding:18px 16px}
-    .sc-label{font-size:0.62rem;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px}
-    .sc-val{font-size:1.7rem;font-weight:800}
-    .sc-val.red{color:#C0392B}.sc-val.green{color:#22c55e}.sc-val.yellow{color:#f59e0b}
-    .sc-sub{font-size:0.68rem;color:#444;margin-top:4px}
-    .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap}
-    .section-title{font-size:0.9rem;font-weight:800}
-    .search-input{background:#1c1c1c;border:1px solid #2a2a2a;border-radius:10px;padding:9px 13px;color:#fff;font-family:'Poppins',sans-serif;font-size:0.8rem;outline:none}
-    .search-input::placeholder{color:#444}
-    .table-box{background:#141414;border:1px solid #1e1e1e;border-radius:14px;overflow:hidden;margin-bottom:20px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-    table{width:100%;border-collapse:collapse;min-width:560px}
-    th{background:#111;padding:10px 14px;text-align:left;font-size:0.62rem;font-weight:700;color:#444;letter-spacing:0.07em;text-transform:uppercase;white-space:nowrap}
-    td{padding:11px 14px;font-size:0.8rem;border-top:1px solid #1a1a1a;vertical-align:middle}
+    .lbtn{width:100%;margin-top:12px;background:#C0392B;color:#fff;border:none;border-radius:14px;padding:14px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;min-height:48px}
+    .lerr{color:#ef4444;font-size:.78rem;margin-top:8px;display:none}
+
+    /* HEADER */
+    #hdr{background:#111;border-bottom:1px solid #1e1e1e;display:flex;align-items:center;padding:0 14px;height:50px;flex-shrink:0;position:sticky;top:0;z-index:100}
+    .hlogo{font-size:.95rem;font-weight:800;margin-right:14px;padding-right:14px;border-right:1px solid #222;white-space:nowrap;flex-shrink:0}
+    .hlogo b{color:#C0392B}
+    nav{display:flex;overflow-x:auto;scrollbar-width:none;flex:1;-webkit-overflow-scrolling:touch}
+    nav::-webkit-scrollbar{display:none}
+    .ntab{height:50px;padding:0 13px;background:none;border:none;border-bottom:2.5px solid transparent;color:#555;font-family:'Poppins',sans-serif;font-size:.73rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s;flex-shrink:0}
+    .ntab.on{color:#fff;border-bottom-color:#C0392B}
+    .hout{margin-left:8px;padding:7px 12px;background:none;border:1px solid #2a2a2a;color:#666;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.72rem;cursor:pointer;flex-shrink:0;min-height:34px}
+
+    /* MAIN */
+    main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .pg{display:none;padding:18px 14px;max-width:1400px;margin:0 auto}
+    .pg.on{display:block}
+
+    /* STATS */
+    .sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+    .sc{background:#141414;border:1px solid #1e1e1e;border-radius:14px;padding:16px}
+    .slbl{font-size:.6rem;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+    .sval{font-size:1.6rem;font-weight:800;line-height:1}
+    .sval.r{color:#C0392B}.sval.g{color:#22c55e}.sval.y{color:#f59e0b}
+    .shint{font-size:.66rem;color:#444;margin-top:4px}
+
+    /* GRÁFICO */
+    .cbox{background:#141414;border:1px solid #1e1e1e;border-radius:14px;padding:16px;margin-bottom:20px}
+    .chead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .ctitle{font-size:.76rem;font-weight:600;color:#555}
+    .ctot{font-size:.8rem;font-weight:700;color:#C0392B}
+    .bars{display:flex;align-items:flex-end;gap:5px;height:100px}
+    .bw{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+    .bar{width:100%;background:#C0392B;border-radius:4px 4px 0 0;min-height:3px;opacity:.85}
+    .blbl{font-size:.52rem;color:#444}
+
+    /* TABELAS */
+    .sechdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap}
+    .sectitle{font-size:.88rem;font-weight:700}
+    .tbox{background:#141414;border:1px solid #1e1e1e;border-radius:14px;overflow:hidden;margin-bottom:18px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    table{width:100%;border-collapse:collapse;min-width:500px}
+    th{background:#111;padding:10px 14px;text-align:left;font-size:.6rem;font-weight:700;color:#444;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
+    td{padding:11px 14px;font-size:.8rem;border-top:1px solid #1a1a1a;vertical-align:middle}
     tr:hover td{background:#181818}
-    .badge{display:inline-block;padding:3px 9px;border-radius:50px;font-size:0.62rem;font-weight:700;white-space:nowrap}
-    .badge.ativo{background:#052e16;color:#22c55e}
-    .badge.inativo{background:#1c1917;color:#6b7280}
-    .badge.trial{background:#1c1107;color:#f59e0b}
-    .badge.pago{background:#052e16;color:#22c55e}
-    .badge.vencido{background:#2a0a0a;color:#ef4444}
-    .btn-acao{background:#1e1e1e;border:1px solid #2a2a2a;color:#888;padding:6px 11px;border-radius:7px;font-family:'Poppins',sans-serif;font-size:0.7rem;font-weight:600;cursor:pointer;min-height:32px;margin-right:3px}
-    .btn-acao:hover{border-color:#C0392B;color:#fff}
-    .btn-acao.success{border-color:#22c55e;color:#22c55e}
-    .btn-acao.danger:hover{background:#C0392B;border-color:#C0392B;color:#fff}
-    .loading-row{color:#444;text-align:center;padding:36px;font-size:0.8rem}
-    .fin-periodo{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
-    .periodo-btn{padding:8px 16px;border-radius:50px;border:1.5px solid #2a2a2a;background:none;color:#555;font-family:'Poppins',sans-serif;font-size:0.76rem;font-weight:700;cursor:pointer;min-height:36px}
-    .periodo-btn.ativo{background:#C0392B;border-color:#C0392B;color:#fff}
-    .fin-chart{background:#141414;border:1px solid #1e1e1e;border-radius:14px;padding:18px;margin-bottom:18px}
-    .chart-bars{display:flex;align-items:flex-end;gap:5px;height:110px}
-    .chart-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
-    .chart-bar{width:100%;background:#C0392B;border-radius:5px 5px 0 0;transition:height 0.4s ease;min-height:4px}
-    .chart-label{font-size:0.55rem;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center}
-    .fin-resumo{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-    .fin-card{background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:14px}
-    .fin-label{font-size:0.62rem;font-weight:700;color:#444;text-transform:uppercase;margin-bottom:6px}
-    .fin-val{font-size:1.2rem;font-weight:800}
-    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:flex-end;justify-content:center;touch-action:none}
-    .modal-bg.open{display:flex}
-    .modal-box{background:#141414;border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:26px 22px 40px;-webkit-overflow-scrolling:touch}
-    .modal-titulo{font-size:0.95rem;font-weight:800;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
-    .modal-close{background:none;border:none;color:#555;font-size:1.3rem;cursor:pointer;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center}
-    .detalhe-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #1e1e1e;font-size:0.82rem}
-    .detalhe-label{color:#555}
-    .detalhe-val{font-weight:600;text-align:right;max-width:60%;word-break:break-word}
-    .form-row{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
-    .form-label{font-size:0.72rem;font-weight:700;color:#555}
-    .form-input,.form-select{background:#1c1c1c;border:1px solid #2a2a2a;border-radius:10px;padding:11px 13px;color:#fff;font-family:'Poppins',sans-serif;font-size:0.85rem;outline:none;width:100%}
-    .form-input:focus,.form-select:focus{border-color:#C0392B}
-    .btn-ceo{padding:12px 20px;border-radius:12px;font-family:'Poppins',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;border:none;min-height:44px}
-    .btn-ceo.red{background:#C0392B;color:#fff}
-    .btn-ceo.ghost{background:#1e1e1e;color:#888;border:1px solid #2a2a2a}
-    .btn-ceo.green{background:#22c55e;color:#fff}
-    .pag-bar-wrap{margin-bottom:12px}
-    .pag-bar-header{display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:5px}
-    .pag-bar-bg{background:#1e1e1e;border-radius:50px;height:6px}
-    .pag-bar-fill{background:#C0392B;height:100%;border-radius:50px;transition:width 0.4s}
-    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;padding:11px 22px;border-radius:50px;font-weight:700;font-size:0.82rem;z-index:9999;display:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.4)}
+    .empty{text-align:center;padding:32px;color:#444;font-size:.8rem}
+
+    /* BADGES */
+    .badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:50px;font-size:.62rem;font-weight:700;white-space:nowrap}
+    .bg{background:#052e16;color:#22c55e}
+    .br{background:#2a0a0a;color:#ef4444}
+    .by{background:#1c1107;color:#f59e0b}
+    .bgr{background:#1c1c1e;color:#71717a}
+
+    /* BOTÕES */
+    .btn{padding:6px 11px;border-radius:8px;border:1px solid #2a2a2a;background:#1a1a1a;color:#888;font-family:'Poppins',sans-serif;font-size:.7rem;font-weight:600;cursor:pointer;min-height:32px;transition:all .15s}
+    .btn:active,.btn:hover{border-color:#C0392B;color:#fff}
+    .btn.red:active,.btn.red:hover{background:#C0392B;border-color:#C0392B;color:#fff}
+    .btn.grn{border-color:#22c55e;color:#22c55e}
+    .btn-red{background:#C0392B;color:#fff;border:none;border-radius:12px;padding:12px 20px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;min-height:44px;display:inline-block}
+
+    /* SEARCH */
+    .srch{background:#1c1c1e;border:1px solid #2a2a2a;border-radius:8px;padding:8px 12px;color:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;outline:none}
+    .srch::placeholder{color:#444}
+    .srch:focus{border-color:#C0392B}
+
+    /* PILLS PERÍODO */
+    .pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+    .pill{padding:7px 15px;border-radius:50px;border:1.5px solid #2a2a2a;background:none;color:#555;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s;min-height:34px}
+    .pill.on{background:#C0392B;border-color:#C0392B;color:#fff}
+
+    /* FIN */
+    .fcards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+    .fcard{background:#141414;border:1px solid #1e1e1e;border-radius:14px;padding:14px}
+    .flbl{font-size:.6rem;font-weight:700;color:#444;text-transform:uppercase;margin-bottom:6px}
+    .fval{font-size:1.2rem;font-weight:800}
+    .pbar-wrap{margin-bottom:12px}
+    .pbar-top{display:flex;justify-content:space-between;font-size:.77rem;margin-bottom:5px}
+    .pbar-bg{background:#222;border-radius:50px;height:6px}
+    .pbar-fill{background:#C0392B;height:100%;border-radius:50px;transition:width .4s}
+
+    /* MODAL */
+    .ov{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:500;display:none;align-items:flex-end;justify-content:center}
+    .ov.on{display:flex}
+    .modal{background:#141414;border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:24px 20px 40px;-webkit-overflow-scrolling:touch}
+    .mhead{font-size:.95rem;font-weight:800;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+    .mclose{background:none;border:none;color:#555;font-size:1.3rem;cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+    .mclose:hover{background:#222}
+    .drow{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid #1e1e1e;font-size:.8rem}
+    .dlbl{color:#555}
+    .dval{font-weight:600;text-align:right;max-width:60%;word-break:break-word}
+    .mfield{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+    .mfield label{font-size:.72rem;font-weight:700;color:#555}
+    .mfield input,.mfield select{background:#1c1c1e;border:1px solid #2a2a2a;border-radius:10px;padding:11px 12px;color:#fff;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none;width:100%}
+    .mfield input:focus,.mfield select:focus{border-color:#C0392B}
+    .btn-ghost{background:none;color:#666;border:1px solid #2a2a2a;border-radius:12px;padding:12px 16px;font-family:'Poppins',sans-serif;font-weight:600;font-size:.85rem;cursor:pointer;min-height:44px}
+
+    /* DEBUG BOX */
+    #debug-box{background:#1a0505;border:1px solid #3a1515;border-radius:12px;padding:14px;margin-bottom:16px;display:none}
+    #debug-box.show{display:block}
+    #debug-txt{font-size:.75rem;color:#ef4444;font-family:monospace;white-space:pre-wrap}
+
+    /* TOAST */
+    #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;padding:11px 22px;border-radius:50px;font-weight:700;font-size:.82rem;z-index:9999;display:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+
     @media(max-width:700px){
-      .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px}
-      .sc-val{font-size:1.3rem}
-      .fin-resumo{grid-template-columns:repeat(2,1fr)}
-      .ceo-aba{padding:14px 12px}
-      .ceo-logo{font-size:0.9rem;padding:14px 10px 14px 0}
-      th,td{padding:9px 11px;font-size:0.75rem}
+      .sgrid{grid-template-columns:repeat(2,1fr);gap:8px}
+      .sval{font-size:1.2rem}
+      .fcards{grid-template-columns:repeat(2,1fr)}
+      .pg{padding:14px 10px}
+      th,td{padding:9px 10px;font-size:.74rem}
+      .hlogo{display:none}
     }
-    @media(max-width:420px){
-      .fin-resumo{grid-template-columns:1fr}
-      .ceo-logo{display:none}
+    @media(max-width:380px){
+      .fcards{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
 
-<div class="login-screen" id="tela-login">
-  <div class="login-box">
-    <div class="logo-big">PEDI<span>WAY</span></div>
-    <div class="logo-sub">Acesso CEO</div>
-    <input class="pin-input" id="pin-input" type="password" placeholder="••••••••" maxlength="10">
-    <button class="btn-login" id="btn-login">Entrar</button>
-    <div class="erro-msg" id="erro-msg">Código incorreto.</div>
+<!-- LOGIN -->
+<div id="login">
+  <div class="lbox">
+    <div class="llogo">PEDI<b>WAY</b></div>
+    <div class="lsub">Painel CEO</div>
+    <input class="lpin" id="pin" type="password" placeholder="••••••••" maxlength="10">
+    <button class="lbtn" id="btn-entrar">Entrar</button>
+    <div class="lerr" id="lerr">Código incorreto.</div>
   </div>
 </div>
 
-<div id="painel">
-  <div class="ceo-header">
-    <div class="ceo-logo">PEDI<span>WAY</span></div>
-    <nav class="ceo-nav">
-      <button class="nav-btn ativa" id="nav-visao"      onclick="irAba('visao',this)">📊 Visão Geral</button>
-      <button class="nav-btn"        id="nav-lojas"      onclick="irAba('lojas',this)">🏪 Lojas</button>
-      <button class="nav-btn"        id="nav-pedidos"    onclick="irAba('pedidos',this)">📋 Pedidos</button>
-      <button class="nav-btn"        id="nav-financeiro" onclick="irAba('financeiro',this)">💰 Financeiro</button>
-      <button class="nav-btn"        id="nav-planos"     onclick="irAba('planos',this)">📦 Planos</button>
-    </nav>
-    <button class="btn-sair" id="btn-sair">Sair</button>
-  </div>
+<!-- HEADER -->
+<div id="hdr" style="display:none">
+  <div class="hlogo">PEDI<b>WAY</b></div>
+  <nav id="nav">
+    <button class="ntab on" data-pg="visao">📊 Visão Geral</button>
+    <button class="ntab" data-pg="lojas">🏪 Lojas</button>
+    <button class="ntab" data-pg="pedidos">📋 Pedidos</button>
+    <button class="ntab" data-pg="financeiro">💰 Financeiro</button>
+    <button class="ntab" data-pg="planos">📦 Planos</button>
+  </nav>
+  <button class="hout" id="btn-sair">Sair</button>
+</div>
+
+<main id="main" style="display:none">
 
   <!-- VISÃO GERAL -->
-  <div class="ceo-aba ativa" id="aba-visao">
-    <div class="stats-grid">
-      <div class="stat-card"><div class="sc-label">Total lojas</div><div class="sc-val red" id="s-total">--</div><div class="sc-sub" id="s-abertas">-- abertas</div></div>
-      <div class="stat-card"><div class="sc-label">Pedidos hoje</div><div class="sc-val green" id="s-ped-hoje">--</div><div class="sc-sub" id="s-ped-mes">-- no mês</div></div>
-      <div class="stat-card"><div class="sc-label">Fat. hoje</div><div class="sc-val" id="s-fat-hoje">--</div><div class="sc-sub" id="s-fat-mes">-- no mês</div></div>
-      <div class="stat-card"><div class="sc-label">MRR</div><div class="sc-val yellow" id="s-mrr">--</div><div class="sc-sub" id="s-assin">-- assinaturas</div></div>
+  <div class="pg on" id="pg-visao">
+    <div id="debug-box"><div id="debug-txt"></div></div>
+    <div class="sgrid">
+      <div class="sc"><div class="slbl">Total lojas</div><div class="sval r" id="s1">--</div><div class="shint" id="s1h"></div></div>
+      <div class="sc"><div class="slbl">Pedidos hoje</div><div class="sval g" id="s2">--</div><div class="shint" id="s2h"></div></div>
+      <div class="sc"><div class="slbl">Fat. hoje</div><div class="sval" id="s3">--</div><div class="shint" id="s3h"></div></div>
+      <div class="sc"><div class="slbl">MRR</div><div class="sval y" id="s4">--</div><div class="shint" id="s4h"></div></div>
     </div>
-    <div class="fin-chart">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <span style="font-size:0.8rem;font-weight:700;color:#666">Pedidos — últimos 7 dias</span>
-        <span style="font-size:0.8rem;font-weight:800;color:#C0392B" id="chart-label"></span>
-      </div>
-      <div class="chart-bars" id="chart-bars"></div>
+    <div class="cbox">
+      <div class="chead"><span class="ctitle">Pedidos — últimos 7 dias</span><span class="ctot" id="ctot"></span></div>
+      <div class="bars" id="bars"></div>
     </div>
-    <div class="section-title" style="margin-bottom:12px">🏆 Top lojas hoje</div>
-    <div class="table-box">
-      <table><thead><tr><th>Loja</th><th>Pedidos hoje</th><th>Faturamento</th><th>Status</th></tr></thead>
-      <tbody id="top-lojas"><tr><td colspan="4" class="loading-row">Carregando...</td></tr></tbody></table>
+    <div class="sectitle" style="margin-bottom:12px">🏆 Top lojas hoje</div>
+    <div class="tbox">
+      <table><thead><tr><th>Loja</th><th>Pedidos</th><th>Faturamento</th><th>Status</th></tr></thead>
+      <tbody id="top-lojas"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody></table>
     </div>
   </div>
 
   <!-- LOJAS -->
-  <div class="ceo-aba" id="aba-lojas">
-    <div class="section-header">
-      <div class="section-title">Estabelecimentos</div>
-      <input class="search-input" id="busca-lojas" placeholder="🔍 Nome ou link..." oninput="filtrarLojas(this.value)" style="width:200px">
+  <div class="pg" id="pg-lojas">
+    <div class="sechdr">
+      <div class="sectitle">Estabelecimentos</div>
+      <input class="srch" id="busca-lojas" placeholder="🔍 Buscar..." style="width:200px">
     </div>
-    <div class="table-box">
-      <table><thead><tr><th>Loja</th><th>Link</th><th>Plano</th><th>Situação</th><th>Pedidos</th><th>Cadastro</th><th>Ações</th></tr></thead>
-      <tbody id="tbody-lojas"><tr><td colspan="7" class="loading-row">Carregando...</td></tr></tbody></table>
+    <div class="tbox">
+      <table><thead><tr><th>Loja</th><th>Link</th><th>Plano</th><th>Status</th><th>Pedidos</th><th>Cadastro</th><th>Ações</th></tr></thead>
+      <tbody id="tbody-lojas"><tr><td colspan="7" class="empty">Carregando...</td></tr></tbody></table>
     </div>
   </div>
 
   <!-- PEDIDOS -->
-  <div class="ceo-aba" id="aba-pedidos">
-    <div class="section-header">
-      <div class="section-title">Todos os pedidos</div>
+  <div class="pg" id="pg-pedidos">
+    <div class="sechdr">
+      <div class="sectitle">Pedidos</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <select class="search-input" id="fil-status" onchange="filtrarPeds()" style="width:auto">
-          <option value="">Todos</option><option value="novo">Novo</option><option value="preparo">Preparo</option><option value="pronto">Pronto</option><option value="recusado">Recusado</option>
-        </select>
-        <input class="search-input" id="fil-busca" placeholder="🔍 Buscar..." oninput="filtrarPeds()" style="width:140px">
+        <select class="srch" id="fil-st"><option value="">Todos os status</option><option value="novo">Novo</option><option value="preparo">Preparo</option><option value="pronto">Pronto</option><option value="recusado">Recusado</option></select>
+        <input class="srch" id="fil-q" placeholder="🔍 Buscar..." style="width:140px">
       </div>
     </div>
-    <div class="table-box">
-      <table><thead><tr><th>#</th><th>Loja</th><th>Cliente</th><th>Pagamento</th><th>Total</th><th>Status</th><th>Data</th><th></th></tr></thead>
-      <tbody id="tbody-peds"><tr><td colspan="8" class="loading-row">Carregando...</td></tr></tbody></table>
+    <div class="tbox">
+      <table><thead><tr><th>#</th><th>Loja</th><th>Cliente</th><th>Pgto</th><th>Total</th><th>Status</th><th>Data</th><th></th></tr></thead>
+      <tbody id="tbody-peds"><tr><td colspan="8" class="empty">Carregando...</td></tr></tbody></table>
     </div>
   </div>
 
   <!-- FINANCEIRO -->
-  <div class="ceo-aba" id="aba-financeiro">
-    <div class="fin-periodo" id="fin-periodo-btns">
-      <button class="periodo-btn ativo" data-periodo="hoje">Hoje</button>
-      <button class="periodo-btn" data-periodo="semana">Semana</button>
-      <button class="periodo-btn" data-periodo="mes">Mês</button>
-      <button class="periodo-btn" data-periodo="tudo">Tudo</button>
+  <div class="pg" id="pg-financeiro">
+    <div class="pills" id="fin-pills">
+      <button class="pill on" data-p="hoje">Hoje</button>
+      <button class="pill" data-p="semana">Semana</button>
+      <button class="pill" data-p="mes">Mês</button>
+      <button class="pill" data-p="tudo">Tudo</button>
     </div>
-    <div class="fin-resumo">
-      <div class="fin-card"><div class="fin-label">Faturamento</div><div class="fin-val green" id="fin-fat">--</div></div>
-      <div class="fin-card"><div class="fin-label">Pedidos</div><div class="fin-val" id="fin-qtd">--</div></div>
-      <div class="fin-card"><div class="fin-label">Ticket médio</div><div class="fin-val yellow" id="fin-tick">--</div></div>
+    <div class="fcards">
+      <div class="fcard"><div class="flbl">Faturamento</div><div class="fval" style="color:#22c55e" id="ff">--</div></div>
+      <div class="fcard"><div class="flbl">Pedidos</div><div class="fval" id="fq">--</div></div>
+      <div class="fcard"><div class="flbl">Ticket médio</div><div class="fval" style="color:#f59e0b" id="ft">--</div></div>
     </div>
-    <div class="fin-chart">
-      <div style="font-size:0.8rem;font-weight:700;color:#666;margin-bottom:14px">Por forma de pagamento</div>
+    <div class="cbox" style="margin-bottom:18px">
+      <div class="ctitle" style="margin-bottom:14px">Por forma de pagamento</div>
       <div id="fin-pags"></div>
     </div>
-    <div class="section-title" style="margin-bottom:12px">Por estabelecimento</div>
-    <div class="table-box">
-      <table><thead><tr><th>Loja</th><th>Pedidos</th><th>Faturamento</th><th>Ticket médio</th></tr></thead>
-      <tbody id="fin-lojas"><tr><td colspan="4" class="loading-row">Carregando...</td></tr></tbody></table>
+    <div class="sectitle" style="margin-bottom:12px">Por estabelecimento</div>
+    <div class="tbox">
+      <table><thead><tr><th>Loja</th><th>Pedidos</th><th>Faturamento</th><th>Ticket</th></tr></thead>
+      <tbody id="fin-lojas"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody></table>
     </div>
   </div>
 
   <!-- PLANOS -->
-  <div class="ceo-aba" id="aba-planos">
-    <div style="margin-bottom:18px">
-      <button class="btn-ceo red" id="btn-novo-plano">+ Atribuir plano</button>
+  <div class="pg" id="pg-planos">
+    <div style="margin-bottom:16px"><button class="btn-red" id="btn-novo-plano">+ Atribuir plano</button></div>
+    <div class="sgrid" style="margin-bottom:18px">
+      <div class="sc"><div class="slbl">Trial</div><div class="sval y" id="pt">--</div></div>
+      <div class="sc"><div class="slbl">Pro</div><div class="sval" id="pp">--</div></div>
+      <div class="sc"><div class="slbl">Premium</div><div class="sval g" id="pprem">--</div></div>
+      <div class="sc"><div class="slbl">MRR</div><div class="sval r" id="pmrr">--</div></div>
     </div>
-    <div class="stats-grid" style="margin-bottom:20px">
-      <div class="stat-card"><div class="sc-label">Trial</div><div class="sc-val yellow" id="p-trial">--</div></div>
-      <div class="stat-card"><div class="sc-label">Pro</div><div class="sc-val" id="p-pro">--</div></div>
-      <div class="stat-card"><div class="sc-label">Premium</div><div class="sc-val green" id="p-premium">--</div></div>
-      <div class="stat-card"><div class="sc-label">MRR</div><div class="sc-val red" id="p-mrr">--</div></div>
-    </div>
-    <div class="table-box">
-      <table><thead><tr><th>Loja</th><th>Plano</th><th>Pagamento</th><th>Vencimento</th><th>Valor</th><th>Ações</th></tr></thead>
-      <tbody id="tbody-planos"><tr><td colspan="6" class="loading-row">Carregando...</td></tr></tbody></table>
+    <div class="tbox">
+      <table><thead><tr><th>Loja</th><th>Plano</th><th>Pagamento</th><th>Vencimento</th><th>Valor</th><th></th></tr></thead>
+      <tbody id="tbody-planos"><tr><td colspan="6" class="empty">Carregando...</td></tr></tbody></table>
     </div>
   </div>
-</div>
+
+</main>
 
 <!-- MODAL PEDIDO -->
-<div class="modal-bg" id="m-ped"><div class="modal-box">
-  <div class="modal-titulo">Detalhe do pedido<button class="modal-close" id="x-ped">✕</button></div>
-  <div id="m-ped-body"></div>
+<div class="ov" id="ov-ped"><div class="modal">
+  <div class="mhead">Pedido <button class="mclose" id="x-ped">✕</button></div>
+  <div id="ped-body"></div>
 </div></div>
 
 <!-- MODAL LOJA -->
-<div class="modal-bg" id="m-loja"><div class="modal-box">
-  <div class="modal-titulo">Detalhe da loja<button class="modal-close" id="x-loja">✕</button></div>
-  <div id="m-loja-body"></div>
+<div class="ov" id="ov-loja"><div class="modal">
+  <div class="mhead">Detalhes da loja <button class="mclose" id="x-loja">✕</button></div>
+  <div id="loja-body"></div>
 </div></div>
 
 <!-- MODAL PLANO -->
-<div class="modal-bg" id="m-plano"><div class="modal-box">
-  <div class="modal-titulo">Atribuir plano<button class="modal-close" id="x-plano">✕</button></div>
-  <div class="form-row"><label class="form-label">Estabelecimento</label><select class="form-select" id="pl-loja"></select></div>
-  <div class="form-row"><label class="form-label">Plano</label>
-    <select class="form-select" id="pl-tipo">
+<div class="ov" id="ov-plano"><div class="modal">
+  <div class="mhead">Atribuir plano <button class="mclose" id="x-plano">✕</button></div>
+  <div class="mfield"><label>Estabelecimento</label><select id="pl-loja"></select></div>
+  <div class="mfield"><label>Plano</label>
+    <select id="pl-tipo">
       <option value="basico">Trial (grátis)</option>
       <option value="pro">Pro — R$ 49/mês</option>
       <option value="premium">Premium — R$ 99/mês</option>
     </select>
   </div>
-  <div class="form-row"><label class="form-label">Vencimento</label><input type="date" class="form-input" id="pl-venc"></div>
-  <div class="form-row"><label class="form-label">Status pagamento</label>
-    <select class="form-select" id="pl-pag-status">
-      <option value="pago">Pago</option><option value="pendente">Pendente</option><option value="cancelado">Cancelado</option>
+  <div class="mfield"><label>Vencimento</label><input type="date" id="pl-venc"></div>
+  <div class="mfield"><label>Status pagamento</label>
+    <select id="pl-pgst">
+      <option value="pago">Pago</option>
+      <option value="pendente">Pendente</option>
+      <option value="cancelado">Cancelado</option>
     </select>
   </div>
-  <div style="display:flex;gap:10px;margin-top:6px">
-    <button class="btn-ceo ghost" id="x-plano-btn" style="flex:1">Cancelar</button>
-    <button class="btn-ceo red" id="salvar-plano" style="flex:2">Salvar</button>
+  <div style="display:flex;gap:10px;margin-top:8px">
+    <button class="btn-ghost" id="x-plano2" style="flex:1">Cancelar</button>
+    <button class="btn-red" id="salvar-plano" style="flex:2">Salvar</button>
   </div>
 </div></div>
 
-<div class="toast" id="toast"></div>
+<div id="toast"></div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmFra3giLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NDA0OTQ0NiwiZXhwIjoyMDU5NjI1NDQ2fQ.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
-const supa = createClient(SUPA_URL, SUPA_KEY);
 
-const CODIGO = '35585201';
-const $ = id => document.getElementById(id);
-const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+const SURL = 'https://nmttkjmfazcipefeakkx.supabase.co';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmFra3giLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NDA0OTQ0NiwiZXhwIjoyMDU5NjI1NDQ2fQ.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+const db   = createClient(SURL, SKEY);
+const PASS = '35585201';
+const $R   = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+const gel  = id => document.getElementById(id);
 
-let lojas = [], pedidos = [], periodo = 'hoje';
+let lojas=[], peds=[], periodo='hoje';
+
+// ── DEBUG ──────────────────────────────────────────────────────────────────
+function debug(msg) {
+  const box = gel('debug-box');
+  const txt = gel('debug-txt');
+  if (!box || !txt) return;
+  box.classList.add('show');
+  txt.textContent += '\n' + msg;
+}
 
 // ── LOGIN ──────────────────────────────────────────────────────────────────
-function login() {
-  if ($('pin-input').value === CODIGO) {
-    $('tela-login').style.display = 'none';
-    $('painel').style.display = 'block';
-    carregar();
+function doLogin() {
+  if (gel('pin').value === PASS) {
+    gel('login').style.display  = 'none';
+    gel('hdr').style.display    = 'flex';
+    gel('main').style.display   = 'block';
+    load();
   } else {
-    $('pin-input').classList.add('erro');
-    $('erro-msg').style.display = 'block';
-    setTimeout(() => { $('pin-input').classList.remove('erro'); $('pin-input').value = ''; }, 600);
+    gel('pin').classList.add('err');
+    gel('lerr').style.display = 'block';
+    setTimeout(() => { gel('pin').classList.remove('err'); gel('pin').value = ''; }, 600);
   }
 }
-$('btn-login').addEventListener('click', login);
-$('pin-input').addEventListener('keydown', e => e.key === 'Enter' && login());
-$('btn-sair').addEventListener('click', () => { $('painel').style.display='none'; $('tela-login').style.display='flex'; $('pin-input').value=''; });
+gel('btn-entrar').addEventListener('click', doLogin);
+gel('pin').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
+gel('btn-sair').addEventListener('click', () => {
+  gel('hdr').style.display = 'none';
+  gel('main').style.display = 'none';
+  gel('login').style.display = 'flex';
+  gel('pin').value = '';
+});
 
-// ── ABAS ───────────────────────────────────────────────────────────────────
-window.irAba = (nome, btn) => {
-  document.querySelectorAll('.ceo-aba').forEach(a => a.classList.remove('ativa'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativa'));
-  $('aba-'+nome).classList.add('ativa');
-  btn.classList.add('ativa');
-};
+// ── NAVEGAÇÃO ──────────────────────────────────────────────────────────────
+gel('nav').addEventListener('click', e => {
+  const btn = e.target.closest('.ntab'); if (!btn) return;
+  document.querySelectorAll('.ntab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  const pg = btn.dataset.pg;
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  gel('pg-' + pg).classList.add('on');
+});
 
-// ── CARREGAR ───────────────────────────────────────────────────────────────
-async function carregar() {
-  const [r1, r2] = await Promise.all([
-    supa.from('estabelecimentos').select('*').order('created_at',{ascending:false}),
-    supa.from('pedidos').select('*,estabelecimentos(nome,slug)').order('created_at',{ascending:false}).limit(1000),
-  ]);
-  lojas   = r1.data || [];
-  pedidos = r2.data || [];
+// ── PILLS FINANCEIRO ───────────────────────────────────────────────────────
+gel('fin-pills').addEventListener('click', e => {
+  const btn = e.target.closest('.pill'); if (!btn) return;
+  document.querySelectorAll('#fin-pills .pill').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  periodo = btn.dataset.p;
+  renderFin();
+});
+
+// ── CARREGAR DADOS ────────────────────────────────────────────────────────
+async function load() {
+  // LOJAS
+  const { data: lj, error: e1 } = await db
+    .from('estabelecimentos')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (e1) {
+    debug('ERRO lojas: ' + JSON.stringify(e1));
+    gel('tbody-lojas').innerHTML = `<tr><td colspan="7" class="empty" style="color:#ef4444">
+      Erro ao carregar lojas: ${e1.message}<br><br>
+      <strong>Execute o SQL de configuração no Supabase!</strong>
+    </td></tr>`;
+  }
+  lojas = lj || [];
+  debug('Lojas carregadas: ' + lojas.length);
+
+  // PEDIDOS
+  const { data: pd, error: e2 } = await db
+    .from('pedidos')
+    .select('id,cliente_nome,cliente_whats,status,total,pagamento,troco,taxa_entrega,endereco,itens,created_at,estabelecimento_id,estabelecimentos(nome,slug)')
+    .order('created_at', { ascending: false })
+    .limit(1000);
+
+  if (e2) debug('ERRO pedidos: ' + JSON.stringify(e2));
+  peds = pd || [];
+  debug('Pedidos carregados: ' + peds.length);
+
+  // Esconde debug se tudo ok
+  if (!e1 && !e2) {
+    const box = gel('debug-box');
+    if (box) box.classList.remove('show');
+  }
+
   renderVisao();
   renderLojas(lojas);
-  renderPeds(pedidos);
-  renderFin('hoje');
+  renderPeds(peds);
+  renderFin();
   renderPlanos();
 }
 
@@ -314,250 +400,289 @@ async function carregar() {
 function renderVisao() {
   const hoje = new Date().toDateString();
   const mes  = new Date().getMonth();
-  const ph   = pedidos.filter(p => new Date(p.created_at).toDateString() === hoje);
-  const pm   = pedidos.filter(p => new Date(p.created_at).getMonth()     === mes);
-  const fh   = ph.reduce((s,p) => s+Number(p.total||0),0);
-  const fm   = pm.reduce((s,p) => s+Number(p.total||0),0);
-  const mrr  = lojas.reduce((s,l) => s+({pro:49,premium:99}[l.plano]||0),0);
-  const assin= lojas.filter(l => l.plano && l.plano !== 'basico').length;
-  const abertas = lojas.filter(l => l.aberto !== false).length;
+  const ph   = peds.filter(p => new Date(p.created_at).toDateString() === hoje);
+  const pm   = peds.filter(p => new Date(p.created_at).getMonth() === mes);
+  const fh   = ph.reduce((s, p) => s + Number(p.total||0), 0);
+  const fm   = pm.reduce((s, p) => s + Number(p.total||0), 0);
+  const mrr  = lojas.reduce((s, l) => s + ({ pro: 49, premium: 99 }[l.plano] || 0), 0);
 
-  $('s-total').textContent    = lojas.length;
-  $('s-abertas').textContent  = abertas + ' abertas';
-  $('s-ped-hoje').textContent = ph.length;
-  $('s-ped-mes').textContent  = pm.length + ' no mês';
-  $('s-fat-hoje').textContent = fmt(fh);
-  $('s-fat-mes').textContent  = fmt(fm) + ' no mês';
-  $('s-mrr').textContent      = fmt(mrr);
-  $('s-assin').textContent    = assin + ' assinaturas';
+  gel('s1').textContent  = lojas.length;
+  gel('s1h').textContent = lojas.filter(l => l.aberto !== false).length + ' abertas';
+  gel('s2').textContent  = ph.length;
+  gel('s2h').textContent = pm.length + ' no mês';
+  gel('s3').textContent  = $R(fh);
+  gel('s3h').textContent = $R(fm) + ' no mês';
+  gel('s4').textContent  = $R(mrr);
+  gel('s4h').textContent = lojas.filter(l => l.plano && l.plano !== 'basico').length + ' assinaturas';
 
   // Gráfico 7 dias
-  const dias = Array.from({length:7},(_,i) => {
-    const d = new Date(); d.setDate(d.getDate()-6+i);
-    return { label: d.toLocaleDateString('pt-BR',{weekday:'short'}), str: d.toDateString() };
+  const dias = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - 6 + i);
+    return { l: d.toLocaleDateString('pt-BR', { weekday: 'short' }), s: d.toDateString() };
   });
-  const qtds = dias.map(d => pedidos.filter(p => new Date(p.created_at).toDateString()===d.str).length);
-  const max  = Math.max(...qtds,1);
-  $('chart-label').textContent = qtds.reduce((s,v)=>s+v,0) + ' pedidos';
-  $('chart-bars').innerHTML = dias.map((d,i) => `
-    <div class="chart-bar-wrap">
-      <div class="chart-bar" style="height:${Math.max(Math.round(qtds[i]/max*100),4)}px" title="${qtds[i]}"></div>
-      <div class="chart-label">${d.label}</div>
+  const qs  = dias.map(d => peds.filter(p => new Date(p.created_at).toDateString() === d.s).length);
+  const mx  = Math.max(...qs, 1);
+  gel('ctot').textContent = qs.reduce((a,b)=>a+b,0) + ' pedidos';
+  gel('bars').innerHTML = dias.map((d, i) => `
+    <div class="bw">
+      <div class="bar" style="height:${Math.max(Math.round(qs[i]/mx*90),3)}px" title="${qs[i]}"></div>
+      <div class="blbl">${d.l}</div>
     </div>`).join('');
 
   // Top lojas
-  const mapa = {};
+  const mp = {};
   ph.forEach(p => {
-    const n = p.estabelecimentos?.nome||p.estabelecimento_id;
-    mapa[n] = mapa[n] || {qtd:0,fat:0};
-    mapa[n].qtd++; mapa[n].fat+=Number(p.total||0);
+    const n = p.estabelecimentos?.nome || p.estabelecimento_id || '?';
+    mp[n] = mp[n] || { q: 0, f: 0 };
+    mp[n].q++; mp[n].f += Number(p.total||0);
   });
-  const top = Object.entries(mapa).sort((a,b)=>b[1].qtd-a[1].qtd).slice(0,5);
-  $('top-lojas').innerHTML = top.length
-    ? top.map(([n,d]) => `<tr><td><strong>${n}</strong></td><td>${d.qtd}</td><td style="color:#22c55e;font-weight:700">${fmt(d.fat)}</td><td><span class="badge ativo">Ativa</span></td></tr>`).join('')
-    : '<tr><td colspan="4" class="loading-row">Sem pedidos hoje.</td></tr>';
+  const top = Object.entries(mp).sort((a,b)=>b[1].q-a[1].q).slice(0,5);
+  gel('top-lojas').innerHTML = top.length
+    ? top.map(([n,d]) => `<tr><td><strong>${n}</strong></td><td>${d.q}</td><td style="color:#22c55e;font-weight:700">${$R(d.f)}</td><td><span class="badge bg">Ativa</span></td></tr>`).join('')
+    : `<tr><td colspan="4" class="empty">Sem pedidos hoje.</td></tr>`;
 }
 
 // ── LOJAS ──────────────────────────────────────────────────────────────────
 function renderLojas(lista) {
-  $('tbody-lojas').innerHTML = !lista.length
-    ? '<tr><td colspan="7" class="loading-row">Nenhuma loja.</td></tr>'
-    : lista.map(l => {
-        const cls  = {basico:'trial',pro:'ativo',premium:'ativo'}[l.plano]||'trial';
-        const pln  = {basico:'Trial',pro:'Pro',premium:'Premium'}[l.plano]||'Trial';
-        const qtd  = pedidos.filter(p=>p.estabelecimento_id===l.id).length;
-        const dt   = new Date(l.created_at).toLocaleDateString('pt-BR');
-        return `<tr>
-          <td><strong>${l.nome}</strong></td>
-          <td><a href="/${l.slug}" target="_blank" style="color:#C0392B;text-decoration:none">${l.slug}</a></td>
-          <td><span class="badge ${cls}">${pln}</span></td>
-          <td><span class="badge ${l.aberto!==false?'ativo':'inativo'}">${l.aberto!==false?'Aberta':'Fechada'}</span></td>
-          <td>${qtd}</td>
-          <td style="color:#555;font-size:0.72rem">${dt}</td>
-          <td><button class="btn-acao" onclick="detalheLoja('${l.id}')">Ver</button><button class="btn-acao danger" onclick="remLoja('${l.id}','${l.nome.replace(/'/g,'')}')">Remover</button></td>
-        </tr>`;
-      }).join('');
+  if (!lista.length) {
+    gel('tbody-lojas').innerHTML = `<tr><td colspan="7" class="empty">
+      Nenhuma loja encontrada.<br>
+      <span style="color:#555;font-size:.72rem">Verifique se o SQL de configuração foi executado no Supabase.</span>
+    </td></tr>`;
+    return;
+  }
+  const CL = { basico:'by', pro:'bg', premium:'bg' };
+  const NM = { basico:'Trial', pro:'Pro', premium:'Premium' };
+  gel('tbody-lojas').innerHTML = lista.map(l => {
+    const q  = peds.filter(p => p.estabelecimento_id === l.id).length;
+    const dt = new Date(l.created_at).toLocaleDateString('pt-BR');
+    return `<tr>
+      <td><strong>${l.nome}</strong><div style="font-size:.65rem;color:#444">${l.descricao||''}</div></td>
+      <td><a href="/${l.slug}" target="_blank" style="color:#C0392B;text-decoration:none">${l.slug}</a></td>
+      <td><span class="badge ${CL[l.plano]||'by'}">${NM[l.plano]||'Trial'}</span></td>
+      <td><span class="badge ${l.aberto!==false?'bg':'bgr'}">${l.aberto!==false?'Aberta':'Fechada'}</span></td>
+      <td>${q}</td>
+      <td style="color:#444;font-size:.72rem">${dt}</td>
+      <td style="white-space:nowrap">
+        <button class="btn" data-action="det-loja" data-id="${l.id}">Ver</button>
+        <button class="btn red" data-action="del-loja" data-id="${l.id}" data-nome="${l.nome.replace(/"/g,'')}">Remover</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
-window.filtrarLojas = t => renderLojas(t ? lojas.filter(l=>l.nome.toLowerCase().includes(t.toLowerCase())||l.slug.includes(t.toLowerCase())) : lojas);
 
-window.detalheLoja = id => {
-  const l = lojas.find(x=>x.id===id); if(!l) return;
-  const pL = pedidos.filter(p=>p.estabelecimento_id===id);
-  const fat = pL.reduce((s,p)=>s+Number(p.total||0),0);
-  const ph  = pL.filter(p=>new Date(p.created_at).toDateString()===new Date().toDateString());
-  $('m-loja-body').innerHTML = `
-    <div class="detalhe-row"><span class="detalhe-label">Nome</span><span class="detalhe-val">${l.nome}</span></div>
-    <div class="detalhe-row"><span class="detalhe-label">Link</span><span class="detalhe-val">${l.slug}</span></div>
-    <div class="detalhe-row"><span class="detalhe-label">WhatsApp</span><span class="detalhe-val">${l.whatsapp||'—'}</span></div>
-    <div class="detalhe-row"><span class="detalhe-label">Plano</span><span class="detalhe-val">${{basico:'Trial',pro:'Pro',premium:'Premium'}[l.plano]||'Trial'}</span></div>
-    <div class="detalhe-row"><span class="detalhe-label">Status</span><span class="detalhe-val">${l.aberto!==false?'Aberta':'Fechada'}</span></div>
-    <div class="detalhe-row"><span class="detalhe-label">Total pedidos</span><span class="detalhe-val">${pL.length}</span></div>
-    <div class="detalhe-row"><span class="detalhe-label">Pedidos hoje</span><span class="detalhe-val">${ph.length}</span></div>
-    <div class="detalhe-row"><span class="detalhe-label">Faturamento total</span><span class="detalhe-val" style="color:#22c55e">${fmt(fat)}</span></div>
-    <div class="detalhe-row"><span class="detalhe-label">Cadastrado em</span><span class="detalhe-val">${new Date(l.created_at).toLocaleDateString('pt-BR')}</span></div>
+// Delegação de eventos na tabela de lojas
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const { action, id, nome } = btn.dataset;
+  if (action === 'det-loja')  detLoja(id);
+  if (action === 'del-loja')  delLoja(id, nome);
+  if (action === 'det-ped')   detPed(id);
+  if (action === 'edit-plano') editPlano(id);
+});
+
+gel('busca-lojas').addEventListener('input', e => {
+  const t = e.target.value.toLowerCase();
+  renderLojas(t ? lojas.filter(l => l.nome.toLowerCase().includes(t) || l.slug.includes(t)) : lojas);
+});
+
+function detLoja(id) {
+  const l = lojas.find(x => x.id === id); if (!l) return;
+  const pl  = peds.filter(p => p.estabelecimento_id === id);
+  const fat = pl.reduce((s, p) => s + Number(p.total||0), 0);
+  const ph  = pl.filter(p => new Date(p.created_at).toDateString() === new Date().toDateString());
+  gel('loja-body').innerHTML = `
+    <div class="drow"><span class="dlbl">Nome</span><span class="dval">${l.nome}</span></div>
+    <div class="drow"><span class="dlbl">Link</span><span class="dval"><a href="/${l.slug}" target="_blank" style="color:#C0392B">/${l.slug}</a></span></div>
+    <div class="drow"><span class="dlbl">WhatsApp</span><span class="dval">${l.whatsapp||'—'}</span></div>
+    <div class="drow"><span class="dlbl">Plano</span><span class="dval">${{basico:'Trial',pro:'Pro',premium:'Premium'}[l.plano]||'Trial'}</span></div>
+    <div class="drow"><span class="dlbl">Status loja</span><span class="dval">${l.aberto!==false?'Aberta':'Fechada'}</span></div>
+    <div class="drow"><span class="dlbl">Total pedidos</span><span class="dval">${pl.length}</span></div>
+    <div class="drow"><span class="dlbl">Pedidos hoje</span><span class="dval">${ph.length}</span></div>
+    <div class="drow"><span class="dlbl">Faturamento total</span><span class="dval" style="color:#22c55e;font-weight:800">${$R(fat)}</span></div>
+    <div class="drow"><span class="dlbl">Cadastro</span><span class="dval">${new Date(l.created_at).toLocaleDateString('pt-BR')}</span></div>
     <div style="display:flex;gap:10px;margin-top:18px">
-      <button class="btn-ceo red" style="flex:1" onclick="window.open('/'+' ${l.slug}','_blank')">Ver cardápio</button>
-      <button class="btn-ceo ghost" style="flex:1" onclick="remLoja('${l.id}','${l.nome.replace(/'/g,'')}')">Remover</button>
+      <button class="btn-red" style="flex:1" onclick="window.open('/${l.slug}','_blank')">Ver cardápio</button>
+      <button class="btn-ghost" style="flex:1" onclick="delLoja('${l.id}','${l.nome.replace(/'/g,'')}')">Remover loja</button>
     </div>`;
-  $('m-loja').classList.add('open');
-};
-window.remLoja = async (id,nome) => {
-  if(!confirm('Remover "'+nome+'"?')) return;
-  const {error} = await supa.from('estabelecimentos').delete().eq('id',id);
-  if(error) return toast('Erro: '+error.message,'#ef4444');
-  toast('Loja removida!'); $('m-loja').classList.remove('open');
-  await carregar();
+  gel('ov-loja').classList.add('on');
+}
+window.delLoja = async (id, nome) => {
+  if (!confirm('Remover "' + nome + '"?')) return;
+  const { error } = await db.from('estabelecimentos').delete().eq('id', id);
+  if (error) return toast('Erro: ' + error.message, '#ef4444');
+  toast('Loja removida!');
+  gel('ov-loja').classList.remove('on');
+  await load();
 };
 
 // ── PEDIDOS ────────────────────────────────────────────────────────────────
-const CLS = {novo:'trial',preparo:'trial',pronto:'ativo',recusado:'inativo'};
-const LBL = {novo:'Novo',preparo:'Preparo',pronto:'Pronto',recusado:'Recusado'};
+const CLS = { novo:'by', preparo:'by', pronto:'bg', recusado:'br' };
+const LBL = { novo:'Novo', preparo:'Preparo', pronto:'Pronto', recusado:'Recusado' };
+
 function renderPeds(lista) {
-  $('tbody-peds').innerHTML = !lista.length
-    ? '<tr><td colspan="8" class="loading-row">Nenhum pedido.</td></tr>'
-    : lista.slice(0,150).map(p => {
-        const dt = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  gel('tbody-peds').innerHTML = !lista.length
+    ? `<tr><td colspan="8" class="empty">Nenhum pedido.</td></tr>`
+    : lista.slice(0, 200).map(p => {
+        const dt = new Date(p.created_at).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
         return `<tr>
           <td><strong>#${p.id.slice(-4).toUpperCase()}</strong></td>
-          <td style="color:#aaa;font-size:0.75rem">${p.estabelecimentos?.nome||'—'}</td>
+          <td style="color:#555;font-size:.72rem">${p.estabelecimentos?.nome||'—'}</td>
           <td>${p.cliente_nome||'—'}</td>
-          <td style="font-size:0.72rem;color:#888">${p.pagamento||'—'}</td>
-          <td style="color:#22c55e;font-weight:700">${fmt(p.total)}</td>
-          <td><span class="badge ${CLS[p.status]||'trial'}">${LBL[p.status]||p.status}</span></td>
-          <td style="color:#555;font-size:0.72rem">${dt}</td>
-          <td><button class="btn-acao" onclick="verPed('${p.id}')">Ver</button></td>
+          <td style="color:#555;font-size:.7rem">${p.pagamento||'—'}</td>
+          <td style="color:#22c55e;font-weight:700">${$R(p.total)}</td>
+          <td><span class="badge ${CLS[p.status]||'by'}">${LBL[p.status]||p.status}</span></td>
+          <td style="color:#444;font-size:.7rem">${dt}</td>
+          <td><button class="btn" data-action="det-ped" data-id="${p.id}">Ver</button></td>
         </tr>`;
       }).join('');
 }
-window.filtrarPeds = () => {
-  const st = $('fil-status').value, t = $('fil-busca').value.toLowerCase();
-  renderPeds(pedidos.filter(p=>(!st||p.status===st)&&(!t||p.cliente_nome?.toLowerCase().includes(t)||p.estabelecimentos?.nome?.toLowerCase().includes(t))));
-};
-window.verPed = id => {
-  const p = pedidos.find(x=>x.id===id); if(!p) return;
-  const its = Array.isArray(p.itens)?p.itens:[];
-  $('m-ped-body').innerHTML = `
-    <div class="detalhe-row"><span class="detalhe-label">Loja</span><span class="detalhe-val">${p.estabelecimentos?.nome||'—'}</span></div>
-    <div class="detalhe-row"><span class="detalhe-label">Cliente</span><span class="detalhe-val">${p.cliente_nome||'—'} · ${p.cliente_whats||'—'}</span></div>
-    <div class="detalhe-row"><span class="detalhe-label">Entrega</span><span class="detalhe-val">${p.endereco||'Retirada'}</span></div>
-    <div class="detalhe-row"><span class="detalhe-label">Pagamento</span><span class="detalhe-val">${p.pagamento||'—'}${p.troco?' · troco: '+p.troco:''}</span></div>
-    <div class="detalhe-row"><span class="detalhe-label">Status</span><span class="detalhe-val">${LBL[p.status]||p.status}</span></div>
+
+function filtPeds() {
+  const st = gel('fil-st').value;
+  const q  = gel('fil-q').value.toLowerCase();
+  renderPeds(peds.filter(p =>
+    (!st || p.status === st) &&
+    (!q  || p.cliente_nome?.toLowerCase().includes(q) || p.estabelecimentos?.nome?.toLowerCase().includes(q))
+  ));
+}
+gel('fil-st').addEventListener('change', filtPeds);
+gel('fil-q').addEventListener('input', filtPeds);
+
+function detPed(id) {
+  const p = peds.find(x => x.id === id); if (!p) return;
+  const its = Array.isArray(p.itens) ? p.itens : [];
+  gel('ped-body').innerHTML = `
+    <div class="drow"><span class="dlbl">Loja</span><span class="dval">${p.estabelecimentos?.nome||'—'}</span></div>
+    <div class="drow"><span class="dlbl">Cliente</span><span class="dval">${p.cliente_nome||'—'}</span></div>
+    <div class="drow"><span class="dlbl">WhatsApp</span><span class="dval">${p.cliente_whats||'—'}</span></div>
+    <div class="drow"><span class="dlbl">Entrega</span><span class="dval">${p.endereco||'Retirada'}</span></div>
+    <div class="drow"><span class="dlbl">Pagamento</span><span class="dval">${p.pagamento||'—'}${p.troco?' · troco '+p.troco:''}</span></div>
+    <div class="drow"><span class="dlbl">Status</span><span class="dval">${LBL[p.status]||p.status}</span></div>
     <hr style="border:none;border-top:1px solid #1e1e1e;margin:10px 0">
-    ${its.map(i=>`<div class="detalhe-row"><span class="detalhe-label">${i.qtd}x ${i.nome}</span><span class="detalhe-val">${fmt(i.preco*i.qtd)}</span></div>`).join('')}
-    <div class="detalhe-row" style="margin-top:6px;border-top:1px solid #333"><strong>Total</strong><span style="color:#22c55e;font-weight:800">${fmt(p.total)}</span></div>
-    <div style="font-size:0.7rem;color:#444;text-align:center;margin-top:12px">${new Date(p.created_at).toLocaleString('pt-BR')}</div>`;
-  $('m-ped').classList.add('open');
-};
+    ${its.map(i => `<div class="drow"><span class="dlbl">${i.qtd}x ${i.nome}</span><span class="dval">${$R(i.preco*i.qtd)}</span></div>`).join('')}
+    <div class="drow" style="margin-top:4px"><strong>Total</strong><span style="color:#22c55e;font-weight:800">${$R(p.total)}</span></div>
+    <div style="font-size:.7rem;color:#444;text-align:center;margin-top:12px">${new Date(p.created_at).toLocaleString('pt-BR')}</div>`;
+  gel('ov-ped').classList.add('on');
+}
 
 // ── FINANCEIRO ────────────────────────────────────────────────────────────
-// Listeners dos botões de período
-document.addEventListener('DOMContentLoaded', () => {
-  const container = document.getElementById('fin-periodo-btns');
-  if (container) {
-    container.addEventListener('click', e => {
-      const btn = e.target.closest('[data-periodo]');
-      if (!btn) return;
-      periodo = btn.dataset.periodo;
-      container.querySelectorAll('.periodo-btn').forEach(b => b.classList.remove('ativo'));
-      btn.classList.add('ativo');
-      renderFin(periodo);
-    });
-  }
-});
-
-window.setPeriodo = (p,btn) => {
-  periodo = p;
-  document.querySelectorAll('.periodo-btn').forEach(b=>b.classList.remove('ativo'));
-  btn.classList.add('ativo');
-  renderFin(p);
-};
-function filtraPeriodo(p) {
+function filtraPeriodo() {
   const now = new Date();
-  return pedidos.filter(x => {
-    const d = new Date(x.created_at);
-    if(p==='hoje')   return d.toDateString()===now.toDateString();
-    if(p==='semana') { const s=new Date(now);s.setDate(s.getDate()-7);return d>=s; }
-    if(p==='mes')    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+  return peds.filter(p => {
+    if (p.status === 'recusado') return false;
+    const d = new Date(p.created_at);
+    if (periodo === 'hoje')   return d.toDateString() === now.toDateString();
+    if (periodo === 'semana') { const s=new Date(now); s.setDate(s.getDate()-7); return d>=s; }
+    if (periodo === 'mes')    return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
     return true;
-  }).filter(x=>x.status!=='recusado');
+  });
 }
-function renderFin(p) {
-  const peds = filtraPeriodo(p);
-  const fat  = peds.reduce((s,x)=>s+Number(x.total||0),0);
-  const tick = peds.length?fat/peds.length:0;
-  $('fin-fat').textContent = fmt(fat);
-  $('fin-qtd').textContent = peds.length;
-  $('fin-tick').textContent= fmt(tick);
 
+function renderFin() {
+  const fp  = filtraPeriodo();
+  const fat = fp.reduce((s,p)=>s+Number(p.total||0),0);
+  const tck = fp.length ? fat/fp.length : 0;
+  gel('ff').textContent = $R(fat);
+  gel('fq').textContent = fp.length;
+  gel('ft').textContent = $R(tck);
+
+  // Por pagamento
   const pm = {};
-  peds.forEach(x=>{const k=(x.pagamento||'Não informado').toUpperCase();pm[k]=(pm[k]||0)+Number(x.total||0);});
+  fp.forEach(p => { const k=(p.pagamento||'Não informado').toUpperCase(); pm[k]=(pm[k]||0)+Number(p.total||0); });
   const tot = Object.values(pm).reduce((s,v)=>s+v,0)||1;
-  $('fin-pags').innerHTML = Object.entries(pm).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
-    const pct=Math.round(v/tot*100);
-    return `<div class="pag-bar-wrap">
-      <div class="pag-bar-header"><span>${k}</span><span style="color:#22c55e;font-weight:700">${fmt(v)} (${pct}%)</span></div>
-      <div class="pag-bar-bg"><div class="pag-bar-fill" style="width:${pct}%"></div></div>
+  gel('fin-pags').innerHTML = Object.entries(pm).sort((a,b)=>b[1]-a[1]).map(([k,v]) => {
+    const pct = Math.round(v/tot*100);
+    return `<div class="pbar-wrap">
+      <div class="pbar-top"><span style="font-weight:600">${k}</span><span style="color:#22c55e;font-weight:700">${$R(v)} (${pct}%)</span></div>
+      <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
     </div>`;
-  }).join('')||'<div style="color:#444;text-align:center;padding:16px;font-size:0.8rem">Sem dados</div>';
+  }).join('') || `<div class="empty">Sem dados no período</div>`;
 
+  // Por loja
   const lm = {};
-  peds.forEach(x=>{const n=x.estabelecimentos?.nome||x.estabelecimento_id;lm[n]=lm[n]||{qtd:0,fat:0};lm[n].qtd++;lm[n].fat+=Number(x.total||0);});
-  $('fin-lojas').innerHTML = Object.entries(lm).sort((a,b)=>b[1].fat-a[1].fat).map(([n,d])=>`
-    <tr><td><strong>${n}</strong></td><td>${d.qtd}</td><td style="color:#22c55e;font-weight:700">${fmt(d.fat)}</td><td>${fmt(d.qtd?d.fat/d.qtd:0)}</td></tr>`
-  ).join('')||'<tr><td colspan="4" class="loading-row">Sem dados</td></tr>';
+  fp.forEach(p => {
+    const n = p.estabelecimentos?.nome || p.estabelecimento_id || '?';
+    lm[n] = lm[n] || { q:0, f:0 };
+    lm[n].q++; lm[n].f += Number(p.total||0);
+  });
+  gel('fin-lojas').innerHTML = Object.entries(lm).sort((a,b)=>b[1].f-a[1].f).map(([n,d]) =>
+    `<tr><td><strong>${n}</strong></td><td>${d.q}</td><td style="color:#22c55e;font-weight:700">${$R(d.f)}</td><td>${$R(d.q?d.f/d.q:0)}</td></tr>`
+  ).join('') || `<tr><td colspan="4" class="empty">Sem dados</td></tr>`;
 }
 
 // ── PLANOS ────────────────────────────────────────────────────────────────
 function renderPlanos() {
-  const trial=lojas.filter(l=>!l.plano||l.plano==='basico').length;
-  const pro=lojas.filter(l=>l.plano==='pro').length;
-  const prem=lojas.filter(l=>l.plano==='premium').length;
-  $('p-trial').textContent=trial; $('p-pro').textContent=pro; $('p-premium').textContent=prem;
-  $('p-mrr').textContent=fmt(pro*49+prem*99);
-  const PLN={basico:'Trial',pro:'Pro',premium:'Premium'};
-  const PCLS={basico:'trial',pro:'ativo',premium:'ativo'};
-  const VALOR={pro:'R$ 49,00',premium:'R$ 99,00'};
-  $('tbody-planos').innerHTML = lojas.map(l=>{
-    const venc=l.assinatura_vencimento?new Date(l.assinatura_vencimento).toLocaleDateString('pt-BR'):'—';
-    const vencida=l.assinatura_vencimento&&new Date(l.assinatura_vencimento)<new Date();
-    const stCls=vencida?'vencido':(l.pagamento_status==='pago'?'pago':'trial');
-    const stLbl=vencida?'Vencido':(l.pagamento_status==='pago'?'Pago':'Pendente');
+  const t  = lojas.filter(l=>!l.plano||l.plano==='basico').length;
+  const p  = lojas.filter(l=>l.plano==='pro').length;
+  const pr = lojas.filter(l=>l.plano==='premium').length;
+  gel('pt').textContent   = t;
+  gel('pp').textContent   = p;
+  gel('pprem').textContent= pr;
+  gel('pmrr').textContent = $R(p*49+pr*99);
+
+  const NM={basico:'Trial',pro:'Pro',premium:'Premium'};
+  const CL={basico:'by',pro:'bg',premium:'bg'};
+  const VL={pro:'R$ 49,00',premium:'R$ 99,00'};
+  gel('tbody-planos').innerHTML = lojas.map(l => {
+    const venc  = l.assinatura_vencimento ? new Date(l.assinatura_vencimento).toLocaleDateString('pt-BR') : '—';
+    const venc_ = l.assinatura_vencimento && new Date(l.assinatura_vencimento) < new Date();
+    const sCls  = venc_ ? 'br' : (l.pagamento_status==='pago'?'bg':'by');
+    const sLbl  = venc_ ? 'Vencido' : (l.pagamento_status==='pago'?'Pago':'Pendente');
     return `<tr>
       <td><strong>${l.nome}</strong></td>
-      <td><span class="badge ${PCLS[l.plano]||'trial'}">${PLN[l.plano]||'Trial'}</span></td>
-      <td><span class="badge ${stCls}">${stLbl}</span></td>
-      <td style="color:${vencida?'#ef4444':'#555'}">${venc}</td>
-      <td style="font-weight:700">${VALOR[l.plano]||'Grátis'}</td>
-      <td><button class="btn-acao success" onclick="editPlano('${l.id}')">Editar</button></td>
+      <td><span class="badge ${CL[l.plano]||'by'}">${NM[l.plano]||'Trial'}</span></td>
+      <td><span class="badge ${sCls}">${sLbl}</span></td>
+      <td style="color:${venc_?'#ef4444':'#444'}">${venc}</td>
+      <td style="font-weight:700">${VL[l.plano]||'Grátis'}</td>
+      <td><button class="btn grn" data-action="edit-plano" data-id="${l.id}">Editar</button></td>
     </tr>`;
-  }).join('')||'<tr><td colspan="6" class="loading-row">Nenhuma loja</td></tr>';
+  }).join('') || `<tr><td colspan="6" class="empty">Nenhuma loja</td></tr>`;
 }
 
-// Modal plano
-function abrirModalPlano(id) {
+function abrirPlano(id) {
   const l = id ? lojas.find(x=>x.id===id) : null;
-  $('pl-loja').innerHTML = lojas.map(x=>`<option value="${x.id}" ${x.id===id?'selected':''}>${x.nome}</option>`).join('');
-  if(l) { $('pl-tipo').value=l.plano||'basico'; $('pl-pag-status').value=l.pagamento_status||'pendente'; $('pl-venc').value=l.assinatura_vencimento?l.assinatura_vencimento.slice(0,10):''; }
-  else { const d=new Date();d.setDate(d.getDate()+30);$('pl-venc').value=d.toISOString().slice(0,10); }
-  $('m-plano').classList.add('open');
+  gel('pl-loja').innerHTML = lojas.map(x => `<option value="${x.id}" ${x.id===id?'selected':''}>${x.nome}</option>`).join('');
+  if (l) {
+    gel('pl-tipo').value  = l.plano || 'basico';
+    gel('pl-pgst').value  = l.pagamento_status || 'pendente';
+    gel('pl-venc').value  = l.assinatura_vencimento ? l.assinatura_vencimento.slice(0,10) : '';
+  } else {
+    const d = new Date(); d.setDate(d.getDate()+30);
+    gel('pl-venc').value = d.toISOString().slice(0,10);
+  }
+  gel('ov-plano').classList.add('on');
 }
-window.editPlano = id => abrirModalPlano(id);
-$('btn-novo-plano').addEventListener('click', () => abrirModalPlano(null));
-[$('x-plano'),$('x-plano-btn')].forEach(b=>b.addEventListener('click',()=>$('m-plano').classList.remove('open')));
-$('m-plano').addEventListener('click',e=>{if(e.target===$('m-plano'))$('m-plano').classList.remove('open');});
-$('salvar-plano').addEventListener('click',async()=>{
-  const id=$('pl-loja').value, plano=$('pl-tipo').value, venc=$('pl-venc').value, st=$('pl-pag-status').value;
-  const {error}=await supa.from('estabelecimentos').update({plano,assinatura_vencimento:venc||null,pagamento_status:st}).eq('id',id);
-  if(error) return toast('Erro: '+error.message,'#ef4444');
-  toast('Plano salvo!'); $('m-plano').classList.remove('open'); await carregar();
+window.editPlano = id => abrirPlano(id);
+gel('btn-novo-plano').addEventListener('click', () => abrirPlano(null));
+gel('salvar-plano').addEventListener('click', async () => {
+  const id    = gel('pl-loja').value;
+  const plano = gel('pl-tipo').value;
+  const venc  = gel('pl-venc').value;
+  const st    = gel('pl-pgst').value;
+  const { error } = await db.from('estabelecimentos').update({ plano, assinatura_vencimento: venc||null, pagamento_status: st }).eq('id', id);
+  if (error) return toast('Erro: ' + error.message, '#ef4444');
+  toast('Plano salvo!');
+  gel('ov-plano').classList.remove('on');
+  await load();
 });
 
-// Fechar modais
-[$('x-ped'),$('m-ped')].forEach((el,i)=>el.addEventListener('click',e=>{if(i===0||e.target===$('m-ped'))$('m-ped').classList.remove('open');}));
-[$('x-loja'),$('m-loja')].forEach((el,i)=>el.addEventListener('click',e=>{if(i===0||e.target===$('m-loja'))$('m-loja').classList.remove('open');}));
+// ── FECHAR MODAIS ─────────────────────────────────────────────────────────
+['ped','loja','plano'].forEach(m => {
+  const ov = gel('ov-' + m);
+  const close = () => ov.classList.remove('on');
+  gel('x-' + m).addEventListener('click', close);
+  if (gel('x-' + m + '2')) gel('x-' + m + '2').addEventListener('click', close);
+  ov.addEventListener('click', e => { if (e.target === ov) close(); });
+});
 
-// ── TOAST ──────────────────────────────────────────────────────────────────
-function toast(msg,cor='#22c55e'){const t=$('toast');t.textContent=msg;t.style.background=cor;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function toast(msg, cor='#22c55e') {
+  const t = gel('toast');
+  t.textContent = msg; t.style.background = cor; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
 </script>
 </body>
 </html>
