@@ -1,4 +1,4 @@
-// src/auth.js - Versão corrigida com exportações
+// src/auth.js - Versão ultra simples para debug
 import { getSupa } from './supabase.js';
 import { goTo } from './utils.js';
 import { state } from './config.js';
@@ -8,50 +8,49 @@ export async function doLogin() {
   const pass = document.getElementById('lp')?.value;
 
   if (!email || !pass) {
-    alert("Preencha e-mail e senha");
+    alert("Digite email e senha");
     return;
   }
 
-  const btn = document.querySelector('[onclick="doLogin()"]');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Entrando...';
-  }
+  alert(`Tentando login com:\nEmail: ${email}\nSenha: ${pass}\n\nAguarde...`);
 
   try {
     const supa = getSupa();
-    const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+    const { data, error } = await supa.auth.signInWithPassword({
+      email: email,
+      password: pass
+    });
 
-    if (error) throw new Error('E-mail ou senha incorretos');
+    if (error) {
+      console.error("Erro auth:", error);
+      alert("Erro: " + error.message);
+      return;
+    }
 
-    const { data: estab } = await supa
+    console.log("✅ Login Supabase OK", data.user);
+
+    // Busca o estabelecimento
+    const { data: estab, error: estabError } = await supa
       .from('estabelecimentos')
       .select('*')
       .eq('user_id', data.user.id)
       .maybeSingle();
 
-    if (!estab) throw new Error('Estabelecimento não encontrado');
+    if (estabError || !estab) {
+      alert("Conta encontrada, mas estabelecimento não configurado ainda.");
+      return;
+    }
 
     state.currentUser = estab;
     localStorage.setItem('pw_current_user', JSON.stringify(estab));
 
-    alert(`✅ Bem-vindo, ${estab.nome || 'Estabelecimento'}!`);
+    alert(`✅ Login realizado com sucesso!\nBem-vindo, ${estab.nome}`);
     goTo('s-dash');
 
   } catch (e) {
     console.error(e);
-    alert("E-mail ou senha incorretos");
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Entrar';
-    }
+    alert("Erro inesperado: " + e.message);
   }
-}
-
-export async function doRegister() {
-  alert("Cadastro em desenvolvimento...\nEm breve vamos implementar completamente.");
-  // goTo('s-payment'); // descomente quando quiser ir para pagamento
 }
 
 export function loginDemo() {
@@ -59,7 +58,5 @@ export function loginDemo() {
   goTo('s-dash');
 }
 
-// Torna global para HTML
 window.doLogin = doLogin;
-window.doRegister = doRegister;
 window.loginDemo = loginDemo;
