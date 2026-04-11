@@ -1,12 +1,28 @@
 // src/supabase.js
 import { createClient } from '@supabase/supabase-js';
 
-const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
+const supabaseUrl   = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey   = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 let _client = null;
 
 export function getSupa() {
-  if (!_client) _client = createClient(SUPA_URL, SUPA_KEY);
+  if (!_client) {
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("❌ Chaves do Supabase não encontradas no .env");
+      return null;
+    }
+    _client = createClient(supabaseUrl, supabaseKey);
+  }
   return _client;
+}
+
+// Função para debug
+export function checkSupabaseConnection() {
+  const client = getSupa();
+  if (client) {
+    console.log("✅ Supabase conectado com sucesso!");
+  } else {
+    console.error("❌ Falha ao conectar com Supabase - verifique as chaves no .env");
+  }
 }
