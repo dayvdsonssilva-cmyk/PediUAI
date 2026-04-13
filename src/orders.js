@@ -1,16 +1,15 @@
-// src/orders.js
+// src/orders.js - Versão corrigida com realtime e som controlado
 import { state } from './config.js';
 import { showNotif, saveCurrentUser } from './utils.js';
 import { getSupa } from './supabase.js';
 
 let currentAudio = null;
-let realtimeChannel = null;
 
 export function tocarSomNovoPedido() {
   if (currentAudio) currentAudio.pause();
   
   currentAudio = new Audio('/sounds/new-order.mp3');
-  currentAudio.volume = 0.75;
+  currentAudio.volume = 0.7;
   currentAudio.play().catch(() => {});
 }
 
@@ -22,30 +21,27 @@ export function pararSomNotificacao() {
 }
 
 export function renderOrdersList() {
-  // seu código de renderização...
-  console.log("Pedidos renderizados");
+  console.log("📋 Renderizando pedidos...");
+  // Aqui você pode colocar o código de renderização que já tinha
 }
 
-// ====================== REALTIME ======================
 export function iniciarRealtimePedidos() {
   const supa = getSupa();
   if (!supa || !state.currentUser?.id) return;
 
-  if (realtimeChannel) supa.removeChannel(realtimeChannel);
-
-  realtimeChannel = supa.channel('pedidos-realtime')
+  supa.channel('realtime-pedidos')
     .on('postgres_changes', {
       event: 'INSERT',
       schema: 'public',
       table: 'orders',
       filter: `establishment_id=eq.${state.currentUser.id}`
     }, (payload) => {
-      const p = payload.new;
+      console.log('🛎 Novo pedido recebido!', payload.new);
+      
       const novo = {
         id: '#' + String(Date.now()).slice(-4),
-        client: p.client_name,
-        items: typeof p.items === 'string' ? JSON.parse(p.items) : p.items,
-        total: Number(p.total),
+        client: payload.new.client_name || 'Cliente',
+        total: Number(payload.new.total || 0),
         status: 'new',
         time: 'agora'
       };
@@ -62,7 +58,7 @@ export function iniciarRealtimePedidos() {
 }
 
 // Torna global
+window.renderOrdersList = renderOrdersList;
 window.tocarSomNovoPedido = tocarSomNovoPedido;
 window.pararSomNotificacao = pararSomNotificacao;
 window.iniciarRealtimePedidos = iniciarRealtimePedidos;
-window.renderOrdersList = renderOrdersList;
