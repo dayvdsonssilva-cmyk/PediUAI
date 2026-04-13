@@ -1,4 +1,4 @@
-// src/auth.js - Versão final corrigida
+// src/auth.js - Versão simples e confiável
 import { getSupa } from './supabase.js';
 import { goTo } from './utils.js';
 import { state } from './config.js';
@@ -13,48 +13,38 @@ export async function doLogin() {
   }
 
   const btn = document.querySelector('[onclick="doLogin()"]');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Entrando...';
-  }
+  if (btn) btn.textContent = 'Verificando...';
 
   try {
     const supa = getSupa();
-    const { data, error } = await supa.auth.signInWithPassword({ 
-      email, 
-      password: pass 
-    });
 
-    if (error) throw new Error('E-mail ou senha incorretos');
-
-    const { data: estab } = await supa
+    // Busca direta (como era no sistema antigo)
+    const { data: estab, error } = await supa
       .from('estabelecimentos')
       .select('*')
-      .eq('user_id', data.user.id)
+      .eq('email', email)
+      .eq('pass', pass)          // mude para 'password_plain' se for o nome da coluna
       .maybeSingle();
 
-    if (!estab) throw new Error('Estabelecimento não encontrado');
+    if (error || !estab) {
+      alert("E-mail ou senha incorretos");
+      return;
+    }
 
     state.currentUser = estab;
     localStorage.setItem('pw_current_user', JSON.stringify(estab));
 
-    alert(`✅ Login realizado!\nBem-vindo, ${estab.nome}`);
+    alert(`✅ Login OK!\nBem-vindo, ${estab.nome}`);
     goTo('s-dash');
+
+    if (typeof initDashboard === 'function') initDashboard();
 
   } catch (e) {
     console.error(e);
-    alert("E-mail ou senha incorretos");
+    alert("Erro ao fazer login");
   } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Entrar';
-    }
+    if (btn) btn.textContent = 'Entrar';
   }
-}
-
-export async function doRegister() {
-  alert("Cadastro em desenvolvimento...\nVamos implementar em breve.");
-  // goTo('s-payment'); // descomente quando quiser ir para a tela de planos
 }
 
 export function loginDemo() {
@@ -62,7 +52,5 @@ export function loginDemo() {
   goTo('s-dash');
 }
 
-// Torna as funções disponíveis para o HTML
 window.doLogin = doLogin;
-window.doRegister = doRegister;
 window.loginDemo = loginDemo;
