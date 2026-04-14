@@ -189,7 +189,6 @@ export async function initDashboard() {
     await renderPedidos();
     await carregarFinanceiro();
     iniciarRealtime();
-    iniciarRealtimeMesas();
     await carregarPedidosMesas();
     renderMesas();
     renderEmojiGrid();
@@ -1085,8 +1084,23 @@ function iniciarRealtime() {
       payload => {
         const p = payload.new;
         if (!p || !p.id) return;
-        // Filtra por este estabelecimento no cliente
         if (p.estabelecimento_id !== estab.id) return;
+
+        // ── Pedido de mesa (No local) ──────────────────────────────
+        if (p.endereco && p.endereco.startsWith('No local')) {
+          const parts = p.endereco.split('—');
+          if (parts.length >= 2) {
+            const key = parts[1].trim();
+            if (!_pedidosMesas[key]) _pedidosMesas[key] = [];
+            if (!_pedidosMesas[key].find(x => x.id === p.id)) {
+              _pedidosMesas[key].push(p);
+              renderMesas();
+              showToast('🍽️ Novo pedido na ' + key + '!');
+            }
+          }
+        }
+
+        // ── Pedido normal na aba Pedidos ──────────────────────────
         if (pedidosConhecidos.has(p.id)) return;
         pedidosConhecidos.add(p.id);
         const lista = $('pedidos-novos-lista');
@@ -1432,6 +1446,17 @@ function renderMesas() {
   if (inp) inp.value = n;
   const fmt  = v => 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',');
 
+  // Atualiza cards de resumo
+  const allPeds   = Object.values(_pedidosMesas).flat();
+  const mOcup     = Object.keys(_pedidosMesas).filter(k => _pedidosMesas[k].length > 0).length;
+  const totalAb   = allPeds.reduce((s, p) => s + Number(p.total || 0), 0);
+  const elOcup    = document.getElementById('mesas-ocupadas-count');
+  const elPeds    = document.getElementById('mesas-pedidos-count');
+  const elTotal   = document.getElementById('mesas-total-count');
+  if (elOcup)  elOcup.textContent  = mOcup;
+  if (elPeds)  elPeds.textContent  = allPeds.length;
+  if (elTotal) elTotal.textContent = fmt(totalAb);
+
   grid.innerHTML = Array.from({ length: n }, (_, i) => {
     const num    = i + 1;
     const key    = 'Mesa ' + num;
@@ -1524,23 +1549,11 @@ async function confirmarFecharComanda() {
 }
 
 function iniciarRealtimeMesas() {
-  const estab = getEstab(); if (!estab) return;
-  getSupa()
-    .channel('mesas-' + estab.id)
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos' }, payload => {
-      const p = payload.new;
-      if (!p || p.estabelecimento_id !== estab.id) return;
-      if (!p.endereco || !p.endereco.startsWith('No local')) return;
-      const parts = (p.endereco || '').split('—');
-      if (parts.length < 2) return;
-      const key = parts[1].trim();
-      if (!_pedidosMesas[key]) _pedidosMesas[key] = [];
-      _pedidosMesas[key].push(p);
-      renderMesas();
-      showToast('🍽️ Novo pedido na ' + key + '!');
-      notifLoop(p.id);
-    })
-    .subscribe();
+  // Não cria canal separado — aproveita o canal de pedidos já existente
+  // O canal 'pedidos-{id}' em iniciarRealtime() já recebe todos os INSERTs
+  // Aqui apenas filtramos os pedidos de mesa no callback do realtime principal
+  // Esta função agora serve apenas para carregar dados iniciais
+  // O realtime de mesas está integrado em iniciarRealtime()
 }
 
 window.renderMesas            = renderMesas;
