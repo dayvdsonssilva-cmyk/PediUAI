@@ -49,23 +49,41 @@ window.atualizarCfgLink = function(val) {
   if (el) el.textContent = `pediway.vercel.app/${slug || 'meu-link'}`;
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('pw_estab');
+document.addEventListener('DOMContentLoaded', async () => {
+  // Tenta restaurar sessão do Supabase Auth primeiro
+  const { getSupa } = await import('./supabase.js');
+  const { data: { session } } = await getSupa().auth.getSession();
 
-  if (saved) {
-    try {
-      window._estab = JSON.parse(saved);
-    } catch(e) {
-      localStorage.removeItem('pw_estab');
+  if (session?.user) {
+    // Sessão válida — busca estab atualizado do banco
+    const { data: estab } = await getSupa()
+      .from('estabelecimentos')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+
+    if (estab) {
+      window._estab = estab;
+      localStorage.setItem('pw_estab', JSON.stringify(estab));
+      localStorage.setItem('pw_tela_atual', 's-dash');
+      goTo('s-dash');
+      await initDashboard();
+      return;
     }
   }
 
-  // Se tinha uma tela salva (ex: dashboard) e tem sessao, vai direto
+  // Sem sessão válida — tenta localStorage como fallback temporário
+  const saved = localStorage.getItem('pw_estab');
+  if (saved) {
+    try { window._estab = JSON.parse(saved); } catch(e) { localStorage.removeItem('pw_estab'); }
+  }
+
   const telaSalva = localStorage.getItem('pw_tela_atual');
   if (telaSalva === 's-dash' && window._estab) {
     goTo('s-dash');
-    initDashboard();
+    await initDashboard();
   } else {
+    localStorage.removeItem('pw_tela_atual');
     goTo('s-landing');
   }
 });
