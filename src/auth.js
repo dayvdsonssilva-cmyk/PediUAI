@@ -109,13 +109,24 @@ export async function doLogin() {
   try {
     // 1. Autentica no Supabase Auth
     const { data: authData, error: authErr } = await getSupa().auth.signInWithPassword({ email, password: pass });
+
     if (authErr) {
-      if (authErr.message.includes('Invalid login')) throw new Error('E-mail ou senha incorretos.');
-      throw new Error(authErr.message);
+      // Trata erros específicos com mensagens em português
+      const msg = authErr.message || '';
+      if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
+        throw new Error('E-mail ou senha incorretos. Verifique e tente novamente.');
+      }
+      if (msg.includes('Email not confirmed')) {
+        throw new Error('Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.');
+      }
+      if (msg.includes('Too many requests')) {
+        throw new Error('Muitas tentativas. Aguarde alguns minutos e tente novamente.');
+      }
+      throw new Error('Erro ao entrar: ' + msg);
     }
 
     const userId = authData?.user?.id;
-    if (!userId) throw new Error('Erro na sessão. Tente novamente.');
+    if (!userId) throw new Error('Sessão inválida. Tente novamente.');
 
     // 2. Busca estabelecimento do usuário
     const { data: estab, error: dbErr } = await getSupa()
@@ -124,12 +135,15 @@ export async function doLogin() {
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (dbErr) throw new Error('Erro ao carregar dados: ' + dbErr.message);
+    if (dbErr) {
+      console.error('Erro ao buscar estab:', dbErr);
+      throw new Error('Erro ao carregar dados da loja: ' + dbErr.message);
+    }
 
     if (!estab) {
-      // Usuário autenticado mas sem estabelecimento — raro, mas tratamos
-      showToast('Conta encontrada mas sem loja vinculada. Entre em contato com o suporte.', 'error');
-      await getSupa().auth.signOut();
+      // Usuário existe no Auth mas não tem loja — vai para cadastro de loja
+      showToast('Conta encontrada! Complete o cadastro da sua loja.', 'info');
+      goTo('s-register');
       return;
     }
 
@@ -143,6 +157,7 @@ export async function doLogin() {
     if (window.initDashboard) await window.initDashboard();
 
   } catch (e) {
+    console.error('doLogin error:', e);
     showToast(e.message, 'error');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Entrar'; }
