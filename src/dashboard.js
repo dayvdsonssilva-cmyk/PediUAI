@@ -1383,11 +1383,171 @@ window.setFinPeriodo = setFinPeriodo;
 window.exportarCSV   = exportarCSV;
 window.exportarPDF   = exportarPDF;
 
-window.renderMesas           = renderMesas;
-window.abrirComanda          = abrirComanda;
-window.fecharComanda         = fecharComanda;
-window.confirmarFecharComanda= confirmarFecharComanda;
-window.salvarNumMesas        = salvarNumMesas;
+// ═══════════════════════════════════════════════════════════
+// SISTEMA DE COMANDAS DIGITAIS
+// ═══════════════════════════════════════════════════════════
+let _mesaAtual     = null;
+let _pedidosMesas  = {};
+let _mesasFechadas = new Set();
+
+function getNumMesas() {
+  const estab = getEstab();
+  const salvo = localStorage.getItem('pw_num_mesas_' + (estab?.id || ''));
+  return parseInt(salvo || '10', 10);
+}
+
+window.salvarNumMesas = function(val) {
+  const estab = getEstab();
+  const n = Math.max(1, Math.min(99, parseInt(val) || 10));
+  localStorage.setItem('pw_num_mesas_' + (estab?.id || ''), String(n));
+  renderMesas();
+};
+
+async function carregarPedidosMesas() {
+  const estab = getEstab(); if (!estab) return;
+  const { data } = await getSupa()
+    .from('pedidos')
+    .select('*')
+    .eq('estabelecimento_id', estab.id)
+    .ilike('endereco', 'No local%')
+    .neq('status', 'recusado')
+    .order('created_at', { ascending: true });
+
+  _pedidosMesas = {};
+  (data || []).forEach(p => {
+    const raw   = (p.endereco || '');
+    const parts = raw.split('—');
+    if (parts.length < 2) return;
+    const mesa  = parts[1].trim();
+    if (!_pedidosMesas[mesa]) _pedidosMesas[mesa] = [];
+    _pedidosMesas[mesa].push(p);
+  });
+  renderMesas();
+}
+
+function renderMesas() {
+  const grid = document.getElementById('mesas-grid'); if (!grid) return;
+  const n    = getNumMesas();
+  const inp  = document.getElementById('cfg-num-mesas');
+  if (inp) inp.value = n;
+  const fmt  = v => 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',');
+
+  grid.innerHTML = Array.from({ length: n }, (_, i) => {
+    const num    = i + 1;
+    const key    = 'Mesa ' + num;
+    const peds   = _pedidosMesas[key] || [];
+    const ativa  = peds.length > 0;
+    const fechada= _mesasFechadas.has(key);
+    const total  = peds.reduce((s, p) => s + Number(p.total || 0), 0);
+    const qtdIt  = peds.reduce((s, p) => s + (Array.isArray(p.itens) ? p.itens.reduce((a, i) => a + (i.qtd || 1), 0) : 0), 0);
+
+    let cls = 'vazia', dot = 'livre', info = '<span class="mesa-label">Livre</span>';
+    if (fechada) {
+      cls  = 'fechando'; dot = '';
+      info = '<span class="mesa-label" style="color:#22c55e">✓ Fechada</span>';
+    } else if (ativa) {
+      cls  = 'ocupada'; dot = 'ocup';
+      info = '<span class="mesa-total">' + fmt(total) + '</span><span class="mesa-qtd">' + peds.length + ' ped · ' + qtdIt + ' itens</span>';
+    }
+
+    return '<div class="mesa-card ' + cls + '" onclick="abrirComanda(' + num + ')">' +
+      '<div class="mesa-status-dot ' + dot + '"></div>' +
+      '<div class="mesa-num">' + num + '</div>' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:3px">' + info + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function abrirComanda(num) {
+  const key  = 'Mesa ' + num;
+  const peds = _pedidosMesas[key] || [];
+  const fmt  = v => 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',');
+  _mesaAtual = key;
+
+  document.getElementById('comanda-title').textContent = key;
+
+  const total  = peds.reduce((s, p) => s + Number(p.total || 0), 0);
+  const qtdIt  = peds.reduce((s, p) => s + (Array.isArray(p.itens) ? p.itens.reduce((a, i) => a + (i.qtd || 1), 0) : 0), 0);
+  const stLbl  = { novo: 'Aguardando', preparo: 'Preparando', pronto: 'Pronto', recusado: 'Recusado' };
+  const stClr  = { novo: '#f59e0b', preparo: '#3b82f6', pronto: '#22c55e', recusado: '#ef4444' };
+
+  const pedidosEl = document.getElementById('comanda-pedidos');
+  if (!peds.length) {
+    pedidosEl.innerHTML = '<div style="text-align:center;padding:32px;color:#aaa;font-size:.85rem">Mesa vazia — nenhum pedido ainda.</div>';
+  } else {
+    pedidosEl.innerHTML = peds.map((p, idx) => {
+      const itens = Array.isArray(p.itens) ? p.itens : [];
+      const dt    = new Date(p.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      return '<div class="comanda-pedido-bloco">' +
+        '<div class="comanda-pedido-id">Pedido ' + (idx + 1) + ' · #' + p.id.slice(-4).toUpperCase() + ' · ' + dt +
+        ' <span style="color:' + (stClr[p.status] || '#aaa') + ';font-weight:700;margin-left:8px">' + (stLbl[p.status] || p.status) + '</span></div>' +
+        itens.map(i => '<div class="comanda-item-row"><span><span class="comanda-item-qtd">' + (i.qtd || 1) + 'x</span>' + i.nome + '</span><span style="font-weight:600">' + fmt((i.preco || 0) * (i.qtd || 1)) + '</span></div>').join('') +
+        (p.observacao ? '<div style="font-size:.72rem;color:#aaa;margin-top:4px;font-style:italic">Obs: ' + p.observacao + '</div>' : '') +
+        '<div style="text-align:right;font-size:.8rem;color:#888;margin-top:4px">Subtotal: <strong>' + fmt(p.total) + '</strong></div>' +
+        '</div>';
+    }).join('');
+  }
+
+  document.getElementById('comanda-qtd-ped').textContent  = peds.length;
+  document.getElementById('comanda-qtd-itens').textContent = qtdIt;
+  document.getElementById('comanda-total').textContent     = fmt(total);
+  const btnFecha = document.getElementById('btn-fechar-comanda');
+  if (btnFecha) btnFecha.style.display = peds.length > 0 ? 'block' : 'none';
+
+  document.getElementById('modal-comanda').classList.add('open');
+}
+
+function fecharComanda() {
+  document.getElementById('modal-comanda').classList.remove('open');
+  _mesaAtual = null;
+}
+
+async function confirmarFecharComanda() {
+  if (!_mesaAtual) return;
+  const peds  = _pedidosMesas[_mesaAtual] || [];
+  const fmt   = v => 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',');
+  const total = peds.reduce((s, p) => s + Number(p.total || 0), 0);
+
+  if (!confirm('Fechar comanda da ' + _mesaAtual + '?\n\nTotal: ' + fmt(total) + '\nPedidos: ' + peds.length + '\n\nA mesa será liberada para novos clientes.')) return;
+
+  const ids = peds.map(p => p.id);
+  if (ids.length) {
+    await getSupa().from('pedidos').update({ status: 'pronto' }).in('id', ids);
+  }
+  delete _pedidosMesas[_mesaAtual];
+  _mesasFechadas.add(_mesaAtual);
+  const mesaFechada = _mesaAtual;
+  setTimeout(() => { _mesasFechadas.delete(mesaFechada); renderMesas(); }, 5000);
+  fecharComanda();
+  showToast('Comanda da ' + mesaFechada + ' fechada! Total: ' + fmt(total));
+  renderMesas();
+}
+
+function iniciarRealtimeMesas() {
+  const estab = getEstab(); if (!estab) return;
+  getSupa()
+    .channel('mesas-' + estab.id)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos' }, payload => {
+      const p = payload.new;
+      if (!p || p.estabelecimento_id !== estab.id) return;
+      if (!p.endereco || !p.endereco.startsWith('No local')) return;
+      const parts = (p.endereco || '').split('—');
+      if (parts.length < 2) return;
+      const key = parts[1].trim();
+      if (!_pedidosMesas[key]) _pedidosMesas[key] = [];
+      _pedidosMesas[key].push(p);
+      renderMesas();
+      showToast('🍽️ Novo pedido na ' + key + '!');
+      notifLoop(p.id);
+    })
+    .subscribe();
+}
+
+window.renderMesas            = renderMesas;
+window.abrirComanda           = abrirComanda;
+window.fecharComanda          = fecharComanda;
+window.confirmarFecharComanda = confirmarFecharComanda;
+window.salvarNumMesas         = window.salvarNumMesas;
 
 window.toggleTaxaEntrega = function(ativo) {
   const w = document.getElementById('taxa-entrega-wrap');
