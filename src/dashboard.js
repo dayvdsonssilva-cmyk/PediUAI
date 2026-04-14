@@ -1418,6 +1418,7 @@ let _pedidosMesas     = {};     // { "Mesa 3": [{...pedido}] }
 let _mesasFechadas    = new Set();
 let _cardapioCache    = null;   // cache dos produtos para seleção rápida
 let _carrinhoComanda  = {};     // { "Mesa 3": [{nome, preco, qtd, emoji}] }
+let _nomeComanda      = {};     // { "Mesa 3": "João" }
 
 function getNumMesas() {
   const estab = getEstab();
@@ -1511,6 +1512,19 @@ async function carregarCardapioComanda() {
   return _cardapioCache;
 }
 
+// ── Nome do cliente na mesa ──────────────────────────────────────────────────────
+window.salvarNomeComanda = function(val) {
+  if (_mesaAtual) _nomeComanda[_mesaAtual] = val.trim();
+};
+
+// ── Troca de tab dentro do modal ──────────────────────────────────────────────
+window.switchComandaTab = function(tab) {
+  document.querySelectorAll('.ctab').forEach(b => b.classList.remove('ativo'));
+  document.getElementById('ctab-' + tab)?.classList.add('ativo');
+  document.getElementById('cpanel-pedido').style.display = tab === 'pedido' ? 'flex' : 'none';
+  document.getElementById('cpanel-hist').style.display   = tab === 'hist'   ? 'flex' : 'none';
+};
+
 // ── Adiciona item ao carrinho da mesa ──────────────────────────────────────────
 function addItemComanda(mesaKey, id, nome, preco, emoji) {
   if (!_carrinhoComanda[mesaKey]) _carrinhoComanda[mesaKey] = [];
@@ -1538,26 +1552,21 @@ function renderCarrinhoComanda(mesaKey) {
   const btnEnviar = document.getElementById('btn-enviar-comanda');
   if (!el) return;
   if (!carr.length) {
-    el.innerHTML = '<div style="text-align:center;padding:16px;color:#aaa;font-size:.8rem">Nenhum item selecionado</div>';
+    el.innerHTML = '<div style="text-align:center;padding:12px 0;color:#ccc;font-size:.78rem">Nenhum item</div>';
     if (elTotal)   elTotal.textContent = 'R$ 0,00';
     if (btnEnviar) btnEnviar.disabled = true;
     return;
   }
   el.innerHTML = carr.map(i=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0e9e0">
-      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
-        <span style="font-size:1.1rem">${i.emoji||'🍽️'}</span>
-        <span style="font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.nome}</span>
+    <div class="carr-row">
+      <span style="font-size:1.1rem;flex-shrink:0">${i.emoji||'🍽️'}</span>
+      <span class="carr-nome">${i.nome}</span>
+      <div class="carr-ctrl">
+        <button class="carr-btn minus" onclick="rmItemComanda('${mesaKey}','${i.id}')">−</button>
+        <span class="carr-qtd">${i.qtd}</span>
+        <button class="carr-btn plus" onclick="addItemComanda('${mesaKey}','${i.id}','${i.nome.replace(/'/g,"\'")}',${i.preco},'${i.emoji||''}')">+</button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <span style="font-size:.78rem;color:#aaa">${fmtR(i.preco)}</span>
-        <div style="display:flex;align-items:center;gap:4px">
-          <button onclick="rmItemComanda('${mesaKey}','${i.id}')" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #ddd;background:#fff;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--red)">-</button>
-          <span style="font-size:.9rem;font-weight:800;min-width:16px;text-align:center">${i.qtd}</span>
-          <button onclick="addItemComanda('${mesaKey}','${i.id}','${i.nome.replace(/'/g,"\'")}',${i.preco},'${i.emoji||''}')" style="width:26px;height:26px;border-radius:50%;border:none;background:var(--red);color:#fff;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700">+</button>
-        </div>
-        <span style="font-size:.82rem;font-weight:700;color:var(--red);min-width:60px;text-align:right">${fmtR(i.preco*i.qtd)}</span>
-      </div>
+      <span class="carr-subtot">${fmtR(i.preco*i.qtd)}</span>
     </div>`).join('');
   if (elTotal)   elTotal.textContent = fmtR(total);
   if (btnEnviar) btnEnviar.disabled = false;
@@ -1573,17 +1582,16 @@ window.enviarPedidoComanda = async function() {
   const btn   = document.getElementById('btn-enviar-comanda');
   if (btn) { btn.disabled=true; btn.textContent='Enviando...'; }
   try {
+    const nomeCliente = _nomeComanda[_mesaAtual] || _mesaAtual;
     const { error } = await getSupa().from('pedidos').insert({
       estabelecimento_id: estab.id,
-      cliente_nome:       _mesaAtual,
+      cliente_nome:       nomeCliente,
       cliente_whats:      '',
       endereco:           'No local — ' + _mesaAtual,
       itens:              carr.map(i=>({nome:i.nome,preco:i.preco,qtd:i.qtd,emoji:i.emoji})),
       total,
       status:             'novo',
       pagamento:          'No local',
-      tipo_consumo:       'local',
-      numero_mesa:        _mesaAtual.replace('Mesa ',''),
     });
     if (error) throw error;
     _carrinhoComanda[_mesaAtual] = [];
@@ -1614,34 +1622,35 @@ async function abrirComanda(num) {
   renderPedidosComanda(key);
   renderCarrinhoComanda(key);
 
+  // Preenche nome salvo
+  const nomeInput = document.getElementById('comanda-nome-cliente');
+  if (nomeInput) nomeInput.value = _nomeComanda[key] || '';
+
+  // Sempre abre na tab "Novo pedido"
+  window.switchComandaTab('pedido');
+
   if (modal) modal.classList.add('open');
 }
 
 function renderCardapioComanda(mesaKey, prods) {
   const el = document.getElementById('comanda-cardapio');
   if (!el) return;
-  if (!prods.length) { el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:16px">Nenhum produto disponível</div>'; return; }
-
-  // Agrupa por categoria
+  if (!prods.length) {
+    el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:24px">Nenhum produto disponível</div>';
+    return;
+  }
   const cats = {};
-  prods.forEach(p=>{ if(!cats[p.categoria||'Outros'])cats[p.categoria||'Outros']=[];cats[p.categoria||'Outros'].push(p); });
-
-  el.innerHTML = Object.entries(cats).map(([cat,items])=>`
-    <div style="margin-bottom:12px">
-      <div style="font-size:.62rem;font-weight:800;color:#aaa;text-transform:uppercase;letter-spacing:.08em;padding:6px 0 4px">${cat}</div>
-      ${items.map(p=>`
-        <div onclick="addItemComanda('${mesaKey}','${p.id}','${p.nome.replace(/'/g,"\'")}',${p.preco},'${p.emoji||'🍽️'}')"
-          style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:10px;cursor:pointer;transition:background .15s;margin-bottom:2px"
-          onmouseover="this.style.background='#f5f0eb'" onmouseout="this.style.background='transparent'">
-          <span style="font-size:1.5rem;flex-shrink:0">${p.emoji||'🍽️'}</span>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:.85rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.nome}</div>
-          </div>
-          <div style="text-align:right;flex-shrink:0">
-            <div style="font-size:.85rem;font-weight:800;color:var(--red)">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>
-          </div>
-        </div>`).join('')}
-    </div>`).join('');
+  prods.forEach(p=>{ const cat=p.categoria||'Outros'; if(!cats[cat])cats[cat]=[]; cats[cat].push(p); });
+  el.innerHTML = Object.entries(cats).map(([cat,items])=>
+    '<span class="cmd-cat-label">' + cat + '</span>' +
+    items.map(p=>
+      '<div class="cmd-item" onclick="addItemComanda(\'' + mesaKey + '\',\'' + p.id + '\',\'' + p.nome.replace(/'/g,"\\'") + '\',' + p.preco + ',\'' + (p.emoji||'🍽️') + '\')">' +
+      '<span class="cmd-item-emoji">' + (p.emoji||'🍽️') + '</span>' +
+      '<span class="cmd-item-nome">' + p.nome + '</span>' +
+      '<span class="cmd-item-preco">R$ ' + Number(p.preco).toFixed(2).replace('.',',') + '</span>' +
+      '</div>'
+    ).join('')
+  ).join('');
 }
 
 function renderPedidosComanda(mesaKey) {
