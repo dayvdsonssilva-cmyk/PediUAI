@@ -69,10 +69,15 @@ export async function doRegister() {
     const userId = loginData?.user?.id;
     if (!userId) throw new Error('Sessao invalida. Tente fazer login.');
 
-    // 4. Garante slug único
+    // 4. Garante slug único (verificação no JS + constraint no banco)
     let slug = gerarSlug(nome);
-    let t = 1;
-    while (!(await slugLivre(slug))) slug = `${gerarSlug(nome)}-${++t}`;
+    if (!slug || slug.length < 2) slug = 'loja';
+    let t = 0;
+    while (!(await slugLivre(slug))) {
+      t++;
+      slug = `${gerarSlug(nome)}-${t}`;
+      if (t > 99) { slug = gerarSlug(nome) + '-' + Date.now(); break; }
+    }
 
     // 5. Insere o estabelecimento com sessão ativa
     const { error: dbErr } = await getSupa().from('estabelecimentos').insert({
@@ -84,7 +89,12 @@ export async function doRegister() {
       plano:    'basico',
     });
 
-    if (dbErr) throw new Error('Erro ao salvar: ' + dbErr.message);
+    if (dbErr) {
+      if (dbErr.message?.includes('duplicate') || dbErr.code === '23505') {
+        throw new Error('Este link de loja já está em uso. Tente um nome diferente.');
+      }
+      throw new Error('Erro ao salvar: ' + dbErr.message);
+    }
 
     goTo('s-sucesso');
 
