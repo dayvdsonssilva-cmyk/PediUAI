@@ -200,24 +200,30 @@
   <div class="tab-content" id="tab-financeiro">
     <div class="dash-container">
 
-      <!-- Cabeçalho -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-        <h2 style="font-size:1.1rem;font-weight:800">💰 Financeiro</h2>
-        <button onclick="exportarCSV()" class="btn-ghost" style="font-size:0.78rem;font-weight:700;display:flex;align-items:center;gap:6px">
-          📥 Exportar CSV
-        </button>
-      </div>
-
-      <!-- Período -->
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
-        <button class="filtro-pill ativo" id="fin-hoje"   onclick="setFinPeriodo('hoje',this)">Hoje</button>
-        <button class="filtro-pill"       id="fin-semana" onclick="setFinPeriodo('semana',this)">Esta semana</button>
-        <button class="filtro-pill"       id="fin-mes"    onclick="setFinPeriodo('mes',this)">Este mês</button>
-        <button class="filtro-pill"       id="fin-tudo"   onclick="setFinPeriodo('tudo',this)">Tudo</button>
+      <!-- Barra de controles -->
+      <div class="fin-topbar">
+        <!-- Períodos como segmentado -->
+        <div class="fin-segmento">
+          <button class="fin-seg-btn ativo" id="fin-hoje"   onclick="setFinPeriodo('hoje',this)">Hoje</button>
+          <button class="fin-seg-btn"       id="fin-semana" onclick="setFinPeriodo('semana',this)">Semana</button>
+          <button class="fin-seg-btn"       id="fin-mes"    onclick="setFinPeriodo('mes',this)">Este mês</button>
+          <button class="fin-seg-btn"       id="fin-tudo"   onclick="setFinPeriodo('tudo',this)">Tudo</button>
+        </div>
+        <!-- Exportações -->
+        <div style="display:flex;gap:8px">
+          <button onclick="exportarPDF()" class="fin-export-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            PDF
+          </button>
+          <button onclick="exportarCSV()" class="fin-export-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            CSV
+          </button>
+        </div>
       </div>
 
       <!-- Cards resumo -->
-      <div class="stats-grid" style="margin-bottom:20px">
+      <div class="stats-grid" style="margin-bottom:22px">
         <div class="stat-box">
           <div class="stat-label">FATURAMENTO</div>
           <div class="stat-num green" id="fin-fat-est">R$ 0,00</div>
@@ -236,30 +242,33 @@
         </div>
       </div>
 
-      <!-- Pagamentos -->
-      <div class="config-card" style="margin-bottom:16px">
-        <div style="font-size:0.88rem;font-weight:800;margin-bottom:16px">📊 Por forma de pagamento</div>
-        <div id="fin-pags-est">
-          <div style="color:#aaa;font-size:0.82rem;text-align:center;padding:16px">Carregando...</div>
+      <!-- Linha: pagamentos + gráfico rápido -->
+      <div class="fin-meio-row">
+        <div class="config-card" style="flex:1">
+          <div class="fin-card-titulo">Por forma de pagamento</div>
+          <div id="fin-pags-est">
+            <div style="color:#aaa;font-size:0.82rem;text-align:center;padding:16px">Carregando...</div>
+          </div>
         </div>
       </div>
 
       <!-- Histórico -->
-      <div class="config-card">
-        <div style="font-size:0.88rem;font-weight:800;margin-bottom:16px">📋 Histórico de pedidos</div>
+      <div class="config-card" style="margin-top:16px">
+        <div class="fin-card-titulo">Histórico de pedidos</div>
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-          <table style="width:100%;border-collapse:collapse;min-width:420px">
+          <table class="fin-table">
             <thead>
-              <tr style="border-bottom:2px solid var(--border)">
-                <th style="padding:8px 10px;text-align:left;font-size:0.62rem;color:#888;text-transform:uppercase;font-weight:700">#</th>
-                <th style="padding:8px 10px;text-align:left;font-size:0.62rem;color:#888;text-transform:uppercase;font-weight:700">Cliente</th>
-                <th style="padding:8px 10px;text-align:left;font-size:0.62rem;color:#888;text-transform:uppercase;font-weight:700">Pagamento</th>
-                <th style="padding:8px 10px;text-align:right;font-size:0.62rem;color:#888;text-transform:uppercase;font-weight:700">Total</th>
-                <th style="padding:8px 10px;text-align:left;font-size:0.62rem;color:#888;text-transform:uppercase;font-weight:700">Data</th>
+              <tr>
+                <th>#</th>
+                <th>Cliente</th>
+                <th>Endereço</th>
+                <th>Pagamento</th>
+                <th style="text-align:right">Total</th>
+                <th>Data</th>
               </tr>
             </thead>
             <tbody id="fin-hist-est">
-              <tr><td colspan="5" style="text-align:center;padding:24px;color:#aaa;font-size:0.82rem">Carregando...</td></tr>
+              <tr><td colspan="6" style="text-align:center;padding:24px;color:#aaa;font-size:0.82rem">Carregando...</td></tr>
             </tbody>
           </table>
         </div>
