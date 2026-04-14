@@ -115,7 +115,7 @@ function atualizarPrecosDash() {
   const pro  = cfg.precoPro  || '49';
   const prem = cfg.precoPrem || '99';
   const elPro  = document.getElementById('dash-preco-pro');
-  const elPrem = document.getElementById('dash-preco-prem');
+  const elPrem = document.getElementById('dash-preco-prem') || document.getElementById('dash-preco-premium');
   if (elPro)  elPro.textContent  = pro;
   if (elPrem) elPrem.textContent = prem;
 }
