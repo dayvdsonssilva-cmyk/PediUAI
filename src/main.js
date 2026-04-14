@@ -1,5 +1,6 @@
 // src/main.js
 import { goTo, openDemo, openDemoCliente, showToast, showTab, copiarLink, gerarSlug } from './utils.js';
+import { getSupa } from './supabase.js';
 import { doLogin, doRegister } from './auth.js';
 import { initDashboard } from './dashboard.js';
 
@@ -50,29 +51,31 @@ window.atualizarCfgLink = function(val) {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Tenta restaurar sessão do Supabase Auth primeiro
-  const { getSupa } = await import('./supabase.js');
-  const { data: { session } } = await getSupa().auth.getSession();
+  // Restaura sessão via Supabase Auth (import estático já no topo via main.js)
+  try {
+    const { data: { session } } = await getSupa().auth.getSession();
 
-  if (session?.user) {
-    // Sessão válida — busca estab atualizado do banco
-    const { data: estab } = await getSupa()
-      .from('estabelecimentos')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .maybeSingle();
+    if (session?.user) {
+      const { data: estab } = await getSupa()
+        .from('estabelecimentos')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
 
-    if (estab) {
-      window._estab = estab;
-      localStorage.setItem('pw_estab', JSON.stringify(estab));
-      localStorage.setItem('pw_tela_atual', 's-dash');
-      goTo('s-dash');
-      await initDashboard();
-      return;
+      if (estab) {
+        window._estab = estab;
+        localStorage.setItem('pw_estab', JSON.stringify(estab));
+        localStorage.setItem('pw_tela_atual', 's-dash');
+        goTo('s-dash');
+        await initDashboard();
+        return;
+      }
     }
+  } catch(e) {
+    console.warn('Erro ao restaurar sessão:', e);
   }
 
-  // Sem sessão válida — tenta localStorage como fallback temporário
+  // Fallback: localStorage
   const saved = localStorage.getItem('pw_estab');
   if (saved) {
     try { window._estab = JSON.parse(saved); } catch(e) { localStorage.removeItem('pw_estab'); }
