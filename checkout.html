@@ -276,7 +276,6 @@
 
 <script>
 // ── CONFIG ─────────────────────────────────────────────────────────────────────
-// ⚠️ Substitua pela sua Public Key do Mercado Pago (TEST-... ou APP_USR-...)
 const MP_PUBLIC_KEY = 'TEST-3499aeb1-4d4b-4525-b26a-7228d0b5dabb';
 
 const params  = new URLSearchParams(location.search);
@@ -284,38 +283,34 @@ const estabId = params.get('estab') || '';
 let planoSel  = params.get('plano') || 'pro';
 let metodo    = 'card';
 
-// Preços do CEO (sincronizados via localStorage)
 const ceoCfg = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
 const PRECOS = {
   pro:     Number(ceoCfg.precoPro  || 49),
   premium: Number(ceoCfg.precoPrem || 99),
 };
 
+let brickController = null; // guarda o controller para destruir antes de recriar
+
 // ── INIT ────────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Mostra preços do CEO
   document.getElementById('preco-pro').textContent     = PRECOS.pro.toFixed(2).replace('.',',');
   document.getElementById('preco-premium').textContent = PRECOS.premium.toFixed(2).replace('.',',');
-
   selPlano(planoSel, true);
 
-  // Carrega SDK MP
-  const s   = document.createElement('script');
-  s.src     = 'https://sdk.mercadopago.com/js/v2';
+  const s = document.createElement('script');
+  s.src = 'https://sdk.mercadopago.com/js/v2';
   s.onload  = iniciarBrick;
   s.onerror = () => {
     document.getElementById('loading-mp').innerHTML =
-      '<p style="color:#C0392B;padding:24px;text-align:center">Erro ao carregar o sistema de pagamento.<br>Recarregue a página.</p>';
+      '<p style="color:#C0392B;padding:24px;text-align:center">Erro ao carregar sistema de pagamento. Recarregue a página.</p>';
   };
   document.head.appendChild(s);
 
-  // Listeners PIX e Boleto
   document.getElementById('btn-pix').addEventListener('click',    pagarPix);
   document.getElementById('btn-boleto').addEventListener('click', pagarBoleto);
   document.getElementById('btn-copy-pix').addEventListener('click', () => {
     navigator.clipboard.writeText(document.getElementById('pix-code-txt').textContent)
-      .then(() => { document.getElementById('btn-copy-pix').textContent = '✅ Copiado!'; })
-      .catch(() => {});
+      .then(() => { document.getElementById('btn-copy-pix').textContent = '✅ Copiado!'; });
   });
 });
 
@@ -328,20 +323,28 @@ function selPlano(p, skip) {
   const preco = PRECOS[p];
   document.getElementById('sum-plano').textContent = 'Plano ' + nome;
   document.getElementById('sum-val').textContent   = 'R$ ' + preco.toFixed(2).replace('.',',');
-  // Recria brick com novo valor se necessário
-  if (!skip && metodo === 'card') {
-    document.getElementById('mp-card-container').innerHTML = '';
-    iniciarBrick();
-  }
+  if (!skip && metodo === 'card') recriarBrick();
 }
 
-// ── MP BRICKS ────────────────────────────────────────────────────────────────────
+// ── BRICK ─────────────────────────────────────────────────────────────────────
+async function recriarBrick() {
+  // Destrói o brick anterior corretamente
+  if (brickController) {
+    try { brickController.unmount(); } catch(e) {}
+    brickController = null;
+  }
+  document.getElementById('mp-card-container').innerHTML = '';
+  document.getElementById('loading-mp').style.display  = 'block';
+  document.getElementById('pay-body').style.display    = 'none';
+  await iniciarBrick();
+}
+
 async function iniciarBrick() {
   try {
     const mp     = new MercadoPago(MP_PUBLIC_KEY, { locale: 'pt-BR' });
     const bricks = mp.bricks();
 
-    await bricks.create('cardPayment', 'mp-card-container', {
+    brickController = await bricks.create('cardPayment', 'mp-card-container', {
       initialization: { amount: PRECOS[planoSel] },
       customization: {
         visual: {
@@ -354,9 +357,8 @@ async function iniciarBrick() {
               outlinePrimaryColor:  '#C0392B',
             },
           },
-          // hidePaymentButton: FALSE → deixa o botão do MP (resolve o erro submit)
-          hideFormTitle:    true,
-          hidePaymentButton: false,
+          hideFormTitle:     true,
+          hidePaymentButton: false, // Usa o botão do próprio MP
         },
         paymentMethods: { maxInstallments: 12 },
       },
@@ -365,24 +367,34 @@ async function iniciarBrick() {
           document.getElementById('loading-mp').style.display = 'none';
           document.getElementById('pay-body').style.display   = 'block';
         },
-        // onSubmit é chamado pelo botão interno do Brick — aqui recebemos os dados prontos
-        onSubmit: async ({ selectedPaymentMethod, formData }) => {
-          // Log para debug — ver estrutura real do MP Bricks
-          console.log('[MP Brick onSubmit] selectedPaymentMethod:', selectedPaymentMethod);
-          console.log('[MP Brick onSubmit] formData:', JSON.stringify(formData));
-          await enviar({ type: 'card', formData, selectedPaymentMethod });
+        onSubmit: async (data) => {
+          // Captura TUDO que o Brick envia — independente do formato da versão
+          console.log('[MP onSubmit] data completo:', JSON.stringify(data));
+
+          // Extrai campos explicitamente (compatível com diferentes versões do Brick)
+          const fd = data?.formData || data || {};
+          const sm = data?.selectedPaymentMethod || {};
+
+          const cardData = {
+            token:             fd.token             || sm.token             || null,
+            payment_method_id: fd.payment_method_id || sm.payment_method_id || null,
+            issuer_id:         fd.issuer_id         || sm.issuer_id         || null,
+            installments:      fd.installments      || sm.installments      || 1,
+            transaction_amount:fd.transaction_amount|| PRECOS[planoSel],
+            payer:             fd.payer             || sm.payer             || {},
+          };
+
+          console.log('[MP onSubmit] cardData extraído:', JSON.stringify(cardData));
+
+          await enviar({ type: 'card', cardData });
         },
         onError: (err) => {
-          console.error('MP Brick error:', err);
-          if (err?.cause?.length) {
-            const msgs = err.cause.map(e => e.message).join('\n');
-            alert('Erro no formulário:\n' + msgs);
-          }
+          console.error('[MP Brick] Erro:', err);
         },
       },
     });
   } catch (e) {
-    console.error('MP init error:', e);
+    console.error('[iniciarBrick] Erro:', e);
     document.getElementById('loading-mp').style.display = 'none';
     document.getElementById('pay-body').style.display   = 'block';
   }
@@ -398,18 +410,16 @@ function setMetodo(m) {
   document.getElementById('form-boleto').style.display = m === 'boleto' ? 'block' : 'none';
 }
 
-// ── PIX ──────────────────────────────────────────────────────────────────────────
+// ── PIX / BOLETO ─────────────────────────────────────────────────────────────────
 async function pagarPix() {
   const doc   = document.getElementById('pix-doc').value.replace(/\D/g,'');
   const email = document.getElementById('pix-email').value.trim();
   if (!doc || doc.length < 11) return alert('CPF/CNPJ inválido.');
   if (!email)                  return alert('E-mail obrigatório.');
-  setBtnLoading('btn-pix', true);
+  setBtnLoad('btn-pix', true);
   await enviar({ type:'pix', doc, email });
-  setBtnLoading('btn-pix', false);
+  setBtnLoad('btn-pix', false);
 }
-
-// ── BOLETO ───────────────────────────────────────────────────────────────────────
 async function pagarBoleto() {
   const nome  = document.getElementById('bol-nome').value.trim();
   const doc   = document.getElementById('bol-doc').value.replace(/\D/g,'');
@@ -417,83 +427,73 @@ async function pagarBoleto() {
   if (!nome)               return alert('Nome obrigatório.');
   if (!doc||doc.length<11) return alert('CPF/CNPJ inválido.');
   if (!email)              return alert('E-mail obrigatório.');
-  setBtnLoading('btn-boleto', true);
+  setBtnLoad('btn-boleto', true);
   await enviar({ type:'boleto', nome, doc, email });
-  setBtnLoading('btn-boleto', false);
+  setBtnLoad('btn-boleto', false);
+}
+function setBtnLoad(id, on) {
+  const b = document.getElementById(id);
+  if (!b) return;
+  b.disabled    = on;
+  b.textContent = on ? 'Processando...' : (id==='btn-pix'?'🔒 Gerar QR Code PIX':'🔒 Gerar Boleto');
 }
 
-function setBtnLoading(id, on) {
-  const btn = document.getElementById(id);
-  if (!btn) return;
-  btn.disabled    = on;
-  btn.textContent = on ? 'Processando...' : (id === 'btn-pix' ? '🔒 Gerar QR Code PIX' : '🔒 Gerar Boleto');
-}
-
-// ── ENVIAR PARA BACKEND ───────────────────────────────────────────────────────────
+// ── ENVIAR ────────────────────────────────────────────────────────────────────────
 async function enviar(payload) {
   try {
     payload.plano   = planoSel;
     payload.estabId = estabId;
     const res  = await fetch('/api/criar-pagamento', {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body:    JSON.stringify(payload),
     });
     const data = await res.json();
 
     if (!res.ok) {
       alert(data.error || 'Erro ao processar. Tente novamente.');
-      // Recria o Brick para resetar o estado do botão
-      if (metodo === 'card') {
-        document.getElementById('mp-card-container').innerHTML = '';
-        await iniciarBrick();
-      }
+      if (payload.type === 'card') recriarBrick(); // reseta o Brick
       return;
     }
 
-    if (data.qr_code) {
-      mostrarPix(data);
-    } else if (data.boleto_url) {
-      window.open(data.boleto_url, '_blank');
-      mostrarSucesso('boleto');
-    } else if (data.status === 'approved') {
-      mostrarSucesso('card');
-    } else if (['pending','in_process'].includes(data.status)) {
-      mostrarSucesso('pending');
-    } else {
-      alert('Status: ' + (data.status || 'desconhecido') + '. Entre em contato com o suporte.');
-    }
+    if (data.qr_code)        mostrarPix(data);
+    else if (data.boleto_url){ window.open(data.boleto_url,'_blank'); mostrarSucesso('boleto'); }
+    else if (data.status === 'approved')                               mostrarSucesso('card');
+    else if (['pending','in_process'].includes(data.status))           mostrarSucesso('pending');
+    else alert('Status: '+(data.status||'desconhecido')+'. Entre em contato com o suporte.');
+
   } catch (e) {
-    console.error('enviar error:', e);
+    console.error('[enviar]', e);
     alert('Erro de conexão. Verifique sua internet e tente novamente.');
+    if (payload.type === 'card') recriarBrick();
   }
 }
 
-// ── TELAS PÓS PAGAMENTO ───────────────────────────────────────────────────────────
+// ── PÓS PAGAMENTO ─────────────────────────────────────────────────────────────────
 function mostrarPix(data) {
   document.getElementById('pay-body').style.display = 'none';
   document.getElementById('pix-screen').classList.add('show');
   if (data.qr_code_base64) {
     const img = document.getElementById('pix-qr-img');
-    img.src = 'data:image/png;base64,' + data.qr_code_base64;
+    img.src = 'data:image/png;base64,'+data.qr_code_base64;
     img.style.display = 'block';
   }
-  document.getElementById('pix-code-txt').textContent = data.qr_code || '';
+  document.getElementById('pix-code-txt').textContent = data.qr_code||'';
 }
-
 function mostrarSucesso(tipo) {
   document.getElementById('pay-body').style.display = 'none';
   document.getElementById('pix-screen').classList.remove('show');
   document.getElementById('suc-screen').classList.add('show');
-  const m = {
-    card:    ['🎉 Pagamento aprovado!', 'Seu plano foi ativado. Volte ao painel para continuar.'],
-    boleto:  ['🧾 Boleto gerado!', 'Após o pagamento, seu plano será ativado em até 1 dia útil.'],
-    pending: ['⏳ Em análise', 'Assim que aprovado, seu plano será ativado automaticamente.'],
+  const msgs = {
+    card:    ['🎉 Pagamento aprovado!',  'Seu plano foi ativado. Volte ao painel.'],
+    boleto:  ['🧾 Boleto gerado!',       'Ative em até 1 dia útil após o pagamento.'],
+    pending: ['⏳ Em análise',            'Seu plano será ativado automaticamente.'],
   };
-  const [t, s] = m[tipo] || m.card;
+  const [t,s] = msgs[tipo]||msgs.card;
   document.getElementById('suc-title').textContent = t;
   document.getElementById('suc-sub').textContent   = s;
 }
+
 </script>
 </body>
 </html>
