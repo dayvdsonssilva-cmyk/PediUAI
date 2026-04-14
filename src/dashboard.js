@@ -83,10 +83,37 @@ function atualizarLinkSuporte() {
   if (link) link.href = `https://wa.me/${wpp}?text=${msg}`;
 }
 
+
+// ── CHECKOUT / PLANOS ─────────────────────────────────────────────────────────
+window.irCheckout = function(plano) {
+  const estab = getEstab();
+  if (!estab) return showToast('Faça login primeiro.', 'error');
+  window.open(`/checkout?plano=${plano}&estab=${estab.id}`, '_blank');
+};
+
+function atualizarInfoPlano() {
+  const estab = getEstab();
+  if (!estab) return;
+  const el    = document.getElementById('cfg-plano-atual');
+  const elvenc= document.getElementById('cfg-venc-atual');
+  const nomes = { basico:'Trial (grátis)', pro:'Pro', premium:'Premium' };
+  if (el)    el.textContent = nomes[estab.plano] || 'Trial';
+  if (elvenc && estab.assinatura_vencimento) {
+    const venc = new Date(estab.assinatura_vencimento);
+    const hoje = new Date();
+    const dias = Math.round((venc - hoje) / 86400000);
+    elvenc.textContent = dias > 0
+      ? `Vence em ${dias} dia${dias !== 1 ? 's' : ''} (${venc.toLocaleDateString('pt-BR')})`
+      : `Assinatura vencida em ${venc.toLocaleDateString('pt-BR')}`;
+    if (dias <= 5) elvenc.style.color = '#C0392B';
+  }
+}
+
 export async function initDashboard() {
   let estab = getEstab();
   if (!estab) return;
   atualizarLinkSuporte();
+  atualizarInfoPlano();
 
   // SEMPRE busca dados frescos do banco — garante sync entre mobile e desktop
   if (!window._isDemo) {
