@@ -376,10 +376,9 @@
       </div>
       <div>
         <label>Como prefere receber?</label>
-        <div class="carr-opts" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div class="carr-opts">
           <button class="carr-opt-btn ativo" id="btn-entrega"  onclick="selecionarOpcao('entrega')">🛵 Entrega</button>
           <button class="carr-opt-btn"       id="btn-retirada" onclick="selecionarOpcao('retirada')">🏃 Retirada</button>
-          <button class="carr-opt-btn"       id="btn-local"    onclick="selecionarOpcao('local')">🪑 No local</button>
         </div>
       </div>
       <div id="campos-entrega" class="show">
@@ -395,13 +394,7 @@
           📍 Endereço: <span id="estab-endereco-txt">Consulte a loja</span>
         </div>
       </div>
-      <div id="campos-local" style="display:none">
-        <div style="background:#f5f0eb;border-radius:10px;padding:10px;margin-bottom:8px;font-size:0.82rem;color:var(--muted)">
-          🪑 Consumo no local — informe o número da mesa
-        </div>
-        <label style="font-size:0.78rem;font-weight:700;color:#555;display:block;margin-bottom:6px">Número da mesa *</label>
-        <input class="carr-input" id="cli-mesa" placeholder="Ex: Mesa 5" style="font-size:1rem;font-weight:700;text-align:center">
-      </div>
+
       <div>
         <label>Forma de pagamento *</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -944,12 +937,11 @@ window.mudarQtdCarr = function(i, d) {
 
 window.selecionarOpcao = function(op) {
   opcaoEntrega = op;
-  ['entrega','retirada','local'].forEach(o => {
+  ['entrega','retirada'].forEach(o => {
     const btn = $('btn-'+o); if(btn) btn.classList.toggle('ativo', o===op);
   });
   $('campos-entrega').classList.toggle('show', op === 'entrega');
   $('campos-retirada').classList.toggle('show', op === 'retirada');
-  const cl = $('campos-local'); if(cl) cl.style.display = op==='local'?'block':'none';
   renderCarrinho();
 };
 
