@@ -1179,6 +1179,74 @@ function exportarCSV() {
   a.click();
 }
 
+function exportarPDF() {
+  const estab = getEstab();
+  const peds  = filtroPedidosFin();
+  const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fat   = peds.reduce((s,p)=>s+Number(p.total||0),0);
+  const taxa  = peds.reduce((s,p)=>s+Number(p.taxa_entrega||0),0);
+  const tick  = peds.length ? fat/peds.length : 0;
+  const periodoLabel = {hoje:'Hoje',semana:'Esta semana',mes:'Este mês',tudo:'Todo o período'}[_finPeriodo]||'';
+  const agora = new Date().toLocaleString('pt-BR');
+
+  // Breakdown de pagamentos
+  const pm = {};
+  peds.forEach(p => {
+    const k = (p.pagamento||'Não informado').toUpperCase();
+    if (!pm[k]) pm[k] = { q:0, f:0 };
+    pm[k].q++; pm[k].f += Number(p.total||0);
+  });
+  const totPag = Object.values(pm).reduce((s,v)=>s+v.f,0)||1;
+  const pagRows = Object.entries(pm).sort((a,b)=>b[1].f-a[1].f)
+    .map(([k,d]) => '<tr><td>'+k+'</td><td>'+d.q+'</td><td style="text-align:right">'+fmtR(d.f)+'</td><td style="text-align:right">'+Math.round(d.f/totPag*100)+'%</td></tr>')
+    .join('');
+
+  // Linhas do histórico
+  const pedRows = peds.slice(0,200).map(p => {
+    const dt = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return '<tr><td style="font-weight:700">#'+p.id.slice(-4).toUpperCase()+'</td><td>'+(p.cliente_nome||'—')+'</td><td style="font-size:10px;color:#666">'+(p.endereco||'Retirada')+'</td><td>'+(p.pagamento||'—')+'</td><td style="text-align:right;font-weight:700;color:#C0392B">'+fmtR(p.total)+'</td><td style="color:#888">'+dt+'</td></tr>';
+  }).join('') + '<tr style="font-weight:800;background:#fdf8f5"><td colspan="4">TOTAL ('+peds.length+' pedidos)</td><td style="text-align:right;color:#16a34a">'+fmtR(fat)+'</td><td></td></tr>';
+
+  const html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório — '+(estab?.nome||'Loja')+'</title>'
+    + '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;padding:32px}'
+    + '.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;border-bottom:2px solid #C0392B;padding-bottom:16px}'
+    + '.logo{font-size:20px;font-weight:900}.logo span{color:#C0392B}'
+    + '.meta{text-align:right;font-size:11px;color:#666}'
+    + '.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}'
+    + '.card{background:#f8f5f2;border-radius:8px;padding:14px}'
+    + '.card-label{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}'
+    + '.card-val{font-size:18px;font-weight:800}.card-val.g{color:#16a34a}.card-val.r{color:#C0392B}'
+    + '.section{margin-bottom:20px}.section-title{font-size:11px;font-weight:800;text-transform:uppercase;color:#888;margin-bottom:10px}'
+    + 'table{width:100%;border-collapse:collapse}'
+    + 'th{background:#f0ebe4;padding:7px 10px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;color:#666}'
+    + 'td{padding:8px 10px;border-bottom:1px solid #ede8e0;font-size:11px}'
+    + 'tr:last-child td{border-bottom:none}'
+    + '.footer{margin-top:32px;text-align:center;font-size:10px;color:#aaa}'
+    + '@media print{body{padding:0}}'
+    + '</style></head><body>'
+    + '<div class="header"><div><div class="logo">PEDI<span>WAY</span></div><div style="font-size:13px;font-weight:700;margin-top:4px">'+(estab?.nome||'Estabelecimento')+'</div></div>'
+    + '<div class="meta"><strong style="display:block;font-size:13px;color:#1a1a1a">Relatório Financeiro</strong>Período: '+periodoLabel+'<br>Gerado em: '+agora+'</div></div>'
+    + '<div class="cards">'
+    + '<div class="card"><div class="card-label">Faturamento</div><div class="card-val g">'+fmtR(fat)+'</div></div>'
+    + '<div class="card"><div class="card-label">Pedidos</div><div class="card-val">'+peds.length+'</div></div>'
+    + '<div class="card"><div class="card-label">Ticket médio</div><div class="card-val r">'+fmtR(tick)+'</div></div>'
+    + '<div class="card"><div class="card-label">Taxa entrega</div><div class="card-val">'+fmtR(taxa)+'</div></div>'
+    + '</div>'
+    + '<div class="section"><div class="section-title">Por forma de pagamento</div>'
+    + '<table><thead><tr><th>Forma</th><th>Pedidos</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead><tbody>'+pagRows+'</tbody></table></div>'
+    + '<div class="section"><div class="section-title">Histórico de pedidos</div>'
+    + '<table><thead><tr><th>#</th><th>Cliente</th><th>Endereço</th><th>Pagamento</th><th style="text-align:right">Total</th><th>Data</th></tr></thead><tbody>'+pedRows+'</tbody></table></div>'
+    + '<div class="footer">Relatório gerado pelo PEDIWAY — '+agora+'</div>'
+    + '</body></html>';
+
+  const w = window.open('','_blank');
+  if (!w) { alert('Permita pop-ups para exportar o PDF.'); return; }
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 600);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS GLOBAIS
 // ─────────────────────────────────────────────────────────────────────────────
