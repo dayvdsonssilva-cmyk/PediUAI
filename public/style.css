@@ -707,3 +707,7 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 @media(min-width:600px) {
   #comanda-sheet { height:88vh;max-height:720px; }
 }
+
+/* ── SEM ZOOM NO MOBILE ── */
+html { touch-action: pan-y; }
+input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se font>=16px */
