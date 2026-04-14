@@ -21,11 +21,23 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
 /* BUTTONS */
 .btn-primary { background:var(--red); color:white; padding:11px 26px; border:none; border-radius:8px; font-size:0.95rem; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; transition:background 0.2s,transform 0.15s; }
 .btn-primary:hover { background:var(--red-dark); transform:translateY(-1px); }
-.btn-primary.big { padding:16px 32px; font-size:1rem; border-radius:10px; }
+.btn-primary.big {
+  padding: 15px 28px;
+  font-size: 0.95rem;
+  border-radius: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
 .btn-primary.full { width:100%; margin-top:10px; padding:14px; font-size:1rem; }
 .btn-ghost-dark { background:rgba(255,255,255,0.08); color:#fff; border:1.5px solid rgba(255,255,255,0.2); padding:11px 26px; border-radius:8px; font-size:0.95rem; font-weight:500; font-family:'Poppins',sans-serif; cursor:pointer; transition:background 0.2s; }
 .btn-ghost-dark:hover { background:rgba(255,255,255,0.14); }
-.btn-ghost-dark.big { padding:16px 32px; font-size:1rem; border-radius:10px; }
+.btn-ghost-dark.big {
+  padding: 14px 26px;
+  font-size: 0.92rem;
+  border-radius: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
 .btn-sair { background:transparent; border:1.5px solid #ddd; color:#555; padding:7px 16px; border-radius:8px; font-size:0.83rem; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; }
 .btn-sair:hover { background:#ede5d8; }
 
@@ -37,7 +49,13 @@ h2 { font-size:1.8rem; font-weight:700; color:#fff; margin-bottom:4px; }
 h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .highlight { color:var(--red); }
 .hero p { font-size:1rem; font-weight:400; color:rgba(255,255,255,0.6); line-height:1.75; max-width:520px; }
-.hero-actions { display:flex; gap:12px; margin:32px 0; flex-wrap:wrap; }
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  margin: 32px 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
 .stats { display:flex; gap:48px; margin-top:8px; }
 .stats strong { font-size:1.7rem; font-weight:800; color:#fff; display:block; line-height:1.1; }
 .stats span { font-size:0.78rem; color:rgba(255,255,255,0.45); font-weight:500; }
@@ -322,7 +340,9 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 /* ═══ MOBILE ═══════════════════════════════════════════════════════ */
 @media(max-width:600px) {
   /* ── Landing ── */
-  h1{font-size:2.2rem} .hero{padding:130px 5% 60px} .hero-actions{flex-direction:column}
+  h1{font-size:2.2rem} .hero{padding:130px 5% 60px}
+  .hero-actions{flex-direction:column;align-items:stretch}
+  .hero-actions .btn-primary.big,.hero-actions .btn-ghost-dark.big{width:100%;justify-content:center;text-align:center}
   .stats{gap:28px} .stats-grid{grid-template-columns:repeat(2,1fr)}
 
   /* ── Dashboard geral ── */
