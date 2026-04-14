@@ -360,7 +360,7 @@ async function iniciarBrick() {
           hideFormTitle:     true,
           hidePaymentButton: false, // Usa o botão do próprio MP
         },
-        paymentMethods: { maxInstallments: 12 },
+        paymentMethods: { maxInstallments: 1 }, // Assinatura mensal — sem parcelamento
       },
       callbacks: {
         onReady: () => {
