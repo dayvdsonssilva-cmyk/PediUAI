@@ -175,6 +175,40 @@
     </div>
   </div>
 
+  <!-- Comandas Digitais -->
+  <div class="tab-content" id="tab-comandas">
+    <div class="dash-container">
+
+      <!-- Config de mesas -->
+      <div class="config-card" style="margin-bottom:20px">
+        <div style="font-size:.88rem;font-weight:800;margin-bottom:12px">⚙️ Configuração de mesas</div>
+        <div class="mesas-config">
+          <label>Número de mesas:</label>
+          <input class="mesas-input" type="number" id="cfg-num-mesas" min="1" max="99" value="10" onchange="salvarNumMesas(this.value)">
+          <button onclick="renderMesas()" style="padding:9px 18px;background:var(--red);color:#fff;border:none;border-radius:10px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer">Aplicar</button>
+        </div>
+        <div style="font-size:.72rem;color:#aaa">As comandas ficam ativas até você fechá-las. Pedidos acumulam na mesa em tempo real.</div>
+      </div>
+
+      <!-- Legenda -->
+      <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;color:#888">
+          <div style="width:10px;height:10px;border-radius:50%;background:#d1d5db"></div> Mesa livre
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;color:#888">
+          <div style="width:10px;height:10px;border-radius:50%;background:var(--red)"></div> Com pedidos
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;color:#888">
+          <div style="width:10px;height:10px;border-radius:50%;background:#22c55e"></div> Comanda fechada
+        </div>
+      </div>
+
+      <!-- Grid de mesas -->
+      <div class="mesas-grid" id="mesas-grid"></div>
+
+    </div>
+  </div>
+
   <!-- Fresquinho -->
   <div class="tab-content" id="tab-fresquinho">
     <div class="dash-container">
@@ -480,6 +514,28 @@
 </div>
 
 <!-- MODAL: Adicionar Item -->
+<!-- MODAL COMANDA DA MESA -->
+<div id="modal-comanda" onclick="if(event.target.id==='modal-comanda')fecharComanda()">
+  <div id="comanda-sheet">
+    <div class="comanda-header">
+      <div>
+        <div style="font-size:.68rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em">Comanda</div>
+        <div class="comanda-mesa-title" id="comanda-title">Mesa --</div>
+      </div>
+      <button class="comanda-x" onclick="fecharComanda()">✕</button>
+    </div>
+    <div class="comanda-pedidos" id="comanda-pedidos"></div>
+    <div class="comanda-footer" id="comanda-footer">
+      <div class="comanda-subtotal-row"><span>Pedidos</span><span id="comanda-qtd-ped">0</span></div>
+      <div class="comanda-subtotal-row"><span>Itens</span><span id="comanda-qtd-itens">0</span></div>
+      <div class="comanda-total-row"><span>Total da mesa</span><span id="comanda-total">R$ 0,00</span></div>
+      <button class="btn-fechar-comanda" id="btn-fechar-comanda" onclick="confirmarFecharComanda()">
+        ✅ Fechar comanda e ir ao caixa
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CANCELAR PLANO -->
 <div class="modal-overlay" id="modal-cancelar-plano" onclick="if(event.target.id==='modal-cancelar-plano')fecharCancelarPlano()">
   <div class="modal-box" style="max-width:440px">
