@@ -145,6 +145,7 @@ export async function initDashboard() {
   atualizarInfoPlano();
   aplicarRestricaoPlano(estab);
   atualizarPrecosDash();
+  atualizarBotaoCancelar(estab);
 
   // SEMPRE busca dados frescos do banco — garante sync entre mobile e desktop
   if (!window._isDemo) {
@@ -1313,6 +1314,48 @@ function exportarPDF() {
   w.document.close();
   w.focus();
   setTimeout(() => w.print(), 600);
+}
+
+
+// ── CANCELAR PLANO ────────────────────────────────────────────────────────────
+window.abrirCancelarPlano = function() {
+  document.getElementById('modal-cancelar-plano')?.classList.add('open');
+};
+window.fecharCancelarPlano = function() {
+  document.getElementById('modal-cancelar-plano')?.classList.remove('open');
+};
+window.confirmarCancelamento = async function() {
+  const radios = document.querySelectorAll('input[name="motivo-cancel"]');
+  let motivo = '';
+  radios.forEach(r => { if(r.checked) motivo = r.value; });
+  if (!motivo) return showToast('Selecione um motivo.', 'error');
+
+  const msg    = document.getElementById('cancel-msg')?.value.trim() || '';
+  const estab  = getEstab();
+  if (!estab) return;
+
+  const { error } = await getSupa().from('cancelamentos_plano').insert({
+    estab_id: estab.id,
+    motivo,
+    mensagem: msg || null,
+  });
+
+  if (error) return showToast('Erro ao registrar cancelamento.', 'error');
+
+  // Atualiza plano para basico
+  await getSupa().from('estabelecimentos')
+    .update({ plano:'basico', pagamento_status:'cancelado' })
+    .eq('id', estab.id);
+
+  fecharCancelarPlano();
+  showToast('Cancelamento registrado. Sentiremos sua falta! 😔');
+  setTimeout(() => initDashboard(), 1000);
+};
+
+// Mostra/esconde botão cancelar baseado no plano
+function atualizarBotaoCancelar(estab) {
+  const wrap = document.getElementById('cancelar-plano-wrap');
+  if (wrap) wrap.style.display = (estab?.plano && estab.plano !== 'basico') ? 'block' : 'none';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
