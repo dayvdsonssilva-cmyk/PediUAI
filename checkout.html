@@ -367,7 +367,10 @@ async function iniciarBrick() {
         },
         // onSubmit é chamado pelo botão interno do Brick — aqui recebemos os dados prontos
         onSubmit: async ({ selectedPaymentMethod, formData }) => {
-          await enviar({ type: 'card', formData });
+          // Log para debug — ver estrutura real do MP Bricks
+          console.log('[MP Brick onSubmit] selectedPaymentMethod:', selectedPaymentMethod);
+          console.log('[MP Brick onSubmit] formData:', JSON.stringify(formData));
+          await enviar({ type: 'card', formData, selectedPaymentMethod });
         },
         onError: (err) => {
           console.error('MP Brick error:', err);
@@ -440,6 +443,11 @@ async function enviar(payload) {
 
     if (!res.ok) {
       alert(data.error || 'Erro ao processar. Tente novamente.');
+      // Recria o Brick para resetar o estado do botão
+      if (metodo === 'card') {
+        document.getElementById('mp-card-container').innerHTML = '';
+        await iniciarBrick();
+      }
       return;
     }
 
