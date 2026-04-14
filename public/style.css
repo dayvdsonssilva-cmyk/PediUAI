@@ -529,3 +529,106 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .filtro-pill { transition: all 0.2s ease; }
 .stat-box { transition: box-shadow 0.2s ease; }
 .stat-box:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+
+/* ── FINANCEIRO ────────────────────────────────────────────────── */
+.fin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Segmented control */
+.fin-segmento {
+  display: flex;
+  background: #f0ebe4;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+.fin-seg-btn {
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.fin-seg-btn.ativo {
+  background: #fff;
+  color: var(--red);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+  font-weight: 700;
+}
+
+/* Botões exportar */
+.fin-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1.5px solid var(--border);
+  background: #fff;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.fin-export-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* Card título */
+.fin-card-titulo {
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: #1a1a1a;
+}
+
+/* Tabela financeiro */
+.fin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 480px;
+  font-size: 0.82rem;
+}
+.fin-table th {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 0.62rem;
+  color: #888;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--border);
+}
+.fin-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.fin-table tr:last-child td { border-bottom: none; }
+.fin-table tr:hover td { background: rgba(192,57,43,0.03); }
+
+.fin-meio-row { display: flex; gap: 16px; }
+
+@media(max-width:600px) {
+  .fin-topbar { flex-direction: column; align-items: flex-start; }
+  .fin-segmento { width: 100%; }
+  .fin-seg-btn { flex: 1; text-align: center; padding: 8px 8px; font-size: 0.72rem; }
+  .fin-meio-row { flex-direction: column; }
+}
+@media(min-width:900px) {
+  .fin-segmento { gap: 3px; }
+  .fin-seg-btn { padding: 9px 20px; font-size: 0.82rem; }
+}
