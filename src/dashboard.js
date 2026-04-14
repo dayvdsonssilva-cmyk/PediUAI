@@ -74,9 +74,19 @@ async function uploadFile(bucket, path, file) {
 // ─────────────────────────────────────────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────────────────────────────────────────
+// ── Link ME AJUDA PEDIWAY — usa config do CEO ──────────────────────────────
+function atualizarLinkSuporte() {
+  const cfg = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
+  const wpp = cfg.wpp || '5500000000000';
+  const msg = encodeURIComponent(cfg.wppMsg || 'Olá! Preciso de ajuda com o PEDIWAY.');
+  const link = document.getElementById('link-me-ajuda');
+  if (link) link.href = `https://wa.me/${wpp}?text=${msg}`;
+}
+
 export async function initDashboard() {
   let estab = getEstab();
   if (!estab) return;
+  atualizarLinkSuporte();
 
   // SEMPRE busca dados frescos do banco — garante sync entre mobile e desktop
   if (!window._isDemo) {
