@@ -167,6 +167,7 @@
     <button class="ntab"     data-pg="pedidos">📋 Pedidos</button>
     <button class="ntab"     data-pg="financeiro">💰 Financeiro</button>
     <button class="ntab"     data-pg="assinaturas">💳 Assinaturas</button>
+    <button class="ntab"     data-pg="cancelamentos">❌ Cancelamentos</button>
     <button class="ntab"     data-pg="config">⚙️ Config</button>
   </nav>
   <button class="hout" id="btn-sair">Sair</button>
@@ -288,6 +289,18 @@
     <div class="tbox">
       <table><thead><tr><th>Loja</th><th>Plano</th><th>Status pgto</th><th>Vencimento</th><th>Situação</th><th>Valor</th><th>Ações</th></tr></thead>
       <tbody id="tbody-planos"></tbody></table>
+    </div>
+  </div>
+
+  <!-- CANCELAMENTOS -->
+  <div class="pg" id="pg-cancelamentos">
+    <div class="sechdr">
+      <div class="sectitle">Pedidos de cancelamento</div>
+      <div style="font-size:.78rem;color:#555" id="cancel-badge"></div>
+    </div>
+    <div class="tbox">
+      <table><thead><tr><th>Loja</th><th>Motivo</th><th>Mensagem</th><th>Data</th><th></th></tr></thead>
+      <tbody id="tbody-cancelamentos"><tr><td colspan="5" class="empty">Carregando...</td></tr></tbody></table>
     </div>
   </div>
 
@@ -415,8 +428,8 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 // ── CONFIG (salva no localStorage) ───────────────────────────────────────────
-const SURL = 'https://nmttkjmfazcipefeakkx.supabase.co';
-const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
+const SURL  = 'https://nmttkjmfazcipefeakkx.supabase.co';
+const SKEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmFra3giLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NDA0OTQ0NiwiZXhwIjoyMDU5NjI1NDQ2fQ.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
 const db    = createClient(SURL, SKEY);
 
 const CFG_KEY   = 'pw_ceo_cfg';
@@ -543,6 +556,7 @@ async function load() {
   renderPeds(peds);
   renderFin();
   renderAssinaturas();
+  carregarCancelamentos();
 }
 
 // ── VISÃO GERAL ────────────────────────────────────────────────────────────────
@@ -833,6 +847,53 @@ gel('salvar-plano').addEventListener('click', async()=>{
   toast('Plano salvo!'); gel('ov-plano').classList.remove('on');
   await load();
 });
+
+// ── CANCELAMENTOS ─────────────────────────────────────────────────────────────
+async function carregarCancelamentos() {
+  const { data } = await db
+    .from('cancelamentos_plano')
+    .select('*, estabelecimentos(nome,slug)')
+    .order('created_at', { ascending: false });
+
+  const lista = data || [];
+  const naoLidos = lista.filter(c => !c.lido).length;
+
+  const badge = gel('cancel-badge');
+  if (badge) badge.textContent = naoLidos > 0 ? naoLidos + ' não lido(s)' : 'Todos lidos';
+
+  const MOTIVOS = {
+    preco:         'Preço não cabe no orçamento',
+    funcionalidade:'Falta funcionalidade',
+    dificuldade:   'Dificuldade em usar',
+    parei:         'Parou de usar temporariamente',
+    outro:         'Outro motivo',
+  };
+
+  gel('tbody-cancelamentos').innerHTML = !lista.length
+    ? '<tr><td colspan="5" class="empty">Nenhum cancelamento ainda. 🎉</td></tr>'
+    : lista.map(item => {
+        const loja = item.estabelecimentos?.nome || '—';
+        const dt   = new Date(item.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+        return `<tr style="${!item.lido?'background:#1a1107':''}" data-id="${item.id}">
+          <td><strong>${loja}</strong><div style="font-size:.68rem;color:#555">${item.estabelecimentos?.slug||''}</div></td>
+          <td><span class="badge by">${MOTIVOS[item.motivo]||item.motivo}</span></td>
+          <td style="font-size:.78rem;color:#aaa;max-width:220px">${item.mensagem||'—'}</td>
+          <td style="color:#555;font-size:.72rem;white-space:nowrap">${dt}</td>
+          <td>
+            ${!item.lido
+              ? `<button class="btn" onclick="marcarLido('${item.id}')">Marcar lido</button>`
+              : `<span style="color:#22c55e;font-size:.72rem">✓ Lido</span>`
+            }
+          </td>
+        </tr>`;
+      }).join('');
+}
+
+async function marcarLido(id) {
+  await db.from('cancelamentos_plano').update({ lido: true }).eq('id', id);
+  toast('Marcado como lido!');
+  carregarCancelamentos();
+}
 
 // ── TOAST ──────────────────────────────────────────────────────────────────────
 function toast(msg, cor='#22c55e'){
