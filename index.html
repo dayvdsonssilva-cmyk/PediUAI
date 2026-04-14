@@ -456,6 +456,14 @@
           </div>
         </div>
 
+        <!-- Cancelar plano -->
+        <div id="cancelar-plano-wrap" style="display:none;margin-bottom:14px">
+          <button onclick="abrirCancelarPlano()" style="width:100%;background:none;border:1.5px solid #ddd;border-radius:12px;padding:12px;font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:600;color:#aaa;cursor:pointer;transition:all .15s"
+            onmouseover="this.style.borderColor='#C0392B';this.style.color='#C0392B'"
+            onmouseout="this.style.borderColor='#ddd';this.style.color='#aaa'">
+            Cancelar assinatura
+          </button>
+        </div>
         <button class="btn-primary" onclick="salvarConfig()">Salvar configurações</button>
         <a id="link-me-ajuda" href="#"
            target="_blank"
@@ -472,6 +480,49 @@
 </div>
 
 <!-- MODAL: Adicionar Item -->
+<!-- MODAL CANCELAR PLANO -->
+<div class="modal-overlay" id="modal-cancelar-plano" onclick="if(event.target.id==='modal-cancelar-plano')fecharCancelarPlano()">
+  <div class="modal-box" style="max-width:440px">
+    <!-- Header triste -->
+    <div style="text-align:center;padding:8px 0 20px">
+      <div style="font-size:2.5rem;margin-bottom:8px">😔</div>
+      <div style="font-size:1.05rem;font-weight:800;margin-bottom:4px">Que pena que você vai...</div>
+      <div style="font-size:0.82rem;color:#888;line-height:1.5">Nos ajude a melhorar. Conta pra gente o motivo do cancelamento?</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <label class="cancelar-motivo-opt">
+        <input type="radio" name="motivo-cancel" value="preco"> Preço não cabe no meu orçamento
+      </label>
+      <label class="cancelar-motivo-opt">
+        <input type="radio" name="motivo-cancel" value="funcionalidade"> Falta alguma funcionalidade
+      </label>
+      <label class="cancelar-motivo-opt">
+        <input type="radio" name="motivo-cancel" value="dificuldade"> Tive dificuldade em usar
+      </label>
+      <label class="cancelar-motivo-opt">
+        <input type="radio" name="motivo-cancel" value="parei"> Parei de usar temporariamente
+      </label>
+      <label class="cancelar-motivo-opt">
+        <input type="radio" name="motivo-cancel" value="outro"> Outro motivo
+      </label>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:.78rem;font-weight:700;color:#555;display:block;margin-bottom:6px">Quer deixar uma mensagem para a gente? (opcional)</label>
+      <textarea id="cancel-msg" rows="3" placeholder="Conte o que aconteceu ou o que podemos melhorar..."
+        style="width:100%;border:1.5px solid #e0dbd5;border-radius:10px;padding:11px 13px;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none;resize:none;background:#faf8f5"></textarea>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button onclick="fecharCancelarPlano()" class="btn-cancelar" style="flex:1">Manter plano</button>
+      <button onclick="confirmarCancelamento()" style="flex:1;background:#C0392B;color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer">
+        Cancelar assinatura
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CROP DE FOTO DO PRODUTO -->
 <div class="modal-overlay" id="modal-crop-foto" onclick="if(event.target.id==='modal-crop-foto')fecharCropFoto()" style="z-index:1100">
   <div class="modal-box" style="max-width:420px;padding:0;overflow:hidden">
