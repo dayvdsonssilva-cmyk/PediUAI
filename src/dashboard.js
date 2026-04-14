@@ -1009,10 +1009,12 @@ function iniciarRealtime() {
     .channel(channelName)
     .on(
       'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'pedidos', filter: `estabelecimento_id=eq.${estab.id}` },
+      { event: 'INSERT', schema: 'public', table: 'pedidos' },
       payload => {
         const p = payload.new;
         if (!p || !p.id) return;
+        // Filtra por este estabelecimento no cliente
+        if (p.estabelecimento_id !== estab.id) return;
         if (pedidosConhecidos.has(p.id)) return;
         pedidosConhecidos.add(p.id);
         const lista = $('pedidos-novos-lista');
@@ -1027,8 +1029,11 @@ function iniciarRealtime() {
     )
     .on(
       'postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `estabelecimento_id=eq.${estab.id}` },
-      () => { renderPedidos(); }
+      { event: 'UPDATE', schema: 'public', table: 'pedidos' },
+      payload => {
+        const p = payload.new;
+        if (p?.estabelecimento_id === estab.id) renderPedidos();
+      }
     )
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') {
@@ -1062,6 +1067,117 @@ function iniciarRealtime() {
   }, 5000);
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FINANCEIRO DO ESTABELECIMENTO
+// ─────────────────────────────────────────────────────────────────────────────
+let _finPeriodo = 'hoje';
+let _finPedidos = [];
+
+async function carregarFinanceiro() {
+  const estab = getEstab(); if (!estab || estab.id === 'demo') return;
+  const { data } = await getSupa()
+    .from('pedidos').select('*')
+    .eq('estabelecimento_id', estab.id)
+    .order('created_at', { ascending: false })
+    .limit(500);
+  _finPedidos = data || [];
+  renderFinanceiro();
+}
+
+function filtroPedidosFin() {
+  const now = new Date();
+  return _finPedidos.filter(p => {
+    if (p.status === 'recusado') return false;
+    const d = new Date(p.created_at);
+    if (_finPeriodo === 'hoje')   return d.toDateString() === now.toDateString();
+    if (_finPeriodo === 'semana') { const s=new Date(now); s.setDate(s.getDate()-7); return d>=s; }
+    if (_finPeriodo === 'mes')    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+    return true;
+  });
+}
+
+function renderFinanceiro() {
+  const peds = filtroPedidosFin();
+  const fat  = peds.reduce((s,p)=>s+Number(p.total||0),0);
+  const taxa = peds.reduce((s,p)=>s+Number(p.taxa_entrega||0),0);
+  const tick = peds.length ? fat/peds.length : 0;
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+
+  const se = id => document.getElementById(id);
+  if (se('fin-fat-est'))  se('fin-fat-est').textContent  = fmtR(fat);
+  if (se('fin-qtd-est'))  se('fin-qtd-est').textContent  = peds.length;
+  if (se('fin-tick-est')) se('fin-tick-est').textContent = fmtR(tick);
+  if (se('fin-taxa-est')) se('fin-taxa-est').textContent = fmtR(taxa);
+
+  // Pagamentos
+  const pm = {};
+  peds.forEach(p => { const k=(p.pagamento||'Não informado').toUpperCase(); pm[k]=(pm[k]||0)+Number(p.total||0); });
+  const totPag = Object.values(pm).reduce((s,v)=>s+v,0)||1;
+  const pagsEl = se('fin-pags-est');
+  if (pagsEl) pagsEl.innerHTML = Object.entries(pm).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+    const pct = Math.round(v/totPag*100);
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:6px">
+        <span style="font-weight:600">${k}</span>
+        <span style="color:var(--red);font-weight:700">${fmtR(v)} <span style="color:#aaa;font-weight:500">(${pct}%)</span></span>
+      </div>
+      <div style="background:#f0e9e0;border-radius:50px;height:8px">
+        <div style="background:var(--red);width:${pct}%;height:100%;border-radius:50px;transition:width 0.4s"></div>
+      </div>
+    </div>`;
+  }).join('') || '<div style="color:#aaa;font-size:0.82rem;text-align:center;padding:20px">Sem pedidos no período</div>';
+
+  // Histórico
+  const histEl = se('fin-hist-est');
+  if (histEl) histEl.innerHTML = !peds.length
+    ? '<tr><td colspan="5" style="text-align:center;padding:24px;color:#aaa;font-size:0.82rem">Nenhum pedido no período</td></tr>'
+    : peds.slice(0,100).map(p => {
+        const dt = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+        const fmtV = v => 'R$ '+Number(v||0).toFixed(2).replace('.',',');
+        const stCls = {novo:'#f59e0b',preparo:'#3b82f6',pronto:'#22c55e',recusado:'#ef4444'}[p.status]||'#aaa';
+        return `<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:10px;font-weight:700">#${p.id.slice(-4).toUpperCase()}</td>
+          <td style="padding:10px">${p.cliente_nome||'—'}</td>
+          <td style="padding:10px;font-size:0.75rem;color:#888">${p.pagamento||'—'}</td>
+          <td style="padding:10px;text-align:right;color:var(--red);font-weight:700">${fmtV(p.total)}</td>
+          <td style="padding:10px;color:#aaa;font-size:0.75rem">${dt}</td>
+        </tr>`;
+      }).join('');
+}
+
+function setFinPeriodo(p, btn) {
+  _finPeriodo = p;
+  ['fin-hoje','fin-semana','fin-mes','fin-tudo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('ativo');
+  });
+  if (btn) btn.classList.add('ativo');
+  renderFinanceiro();
+}
+
+function exportarCSV() {
+  const estab  = getEstab();
+  const linhas = [['#','Cliente','WhatsApp','Status','Pagamento','Total','Taxa Entrega','Data']];
+  _finPedidos.forEach(p => {
+    linhas.push([
+      p.id.slice(-4).toUpperCase(),
+      p.cliente_nome||'',
+      p.cliente_whats||'',
+      p.status,
+      p.pagamento||'',
+      Number(p.total||0).toFixed(2),
+      Number(p.taxa_entrega||0).toFixed(2),
+      new Date(p.created_at).toLocaleString('pt-BR'),
+    ]);
+  });
+  const csv = linhas.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
+  const a   = document.createElement('a');
+  a.href    = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download= `pedidos-${estab?.slug||'loja'}-${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.csv`;
+  a.click();
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS GLOBAIS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1078,6 +1194,10 @@ window.deletarItem       = deletarItem;
 window.postarFresquinho  = postarFresquinho;
 window.removerFresquinho = removerFresquinho;
 window.renderPedidos     = renderPedidos;
+
+// ── Financeiro do estabelecimento ─────────────────────────
+window.setFinPeriodo = setFinPeriodo;
+window.exportarCSV   = exportarCSV;
 
 window.toggleTaxaEntrega = function(ativo) {
   const w = document.getElementById('taxa-entrega-wrap');
