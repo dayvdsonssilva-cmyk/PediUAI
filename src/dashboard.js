@@ -1136,12 +1136,13 @@ function renderFinanceiro() {
         const dt = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
         const fmtV = v => 'R$ '+Number(v||0).toFixed(2).replace('.',',');
         const stCls = {novo:'#f59e0b',preparo:'#3b82f6',pronto:'#22c55e',recusado:'#ef4444'}[p.status]||'#aaa';
-        return `<tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:10px;font-weight:700">#${p.id.slice(-4).toUpperCase()}</td>
-          <td style="padding:10px">${p.cliente_nome||'—'}</td>
-          <td style="padding:10px;font-size:0.75rem;color:#888">${p.pagamento||'—'}</td>
-          <td style="padding:10px;text-align:right;color:var(--red);font-weight:700">${fmtV(p.total)}</td>
-          <td style="padding:10px;color:#aaa;font-size:0.75rem">${dt}</td>
+        return `<tr>
+          <td style="font-weight:700">#${p.id.slice(-4).toUpperCase()}</td>
+          <td>${p.cliente_nome||'—'}</td>
+          <td style="font-size:0.72rem;color:#aaa;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.endereco||'Retirada'}</td>
+          <td style="font-size:0.75rem;color:#888">${p.pagamento||'—'}</td>
+          <td style="text-align:right;color:var(--red);font-weight:700">${fmtV(p.total)}</td>
+          <td style="color:#aaa;font-size:0.72rem;white-space:nowrap">${dt}</td>
         </tr>`;
       }).join('');
 }
@@ -1198,6 +1199,7 @@ window.renderPedidos     = renderPedidos;
 // ── Financeiro do estabelecimento ─────────────────────────
 window.setFinPeriodo = setFinPeriodo;
 window.exportarCSV   = exportarCSV;
+window.exportarPDF   = exportarPDF;
 
 window.toggleTaxaEntrega = function(ativo) {
   const w = document.getElementById('taxa-entrega-wrap');
