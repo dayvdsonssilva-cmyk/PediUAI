@@ -37,6 +37,7 @@ let logoFile    = null;
 let corAtiva    = '#C0392B';
 let realtimeSub = null;
 let pollingId   = null;
+let _audioAtual = null; // instância de Audio ativa
 let pedidosConhecidos = new Set();
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -956,38 +957,87 @@ window.buscarPedidos = function(termo) {
 let _notifLoop = null;
 
 function tocarNotif() {
-  try { const a = new Audio('/notificacao.mp3'); a.volume = 0.8; a.play().catch(()=>{}); } catch(e){}
+  if (_audioAtual) {
+    _audioAtual.pause();
+    _audioAtual.currentTime = 0;
+  }
+  try {
+    const a = new Audio('/sounds/new-order.mp3');
+    a.volume = 0.85;
+    _audioAtual = a;
+    a.play().catch(() => {
+      // Fallback: tenta o arquivo antigo
+      const b = new Audio('/notificacao.mp3');
+      b.volume = 0.85; _audioAtual = b;
+      b.play().catch(()=>{});
+    });
+  } catch(e) {}
 }
-function pararNotif() { clearTimeout(_notifLoop); _notifLoop = null; }
+function pararNotif() {
+  clearTimeout(_notifLoop);
+  _notifLoop = null;
+  if (_audioAtual) { _audioAtual.pause(); _audioAtual.currentTime = 0; _audioAtual = null; }
+}
 function notifLoop(id) {
   tocarNotif();
-  _notifLoop = setTimeout(() => {
-    if ($(`pnc-${id}`)) notifLoop(id);
-  }, 5000);
+  // Quando o som terminar, aguarda 5s e toca de novo se o pedido ainda está aguardando
+  if (_audioAtual) {
+    _audioAtual.onended = () => {
+      _notifLoop = setTimeout(() => {
+        if (document.getElementById(`pnc-${id}`)) notifLoop(id);
+      }, 5000);
+    };
+  } else {
+    _notifLoop = setTimeout(() => {
+      if (document.getElementById(`pnc-${id}`)) notifLoop(id);
+    }, 5000);
+  }
 }
 
 function iniciarRealtime() {
   const estab = getEstab(); if (!estab || estab.id === 'demo') return;
-  if (realtimeSub) { try { getSupa().removeChannel(realtimeSub); } catch(e){} }
+
+  // Remove canal anterior limpo
+  if (realtimeSub) {
+    try { getSupa().removeChannel(realtimeSub); } catch(e) {}
+    realtimeSub = null;
+  }
+
+  const channelName = 'pedidos-' + estab.id;
 
   realtimeSub = getSupa()
-    .channel('dash-' + estab.id + '-' + Date.now())
-    .on('postgres_changes', { event:'INSERT', schema:'public', table:'pedidos', filter:`estabelecimento_id=eq.${estab.id}` }, payload => {
-      const p = payload.new;
-      if (!pedidosConhecidos.has(p.id)) {
+    .channel(channelName)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'pedidos', filter: `estabelecimento_id=eq.${estab.id}` },
+      payload => {
+        const p = payload.new;
+        if (!p || !p.id) return;
+        if (pedidosConhecidos.has(p.id)) return;
         pedidosConhecidos.add(p.id);
         const lista = $('pedidos-novos-lista');
         if (lista) {
-          const ph = lista.querySelector('div[style]');
-          if (ph && ph.textContent.includes('Nenhum')) ph.remove();
+          const ph = lista.querySelector('[data-placeholder]');
+          if (ph) ph.remove();
           lista.insertAdjacentHTML('afterbegin', cardNovoHTML(p));
           atualizarBadgePedidos();
           notifLoop(p.id);
         }
       }
-    })
-    .on('postgres_changes', { event:'UPDATE', schema:'public', table:'pedidos', filter:`estabelecimento_id=eq.${estab.id}` }, () => { renderPedidos(); })
-    .subscribe();
+    )
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `estabelecimento_id=eq.${estab.id}` },
+      () => { renderPedidos(); }
+    )
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('[Realtime] Conectado ao canal:', channelName);
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn('[Realtime] Erro, tentando reconectar em 5s...');
+        setTimeout(iniciarRealtime, 5000);
+      }
+    });
 
   // Polling de segurança a cada 5s
   clearInterval(pollingId);
