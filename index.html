@@ -199,46 +199,72 @@
   <!-- Financeiro -->
   <div class="tab-content" id="tab-financeiro">
     <div class="dash-container">
+
+      <!-- Cabeçalho -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <h2 style="font-size:1.1rem;font-weight:800">💰 Financeiro</h2>
+        <button onclick="exportarCSV()" class="btn-ghost" style="font-size:0.78rem;font-weight:700;display:flex;align-items:center;gap:6px">
+          📥 Exportar CSV
+        </button>
+      </div>
+
       <!-- Período -->
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
         <button class="filtro-pill ativo" id="fin-hoje"   onclick="setFinPeriodo('hoje',this)">Hoje</button>
-        <button class="filtro-pill"       id="fin-semana" onclick="setFinPeriodo('semana',this)">Semana</button>
-        <button class="filtro-pill"       id="fin-mes"    onclick="setFinPeriodo('mes',this)">Mês</button>
+        <button class="filtro-pill"       id="fin-semana" onclick="setFinPeriodo('semana',this)">Esta semana</button>
+        <button class="filtro-pill"       id="fin-mes"    onclick="setFinPeriodo('mes',this)">Este mês</button>
         <button class="filtro-pill"       id="fin-tudo"   onclick="setFinPeriodo('tudo',this)">Tudo</button>
       </div>
+
       <!-- Cards resumo -->
       <div class="stats-grid" style="margin-bottom:20px">
-        <div class="stat-box"><div class="stat-label">FATURAMENTO</div><div class="stat-num green" id="fin-fat-est">R$ 0,00</div></div>
-        <div class="stat-box"><div class="stat-label">PEDIDOS</div><div class="stat-num" id="fin-qtd-est">0</div></div>
-        <div class="stat-box"><div class="stat-label">TICKET MÉDIO</div><div class="stat-num red" id="fin-tick-est">R$ 0,00</div></div>
-        <div class="stat-box"><div class="stat-label">TAXA ENTREGA</div><div class="stat-num" id="fin-taxa-est">R$ 0,00</div></div>
+        <div class="stat-box">
+          <div class="stat-label">FATURAMENTO</div>
+          <div class="stat-num green" id="fin-fat-est">R$ 0,00</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">PEDIDOS</div>
+          <div class="stat-num" id="fin-qtd-est">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">TICKET MÉDIO</div>
+          <div class="stat-num red" id="fin-tick-est">R$ 0,00</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">TAXA ENTREGA</div>
+          <div class="stat-num" id="fin-taxa-est">R$ 0,00</div>
+        </div>
       </div>
+
       <!-- Pagamentos -->
       <div class="config-card" style="margin-bottom:16px">
-        <h3 style="font-size:0.88rem;font-weight:700;margin-bottom:14px">Formas de pagamento</h3>
-        <div id="fin-pags-est"></div>
+        <div style="font-size:0.88rem;font-weight:800;margin-bottom:16px">📊 Por forma de pagamento</div>
+        <div id="fin-pags-est">
+          <div style="color:#aaa;font-size:0.82rem;text-align:center;padding:16px">Carregando...</div>
+        </div>
       </div>
+
       <!-- Histórico -->
       <div class="config-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <h3 style="font-size:0.88rem;font-weight:700">Histórico de pedidos</h3>
-          <button onclick="exportarCSV()" style="padding:7px 14px;border-radius:8px;border:1.5px solid var(--border);background:none;font-family:Poppins,sans-serif;font-size:0.75rem;font-weight:700;cursor:pointer;color:#555">📥 Exportar CSV</button>
-        </div>
-        <div style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;font-size:0.8rem">
+        <div style="font-size:0.88rem;font-weight:800;margin-bottom:16px">📋 Histórico de pedidos</div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+          <table style="width:100%;border-collapse:collapse;min-width:420px">
             <thead>
               <tr style="border-bottom:2px solid var(--border)">
-                <th style="padding:8px 10px;text-align:left;font-size:0.65rem;color:#888;text-transform:uppercase">#</th>
-                <th style="padding:8px 10px;text-align:left;font-size:0.65rem;color:#888;text-transform:uppercase">Cliente</th>
-                <th style="padding:8px 10px;text-align:left;font-size:0.65rem;color:#888;text-transform:uppercase">Pagamento</th>
-                <th style="padding:8px 10px;text-align:right;font-size:0.65rem;color:#888;text-transform:uppercase">Total</th>
-                <th style="padding:8px 10px;text-align:left;font-size:0.65rem;color:#888;text-transform:uppercase">Data</th>
+                <th style="padding:8px 10px;text-align:left;font-size:0.62rem;color:#888;text-transform:uppercase;font-weight:700">#</th>
+                <th style="padding:8px 10px;text-align:left;font-size:0.62rem;color:#888;text-transform:uppercase;font-weight:700">Cliente</th>
+                <th style="padding:8px 10px;text-align:left;font-size:0.62rem;color:#888;text-transform:uppercase;font-weight:700">Pagamento</th>
+                <th style="padding:8px 10px;text-align:right;font-size:0.62rem;color:#888;text-transform:uppercase;font-weight:700">Total</th>
+                <th style="padding:8px 10px;text-align:left;font-size:0.62rem;color:#888;text-transform:uppercase;font-weight:700">Data</th>
               </tr>
             </thead>
-            <tbody id="fin-hist-est"></tbody>
+            <tbody id="fin-hist-est">
+              <tr><td colspan="5" style="text-align:center;padding:24px;color:#aaa;font-size:0.82rem">Carregando...</td></tr>
+            </tbody>
           </table>
         </div>
       </div>
+
     </div>
   </div>
 
