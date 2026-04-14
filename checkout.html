@@ -195,7 +195,10 @@
 // ── CONFIGURAÇÃO ──────────────────────────────────────────────────────────────
 // A PUBLIC_KEY vem de variável de ambiente via meta tag gerada pelo servidor
 // Por enquanto usa a de TESTE — substitua pela de produção
-const MP_PUBLIC_KEY = window.__MP_PUBLIC_KEY__ || 'TEST-00000000-0000-0000-0000-000000000000';
+// ⚠️ SUBSTITUA pela sua Public Key do Mercado Pago
+// Teste:   TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+// Produção: APP_USR-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+const MP_PUBLIC_KEY = 'TEST-3499aeb1-4d4b-4525-b26a-7228d0b5dabb';
 
 const PLANOS = {
   pro: {
