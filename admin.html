@@ -24,18 +24,18 @@
     .lerr{color:#ef4444;font-size:.78rem;margin-top:8px;display:none}
 
     /* HEADER */
-    #hdr{background:#111;border-bottom:1px solid #1e1e1e;display:flex;align-items:center;padding:0 14px;height:50px;flex-shrink:0;position:sticky;top:0;z-index:100}
-    .hlogo{font-size:.95rem;font-weight:800;margin-right:14px;padding-right:14px;border-right:1px solid #222;white-space:nowrap;flex-shrink:0}
+    #hdr{background:#111;border-bottom:1px solid #1e1e1e;padding:0 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center}
+    .hlogo{font-size:.95rem;font-weight:800;margin-right:12px;padding-right:12px;border-right:1px solid #222;white-space:nowrap;flex-shrink:0}
     .hlogo b{color:#C0392B}
     nav{display:flex;overflow-x:auto;scrollbar-width:none;flex:1;-webkit-overflow-scrolling:touch}
     nav::-webkit-scrollbar{display:none}
-    .ntab{height:50px;padding:0 13px;background:none;border:none;border-bottom:2.5px solid transparent;color:#555;font-family:'Poppins',sans-serif;font-size:.73rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s;flex-shrink:0}
+    .ntab{height:50px;padding:0 12px;background:none;border:none;border-bottom:2.5px solid transparent;color:#555;font-family:'Poppins',sans-serif;font-size:.73rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0;min-height:50px}
     .ntab.on{color:#fff;border-bottom-color:#C0392B}
-    .hout{margin-left:8px;padding:7px 12px;background:none;border:1px solid #2a2a2a;color:#666;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.72rem;cursor:pointer;flex-shrink:0;min-height:34px}
+    .hout{margin-left:8px;padding:7px 12px;background:none;border:1px solid #2a2a2a;color:#666;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.72rem;cursor:pointer;flex-shrink:0;min-height:36px}
 
     /* MAIN */
     main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-    .pg{display:none;padding:18px 14px;max-width:1400px;margin:0 auto}
+    .pg{display:none;padding:20px 16px;max-width:1400px;margin:0 auto}
     .pg.on{display:block}
 
     /* STATS */
@@ -60,7 +60,7 @@
     .sechdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap}
     .sectitle{font-size:.88rem;font-weight:700}
     .tbox{background:#141414;border:1px solid #1e1e1e;border-radius:14px;overflow:hidden;margin-bottom:18px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-    table{width:100%;border-collapse:collapse;min-width:500px}
+    table{width:100%;border-collapse:collapse;min-width:520px}
     th{background:#111;padding:10px 14px;text-align:left;font-size:.6rem;font-weight:700;color:#444;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
     td{padding:11px 14px;font-size:.8rem;border-top:1px solid #1a1a1a;vertical-align:middle}
     tr:hover td{background:#181818}
@@ -72,67 +72,75 @@
     .br{background:#2a0a0a;color:#ef4444}
     .by{background:#1c1107;color:#f59e0b}
     .bgr{background:#1c1c1e;color:#71717a}
+    .bb{background:#0c1a3a;color:#3b82f6}
 
     /* BOTÕES */
-    .btn{padding:6px 11px;border-radius:8px;border:1px solid #2a2a2a;background:#1a1a1a;color:#888;font-family:'Poppins',sans-serif;font-size:.7rem;font-weight:600;cursor:pointer;min-height:32px;transition:all .15s}
-    .btn:active,.btn:hover{border-color:#C0392B;color:#fff}
-    .btn.red:active,.btn.red:hover{background:#C0392B;border-color:#C0392B;color:#fff}
-    .btn.grn{border-color:#22c55e;color:#22c55e}
-    .btn-red{background:#C0392B;color:#fff;border:none;border-radius:12px;padding:12px 20px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;min-height:44px;display:inline-block}
+    .btn{padding:6px 11px;border-radius:8px;border:1px solid #2a2a2a;background:#1a1a1a;color:#888;font-family:'Poppins',sans-serif;font-size:.7rem;font-weight:600;cursor:pointer;transition:all .15s;min-height:32px}
+    .btn:hover{border-color:#C0392B;color:#fff}
+    .btn.danger:hover{background:#C0392B;border-color:#C0392B;color:#fff}
+    .btn.success{border-color:#22c55e;color:#22c55e}
+    .btn.warning{border-color:#f59e0b;color:#f59e0b}
+    .btn.blue{border-color:#3b82f6;color:#3b82f6}
+    .btn-red{background:#C0392B;color:#fff;border:none;border-radius:10px;padding:11px 18px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;min-height:40px}
+    .btn-green{background:#22c55e;color:#fff;border:none;border-radius:10px;padding:11px 18px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;min-height:40px}
+    .btn-ghost{background:none;color:#888;border:1px solid #2a2a2a;border-radius:10px;padding:11px 16px;font-family:'Poppins',sans-serif;font-weight:600;font-size:.82rem;cursor:pointer;min-height:40px}
 
     /* SEARCH */
     .srch{background:#1c1c1e;border:1px solid #2a2a2a;border-radius:8px;padding:8px 12px;color:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;outline:none}
     .srch::placeholder{color:#444}
     .srch:focus{border-color:#C0392B}
 
-    /* PILLS PERÍODO */
-    .pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-    .pill{padding:7px 15px;border-radius:50px;border:1.5px solid #2a2a2a;background:none;color:#555;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s;min-height:34px}
-    .pill.on{background:#C0392B;border-color:#C0392B;color:#fff}
-
-    /* FIN */
-    .fcards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+    /* CARDS FINANCEIRO */
+    .fcards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
     .fcard{background:#141414;border:1px solid #1e1e1e;border-radius:14px;padding:14px}
     .flbl{font-size:.6rem;font-weight:700;color:#444;text-transform:uppercase;margin-bottom:6px}
     .fval{font-size:1.2rem;font-weight:800}
-    .pbar-wrap{margin-bottom:12px}
-    .pbar-top{display:flex;justify-content:space-between;font-size:.77rem;margin-bottom:5px}
-    .pbar-bg{background:#222;border-radius:50px;height:6px}
+
+    /* BARRA PAGAMENTO */
+    .pbar-wrap{margin-bottom:14px}
+    .pbar-top{display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px}
+    .pbar-bg{background:#222;border-radius:50px;height:7px}
     .pbar-fill{background:#C0392B;height:100%;border-radius:50px;transition:width .4s}
+
+    /* SETTINGS */
+    .settings-card{background:#141414;border:1px solid #1e1e1e;border-radius:14px;padding:20px;margin-bottom:16px}
+    .settings-title{font-size:.82rem;font-weight:700;margin-bottom:16px;color:#aaa;text-transform:uppercase;letter-spacing:.06em}
+    .settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #1e1e1e;gap:12px}
+    .settings-row:last-child{border-bottom:none}
+    .settings-label{font-size:.85rem;font-weight:600}
+    .settings-desc{font-size:.72rem;color:#555;margin-top:2px}
+    .settings-input{background:#1c1c1e;border:1px solid #2a2a2a;border-radius:10px;padding:10px 14px;color:#fff;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none;flex:1;max-width:320px}
+    .settings-input:focus{border-color:#C0392B}
+    .btn-save-setting{background:#C0392B;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;white-space:nowrap}
 
     /* MODAL */
     .ov{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:500;display:none;align-items:flex-end;justify-content:center}
     .ov.on{display:flex}
     .modal{background:#141414;border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:24px 20px 40px;-webkit-overflow-scrolling:touch}
     .mhead{font-size:.95rem;font-weight:800;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
-    .mclose{background:none;border:none;color:#555;font-size:1.3rem;cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+    .mclose{background:none;border:none;color:#555;font-size:1.3rem;cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;min-height:36px}
     .mclose:hover{background:#222}
-    .drow{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid #1e1e1e;font-size:.8rem}
-    .dlbl{color:#555}
-    .dval{font-weight:600;text-align:right;max-width:60%;word-break:break-word}
+    .drow{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid #1e1e1e;font-size:.8rem;gap:12px}
+    .dlbl{color:#555;flex-shrink:0}
+    .dval{font-weight:600;text-align:right;word-break:break-word}
     .mfield{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
     .mfield label{font-size:.72rem;font-weight:700;color:#555}
-    .mfield input,.mfield select{background:#1c1c1e;border:1px solid #2a2a2a;border-radius:10px;padding:11px 12px;color:#fff;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none;width:100%}
+    .mfield input,.mfield select{background:#1c1c1e;border:1px solid #2a2a2a;border-radius:10px;padding:10px 12px;color:#fff;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none;width:100%}
     .mfield input:focus,.mfield select:focus{border-color:#C0392B}
-    .btn-ghost{background:none;color:#666;border:1px solid #2a2a2a;border-radius:12px;padding:12px 16px;font-family:'Poppins',sans-serif;font-weight:600;font-size:.85rem;cursor:pointer;min-height:44px}
-
-    /* DEBUG BOX */
-    #debug-box{background:#1a0505;border:1px solid #3a1515;border-radius:12px;padding:14px;margin-bottom:16px;display:none}
-    #debug-box.show{display:block}
-    #debug-txt{font-size:.75rem;color:#ef4444;font-family:monospace;white-space:pre-wrap}
 
     /* TOAST */
     #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;padding:11px 22px;border-radius:50px;font-weight:700;font-size:.82rem;z-index:9999;display:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5)}
 
+    /* RESPONSIVE */
     @media(max-width:700px){
       .sgrid{grid-template-columns:repeat(2,1fr);gap:8px}
+      .fcards{grid-template-columns:repeat(2,1fr);gap:8px}
       .sval{font-size:1.2rem}
-      .fcards{grid-template-columns:repeat(2,1fr)}
       .pg{padding:14px 10px}
-      th,td{padding:9px 10px;font-size:.74rem}
       .hlogo{display:none}
+      th,td{padding:9px 10px;font-size:.74rem}
     }
-    @media(max-width:380px){
+    @media(max-width:420px){
       .fcards{grid-template-columns:1fr}
     }
   </style>
@@ -154,11 +162,12 @@
 <div id="hdr" style="display:none">
   <div class="hlogo">PEDI<b>WAY</b></div>
   <nav id="nav">
-    <button class="ntab on" data-pg="visao">📊 Visão Geral</button>
-    <button class="ntab" data-pg="lojas">🏪 Lojas</button>
-    <button class="ntab" data-pg="pedidos">📋 Pedidos</button>
-    <button class="ntab" data-pg="financeiro">💰 Financeiro</button>
-    <button class="ntab" data-pg="planos">📦 Planos</button>
+    <button class="ntab on"  data-pg="visao">📊 Visão Geral</button>
+    <button class="ntab"     data-pg="lojas">🏪 Lojas</button>
+    <button class="ntab"     data-pg="pedidos">📋 Pedidos</button>
+    <button class="ntab"     data-pg="financeiro">💰 Financeiro</button>
+    <button class="ntab"     data-pg="assinaturas">💳 Assinaturas</button>
+    <button class="ntab"     data-pg="config">⚙️ Config</button>
   </nav>
   <button class="hout" id="btn-sair">Sair</button>
 </div>
@@ -167,7 +176,6 @@
 
   <!-- VISÃO GERAL -->
   <div class="pg on" id="pg-visao">
-    <div id="debug-box"><div id="debug-txt"></div></div>
     <div class="sgrid">
       <div class="sc"><div class="slbl">Total lojas</div><div class="sval r" id="s1">--</div><div class="shint" id="s1h"></div></div>
       <div class="sc"><div class="slbl">Pedidos hoje</div><div class="sval g" id="s2">--</div><div class="shint" id="s2h"></div></div>
@@ -181,7 +189,7 @@
     <div class="sectitle" style="margin-bottom:12px">🏆 Top lojas hoje</div>
     <div class="tbox">
       <table><thead><tr><th>Loja</th><th>Pedidos</th><th>Faturamento</th><th>Status</th></tr></thead>
-      <tbody id="top-lojas"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody></table>
+      <tbody id="top-lojas"></tbody></table>
     </div>
   </div>
 
@@ -189,11 +197,21 @@
   <div class="pg" id="pg-lojas">
     <div class="sechdr">
       <div class="sectitle">Estabelecimentos</div>
-      <input class="srch" id="busca-lojas" placeholder="🔍 Buscar..." style="width:200px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select class="srch" id="fil-situacao" style="width:auto">
+          <option value="">Todas</option>
+          <option value="ativa">Ativas</option>
+          <option value="inativa">Inativas</option>
+          <option value="inadim">Inadimplentes</option>
+        </select>
+        <input class="srch" id="busca-lojas" placeholder="🔍 Buscar..." style="width:180px">
+      </div>
     </div>
     <div class="tbox">
-      <table><thead><tr><th>Loja</th><th>Link</th><th>Plano</th><th>Status</th><th>Pedidos</th><th>Cadastro</th><th>Ações</th></tr></thead>
-      <tbody id="tbody-lojas"><tr><td colspan="7" class="empty">Carregando...</td></tr></tbody></table>
+      <table><thead><tr>
+        <th>Loja</th><th>Link</th><th>Plano</th><th>Pgto</th><th>Venc.</th><th>Pedidos</th><th>Situação</th><th>Ações</th>
+      </tr></thead>
+      <tbody id="tbody-lojas"></tbody></table>
     </div>
   </div>
 
@@ -202,90 +220,191 @@
     <div class="sechdr">
       <div class="sectitle">Pedidos</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <select class="srch" id="fil-st"><option value="">Todos os status</option><option value="novo">Novo</option><option value="preparo">Preparo</option><option value="pronto">Pronto</option><option value="recusado">Recusado</option></select>
+        <select class="srch" id="fil-st" style="width:auto">
+          <option value="">Todos</option><option value="novo">Novo</option>
+          <option value="preparo">Preparo</option><option value="pronto">Pronto</option><option value="recusado">Recusado</option>
+        </select>
         <input class="srch" id="fil-q" placeholder="🔍 Buscar..." style="width:140px">
       </div>
     </div>
     <div class="tbox">
       <table><thead><tr><th>#</th><th>Loja</th><th>Cliente</th><th>Pgto</th><th>Total</th><th>Status</th><th>Data</th><th></th></tr></thead>
-      <tbody id="tbody-peds"><tr><td colspan="8" class="empty">Carregando...</td></tr></tbody></table>
+      <tbody id="tbody-peds"></tbody></table>
     </div>
   </div>
 
-  <!-- FINANCEIRO -->
+  <!-- FINANCEIRO (pedidos de todos os estabelecimentos) -->
   <div class="pg" id="pg-financeiro">
-    <div class="pills" id="fin-pills">
-      <button class="pill on" data-p="hoje">Hoje</button>
-      <button class="pill" data-p="semana">Semana</button>
-      <button class="pill" data-p="mes">Mês</button>
-      <button class="pill" data-p="tudo">Tudo</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div class="sectitle">Financeiro geral</div>
+      <div style="display:flex;gap:6px;background:#1a1a1a;border-radius:10px;padding:3px">
+        <button class="ntab on" data-fp="hoje"   style="border-radius:8px;height:34px;padding:0 14px;font-size:.73rem">Hoje</button>
+        <button class="ntab"    data-fp="semana" style="border-radius:8px;height:34px;padding:0 14px;font-size:.73rem">Semana</button>
+        <button class="ntab"    data-fp="mes"    style="border-radius:8px;height:34px;padding:0 14px;font-size:.73rem">Mês</button>
+        <button class="ntab"    data-fp="tudo"   style="border-radius:8px;height:34px;padding:0 14px;font-size:.73rem">Tudo</button>
+      </div>
     </div>
     <div class="fcards">
       <div class="fcard"><div class="flbl">Faturamento</div><div class="fval" style="color:#22c55e" id="ff">--</div></div>
       <div class="fcard"><div class="flbl">Pedidos</div><div class="fval" id="fq">--</div></div>
       <div class="fcard"><div class="flbl">Ticket médio</div><div class="fval" style="color:#f59e0b" id="ft">--</div></div>
+      <div class="fcard"><div class="flbl">Lojas ativas</div><div class="fval" style="color:#C0392B" id="fla">--</div></div>
     </div>
-    <div class="cbox" style="margin-bottom:18px">
-      <div class="ctitle" style="margin-bottom:14px">Por forma de pagamento</div>
-      <div id="fin-pags"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+      <div class="cbox" style="margin-bottom:0">
+        <div class="ctitle" style="margin-bottom:14px">Por pagamento</div>
+        <div id="fin-pags"></div>
+      </div>
+      <div class="cbox" style="margin-bottom:0">
+        <div class="ctitle" style="margin-bottom:14px">Top lojas no período</div>
+        <div id="fin-top-lojas"></div>
+      </div>
     </div>
-    <div class="sectitle" style="margin-bottom:12px">Por estabelecimento</div>
+    <div class="sectitle" style="margin-bottom:12px">Faturamento por estabelecimento</div>
     <div class="tbox">
-      <table><thead><tr><th>Loja</th><th>Pedidos</th><th>Faturamento</th><th>Ticket</th></tr></thead>
-      <tbody id="fin-lojas"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody></table>
+      <table><thead><tr><th>Loja</th><th>Pedidos</th><th>Faturamento</th><th>Ticket</th><th>Pgto mais usado</th></tr></thead>
+      <tbody id="fin-lojas"></tbody></table>
     </div>
   </div>
 
-  <!-- PLANOS -->
-  <div class="pg" id="pg-planos">
-    <div style="margin-bottom:16px"><button class="btn-red" id="btn-novo-plano">+ Atribuir plano</button></div>
-    <div class="sgrid" style="margin-bottom:18px">
-      <div class="sc"><div class="slbl">Trial</div><div class="sval y" id="pt">--</div></div>
-      <div class="sc"><div class="slbl">Pro</div><div class="sval" id="pp">--</div></div>
-      <div class="sc"><div class="slbl">Premium</div><div class="sval g" id="pprem">--</div></div>
-      <div class="sc"><div class="slbl">MRR</div><div class="sval r" id="pmrr">--</div></div>
+  <!-- ASSINATURAS -->
+  <div class="pg" id="pg-assinaturas">
+    <div class="fcards" style="margin-bottom:20px">
+      <div class="fcard"><div class="flbl">Trial</div><div class="fval y" id="pt">--</div></div>
+      <div class="fcard"><div class="flbl">Pro (R$49)</div><div class="fval" id="pp">--</div></div>
+      <div class="fcard"><div class="flbl">Premium (R$99)</div><div class="fval g" id="pprem">--</div></div>
+      <div class="fcard"><div class="flbl">MRR</div><div class="fval r" id="pmrr">--</div></div>
+    </div>
+    <div class="fcards" style="margin-bottom:20px">
+      <div class="fcard"><div class="flbl">Pagas</div><div class="fval g" id="assin-pagas">--</div></div>
+      <div class="fcard"><div class="flbl">Pendentes</div><div class="fval y" id="assin-pend">--</div></div>
+      <div class="fcard"><div class="flbl">Vencidas</div><div class="fval r" id="assin-venc">--</div></div>
+      <div class="fcard"><div class="flbl">Canceladas</div><div class="fval" id="assin-canc" style="color:#71717a">--</div></div>
+    </div>
+    <div class="sechdr">
+      <div class="sectitle">Controle de assinaturas</div>
+      <button class="btn-red" id="btn-novo-plano">+ Atribuir plano</button>
     </div>
     <div class="tbox">
-      <table><thead><tr><th>Loja</th><th>Plano</th><th>Pagamento</th><th>Vencimento</th><th>Valor</th><th></th></tr></thead>
-      <tbody id="tbody-planos"><tr><td colspan="6" class="empty">Carregando...</td></tr></tbody></table>
+      <table><thead><tr><th>Loja</th><th>Plano</th><th>Status pgto</th><th>Vencimento</th><th>Situação</th><th>Valor</th><th>Ações</th></tr></thead>
+      <tbody id="tbody-planos"></tbody></table>
     </div>
+  </div>
+
+  <!-- CONFIG CEO -->
+  <div class="pg" id="pg-config">
+
+    <div class="settings-card">
+      <div class="settings-title">💬 Botão "Me Ajuda PEDIWAY"</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">WhatsApp do suporte</div>
+          <div class="settings-desc">Número que abre ao clicar em "Me Ajuda PEDIWAY" no dashboard dos estabelecimentos</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="settings-input" id="cfg-wpp" placeholder="5535999999999" type="tel">
+          <button class="btn-save-setting" id="btn-salvar-wpp">Salvar</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Mensagem padrão</div>
+          <div class="settings-desc">Texto que o estabelecimento envia ao abrir o WhatsApp</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex:1;max-width:400px">
+          <input class="settings-input" id="cfg-wpp-msg" placeholder="Olá! Preciso de ajuda com o PEDIWAY." style="max-width:none">
+          <button class="btn-save-setting" id="btn-salvar-msg">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-title">🔑 Código de acesso CEO</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Código atual</div>
+          <div class="settings-desc">Código para acessar este painel CEO</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="settings-input" id="cfg-codigo" type="password" placeholder="••••••••" style="letter-spacing:.3em">
+          <button class="btn-save-setting" id="btn-salvar-codigo">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-title">📋 Planos disponíveis</div>
+      <div class="settings-row">
+        <div><div class="settings-label">Pro</div><div class="settings-desc">Preço mensal</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="color:#555;font-size:.85rem">R$</span>
+          <input class="settings-input" id="cfg-preco-pro" type="number" placeholder="49" style="max-width:100px">
+          <button class="btn-save-setting" id="btn-salvar-preco">Salvar preços</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Premium</div><div class="settings-desc">Preço mensal</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="color:#555;font-size:.85rem">R$</span>
+          <input class="settings-input" id="cfg-preco-prem" type="number" placeholder="99" style="max-width:100px">
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-title">⚠️ Zona de controle</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Lojas inadimplentes</div>
+          <div class="settings-desc">Desativar automaticamente lojas com assinatura vencida</div>
+        </div>
+        <button class="btn-red" id="btn-desativar-inad">Desativar todas inadimplentes</button>
+      </div>
+    </div>
+
   </div>
 
 </main>
 
 <!-- MODAL PEDIDO -->
 <div class="ov" id="ov-ped"><div class="modal">
-  <div class="mhead">Pedido <button class="mclose" id="x-ped">✕</button></div>
+  <div class="mhead">Pedido <button class="mclose" data-close="ov-ped">✕</button></div>
   <div id="ped-body"></div>
 </div></div>
 
 <!-- MODAL LOJA -->
 <div class="ov" id="ov-loja"><div class="modal">
-  <div class="mhead">Detalhes da loja <button class="mclose" id="x-loja">✕</button></div>
+  <div class="mhead">Detalhes da loja <button class="mclose" data-close="ov-loja">✕</button></div>
   <div id="loja-body"></div>
 </div></div>
 
 <!-- MODAL PLANO -->
 <div class="ov" id="ov-plano"><div class="modal">
-  <div class="mhead">Atribuir plano <button class="mclose" id="x-plano">✕</button></div>
+  <div class="mhead">Atribuir / editar plano <button class="mclose" data-close="ov-plano">✕</button></div>
   <div class="mfield"><label>Estabelecimento</label><select id="pl-loja"></select></div>
   <div class="mfield"><label>Plano</label>
     <select id="pl-tipo">
       <option value="basico">Trial (grátis)</option>
-      <option value="pro">Pro — R$ 49/mês</option>
-      <option value="premium">Premium — R$ 99/mês</option>
+      <option value="pro">Pro</option>
+      <option value="premium">Premium</option>
     </select>
   </div>
-  <div class="mfield"><label>Vencimento</label><input type="date" id="pl-venc"></div>
-  <div class="mfield"><label>Status pagamento</label>
+  <div class="mfield"><label>Status do pagamento</label>
     <select id="pl-pgst">
-      <option value="pago">Pago</option>
-      <option value="pendente">Pendente</option>
-      <option value="cancelado">Cancelado</option>
+      <option value="pago">✅ Pago</option>
+      <option value="pendente">⏳ Pendente</option>
+      <option value="cancelado">❌ Cancelado</option>
+    </select>
+  </div>
+  <div class="mfield"><label>Data de vencimento</label><input type="date" id="pl-venc"></div>
+  <div class="mfield"><label>Ativar / desativar loja</label>
+    <select id="pl-ativo">
+      <option value="1">✅ Loja ativa</option>
+      <option value="0">🚫 Loja desativada</option>
     </select>
   </div>
   <div style="display:flex;gap:10px;margin-top:8px">
-    <button class="btn-ghost" id="x-plano2" style="flex:1">Cancelar</button>
+    <button class="btn-ghost" data-close="ov-plano" style="flex:1">Cancelar</button>
     <button class="btn-red" id="salvar-plano" style="flex:2">Salvar</button>
   </div>
 </div></div>
@@ -295,30 +414,49 @@
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+// ── CONFIG (salva no localStorage) ───────────────────────────────────────────
 const SURL = 'https://nmttkjmfazcipefeakkx.supabase.co';
 const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
-const db   = createClient(SURL, SKEY);
-const PASS = '35585201';
-const $R   = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-const gel  = id => document.getElementById(id);
+const db    = createClient(SURL, SKEY);
 
-let lojas=[], peds=[], periodo='hoje';
+const CFG_KEY   = 'pw_ceo_cfg';
+let cfg = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
+const saveCfg = () => localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
 
-// ── DEBUG ──────────────────────────────────────────────────────────────────
-function debug(msg) {
-  const box = gel('debug-box');
-  const txt = gel('debug-txt');
-  if (!box || !txt) return;
-  box.classList.add('show');
-  txt.textContent += '\n' + msg;
+// Código CEO — usa o salvo no cfg ou o padrão
+const getCodigo = () => cfg.codigo || '35585201';
+
+const $R  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+const gel = id => document.getElementById(id);
+
+let lojas = [], peds = [], finPeriodo = 'hoje';
+
+// ── FECHAR MODAIS via data-close ──────────────────────────────────────────────
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-close]');
+  if (btn) { const ov = gel(btn.dataset.close); if(ov) ov.classList.remove('on'); return; }
+  // Fechar clicando no overlay
+  if (e.target.classList.contains('ov')) e.target.classList.remove('on');
+  // Delegação de ações nas tabelas
+  const action = e.target.closest('[data-action]');
+  if (action) handleAction(action.dataset.action, action.dataset.id, action.dataset.extra);
+});
+
+function handleAction(action, id, extra) {
+  if (action === 'det-loja')   detLoja(id);
+  if (action === 'toggle-loja') toggleLoja(id, extra === '1');
+  if (action === 'edit-plano') abrirPlano(id);
+  if (action === 'del-loja')   delLoja(id, extra);
+  if (action === 'det-ped')    detPed(id);
 }
 
-// ── LOGIN ──────────────────────────────────────────────────────────────────
+// ── LOGIN ──────────────────────────────────────────────────────────────────────
 function doLogin() {
-  if (gel('pin').value === PASS) {
+  if (gel('pin').value === getCodigo()) {
     gel('login').style.display  = 'none';
     gel('hdr').style.display    = 'flex';
     gel('main').style.display   = 'block';
+    carregarCfg();
     load();
   } else {
     gel('pin').classList.add('err');
@@ -329,203 +467,216 @@ function doLogin() {
 gel('btn-entrar').addEventListener('click', doLogin);
 gel('pin').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
 gel('btn-sair').addEventListener('click', () => {
-  gel('hdr').style.display = 'none';
-  gel('main').style.display = 'none';
+  ['hdr','main'].forEach(id => gel(id).style.display = 'none');
   gel('login').style.display = 'flex';
   gel('pin').value = '';
 });
 
-// ── NAVEGAÇÃO ──────────────────────────────────────────────────────────────
+// ── NAVEGAÇÃO ──────────────────────────────────────────────────────────────────
 gel('nav').addEventListener('click', e => {
-  const btn = e.target.closest('.ntab'); if (!btn) return;
-  document.querySelectorAll('.ntab').forEach(b => b.classList.remove('on'));
+  const btn = e.target.closest('.ntab[data-pg]'); if (!btn) return;
+  document.querySelectorAll('.ntab[data-pg]').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
-  const pg = btn.dataset.pg;
   document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
-  gel('pg-' + pg).classList.add('on');
+  gel('pg-' + btn.dataset.pg).classList.add('on');
 });
 
-// ── PILLS FINANCEIRO ───────────────────────────────────────────────────────
-gel('fin-pills').addEventListener('click', e => {
-  const btn = e.target.closest('.pill'); if (!btn) return;
-  document.querySelectorAll('#fin-pills .pill').forEach(b => b.classList.remove('on'));
+// Período financeiro
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.ntab[data-fp]'); if (!btn) return;
+  document.querySelectorAll('.ntab[data-fp]').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
-  periodo = btn.dataset.p;
+  finPeriodo = btn.dataset.fp;
   renderFin();
 });
 
-// ── CARREGAR DADOS ────────────────────────────────────────────────────────
+// ── CONFIG CEO ────────────────────────────────────────────────────────────────
+function carregarCfg() {
+  gel('cfg-wpp').value       = cfg.wpp       || '';
+  gel('cfg-wpp-msg').value   = cfg.wppMsg    || 'Olá! Preciso de ajuda com o PEDIWAY.';
+  gel('cfg-codigo').value    = '';
+  gel('cfg-preco-pro').value  = cfg.precoPro  || '49';
+  gel('cfg-preco-prem').value = cfg.precoPrem || '99';
+}
+gel('btn-salvar-wpp').addEventListener('click', () => {
+  cfg.wpp = gel('cfg-wpp').value.replace(/\D/g,'');
+  saveCfg(); toast('WhatsApp salvo!');
+});
+gel('btn-salvar-msg').addEventListener('click', () => {
+  cfg.wppMsg = gel('cfg-wpp-msg').value.trim();
+  saveCfg(); toast('Mensagem salva!');
+});
+gel('btn-salvar-codigo').addEventListener('click', () => {
+  const novo = gel('cfg-codigo').value.trim();
+  if (novo.length < 4) return toast('Código mínimo: 4 caracteres.', '#ef4444');
+  cfg.codigo = novo; saveCfg(); gel('cfg-codigo').value = '';
+  toast('Código atualizado!');
+});
+gel('btn-salvar-preco').addEventListener('click', () => {
+  cfg.precoPro  = gel('cfg-preco-pro').value  || '49';
+  cfg.precoPrem = gel('cfg-preco-prem').value || '99';
+  saveCfg(); toast('Preços salvos!');
+});
+gel('btn-desativar-inad').addEventListener('click', async () => {
+  if (!confirm('Desativar todas as lojas com assinatura vencida?')) return;
+  const inad = lojas.filter(l => l.assinatura_vencimento && new Date(l.assinatura_vencimento) < new Date() && l.plano !== 'basico');
+  if (!inad.length) return toast('Nenhuma loja inadimplente.', '#f59e0b');
+  let ok = 0;
+  for (const l of inad) {
+    const { error } = await db.from('estabelecimentos').update({ aberto: false }).eq('id', l.id);
+    if (!error) ok++;
+  }
+  toast(`${ok} loja(s) desativada(s).`);
+  await load();
+});
+
+// ── LOAD ───────────────────────────────────────────────────────────────────────
 async function load() {
-  // LOJAS
-  const { data: lj, error: e1 } = await db
-    .from('estabelecimentos')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (e1) {
-    debug('ERRO lojas: ' + JSON.stringify(e1));
-    gel('tbody-lojas').innerHTML = `<tr><td colspan="7" class="empty" style="color:#ef4444">
-      Erro ao carregar lojas: ${e1.message}<br><br>
-      <strong>Execute o SQL de configuração no Supabase!</strong>
-    </td></tr>`;
-  }
-  lojas = lj || [];
-  debug('Lojas carregadas: ' + lojas.length);
-
-  // PEDIDOS
-  const { data: pd, error: e2 } = await db
-    .from('pedidos')
-    .select('id,cliente_nome,cliente_whats,status,total,pagamento,troco,taxa_entrega,endereco,itens,created_at,estabelecimento_id,estabelecimentos(nome,slug)')
-    .order('created_at', { ascending: false })
-    .limit(1000);
-
-  if (e2) debug('ERRO pedidos: ' + JSON.stringify(e2));
-  peds = pd || [];
-  debug('Pedidos carregados: ' + peds.length);
-
-  // Esconde debug se tudo ok
-  if (!e1 && !e2) {
-    const box = gel('debug-box');
-    if (box) box.classList.remove('show');
-  }
-
+  const [r1, r2] = await Promise.all([
+    db.from('estabelecimentos').select('*').order('created_at', { ascending: false }),
+    db.from('pedidos').select('id,cliente_nome,cliente_whats,status,total,pagamento,troco,taxa_entrega,endereco,itens,created_at,estabelecimento_id,estabelecimentos(nome,slug)').order('created_at', { ascending: false }).limit(1000),
+  ]);
+  lojas = r1.data || [];
+  peds  = r2.data || [];
   renderVisao();
   renderLojas(lojas);
   renderPeds(peds);
   renderFin();
-  renderPlanos();
+  renderAssinaturas();
 }
 
-// ── VISÃO GERAL ────────────────────────────────────────────────────────────
+// ── VISÃO GERAL ────────────────────────────────────────────────────────────────
 function renderVisao() {
   const hoje = new Date().toDateString();
   const mes  = new Date().getMonth();
-  const ph   = peds.filter(p => new Date(p.created_at).toDateString() === hoje);
-  const pm   = peds.filter(p => new Date(p.created_at).getMonth() === mes);
-  const fh   = ph.reduce((s, p) => s + Number(p.total||0), 0);
-  const fm   = pm.reduce((s, p) => s + Number(p.total||0), 0);
-  const mrr  = lojas.reduce((s, l) => s + ({ pro: 49, premium: 99 }[l.plano] || 0), 0);
-
-  gel('s1').textContent  = lojas.length;
-  gel('s1h').textContent = lojas.filter(l => l.aberto !== false).length + ' abertas';
-  gel('s2').textContent  = ph.length;
-  gel('s2h').textContent = pm.length + ' no mês';
-  gel('s3').textContent  = $R(fh);
-  gel('s3h').textContent = $R(fm) + ' no mês';
-  gel('s4').textContent  = $R(mrr);
-  gel('s4h').textContent = lojas.filter(l => l.plano && l.plano !== 'basico').length + ' assinaturas';
+  const ph = peds.filter(p => new Date(p.created_at).toDateString() === hoje);
+  const pm = peds.filter(p => new Date(p.created_at).getMonth() === mes);
+  const fh = ph.reduce((s,p)=>s+Number(p.total||0),0);
+  const fm = pm.reduce((s,p)=>s+Number(p.total||0),0);
+  const proPrc  = Number(cfg.precoPro  || 49);
+  const premPrc = Number(cfg.precoPrem || 99);
+  const mrr  = lojas.reduce((s,l)=>s+({pro:proPrc,premium:premPrc}[l.plano]||0),0);
+  gel('s1').textContent = lojas.length;
+  gel('s1h').textContent= lojas.filter(l=>l.aberto!==false).length+' abertas';
+  gel('s2').textContent = ph.length;
+  gel('s2h').textContent= pm.length+' no mês';
+  gel('s3').textContent = $R(fh);
+  gel('s3h').textContent= $R(fm)+' no mês';
+  gel('s4').textContent = $R(mrr);
+  gel('s4h').textContent= lojas.filter(l=>l.plano&&l.plano!=='basico').length+' assinaturas';
 
   // Gráfico 7 dias
-  const dias = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - 6 + i);
-    return { l: d.toLocaleDateString('pt-BR', { weekday: 'short' }), s: d.toDateString() };
-  });
-  const qs  = dias.map(d => peds.filter(p => new Date(p.created_at).toDateString() === d.s).length);
-  const mx  = Math.max(...qs, 1);
-  gel('ctot').textContent = qs.reduce((a,b)=>a+b,0) + ' pedidos';
-  gel('bars').innerHTML = dias.map((d, i) => `
-    <div class="bw">
-      <div class="bar" style="height:${Math.max(Math.round(qs[i]/mx*90),3)}px" title="${qs[i]}"></div>
-      <div class="blbl">${d.l}</div>
-    </div>`).join('');
+  const dias = Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return{l:d.toLocaleDateString('pt-BR',{weekday:'short'}),s:d.toDateString()};});
+  const qs = dias.map(d=>peds.filter(p=>new Date(p.created_at).toDateString()===d.s).length);
+  const mx = Math.max(...qs,1);
+  gel('ctot').textContent = qs.reduce((a,b)=>a+b,0)+' pedidos';
+  gel('bars').innerHTML = dias.map((d,i)=>`<div class="bw"><div class="bar" style="height:${Math.max(Math.round(qs[i]/mx*90),3)}px" title="${qs[i]}"></div><div class="blbl">${d.l}</div></div>`).join('');
 
-  // Top lojas
-  const mp = {};
-  ph.forEach(p => {
-    const n = p.estabelecimentos?.nome || p.estabelecimento_id || '?';
-    mp[n] = mp[n] || { q: 0, f: 0 };
-    mp[n].q++; mp[n].f += Number(p.total||0);
-  });
-  const top = Object.entries(mp).sort((a,b)=>b[1].q-a[1].q).slice(0,5);
+  const mp={};
+  ph.forEach(p=>{const n=p.estabelecimentos?.nome||'?';mp[n]=mp[n]||{q:0,f:0};mp[n].q++;mp[n].f+=Number(p.total||0);});
+  const top=Object.entries(mp).sort((a,b)=>b[1].q-a[1].q).slice(0,5);
   gel('top-lojas').innerHTML = top.length
-    ? top.map(([n,d]) => `<tr><td><strong>${n}</strong></td><td>${d.q}</td><td style="color:#22c55e;font-weight:700">${$R(d.f)}</td><td><span class="badge bg">Ativa</span></td></tr>`).join('')
+    ? top.map(([n,d])=>`<tr><td><strong>${n}</strong></td><td>${d.q}</td><td style="color:#22c55e;font-weight:700">${$R(d.f)}</td><td><span class="badge bg">Ativa</span></td></tr>`).join('')
     : `<tr><td colspan="4" class="empty">Sem pedidos hoje.</td></tr>`;
 }
 
-// ── LOJAS ──────────────────────────────────────────────────────────────────
+// ── LOJAS ──────────────────────────────────────────────────────────────────────
 function renderLojas(lista) {
-  if (!lista.length) {
-    gel('tbody-lojas').innerHTML = `<tr><td colspan="7" class="empty">
-      Nenhuma loja encontrada.<br>
-      <span style="color:#555;font-size:.72rem">Verifique se o SQL de configuração foi executado no Supabase.</span>
-    </td></tr>`;
-    return;
-  }
-  const CL = { basico:'by', pro:'bg', premium:'bg' };
-  const NM = { basico:'Trial', pro:'Pro', premium:'Premium' };
-  gel('tbody-lojas').innerHTML = lista.map(l => {
-    const q  = peds.filter(p => p.estabelecimento_id === l.id).length;
-    const dt = new Date(l.created_at).toLocaleDateString('pt-BR');
-    return `<tr>
-      <td><strong>${l.nome}</strong><div style="font-size:.65rem;color:#444">${l.descricao||''}</div></td>
-      <td><a href="/${l.slug}" target="_blank" style="color:#C0392B;text-decoration:none">${l.slug}</a></td>
-      <td><span class="badge ${CL[l.plano]||'by'}">${NM[l.plano]||'Trial'}</span></td>
-      <td><span class="badge ${l.aberto!==false?'bg':'bgr'}">${l.aberto!==false?'Aberta':'Fechada'}</span></td>
-      <td>${q}</td>
-      <td style="color:#444;font-size:.72rem">${dt}</td>
-      <td style="white-space:nowrap">
-        <button class="btn" data-action="det-loja" data-id="${l.id}">Ver</button>
-        <button class="btn red" data-action="del-loja" data-id="${l.id}" data-nome="${l.nome.replace(/"/g,'')}">Remover</button>
-      </td>
-    </tr>`;
-  }).join('');
+  const NM={basico:'Trial',pro:'Pro',premium:'Premium'};
+  const CL={basico:'by',pro:'bg',premium:'bg'};
+  gel('tbody-lojas').innerHTML = !lista.length
+    ? `<tr><td colspan="8" class="empty">Nenhuma loja.</td></tr>`
+    : lista.map(l => {
+        const q    = peds.filter(p=>p.estabelecimento_id===l.id).length;
+        const dt   = new Date(l.created_at).toLocaleDateString('pt-BR');
+        const venc = l.assinatura_vencimento ? new Date(l.assinatura_vencimento) : null;
+        const vencida = venc && venc < new Date() && l.plano !== 'basico';
+        const ativa = l.aberto !== false;
+        const stCls = l.pagamento_status==='pago'?'bg': vencida?'br':'by';
+        const stLbl = l.pagamento_status==='pago'?'Pago': vencida?'Vencida':'Pendente';
+        return `<tr>
+          <td><strong>${l.nome}</strong><div style="font-size:.65rem;color:#444">${l.slug}</div></td>
+          <td><a href="/${l.slug}" target="_blank" style="color:#C0392B;text-decoration:none">/${l.slug}</a></td>
+          <td><span class="badge ${CL[l.plano]||'by'}">${NM[l.plano]||'Trial'}</span></td>
+          <td><span class="badge ${stCls}">${stLbl}</span></td>
+          <td style="color:${vencida?'#ef4444':'#444'};font-size:.75rem">${venc?venc.toLocaleDateString('pt-BR'):'—'}</td>
+          <td>${q}</td>
+          <td><span class="badge ${ativa?'bg':'br'}">${ativa?'Ativa':'Desativada'}</span></td>
+          <td style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap">
+            <button class="btn" data-action="det-loja" data-id="${l.id}">Ver</button>
+            <button class="btn ${ativa?'warning':'success'}" data-action="toggle-loja" data-id="${l.id}" data-extra="${ativa?'1':'0'}">${ativa?'Desativar':'Ativar'}</button>
+            <button class="btn success" data-action="edit-plano" data-id="${l.id}">Plano</button>
+          </td>
+        </tr>`;
+      }).join('');
 }
 
-// Delegação de eventos na tabela de lojas
-document.addEventListener('click', e => {
-  const btn = e.target.closest('[data-action]');
-  if (!btn) return;
-  const { action, id, nome } = btn.dataset;
-  if (action === 'det-loja')  detLoja(id);
-  if (action === 'del-loja')  delLoja(id, nome);
-  if (action === 'det-ped')   detPed(id);
-  if (action === 'edit-plano') editPlano(id);
-});
-
-gel('busca-lojas').addEventListener('input', e => {
-  const t = e.target.value.toLowerCase();
-  renderLojas(t ? lojas.filter(l => l.nome.toLowerCase().includes(t) || l.slug.includes(t)) : lojas);
-});
+function filtrarLojas() {
+  const sit = gel('fil-situacao').value;
+  const q   = gel('busca-lojas').value.toLowerCase();
+  let lista = [...lojas];
+  if (q) lista = lista.filter(l=>l.nome.toLowerCase().includes(q)||l.slug.includes(q));
+  if (sit === 'ativa')   lista = lista.filter(l=>l.aberto!==false);
+  if (sit === 'inativa') lista = lista.filter(l=>l.aberto===false);
+  if (sit === 'inadim')  lista = lista.filter(l=>l.assinatura_vencimento&&new Date(l.assinatura_vencimento)<new Date()&&l.plano!=='basico');
+  renderLojas(lista);
+}
+gel('busca-lojas').addEventListener('input', filtrarLojas);
+gel('fil-situacao').addEventListener('change', filtrarLojas);
 
 function detLoja(id) {
-  const l = lojas.find(x => x.id === id); if (!l) return;
-  const pl  = peds.filter(p => p.estabelecimento_id === id);
-  const fat = pl.reduce((s, p) => s + Number(p.total||0), 0);
-  const ph  = pl.filter(p => new Date(p.created_at).toDateString() === new Date().toDateString());
+  const l = lojas.find(x=>x.id===id); if(!l) return;
+  const pl = peds.filter(p=>p.estabelecimento_id===id);
+  const fat= pl.reduce((s,p)=>s+Number(p.total||0),0);
+  const ph = pl.filter(p=>new Date(p.created_at).toDateString()===new Date().toDateString());
+  const wpp= cfg.wpp || '5500000000000';
+  const msg= encodeURIComponent(cfg.wppMsg || 'Olá! Preciso de ajuda com o PEDIWAY.');
   gel('loja-body').innerHTML = `
     <div class="drow"><span class="dlbl">Nome</span><span class="dval">${l.nome}</span></div>
     <div class="drow"><span class="dlbl">Link</span><span class="dval"><a href="/${l.slug}" target="_blank" style="color:#C0392B">/${l.slug}</a></span></div>
     <div class="drow"><span class="dlbl">WhatsApp</span><span class="dval">${l.whatsapp||'—'}</span></div>
     <div class="drow"><span class="dlbl">Plano</span><span class="dval">${{basico:'Trial',pro:'Pro',premium:'Premium'}[l.plano]||'Trial'}</span></div>
-    <div class="drow"><span class="dlbl">Status loja</span><span class="dval">${l.aberto!==false?'Aberta':'Fechada'}</span></div>
+    <div class="drow"><span class="dlbl">Situação</span><span class="dval">${l.aberto!==false?'✅ Ativa':'🚫 Desativada'}</span></div>
+    <div class="drow"><span class="dlbl">Assinatura</span><span class="dval">${l.pagamento_status||'pendente'} ${l.assinatura_vencimento?'até '+new Date(l.assinatura_vencimento).toLocaleDateString('pt-BR'):''}</span></div>
     <div class="drow"><span class="dlbl">Total pedidos</span><span class="dval">${pl.length}</span></div>
     <div class="drow"><span class="dlbl">Pedidos hoje</span><span class="dval">${ph.length}</span></div>
-    <div class="drow"><span class="dlbl">Faturamento total</span><span class="dval" style="color:#22c55e;font-weight:800">${$R(fat)}</span></div>
-    <div class="drow"><span class="dlbl">Cadastro</span><span class="dval">${new Date(l.created_at).toLocaleDateString('pt-BR')}</span></div>
-    <div style="display:flex;gap:10px;margin-top:18px">
+    <div class="drow"><span class="dlbl">Faturamento total</span><span class="dval" style="color:#22c55e">${$R(fat)}</span></div>
+    <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap">
       <button class="btn-red" style="flex:1" onclick="window.open('/${l.slug}','_blank')">Ver cardápio</button>
-      <button class="btn-ghost" style="flex:1" onclick="delLoja('${l.id}','${l.nome.replace(/'/g,'')}')">Remover loja</button>
+      <a href="https://wa.me/${wpp}?text=${msg}" target="_blank" class="btn-green" style="flex:1;display:flex;align-items:center;justify-content:center;text-decoration:none">WhatsApp suporte</a>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn ${l.aberto!==false?'warning':'success'}" style="flex:1" data-action="toggle-loja" data-id="${l.id}" data-extra="${l.aberto!==false?'1':'0'}">${l.aberto!==false?'🚫 Desativar loja':'✅ Ativar loja'}</button>
+      <button class="btn danger" style="flex:1" data-action="del-loja" data-id="${l.id}" data-extra="${l.nome}">🗑 Remover</button>
     </div>`;
   gel('ov-loja').classList.add('on');
 }
-window.delLoja = async (id, nome) => {
-  if (!confirm('Remover "' + nome + '"?')) return;
-  const { error } = await db.from('estabelecimentos').delete().eq('id', id);
-  if (error) return toast('Erro: ' + error.message, '#ef4444');
-  toast('Loja removida!');
+
+async function toggleLoja(id, eraAtiva) {
+  const novoEstado = !eraAtiva;
+  const { error } = await db.from('estabelecimentos').update({ aberto: novoEstado }).eq('id', id);
+  if (error) return toast('Erro: '+error.message, '#ef4444');
+  toast(novoEstado ? '✅ Loja ativada!' : '🚫 Loja desativada!');
   gel('ov-loja').classList.remove('on');
   await load();
-};
+}
 
-// ── PEDIDOS ────────────────────────────────────────────────────────────────
-const CLS = { novo:'by', preparo:'by', pronto:'bg', recusado:'br' };
-const LBL = { novo:'Novo', preparo:'Preparo', pronto:'Pronto', recusado:'Recusado' };
+async function delLoja(id, nome) {
+  if (!confirm('Remover "'+nome+'"? Isso não pode ser desfeito.')) return;
+  const { error } = await db.from('estabelecimentos').delete().eq('id', id);
+  if (error) return toast('Erro: '+error.message,'#ef4444');
+  toast('Loja removida!'); gel('ov-loja').classList.remove('on');
+  await load();
+}
 
+// ── PEDIDOS ────────────────────────────────────────────────────────────────────
+const CLS={novo:'by',preparo:'bb',pronto:'bg',recusado:'br'};
+const LBL={novo:'Novo',preparo:'Preparo',pronto:'Pronto',recusado:'Recusado'};
 function renderPeds(lista) {
   gel('tbody-peds').innerHTML = !lista.length
     ? `<tr><td colspan="8" class="empty">Nenhum pedido.</td></tr>`
-    : lista.slice(0, 200).map(p => {
-        const dt = new Date(p.created_at).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+    : lista.slice(0,200).map(p=>{
+        const dt=new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
         return `<tr>
           <td><strong>#${p.id.slice(-4).toUpperCase()}</strong></td>
           <td style="color:#555;font-size:.72rem">${p.estabelecimentos?.nome||'—'}</td>
@@ -538,22 +689,16 @@ function renderPeds(lista) {
         </tr>`;
       }).join('');
 }
-
-function filtPeds() {
-  const st = gel('fil-st').value;
-  const q  = gel('fil-q').value.toLowerCase();
-  renderPeds(peds.filter(p =>
-    (!st || p.status === st) &&
-    (!q  || p.cliente_nome?.toLowerCase().includes(q) || p.estabelecimentos?.nome?.toLowerCase().includes(q))
-  ));
+function filtPeds(){
+  const st=gel('fil-st').value, q=gel('fil-q').value.toLowerCase();
+  renderPeds(peds.filter(p=>(!st||p.status===st)&&(!q||p.cliente_nome?.toLowerCase().includes(q)||p.estabelecimentos?.nome?.toLowerCase().includes(q))));
 }
 gel('fil-st').addEventListener('change', filtPeds);
 gel('fil-q').addEventListener('input', filtPeds);
-
 function detPed(id) {
-  const p = peds.find(x => x.id === id); if (!p) return;
-  const its = Array.isArray(p.itens) ? p.itens : [];
-  gel('ped-body').innerHTML = `
+  const p=peds.find(x=>x.id===id); if(!p) return;
+  const its=Array.isArray(p.itens)?p.itens:[];
+  gel('ped-body').innerHTML=`
     <div class="drow"><span class="dlbl">Loja</span><span class="dval">${p.estabelecimentos?.nome||'—'}</span></div>
     <div class="drow"><span class="dlbl">Cliente</span><span class="dval">${p.cliente_nome||'—'}</span></div>
     <div class="drow"><span class="dlbl">WhatsApp</span><span class="dval">${p.cliente_whats||'—'}</span></div>
@@ -561,127 +706,138 @@ function detPed(id) {
     <div class="drow"><span class="dlbl">Pagamento</span><span class="dval">${p.pagamento||'—'}${p.troco?' · troco '+p.troco:''}</span></div>
     <div class="drow"><span class="dlbl">Status</span><span class="dval">${LBL[p.status]||p.status}</span></div>
     <hr style="border:none;border-top:1px solid #1e1e1e;margin:10px 0">
-    ${its.map(i => `<div class="drow"><span class="dlbl">${i.qtd}x ${i.nome}</span><span class="dval">${$R(i.preco*i.qtd)}</span></div>`).join('')}
+    ${its.map(i=>`<div class="drow"><span class="dlbl">${i.qtd}x ${i.nome}</span><span class="dval">${$R(i.preco*i.qtd)}</span></div>`).join('')}
     <div class="drow" style="margin-top:4px"><strong>Total</strong><span style="color:#22c55e;font-weight:800">${$R(p.total)}</span></div>
     <div style="font-size:.7rem;color:#444;text-align:center;margin-top:12px">${new Date(p.created_at).toLocaleString('pt-BR')}</div>`;
   gel('ov-ped').classList.add('on');
 }
 
-// ── FINANCEIRO ────────────────────────────────────────────────────────────
+// ── FINANCEIRO ─────────────────────────────────────────────────────────────────
 function filtraPeriodo() {
   const now = new Date();
-  return peds.filter(p => {
-    if (p.status === 'recusado') return false;
-    const d = new Date(p.created_at);
-    if (periodo === 'hoje')   return d.toDateString() === now.toDateString();
-    if (periodo === 'semana') { const s=new Date(now); s.setDate(s.getDate()-7); return d>=s; }
-    if (periodo === 'mes')    return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+  return peds.filter(p=>{
+    if(p.status==='recusado') return false;
+    const d=new Date(p.created_at);
+    if(finPeriodo==='hoje')   return d.toDateString()===now.toDateString();
+    if(finPeriodo==='semana') {const s=new Date(now);s.setDate(s.getDate()-7);return d>=s;}
+    if(finPeriodo==='mes')    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
     return true;
   });
 }
-
 function renderFin() {
   const fp  = filtraPeriodo();
   const fat = fp.reduce((s,p)=>s+Number(p.total||0),0);
-  const tck = fp.length ? fat/fp.length : 0;
+  const tck = fp.length?fat/fp.length:0;
   gel('ff').textContent = $R(fat);
   gel('fq').textContent = fp.length;
   gel('ft').textContent = $R(tck);
+  gel('fla').textContent= lojas.filter(l=>l.aberto!==false).length;
 
-  // Por pagamento
-  const pm = {};
-  fp.forEach(p => { const k=(p.pagamento||'Não informado').toUpperCase(); pm[k]=(pm[k]||0)+Number(p.total||0); });
-  const tot = Object.values(pm).reduce((s,v)=>s+v,0)||1;
-  gel('fin-pags').innerHTML = Object.entries(pm).sort((a,b)=>b[1]-a[1]).map(([k,v]) => {
-    const pct = Math.round(v/tot*100);
+  // Pagamentos
+  const pm={};
+  fp.forEach(p=>{const k=(p.pagamento||'Não informado').toUpperCase();pm[k]=pm[k]||{q:0,f:0};pm[k].q++;pm[k].f+=Number(p.total||0);});
+  const tot=Object.values(pm).reduce((s,v)=>s+v.f,0)||1;
+  gel('fin-pags').innerHTML=Object.entries(pm).sort((a,b)=>b[1].f-a[1].f).map(([k,v])=>{
+    const pct=Math.round(v.f/tot*100);
     return `<div class="pbar-wrap">
-      <div class="pbar-top"><span style="font-weight:600">${k}</span><span style="color:#22c55e;font-weight:700">${$R(v)} (${pct}%)</span></div>
+      <div class="pbar-top"><span style="font-weight:600">${k}</span><span style="color:#22c55e;font-weight:700">${$R(v.f)} (${pct}%)</span></div>
       <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
     </div>`;
-  }).join('') || `<div class="empty">Sem dados no período</div>`;
+  }).join('')||`<div class="empty">Sem dados</div>`;
 
-  // Por loja
-  const lm = {};
-  fp.forEach(p => {
-    const n = p.estabelecimentos?.nome || p.estabelecimento_id || '?';
-    lm[n] = lm[n] || { q:0, f:0 };
-    lm[n].q++; lm[n].f += Number(p.total||0);
-  });
-  gel('fin-lojas').innerHTML = Object.entries(lm).sort((a,b)=>b[1].f-a[1].f).map(([n,d]) =>
-    `<tr><td><strong>${n}</strong></td><td>${d.q}</td><td style="color:#22c55e;font-weight:700">${$R(d.f)}</td><td>${$R(d.q?d.f/d.q:0)}</td></tr>`
-  ).join('') || `<tr><td colspan="4" class="empty">Sem dados</td></tr>`;
+  // Top lojas
+  const lm={};
+  fp.forEach(p=>{const n=p.estabelecimentos?.nome||'?';lm[n]=lm[n]||{q:0,f:0};lm[n].q++;lm[n].f+=Number(p.total||0);});
+  const topL=Object.entries(lm).sort((a,b)=>b[1].f-a[1].f).slice(0,5);
+  gel('fin-top-lojas').innerHTML=topL.map(([n,d],i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1e1e1e;font-size:.8rem">
+      <span><span style="color:#C0392B;font-weight:700;margin-right:8px">#${i+1}</span>${n}</span>
+      <span style="color:#22c55e;font-weight:700">${$R(d.f)}</span>
+    </div>`).join('')||`<div class="empty">Sem dados</div>`;
+
+  // Tabela por loja
+  gel('fin-lojas').innerHTML=Object.entries(lm).sort((a,b)=>b[1].f-a[1].f).map(([n,d])=>{
+    const mainPag=Object.entries(pm).sort((a,b)=>b[1].q-a[1].q)[0]?.[0]||'—';
+    return `<tr><td><strong>${n}</strong></td><td>${d.q}</td><td style="color:#22c55e;font-weight:700">${$R(d.f)}</td><td>${$R(d.q?d.f/d.q:0)}</td><td style="color:#555;font-size:.75rem">${mainPag}</td></tr>`;
+  }).join('')||`<tr><td colspan="5" class="empty">Sem dados</td></tr>`;
 }
 
-// ── PLANOS ────────────────────────────────────────────────────────────────
-function renderPlanos() {
+// ── ASSINATURAS ────────────────────────────────────────────────────────────────
+function renderAssinaturas() {
+  const proPrc  = Number(cfg.precoPro  || 49);
+  const premPrc = Number(cfg.precoPrem || 99);
   const t  = lojas.filter(l=>!l.plano||l.plano==='basico').length;
   const p  = lojas.filter(l=>l.plano==='pro').length;
   const pr = lojas.filter(l=>l.plano==='premium').length;
-  gel('pt').textContent   = t;
-  gel('pp').textContent   = p;
-  gel('pprem').textContent= pr;
-  gel('pmrr').textContent = $R(p*49+pr*99);
+  const mrr= p*proPrc + pr*premPrc;
+
+  const pagas = lojas.filter(l=>l.pagamento_status==='pago').length;
+  const pend  = lojas.filter(l=>!l.pagamento_status||l.pagamento_status==='pendente').length;
+  const inad  = lojas.filter(l=>l.assinatura_vencimento&&new Date(l.assinatura_vencimento)<new Date()&&l.plano!=='basico').length;
+  const canc  = lojas.filter(l=>l.pagamento_status==='cancelado').length;
+
+  gel('pt').textContent  = t; gel('pp').textContent = p;
+  gel('pprem').textContent=pr; gel('pmrr').textContent=$R(mrr);
+  gel('assin-pagas').textContent=pagas; gel('assin-pend').textContent=pend;
+  gel('assin-venc').textContent=inad;  gel('assin-canc').textContent=canc;
 
   const NM={basico:'Trial',pro:'Pro',premium:'Premium'};
   const CL={basico:'by',pro:'bg',premium:'bg'};
-  const VL={pro:'R$ 49,00',premium:'R$ 99,00'};
-  gel('tbody-planos').innerHTML = lojas.map(l => {
-    const venc  = l.assinatura_vencimento ? new Date(l.assinatura_vencimento).toLocaleDateString('pt-BR') : '—';
-    const venc_ = l.assinatura_vencimento && new Date(l.assinatura_vencimento) < new Date();
-    const sCls  = venc_ ? 'br' : (l.pagamento_status==='pago'?'bg':'by');
-    const sLbl  = venc_ ? 'Vencido' : (l.pagamento_status==='pago'?'Pago':'Pendente');
+  const VL={pro:$R(proPrc),premium:$R(premPrc)};
+  gel('tbody-planos').innerHTML=lojas.map(l=>{
+    const venc=l.assinatura_vencimento?new Date(l.assinatura_vencimento):null;
+    const vencida=venc&&venc<new Date()&&l.plano!=='basico';
+    const stCls=vencida?'br':(l.pagamento_status==='pago'?'bg':l.pagamento_status==='cancelado'?'bgr':'by');
+    const stLbl=vencida?'Vencida':(l.pagamento_status==='pago'?'Pago':l.pagamento_status==='cancelado'?'Cancelado':'Pendente');
+    const situCls=l.aberto!==false?'bg':'br';
+    const situLbl=l.aberto!==false?'Ativa':'Desativada';
     return `<tr>
       <td><strong>${l.nome}</strong></td>
       <td><span class="badge ${CL[l.plano]||'by'}">${NM[l.plano]||'Trial'}</span></td>
-      <td><span class="badge ${sCls}">${sLbl}</span></td>
-      <td style="color:${venc_?'#ef4444':'#444'}">${venc}</td>
+      <td><span class="badge ${stCls}">${stLbl}</span></td>
+      <td style="color:${vencida?'#ef4444':'#555'};font-size:.75rem">${venc?venc.toLocaleDateString('pt-BR'):'—'}</td>
+      <td><span class="badge ${situCls}">${situLbl}</span></td>
       <td style="font-weight:700">${VL[l.plano]||'Grátis'}</td>
-      <td><button class="btn grn" data-action="edit-plano" data-id="${l.id}">Editar</button></td>
+      <td style="white-space:nowrap;display:flex;gap:4px">
+        <button class="btn success" data-action="edit-plano" data-id="${l.id}">Editar</button>
+        <button class="btn ${l.aberto!==false?'warning':'success'}" data-action="toggle-loja" data-id="${l.id}" data-extra="${l.aberto!==false?'1':'0'}">${l.aberto!==false?'Desativar':'Ativar'}</button>
+      </td>
     </tr>`;
-  }).join('') || `<tr><td colspan="6" class="empty">Nenhuma loja</td></tr>`;
+  }).join('')||`<tr><td colspan="7" class="empty">Nenhuma loja</td></tr>`;
 }
 
+// ── MODAL PLANO ────────────────────────────────────────────────────────────────
 function abrirPlano(id) {
   const l = id ? lojas.find(x=>x.id===id) : null;
-  gel('pl-loja').innerHTML = lojas.map(x => `<option value="${x.id}" ${x.id===id?'selected':''}>${x.nome}</option>`).join('');
-  if (l) {
-    gel('pl-tipo').value  = l.plano || 'basico';
-    gel('pl-pgst').value  = l.pagamento_status || 'pendente';
-    gel('pl-venc').value  = l.assinatura_vencimento ? l.assinatura_vencimento.slice(0,10) : '';
+  gel('pl-loja').innerHTML=lojas.map(x=>`<option value="${x.id}" ${x.id===id?'selected':''}>${x.nome}</option>`).join('');
+  if(l){
+    gel('pl-tipo').value  = l.plano||'basico';
+    gel('pl-pgst').value  = l.pagamento_status||'pendente';
+    gel('pl-venc').value  = l.assinatura_vencimento?l.assinatura_vencimento.slice(0,10):'';
+    gel('pl-ativo').value = l.aberto!==false?'1':'0';
   } else {
-    const d = new Date(); d.setDate(d.getDate()+30);
-    gel('pl-venc').value = d.toISOString().slice(0,10);
+    const d=new Date(); d.setDate(d.getDate()+30);
+    gel('pl-venc').value=''; gel('pl-ativo').value='1';
   }
   gel('ov-plano').classList.add('on');
 }
-window.editPlano = id => abrirPlano(id);
-gel('btn-novo-plano').addEventListener('click', () => abrirPlano(null));
-gel('salvar-plano').addEventListener('click', async () => {
-  const id    = gel('pl-loja').value;
-  const plano = gel('pl-tipo').value;
-  const venc  = gel('pl-venc').value;
-  const st    = gel('pl-pgst').value;
-  const { error } = await db.from('estabelecimentos').update({ plano, assinatura_vencimento: venc||null, pagamento_status: st }).eq('id', id);
-  if (error) return toast('Erro: ' + error.message, '#ef4444');
-  toast('Plano salvo!');
-  gel('ov-plano').classList.remove('on');
+gel('btn-novo-plano').addEventListener('click', ()=>abrirPlano(null));
+gel('salvar-plano').addEventListener('click', async()=>{
+  const id   = gel('pl-loja').value;
+  const plano= gel('pl-tipo').value;
+  const venc = gel('pl-venc').value;
+  const st   = gel('pl-pgst').value;
+  const ativo= gel('pl-ativo').value === '1';
+  const {error}=await db.from('estabelecimentos').update({plano,assinatura_vencimento:venc||null,pagamento_status:st,aberto:ativo}).eq('id',id);
+  if(error) return toast('Erro: '+error.message,'#ef4444');
+  toast('Plano salvo!'); gel('ov-plano').classList.remove('on');
   await load();
 });
 
-// ── FECHAR MODAIS ─────────────────────────────────────────────────────────
-['ped','loja','plano'].forEach(m => {
-  const ov = gel('ov-' + m);
-  const close = () => ov.classList.remove('on');
-  gel('x-' + m).addEventListener('click', close);
-  if (gel('x-' + m + '2')) gel('x-' + m + '2').addEventListener('click', close);
-  ov.addEventListener('click', e => { if (e.target === ov) close(); });
-});
-
-// ── TOAST ─────────────────────────────────────────────────────────────────
-function toast(msg, cor='#22c55e') {
-  const t = gel('toast');
-  t.textContent = msg; t.style.background = cor; t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 3000);
+// ── TOAST ──────────────────────────────────────────────────────────────────────
+function toast(msg, cor='#22c55e'){
+  const t=gel('toast'); t.textContent=msg; t.style.background=cor; t.style.display='block';
+  setTimeout(()=>t.style.display='none',3000);
 }
 </script>
 </body>
