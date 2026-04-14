@@ -74,6 +74,24 @@ async function uploadFile(bucket, path, file) {
 // ─────────────────────────────────────────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────────────────────────────────────────
+// ── Restrição por plano ──────────────────────────────────────────────────────
+function aplicarRestricaoPlano(estab) {
+  const plano = estab?.plano || 'basico';
+  // Aba Financeiro — só Pro e Premium
+  const tabFin = document.querySelector('[data-tab="financeiro"]');
+  const pgFin  = document.getElementById('tab-financeiro');
+  if (plano === 'basico') {
+    if (tabFin) tabFin.style.display = 'none';
+    if (pgFin)  pgFin.style.display  = 'none';
+  } else {
+    if (tabFin) tabFin.style.display = '';
+    if (pgFin)  pgFin.style.display  = '';
+  }
+  // Banner de upgrade se for trial/básico
+  const banner = document.getElementById('banner-upgrade');
+  if (banner) banner.style.display = plano === 'basico' ? 'flex' : 'none';
+}
+
 // ── Link ME AJUDA PEDIWAY — usa config do CEO ──────────────────────────────
 function atualizarLinkSuporte() {
   const cfg = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
@@ -90,6 +108,17 @@ window.irCheckout = function(plano) {
   if (!estab) return showToast('Faça login primeiro.', 'error');
   window.open(`/checkout?plano=${plano}&estab=${estab.id}`, '_blank');
 };
+
+// Atualiza preços no dashboard conforme config do CEO
+function atualizarPrecosDash() {
+  const cfg = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
+  const pro  = cfg.precoPro  || '49';
+  const prem = cfg.precoPrem || '99';
+  const elPro  = document.getElementById('dash-preco-pro');
+  const elPrem = document.getElementById('dash-preco-prem');
+  if (elPro)  elPro.textContent  = pro;
+  if (elPrem) elPrem.textContent = prem;
+}
 
 function atualizarInfoPlano() {
   const estab = getEstab();
@@ -114,6 +143,8 @@ export async function initDashboard() {
   if (!estab) return;
   atualizarLinkSuporte();
   atualizarInfoPlano();
+  aplicarRestricaoPlano(estab);
+  atualizarPrecosDash();
 
   // SEMPRE busca dados frescos do banco — garante sync entre mobile e desktop
   if (!window._isDemo) {
