@@ -665,3 +665,45 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
     .comanda-x { background:none;border:none;font-size:1.3rem;cursor:pointer;color:#aaa;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0; }
     .comanda-x:hover { background:#f0e9e0; }
     #btn-enviar-comanda:disabled { opacity:.45;cursor:not-allowed; }
+
+/* ── COMANDA MODAL GARÇOM ─────────────────────────────────── */
+#modal-comanda { position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:600;display:none;align-items:flex-end;justify-content:center; }
+#modal-comanda.open { display:flex; }
+#comanda-sheet { background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:520px;display:flex;flex-direction:column;height:92vh;overflow:hidden; }
+
+.comanda-hdr { padding:16px 16px 12px;border-bottom:1px solid #f0e9e0;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0; }
+.comanda-mesa-title { font-size:1.2rem;font-weight:800;line-height:1; }
+.comanda-x { background:none;border:none;font-size:1.2rem;cursor:pointer;color:#aaa;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;transition:background .15s; }
+.comanda-x:hover { background:#f0e9e0; }
+
+.comanda-tabs { display:flex;border-bottom:2px solid #f0e9e0;flex-shrink:0; }
+.ctab { flex:1;padding:12px;border:none;background:none;font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:600;color:#aaa;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;transition:all .15s; }
+.ctab.ativo { color:var(--red);border-bottom-color:var(--red);font-weight:700; }
+
+.comanda-panel { flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0; }
+
+#btn-enviar-comanda:disabled { opacity:.4;cursor:not-allowed; }
+
+/* Cardápio na comanda */
+#comanda-cardapio .cmd-cat-label { font-size:.6rem;font-weight:800;color:#aaa;text-transform:uppercase;letter-spacing:.08em;padding:8px 0 4px;display:block; }
+#comanda-cardapio .cmd-item { display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:10px;cursor:pointer;border:1.5px solid transparent;transition:all .15s;margin-bottom:2px; }
+#comanda-cardapio .cmd-item:hover { background:#f5f0eb;border-color:#f0e9e0; }
+#comanda-cardapio .cmd-item:active { background:#f0e9e0;transform:scale(.98); }
+#comanda-cardapio .cmd-item-emoji { font-size:1.5rem;flex-shrink:0;width:36px;text-align:center; }
+#comanda-cardapio .cmd-item-nome { font-size:.88rem;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+#comanda-cardapio .cmd-item-preco { font-size:.85rem;font-weight:800;color:var(--red);flex-shrink:0; }
+
+/* Carrinho na comanda */
+#comanda-carrinho .carr-row { display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0e9e0; }
+#comanda-carrinho .carr-row:last-child { border-bottom:none; }
+#comanda-carrinho .carr-nome { font-size:.83rem;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 8px; }
+#comanda-carrinho .carr-ctrl { display:flex;align-items:center;gap:4px;flex-shrink:0; }
+#comanda-carrinho .carr-btn { width:26px;height:26px;border-radius:50%;border:1.5px solid #e0dbd5;background:#fff;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:800;transition:all .12s; }
+#comanda-carrinho .carr-btn.minus:hover { border-color:var(--red);color:var(--red); }
+#comanda-carrinho .carr-btn.plus { border:none;background:var(--red);color:#fff; }
+#comanda-carrinho .carr-qtd { font-size:.9rem;font-weight:800;min-width:18px;text-align:center; }
+#comanda-carrinho .carr-subtot { font-size:.82rem;font-weight:700;color:var(--red);min-width:58px;text-align:right; }
+
+@media(min-width:600px) {
+  #comanda-sheet { height:88vh;max-height:720px; }
+}
