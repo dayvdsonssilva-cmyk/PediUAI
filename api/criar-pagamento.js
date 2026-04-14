@@ -37,20 +37,35 @@ export default async function handler(req, res) {
     let body;
 
     if (type === 'card') {
-      // formData vem do MP Bricks onSubmit callback
-      if (!formData?.token) {
-        return res.status(400).json({ error: 'Token do cartão inválido. Preencha os dados novamente.' });
+      // Log da estrutura recebida (remover em produção)
+      console.log('[criar-pagamento] formData recebido:', JSON.stringify(formData));
+      console.log('[criar-pagamento] selectedPaymentMethod:', JSON.stringify(req.body.selectedPaymentMethod));
+
+      // Token pode estar em formData.token ou selectedPaymentMethod.token
+      const spMethod = req.body.selectedPaymentMethod || {};
+      const token    = formData?.token || spMethod?.token;
+      const pmId     = formData?.payment_method_id || spMethod?.payment_method_id || spMethod?.id;
+      const issuer   = formData?.issuer_id || spMethod?.issuer_id;
+      const inst     = formData?.installments || 1;
+      const payer    = formData?.payer || {};
+
+      if (!token) {
+        console.error('[criar-pagamento] Token não encontrado. formData:', JSON.stringify(formData));
+        return res.status(400).json({
+          error: 'Token do cartão não gerado. Use o cartão de teste: 4009175332027601 (CVV: 123, Validade: 11/25)'
+        });
       }
+
       body = {
         transaction_amount: valor,
-        token:             formData.token,
-        installments:      formData.installments  || 1,
-        payment_method_id: formData.payment_method_id,
-        issuer_id:         formData.issuer_id,
+        token,
+        installments:      inst,
+        payment_method_id: pmId,
+        issuer_id:         issuer,
         description:       `PEDIWAY — Plano ${plano} (mensal)`,
         payer: {
-          email: formData.payer?.email,
-          identification: formData.payer?.identification,
+          email:          payer.email,
+          identification: payer.identification,
         },
         metadata:           { plano, estab_id: estabId },
         external_reference: extRef,
