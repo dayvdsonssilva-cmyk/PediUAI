@@ -37,35 +37,28 @@ export default async function handler(req, res) {
     let body;
 
     if (type === 'card') {
-      // Log da estrutura recebida (remover em produção)
-      console.log('[criar-pagamento] formData recebido:', JSON.stringify(formData));
-      console.log('[criar-pagamento] selectedPaymentMethod:', JSON.stringify(req.body.selectedPaymentMethod));
+      // cardData foi extraído explicitamente pelo checkout.html
+      const cardData = req.body.cardData || {};
+      console.log('[criar-pagamento] cardData:', JSON.stringify(cardData));
 
-      // Token pode estar em formData.token ou selectedPaymentMethod.token
-      const spMethod = req.body.selectedPaymentMethod || {};
-      const token    = formData?.token || spMethod?.token;
-      const pmId     = formData?.payment_method_id || spMethod?.payment_method_id || spMethod?.id;
-      const issuer   = formData?.issuer_id || spMethod?.issuer_id;
-      const inst     = formData?.installments || 1;
-      const payer    = formData?.payer || {};
-
+      const token = cardData.token;
       if (!token) {
-        console.error('[criar-pagamento] Token não encontrado. formData:', JSON.stringify(formData));
+        console.error('[criar-pagamento] Token ausente. Body completo:', JSON.stringify(req.body));
         return res.status(400).json({
-          error: 'Token do cartão não gerado. Use o cartão de teste: 4009175332027601 (CVV: 123, Validade: 11/25)'
+          error: 'Erro ao tokenizar cartão. Preencha novamente e clique no botão azul "Pagar" do formulário.'
         });
       }
 
       body = {
         transaction_amount: valor,
         token,
-        installments:      inst,
-        payment_method_id: pmId,
-        issuer_id:         issuer,
+        installments:      Number(cardData.installments) || 1,
+        payment_method_id: cardData.payment_method_id || '',
+        issuer_id:         cardData.issuer_id || '',
         description:       `PEDIWAY — Plano ${plano} (mensal)`,
         payer: {
-          email:          payer.email,
-          identification: payer.identification,
+          email:          cardData.payer?.email || '',
+          identification: cardData.payer?.identification || {},
         },
         metadata:           { plano, estab_id: estabId },
         external_reference: extRef,
