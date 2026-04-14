@@ -499,6 +499,7 @@ export function abrirModalItem() {
   fotosFiles = []; fotosPosX = []; fotosPosY = [];
   renderFotosGrid();
   emojiSel = '🍔'; renderEmojiGrid();
+  resetAddGrupos();
   // Reset botão salvar
   const btn = document.querySelector('#modal-item .btn-primary');
   if (btn) { btn.textContent = 'Salvar item'; btn.onclick = salvarItem; }
@@ -707,12 +708,14 @@ export async function salvarItem() {
     const foto_url = fotos_urls[0] || null;
     const promocao   = $('item-promocao')?.checked || false;
     const preco_orig = parseFloat($('item-preco-orig')?.value) || null;
+    const adicionais = getAddGruposValidos();
     const { error } = await getSupa().from('produtos').insert({
       estabelecimento_id: estab.id, nome,
       descricao:    $('item-desc')?.value.trim(),
       categoria:    $('item-cat')?.value.trim().toUpperCase(),
       preco, preco_original: promocao ? preco_orig : null,
       foto_url, fotos_urls, emoji: emojiSel, disponivel: true, promocao,
+      adicionais,
     });
     if (error) throw new Error(error.message);
     await renderCardapio(); fecharModal(); showToast('Item adicionado! ✅');
@@ -1388,6 +1391,270 @@ function atualizarBotaoCancelar(estab) {
   if (wrap) wrap.style.display = (estab?.plano && estab.plano !== 'basico') ? 'block' : 'none';
 }
 
+
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADICIONAIS — GERENCIAMENTO NO FORMULÁRIO DE PRODUTO
+// ─────────────────────────────────────────────────────────────────────────────
+let _addGrupos = []; // array de grupos ao editar/criar produto
+
+function resetAddGrupos() { _addGrupos = []; renderAddGrupos(); }
+
+window.adicionarGrupoAdd = function() {
+  _addGrupos.push({ grupo: '', min: 0, max: 1, opcoes: [{ nome: '', preco: 0 }] });
+  renderAddGrupos();
+};
+
+window.removerGrupoAdd = function(gi) {
+  _addGrupos.splice(gi, 1);
+  renderAddGrupos();
+};
+
+window.adicionarOpcaoAdd = function(gi) {
+  _addGrupos[gi].opcoes.push({ nome: '', preco: 0 });
+  renderAddGrupos();
+};
+
+window.removerOpcaoAdd = function(gi, oi) {
+  _addGrupos[gi].opcoes.splice(oi, 1);
+  renderAddGrupos();
+};
+
+window.syncAddGrupo = function(gi) {
+  const g = _addGrupos[gi];
+  g.grupo = document.getElementById('ag-nome-'+gi)?.value || '';
+  g.min   = parseInt(document.getElementById('ag-min-'+gi)?.value||'0');
+  g.max   = parseInt(document.getElementById('ag-max-'+gi)?.value||'1');
+  g.opcoes.forEach((o, oi) => {
+    o.nome  = document.getElementById('ag-on-'+gi+'-'+oi)?.value || '';
+    o.preco = parseFloat(document.getElementById('ag-op-'+gi+'-'+oi)?.value||'0') || 0;
+  });
+};
+
+function renderAddGrupos() {
+  const el = document.getElementById('add-grupos-list'); if (!el) return;
+  if (!_addGrupos.length) { el.innerHTML = ''; return; }
+
+  el.innerHTML = _addGrupos.map((g, gi) => `
+    <div style="border:1.5px solid var(--border);border-radius:12px;padding:12px;background:#faf8f5">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <input id="ag-nome-${gi}" value="${g.grupo}" placeholder="Nome do grupo (ex: Complementos)"
+          oninput="syncAddGrupo(${gi})"
+          style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-family:'Poppins',sans-serif;font-size:.82rem;outline:none">
+        <button onclick="removerGrupoAdd(${gi})" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:1rem;flex-shrink:0">🗑️</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div style="flex:1">
+          <label style="font-size:.65rem;font-weight:700;color:#888;display:block;margin-bottom:3px">Mínimo</label>
+          <input id="ag-min-${gi}" type="number" value="${g.min}" min="0" oninput="syncAddGrupo(${gi})"
+            style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-family:'Poppins',sans-serif;font-size:.82rem;outline:none;text-align:center">
+        </div>
+        <div style="flex:1">
+          <label style="font-size:.65rem;font-weight:700;color:#888;display:block;margin-bottom:3px">Máximo</label>
+          <input id="ag-max-${gi}" type="number" value="${g.max}" min="1" oninput="syncAddGrupo(${gi})"
+            style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-family:'Poppins',sans-serif;font-size:.82rem;outline:none;text-align:center">
+        </div>
+      </div>
+      <div style="font-size:.68rem;font-weight:700;color:#555;margin-bottom:6px">Opções:</div>
+      ${g.opcoes.map((o, oi) => `
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+          <input id="ag-on-${gi}-${oi}" value="${o.nome}" placeholder="Nome da opção" oninput="syncAddGrupo(${gi})"
+            style="flex:2;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-family:'Poppins',sans-serif;font-size:.8rem;outline:none">
+          <input id="ag-op-${gi}-${oi}" type="number" value="${o.preco||0}" placeholder="+ R$" step="0.50" min="0" oninput="syncAddGrupo(${gi})"
+            style="width:72px;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-family:'Poppins',sans-serif;font-size:.8rem;outline:none;text-align:right">
+          <button onclick="removerOpcaoAdd(${gi},${oi})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:.9rem;flex-shrink:0">✕</button>
+        </div>`).join('')}
+      <button onclick="adicionarOpcaoAdd(${gi})" style="background:none;border:1.5px dashed var(--border);border-radius:8px;padding:6px;width:100%;font-family:'Poppins',sans-serif;font-size:.72rem;color:#aaa;cursor:pointer;font-weight:600">+ Opção</button>
+    </div>`).join('');
+}
+
+function getAddGruposValidos() {
+  // Lê estado atual dos inputs antes de salvar
+  _addGrupos.forEach((g, gi) => {
+    g.grupo = document.getElementById('ag-nome-'+gi)?.value?.trim() || '';
+    g.min   = parseInt(document.getElementById('ag-min-'+gi)?.value||'0');
+    g.max   = parseInt(document.getElementById('ag-max-'+gi)?.value||'1');
+    g.opcoes.forEach((o, oi) => {
+      o.nome  = (document.getElementById('ag-on-'+gi+'-'+oi)?.value||'').trim();
+      o.preco = parseFloat(document.getElementById('ag-op-'+gi+'-'+oi)?.value||'0')||0;
+    });
+  });
+  return _addGrupos.filter(g => g.grupo && g.opcoes.some(o=>o.nome));
+}
+
+// ═══════════════════════════════════════════════════════════
+// SISTEMA DE ADICIONAIS (comanda garçom + cardápio)
+// ═══════════════════════════════════════════════════════════
+let _adicionalProduto   = null; // produto sendo configurado
+let _adicionalSel       = {};   // { grupoIdx: [opcaoIdx, ...] }
+let _adicionalMesaKey   = null;
+
+window.fecharAdicionais = function() {
+  document.getElementById('modal-adicionais')?.classList.remove('open');
+  _adicionalProduto = null;
+  _adicionalSel = {};
+};
+
+// Chamada quando produto tem adicionais
+window.abrirAdicionais = function(mesaKey, prodJSON) {
+  const prod = JSON.parse(decodeURIComponent(prodJSON));
+  _adicionalProduto = prod;
+  _adicionalMesaKey = mesaKey;
+  _adicionalSel     = {};
+
+  document.getElementById('adicionais-nome').textContent  = prod.nome;
+  document.getElementById('adicionais-preco-base').textContent = 'R$ ' + Number(prod.preco).toFixed(2).replace('.',',');
+
+  const grupos = Array.isArray(prod.adicionais) ? prod.adicionais : [];
+  const el = document.getElementById('adicionais-grupos');
+  if (!el) return;
+
+  el.innerHTML = grupos.map((g, gi) => {
+    const maxTxt = g.max === 1 ? 'Escolha 1' : g.min > 0 ? `Mín. ${g.min}, Máx. ${g.max}` : `Até ${g.max}`;
+    const obrig  = g.min > 0;
+    return `<div class="adicional-grupo">
+      <div class="adicional-grupo-titulo">${g.grupo} ${obrig?'<span style="color:var(--red);font-size:.65rem">*obrigatório</span>':''}</div>
+      <div class="adicional-grupo-desc">${maxTxt}</div>
+      ${g.opcoes.map((o, oi) => `
+        <div class="adicional-opt" id="aopt-${gi}-${oi}" onclick="toggleAdicional(${gi},${oi},${g.max})">
+          <div class="adicional-opt-left">
+            <div class="adicional-opt-check">✓</div>
+            <span class="adicional-opt-nome">${o.nome}</span>
+          </div>
+          <span class="adicional-opt-preco">${Number(o.preco||0) > 0 ? '+R$ '+Number(o.preco).toFixed(2).replace('.',',') : 'Grátis'}</span>
+        </div>`).join('')}
+      <div class="adicional-limite-aviso" id="aviso-${gi}">Limite de ${g.max} opções atingido</div>
+    </div>`;
+  }).join('');
+
+  calcTotalAdicionais();
+  document.getElementById('modal-adicionais')?.classList.add('open');
+};
+
+window.toggleAdicional = function(gi, oi, max) {
+  if (!_adicionalSel[gi]) _adicionalSel[gi] = [];
+  const sel = _adicionalSel[gi];
+  const idx = sel.indexOf(oi);
+
+  if (idx >= 0) {
+    // Deseleciona
+    sel.splice(idx, 1);
+    document.getElementById('aopt-'+gi+'-'+oi)?.classList.remove('sel');
+  } else {
+    if (sel.length >= max) {
+      // Atingiu limite
+      document.getElementById('aviso-'+gi)?.classList.add('show');
+      setTimeout(()=>document.getElementById('aviso-'+gi)?.classList.remove('show'), 2000);
+      return;
+    }
+    sel.push(oi);
+    document.getElementById('aopt-'+gi+'-'+oi)?.classList.add('sel');
+  }
+  calcTotalAdicionais();
+};
+
+function calcTotalAdicionais() {
+  if (!_adicionalProduto) return;
+  const grupos = Array.isArray(_adicionalProduto.adicionais) ? _adicionalProduto.adicionais : [];
+  let extra = 0;
+  Object.entries(_adicionalSel).forEach(([gi, ois]) => {
+    ois.forEach(oi => {
+      extra += Number(grupos[gi]?.opcoes?.[oi]?.preco || 0);
+    });
+  });
+  const total = Number(_adicionalProduto.preco) + extra;
+  const el = document.getElementById('adicionais-total');
+  if (el) el.textContent = 'R$ ' + total.toFixed(2).replace('.',',');
+}
+
+window.confirmarAdicionais = function() {
+  if (!_adicionalProduto || !_adicionalMesaKey) return;
+  const grupos  = Array.isArray(_adicionalProduto.adicionais) ? _adicionalProduto.adicionais : [];
+
+  // Valida obrigatórios
+  for (let gi = 0; gi < grupos.length; gi++) {
+    const g = grupos[gi];
+    const qtdSel = (_adicionalSel[gi]||[]).length;
+    if (g.min > 0 && qtdSel < g.min) {
+      showToast('Escolha pelo menos ' + g.min + ' opção em "' + g.grupo + '"', 'error');
+      return;
+    }
+  }
+
+  // Monta descrição dos adicionais selecionados
+  const descAdic = [];
+  Object.entries(_adicionalSel).forEach(([gi, ois]) => {
+    ois.forEach(oi => descAdic.push(grupos[gi]?.opcoes?.[oi]?.nome));
+  });
+  let extra = 0;
+  Object.entries(_adicionalSel).forEach(([gi, ois]) => {
+    ois.forEach(oi => { extra += Number(grupos[gi]?.opcoes?.[oi]?.preco || 0); });
+  });
+
+  const nomeCompleto = descAdic.length ? _adicionalProduto.nome + ' (' + descAdic.join(', ') + ')' : _adicionalProduto.nome;
+  const precoFinal   = Number(_adicionalProduto.preco) + extra;
+
+  addItemComanda(_adicionalMesaKey, _adicionalProduto.id + '_' + Date.now(), nomeCompleto, precoFinal, _adicionalProduto.emoji||'🍽️');
+  window.fecharAdicionais();
+  showToast('Adicionado! ✅');
+};
+
+// ── Imprimir comanda da mesa ──────────────────────────────────────────────────
+window.imprimirComanda = function() {
+  if (!_mesaAtual) return;
+  const estab = getEstab();
+  const peds  = _pedidosMesas[_mesaAtual] || [];
+  const nome  = _nomeComanda[_mesaAtual] || _mesaAtual;
+  const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const total = peds.reduce((s,p)=>s+Number(p.total||0),0);
+  const agora = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+
+  const pedRows = peds.map((p,idx)=>{
+    const itens = Array.isArray(p.itens)?p.itens:[];
+    const dt    = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    return '<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed #ddd">'
+      + '<div style="font-size:10px;color:#888;margin-bottom:4px">Pedido '+(idx+1)+' · '+dt+'</div>'
+      + itens.map(i=>'<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0"><span>'+i.qtd+'x '+i.nome+'</span><span>'+fmtR((i.preco||0)*(i.qtd||1))+'</span></div>').join('')
+      + '<div style="text-align:right;font-size:11px;color:#C0392B;font-weight:700;margin-top:2px">'+fmtR(p.total)+'</div>'
+      + '</div>';
+  }).join('');
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    <title>Comanda — ${_mesaAtual}</title>
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{font-family:Arial,sans-serif;font-size:12px;padding:16px;max-width:300px;margin:0 auto}
+      .logo{font-size:16px;font-weight:900;text-align:center;margin-bottom:4px}
+      .logo span{color:#C0392B}
+      .loja{font-size:11px;text-align:center;color:#888;margin-bottom:8px}
+      .divider{border:none;border-top:2px dashed #ddd;margin:8px 0}
+      .mesa{font-size:14px;font-weight:800;text-align:center;margin:6px 0}
+      .cliente{font-size:11px;text-align:center;color:#888;margin-bottom:8px}
+      .total-row{display:flex;justify-content:space-between;font-size:14px;font-weight:800;margin-top:8px;border-top:2px solid #1a1a1a;padding-top:8px}
+      .rodape{text-align:center;font-size:9px;color:#aaa;margin-top:12px}
+      @media print{body{padding:0}}
+    </style></head><body>
+    <div class="logo">PEDI<span>WAY</span></div>
+    <div class="loja">${estab?.nome||'Estabelecimento'}</div>
+    <hr class="divider">
+    <div class="mesa">${_mesaAtual}</div>
+    <div class="cliente">${nome !== _mesaAtual ? 'Cliente: '+nome : ''}</div>
+    <div style="font-size:9px;text-align:center;color:#aaa;margin-bottom:8px">${agora}</div>
+    <hr class="divider">
+    ${pedRows}
+    <div class="total-row"><span>TOTAL</span><span style="color:#C0392B">${fmtR(total)}</span></div>
+    <div class="rodape">Obrigado pela preferência!<br>Feito com PEDIWAY</div>
+  </body></html>`;
+
+  const w = window.open('','_blank','width=320,height=600');
+  if (!w) { alert('Permita pop-ups para imprimir.'); return; }
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(()=>w.print(), 400);
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS GLOBAIS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1644,7 +1911,7 @@ function renderCardapioComanda(mesaKey, prods) {
   el.innerHTML = Object.entries(cats).map(([cat,items])=>
     '<span class="cmd-cat-label">' + cat + '</span>' +
     items.map(p=>
-      '<div class="cmd-item" onclick="addItemComanda(\'' + mesaKey + '\',\'' + p.id + '\',\'' + p.nome.replace(/'/g,"\\'") + '\',' + p.preco + ',\'' + (p.emoji||'🍽️') + '\')">' +
+      '<div class="cmd-item" onclick="' + (p.adicionais && p.adicionais.length ? 'abrirAdicionais(\'' + mesaKey + '\',encodeURIComponent(JSON.stringify(' + JSON.stringify(p) + ')))' : 'addItemComanda(\'' + mesaKey + '\',\'' + p.id + '\',\'' + p.nome.replace(/'/g,"\\'") + '\',' + p.preco + ',\'' + (p.emoji||'🍽️') + '\')') + '">' +
       '<span class="cmd-item-emoji">' + (p.emoji||'🍽️') + '</span>' +
       '<span class="cmd-item-nome">' + p.nome + '</span>' +
       '<span class="cmd-item-preco">R$ ' + Number(p.preco).toFixed(2).replace('.',',') + '</span>' +
