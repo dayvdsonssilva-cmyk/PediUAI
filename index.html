@@ -423,21 +423,36 @@
           <div class="cores-grid" id="cores-grid"></div>
         </div>
 
-        <!-- Cards de planos -->
+        <!-- Plano atual + upgrade -->
         <div style="background:#faf8f5;border:1.5px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px">
-          <div style="font-size:0.85rem;font-weight:800;margin-bottom:2px">Plano atual: <span id="cfg-plano-atual" style="color:var(--red)">--</span></div>
-          <div style="font-size:0.72rem;color:#aaa;margin-bottom:14px" id="cfg-venc-atual"></div>
+          <!-- Status do plano -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+            <div>
+              <div style="font-size:.7rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em">Plano atual</div>
+              <div style="font-size:1.1rem;font-weight:800;color:var(--red);margin-top:2px" id="cfg-plano-atual">--</div>
+              <div style="font-size:.72rem;color:#aaa;margin-top:2px" id="cfg-venc-atual"></div>
+            </div>
+            <a onclick="irCheckout('pro')" style="font-size:.75rem;font-weight:700;color:var(--red);cursor:pointer;text-decoration:underline">Ver todos os planos →</a>
+          </div>
+
+          <!-- Cards lado a lado -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <button onclick="irCheckout('pro')" style="border:2px solid var(--red);background:none;border-radius:12px;padding:14px;cursor:pointer;font-family:'Poppins',sans-serif;text-align:left;transition:background .15s">
-              <div style="font-size:.65rem;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:4px">Pro</div>
-              <div style="font-size:1.2rem;font-weight:800">R$<span id="dash-preco-pro">49</span><span style="font-size:.75rem;font-weight:500;color:#888">/mês</span></div>
-              <div style="font-size:.68rem;color:#888;margin-top:3px">Pedidos ilimitados · Suporte</div>
-            </button>
-            <button onclick="irCheckout('premium')" style="border:2px solid #1a1a1a;background:#1a1a1a;border-radius:12px;padding:14px;cursor:pointer;font-family:'Poppins',sans-serif;text-align:left;color:#fff">
-              <div style="font-size:.65rem;font-weight:700;color:#f59e0b;text-transform:uppercase;margin-bottom:4px">Premium</div>
-              <div style="font-size:1.2rem;font-weight:800">R$99<span style="font-size:.75rem;font-weight:500;opacity:.6">/mês</span></div>
-              <div style="font-size:.68rem;opacity:.5;margin-top:3px">Tudo do Pro · Avançado</div>
-            </button>
+            <!-- Pro -->
+            <div onclick="irCheckout('pro')" style="border:2px solid var(--red);background:#fff;border-radius:12px;padding:14px;cursor:pointer;transition:all .15s"
+                 onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background='#fff'">
+              <div style="font-size:.6rem;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">⭐ Pro</div>
+              <div style="font-size:1.2rem;font-weight:800;margin-bottom:3px">R$<span id="dash-preco-pro">49</span><span style="font-size:.72rem;font-weight:500;color:#888">/mês</span></div>
+              <div style="font-size:.68rem;color:#888;line-height:1.5">Cardápio · Pedidos<br>Fresquinho · Suporte</div>
+              <div style="margin-top:10px;background:var(--red);color:#fff;border-radius:7px;padding:7px;text-align:center;font-size:.72rem;font-weight:700">Assinar Pro</div>
+            </div>
+            <!-- Premium -->
+            <div onclick="irCheckout('premium')" style="border:2px solid #1a1a1a;background:#1a1a1a;border-radius:12px;padding:14px;cursor:pointer;transition:opacity .15s;color:#fff"
+                 onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+              <div style="font-size:.6rem;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">🏆 Premium</div>
+              <div style="font-size:1.2rem;font-weight:800;margin-bottom:3px">R$<span id="dash-preco-prem">99</span><span style="font-size:.72rem;font-weight:500;opacity:.5">/mês</span></div>
+              <div style="font-size:.68rem;opacity:.6;line-height:1.5">Pro + Financeiro<br>Relatórios · SLA</div>
+              <div style="margin-top:10px;background:#f59e0b;color:#1a1a1a;border-radius:7px;padding:7px;text-align:center;font-size:.72rem;font-weight:800">Assinar Premium</div>
+            </div>
           </div>
         </div>
 
