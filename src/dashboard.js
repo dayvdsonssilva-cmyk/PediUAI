@@ -77,7 +77,8 @@ async function uploadFile(bucket, path, file) {
 // ── Restrição por plano ──────────────────────────────────────────────────────
 function aplicarRestricaoPlano(estab) {
   const plano = estab?.plano || 'basico';
-  // Aba Financeiro — só Pro e Premium
+
+  // Financeiro — só Pro e Premium
   const tabFin = document.querySelector('[data-tab="financeiro"]');
   const pgFin  = document.getElementById('tab-financeiro');
   if (plano === 'basico') {
@@ -87,6 +88,18 @@ function aplicarRestricaoPlano(estab) {
     if (tabFin) tabFin.style.display = '';
     if (pgFin)  pgFin.style.display  = '';
   }
+
+  // Comandas — só Pro e Premium
+  const tabCmd = document.querySelector('[data-tab="comandas"]');
+  const pgCmd  = document.getElementById('tab-comandas');
+  if (plano === 'basico') {
+    if (tabCmd) tabCmd.style.display = 'none';
+    if (pgCmd)  pgCmd.style.display  = 'none';
+  } else {
+    if (tabCmd) tabCmd.style.display = '';
+    if (pgCmd)  pgCmd.style.display  = '';
+  }
+
   // Banner de upgrade se for trial/básico
   const banner = document.getElementById('banner-upgrade');
   if (banner) banner.style.display = plano === 'basico' ? 'flex' : 'none';
@@ -1398,11 +1411,13 @@ window.exportarCSV   = exportarCSV;
 window.exportarPDF   = exportarPDF;
 
 // ═══════════════════════════════════════════════════════════
-// SISTEMA DE COMANDAS DIGITAIS
+// SISTEMA DE COMANDAS — MODO GARÇOM
 // ═══════════════════════════════════════════════════════════
-let _mesaAtual     = null;
-let _pedidosMesas  = {};
-let _mesasFechadas = new Set();
+let _mesaAtual        = null;   // chave da mesa aberta "Mesa 3"
+let _pedidosMesas     = {};     // { "Mesa 3": [{...pedido}] }
+let _mesasFechadas    = new Set();
+let _cardapioCache    = null;   // cache dos produtos para seleção rápida
+let _carrinhoComanda  = {};     // { "Mesa 3": [{nome, preco, qtd, emoji}] }
 
 function getNumMesas() {
   const estab = getEstab();
@@ -1548,17 +1563,223 @@ async function confirmarFecharComanda() {
   renderMesas();
 }
 
-function iniciarRealtimeMesas() {
-  // Não cria canal separado — aproveita o canal de pedidos já existente
-  // O canal 'pedidos-{id}' em iniciarRealtime() já recebe todos os INSERTs
-  // Aqui apenas filtramos os pedidos de mesa no callback do realtime principal
-  // Esta função agora serve apenas para carregar dados iniciais
-  // O realtime de mesas está integrado em iniciarRealtime()
+// ── Carrega cardápio para seleção no modo garçom ──────────────────────────────
+async function carregarCardapioComanda() {
+  if (_cardapioCache) return _cardapioCache;
+  const estab = getEstab(); if (!estab) return [];
+  const { data } = await getSupa()
+    .from('produtos').select('id,nome,preco,emoji,categoria,disponivel')
+    .eq('estabelecimento_id', estab.id)
+    .eq('disponivel', true)
+    .order('categoria');
+  _cardapioCache = data || [];
+  return _cardapioCache;
+}
+
+// ── Adiciona item ao carrinho da mesa ──────────────────────────────────────────
+function addItemComanda(mesaKey, id, nome, preco, emoji) {
+  if (!_carrinhoComanda[mesaKey]) _carrinhoComanda[mesaKey] = [];
+  const ex = _carrinhoComanda[mesaKey].find(x => x.id === id);
+  if (ex) { ex.qtd++; } else { _carrinhoComanda[mesaKey].push({ id, nome, preco, emoji, qtd: 1 }); }
+  renderCarrinhoComanda(mesaKey);
+}
+window.addItemComanda = addItemComanda;
+
+function rmItemComanda(mesaKey, id) {
+  if (!_carrinhoComanda[mesaKey]) return;
+  const ex = _carrinhoComanda[mesaKey].find(x => x.id === id);
+  if (!ex) return;
+  if (ex.qtd > 1) { ex.qtd--; } else { _carrinhoComanda[mesaKey] = _carrinhoComanda[mesaKey].filter(x=>x.id!==id); }
+  renderCarrinhoComanda(mesaKey);
+}
+window.rmItemComanda = rmItemComanda;
+
+function renderCarrinhoComanda(mesaKey) {
+  const carr = _carrinhoComanda[mesaKey] || [];
+  const total = carr.reduce((s,i)=>s+i.preco*i.qtd, 0);
+  const fmtR  = v=>'R$ '+Number(v).toFixed(2).replace('.',',');
+  const el = document.getElementById('comanda-carrinho');
+  const elTotal = document.getElementById('comanda-carr-total');
+  const btnEnviar = document.getElementById('btn-enviar-comanda');
+  if (!el) return;
+  if (!carr.length) {
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:#aaa;font-size:.8rem">Nenhum item selecionado</div>';
+    if (elTotal)   elTotal.textContent = 'R$ 0,00';
+    if (btnEnviar) btnEnviar.disabled = true;
+    return;
+  }
+  el.innerHTML = carr.map(i=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0e9e0">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+        <span style="font-size:1.1rem">${i.emoji||'🍽️'}</span>
+        <span style="font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.nome}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span style="font-size:.78rem;color:#aaa">${fmtR(i.preco)}</span>
+        <div style="display:flex;align-items:center;gap:4px">
+          <button onclick="rmItemComanda('${mesaKey}','${i.id}')" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #ddd;background:#fff;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--red)">-</button>
+          <span style="font-size:.9rem;font-weight:800;min-width:16px;text-align:center">${i.qtd}</span>
+          <button onclick="addItemComanda('${mesaKey}','${i.id}','${i.nome.replace(/'/g,"\'")}',${i.preco},'${i.emoji||''}')" style="width:26px;height:26px;border-radius:50%;border:none;background:var(--red);color:#fff;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700">+</button>
+        </div>
+        <span style="font-size:.82rem;font-weight:700;color:var(--red);min-width:60px;text-align:right">${fmtR(i.preco*i.qtd)}</span>
+      </div>
+    </div>`).join('');
+  if (elTotal)   elTotal.textContent = fmtR(total);
+  if (btnEnviar) btnEnviar.disabled = false;
+}
+
+// ── Envia pedido da comanda para o banco ───────────────────────────────────────
+window.enviarPedidoComanda = async function() {
+  if (!_mesaAtual) return;
+  const carr  = _carrinhoComanda[_mesaAtual] || [];
+  if (!carr.length) return;
+  const estab = getEstab(); if (!estab) return;
+  const total = carr.reduce((s,i)=>s+i.preco*i.qtd, 0);
+  const btn   = document.getElementById('btn-enviar-comanda');
+  if (btn) { btn.disabled=true; btn.textContent='Enviando...'; }
+  try {
+    const { error } = await getSupa().from('pedidos').insert({
+      estabelecimento_id: estab.id,
+      cliente_nome:       _mesaAtual,
+      cliente_whats:      '',
+      endereco:           'No local — ' + _mesaAtual,
+      itens:              carr.map(i=>({nome:i.nome,preco:i.preco,qtd:i.qtd,emoji:i.emoji})),
+      total,
+      status:             'novo',
+      pagamento:          'No local',
+      tipo_consumo:       'local',
+      numero_mesa:        _mesaAtual.replace('Mesa ',''),
+    });
+    if (error) throw error;
+    _carrinhoComanda[_mesaAtual] = [];
+    showToast('Pedido enviado para a cozinha! 🍽️');
+    renderCarrinhoComanda(_mesaAtual);
+    await carregarPedidosMesas();
+    renderPedidosComanda(_mesaAtual);
+  } catch(e) {
+    showToast('Erro ao enviar: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled=false; btn.textContent='Enviar para cozinha 🍳'; }
+  }
+};
+
+// ── Abre painel da mesa (mode garçom) ─────────────────────────────────────────
+async function abrirComanda(num) {
+  const key  = 'Mesa ' + num;
+  _mesaAtual = key;
+  if (!_carrinhoComanda[key]) _carrinhoComanda[key] = [];
+
+  const modal = document.getElementById('modal-comanda');
+  const title = document.getElementById('comanda-title');
+  if (title) title.textContent = key;
+
+  // Carrega cardápio
+  const prods = await carregarCardapioComanda();
+  renderCardapioComanda(key, prods);
+  renderPedidosComanda(key);
+  renderCarrinhoComanda(key);
+
+  if (modal) modal.classList.add('open');
+}
+
+function renderCardapioComanda(mesaKey, prods) {
+  const el = document.getElementById('comanda-cardapio');
+  if (!el) return;
+  if (!prods.length) { el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:16px">Nenhum produto disponível</div>'; return; }
+
+  // Agrupa por categoria
+  const cats = {};
+  prods.forEach(p=>{ if(!cats[p.categoria||'Outros'])cats[p.categoria||'Outros']=[];cats[p.categoria||'Outros'].push(p); });
+
+  el.innerHTML = Object.entries(cats).map(([cat,items])=>`
+    <div style="margin-bottom:12px">
+      <div style="font-size:.62rem;font-weight:800;color:#aaa;text-transform:uppercase;letter-spacing:.08em;padding:6px 0 4px">${cat}</div>
+      ${items.map(p=>`
+        <div onclick="addItemComanda('${mesaKey}','${p.id}','${p.nome.replace(/'/g,"\'")}',${p.preco},'${p.emoji||'🍽️'}')"
+          style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:10px;cursor:pointer;transition:background .15s;margin-bottom:2px"
+          onmouseover="this.style.background='#f5f0eb'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:1.5rem;flex-shrink:0">${p.emoji||'🍽️'}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.85rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.nome}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:.85rem;font-weight:800;color:var(--red)">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function renderPedidosComanda(mesaKey) {
+  const el   = document.getElementById('comanda-historico');
+  const peds = _pedidosMesas[mesaKey] || [];
+  const fmtR = v=>'R$ '+Number(v||0).toFixed(2).replace('.',',');
+  const stLbl = {novo:'⏳ Aguardando',preparo:'🍳 Preparando',pronto:'✅ Pronto'};
+  const stClr = {novo:'#f59e0b',preparo:'#3b82f6',pronto:'#22c55e'};
+
+  const totalMesa = peds.reduce((s,p)=>s+Number(p.total||0),0);
+  const elTotal = document.getElementById('comanda-total-geral');
+  if (elTotal) elTotal.textContent = fmtR(totalMesa);
+
+  if (!el) return;
+  if (!peds.length) { el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:12px">Nenhum pedido lançado</div>'; return; }
+
+  el.innerHTML = peds.map((p,idx)=>{
+    const itens = Array.isArray(p.itens)?p.itens:[];
+    const dt    = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    return `<div style="border:1px solid #f0e9e0;border-radius:10px;padding:10px;margin-bottom:8px;background:#faf8f5">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:.72rem;font-weight:700;color:#aaa">Pedido ${idx+1} · ${dt}</span>
+        <span style="font-size:.72rem;font-weight:700;color:${stClr[p.status]||'#aaa'}">${stLbl[p.status]||p.status}</span>
+      </div>
+      ${itens.map(i=>`<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:2px 0">
+        <span>${i.qtd||1}x ${i.nome}</span>
+        <span style="font-weight:600">${fmtR((i.preco||0)*(i.qtd||1))}</span>
+      </div>`).join('')}
+      <div style="text-align:right;font-size:.78rem;color:var(--red);font-weight:700;margin-top:4px">${fmtR(p.total)}</div>
+    </div>`;
+  }).join('');
+}
+
+window.fecharComanda = function() {
+  const modal = document.getElementById('modal-comanda');
+  if (modal) modal.classList.remove('open');
+  _mesaAtual = null;
+};
+
+async function confirmarFecharComanda() {
+  if (!_mesaAtual) return;
+  const peds  = _pedidosMesas[_mesaAtual] || [];
+  const fmt   = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const carr  = _carrinhoComanda[_mesaAtual] || [];
+  const totalMesa = peds.reduce((s,p)=>s+Number(p.total||0),0);
+
+  if (carr.length > 0) {
+    if (!confirm('Há itens não enviados no carrinho. Deseja fechar mesmo assim?')) return;
+  }
+  if (!confirm(`Fechar comanda da ${_mesaAtual}?
+
+Total: ${fmt(totalMesa)}
+Pedidos: ${peds.length}
+
+A mesa será liberada.`)) return;
+
+  const ids = peds.map(p=>p.id);
+  if (ids.length) await getSupa().from('pedidos').update({ status:'pronto' }).in('id', ids);
+
+  delete _pedidosMesas[_mesaAtual];
+  delete _carrinhoComanda[_mesaAtual];
+  _mesasFechadas.add(_mesaAtual);
+  const mf = _mesaAtual;
+  setTimeout(()=>{ _mesasFechadas.delete(mf); renderMesas(); }, 5000);
+
+  window.fecharComanda();
+  showToast('Comanda da ' + mf + ' fechada! Total: ' + fmt(totalMesa));
+  renderMesas();
 }
 
 window.renderMesas            = renderMesas;
 window.abrirComanda           = abrirComanda;
-window.fecharComanda          = fecharComanda;
+window.fecharComanda          = window.fecharComanda;
 window.confirmarFecharComanda = confirmarFecharComanda;
 window.salvarNumMesas         = window.salvarNumMesas;
 
