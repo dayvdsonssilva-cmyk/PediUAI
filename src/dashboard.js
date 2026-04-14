@@ -189,6 +189,9 @@ export async function initDashboard() {
     await renderPedidos();
     await carregarFinanceiro();
     iniciarRealtime();
+    iniciarRealtimeMesas();
+    await carregarPedidosMesas();
+    renderMesas();
     renderEmojiGrid();
   } else {
     renderCardapioDemo();
@@ -1379,6 +1382,12 @@ window.renderPedidos     = renderPedidos;
 window.setFinPeriodo = setFinPeriodo;
 window.exportarCSV   = exportarCSV;
 window.exportarPDF   = exportarPDF;
+
+window.renderMesas           = renderMesas;
+window.abrirComanda          = abrirComanda;
+window.fecharComanda         = fecharComanda;
+window.confirmarFecharComanda= confirmarFecharComanda;
+window.salvarNumMesas        = salvarNumMesas;
 
 window.toggleTaxaEntrega = function(ativo) {
   const w = document.getElementById('taxa-entrega-wrap');
