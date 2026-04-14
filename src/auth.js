@@ -27,6 +27,7 @@ function validarCNPJ(c) {
   };
   return calc(12) === +c[12] && calc(13) === +c[13];
 }
+
 function docValido(d) {
   const n = d.replace(/\D/g,'');
   return n.length === 11 ? validarCPF(n) : n.length === 14 ? validarCNPJ(n) : false;
@@ -41,37 +42,52 @@ async function slugLivre(slug) {
 
 // ── CADASTRO ───────────────────────────────────────────────
 export async function doRegister() {
-  const nome = document.getElementById('rn')?.value.trim();
-  const doc = document.getElementById('rdoc')?.value.trim();
+  const nome  = document.getElementById('rn')?.value.trim();
+  const doc   = document.getElementById('rdoc')?.value.trim();
   const email = document.getElementById('re')?.value.trim();
-  const pass = document.getElementById('rp')?.value;
-  if (!nome) return showToast('Digite o nome do estabelecimento.', 'error');
-  if (!doc) return showToast('Digite o CPF ou CNPJ.', 'error');
+  const pass  = document.getElementById('rp')?.value;
+
+  if (!nome)           return showToast('Digite o nome do estabelecimento.', 'error');
+  if (!doc)            return showToast('Digite o CPF ou CNPJ.', 'error');
   if (!docValido(doc)) return showToast('CPF ou CNPJ invalido.', 'error');
-  if (!email) return showToast('Digite o e-mail.', 'error');
+  if (!email)          return showToast('Digite o e-mail.', 'error');
   if (!pass || pass.length < 6) return showToast('Senha minima: 6 caracteres.', 'error');
+
   const btn = document.querySelector('[onclick="doRegister()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Criando...'; }
+
   try {
+    // 1. Cria o usuário
     const { data: authData, error: authErr } = await getSupa().auth.signUp({ email, password: pass });
     if (authErr) throw new Error(authErr.message);
+
+    // 2. Faz login imediato para garantir sessão ativa
     const { data: loginData, error: loginErr } = await getSupa().auth.signInWithPassword({ email, password: pass });
-    if (loginErr) throw new Error('Conta criada mas erro ao ativar sessao.');
+    if (loginErr) throw new Error('Conta criada mas erro ao ativar sessao. Tente fazer login.');
+
+    // 3. Pega o user_id da sessão ativa (100% confiável)
     const userId = loginData?.user?.id;
-    if (!userId) throw new Error('Sessao invalida.');
+    if (!userId) throw new Error('Sessao invalida. Tente fazer login.');
+
+    // 4. Garante slug único
     let slug = gerarSlug(nome);
     let t = 1;
     while (!(await slugLivre(slug))) slug = `${gerarSlug(nome)}-${++t}`;
+
+    // 5. Insere o estabelecimento com sessão ativa
     const { error: dbErr } = await getSupa().from('estabelecimentos').insert({
-      user_id: userId,
+      user_id:  userId,
       nome,
       slug,
       cpf_cnpj: doc.replace(/\D/g,''),
-      status: 'ativo',
-      plano: 'basico',
+      status:   'ativo',
+      plano:    'basico',
     });
+
     if (dbErr) throw new Error('Erro ao salvar: ' + dbErr.message);
+
     goTo('s-sucesso');
+
   } catch (e) {
     showToast(e.message, 'error');
   } finally {
@@ -82,26 +98,50 @@ export async function doRegister() {
 // ── LOGIN ──────────────────────────────────────────────────
 export async function doLogin() {
   const email = document.getElementById('le')?.value.trim();
-  const pass = document.getElementById('lp')?.value;
-  if (!email || !pass) return showToast('Preencha e-mail e senha.', 'error');
+  const pass  = document.getElementById('lp')?.value;
+
+  if (!email) return showToast('Digite o e-mail.', 'error');
+  if (!pass)  return showToast('Digite a senha.', 'error');
+
   const btn = document.querySelector('[onclick="doLogin()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Entrando...'; }
+
   try {
-    const { data, error } = await getSupa().auth.signInWithPassword({ email, password: pass });
-    if (error) throw new Error('E-mail ou senha incorretos.');
-    const userId = data?.user?.id;
-    if (!userId) throw new Error('Erro na sessao.');
-    const { data: estab } = await getSupa()
+    // 1. Autentica no Supabase Auth
+    const { data: authData, error: authErr } = await getSupa().auth.signInWithPassword({ email, password: pass });
+    if (authErr) {
+      if (authErr.message.includes('Invalid login')) throw new Error('E-mail ou senha incorretos.');
+      throw new Error(authErr.message);
+    }
+
+    const userId = authData?.user?.id;
+    if (!userId) throw new Error('Erro na sessão. Tente novamente.');
+
+    // 2. Busca estabelecimento do usuário
+    const { data: estab, error: dbErr } = await getSupa()
       .from('estabelecimentos')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
-    if (estab) {
-      window._estab = estab;
-      localStorage.setItem('pw_estab', JSON.stringify(estab));
+
+    if (dbErr) throw new Error('Erro ao carregar dados: ' + dbErr.message);
+
+    if (!estab) {
+      // Usuário autenticado mas sem estabelecimento — raro, mas tratamos
+      showToast('Conta encontrada mas sem loja vinculada. Entre em contato com o suporte.', 'error');
+      await getSupa().auth.signOut();
+      return;
     }
+
+    // 3. Salva no state e localStorage
+    window._estab = estab;
+    localStorage.setItem('pw_estab', JSON.stringify(estab));
+    localStorage.setItem('pw_tela_atual', 's-dash');
+
+    // 4. Vai para o dashboard
     goTo('s-dash');
-    if (window.initDashboard) window.initDashboard();
+    if (window.initDashboard) await window.initDashboard();
+
   } catch (e) {
     showToast(e.message, 'error');
   } finally {
