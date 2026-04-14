@@ -21,10 +21,6 @@
       "destination": "/style.css"
     },
     {
-      "source": "/cliente.html",
-      "destination": "/cliente.html"
-    },
-    {
       "source": "/admin",
       "destination": "/admin.html"
     },
@@ -33,12 +29,8 @@
       "destination": "/checkout.html"
     },
     {
-      "source": "/api/criar-pagamento",
-      "destination": "/api/criar-pagamento.js"
-    },
-    {
-      "source": "/api/webhook-mp",
-      "destination": "/api/webhook-mp.js"
+      "source": "/cliente.html",
+      "destination": "/cliente.html"
     },
     {
       "source": "/:slug",
