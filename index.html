@@ -625,24 +625,25 @@
 
     <!-- Header -->
     <div class="comanda-hdr">
-      <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
-        <div>
-          <div style="font-size:.58rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.08em">Comanda</div>
-          <div class="comanda-mesa-title" id="comanda-title">Mesa --</div>
+      <!-- Número da mesa bem grande -->
+      <div style="display:flex;align-items:center;gap:14px;flex:1;min-width:0">
+        <div style="background:#1a1a1a;color:#fff;border-radius:14px;width:56px;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">
+          <div style="font-size:.5rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.1em;line-height:1">Mesa</div>
+          <div style="font-size:1.6rem;font-weight:900;line-height:1" id="comanda-num-mesa">--</div>
         </div>
-        <!-- Nome do cliente na mesa -->
         <div style="flex:1;min-width:0">
+          <div style="font-size:.62rem;color:#aaa;margin-bottom:4px;font-weight:600">Cliente / Nome</div>
           <input id="comanda-nome-cliente" placeholder="Nome do cliente (opcional)"
             oninput="salvarNomeComanda(this.value)"
-            style="width:100%;border:1.5px solid #f0e9e0;border-radius:8px;padding:7px 10px;font-family:'Poppins',sans-serif;font-size:.82rem;outline:none;background:#faf8f5;color:#1a1a1a">
+            style="width:100%;border:1.5px solid #f0e9e0;border-radius:8px;padding:7px 10px;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none;background:#faf8f5;color:#1a1a1a;transition:border-color .2s">
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-        <div style="text-align:right">
-          <div style="font-size:.58rem;color:#aaa;text-transform:uppercase;font-weight:700;letter-spacing:.06em">Total mesa</div>
-          <div style="font-size:1.15rem;font-weight:800;color:var(--red)" id="comanda-total-geral">R$ 0,00</div>
-        </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;margin-left:8px">
         <button class="comanda-x" onclick="fecharComanda()">✕</button>
+        <div style="text-align:right">
+          <div style="font-size:.58rem;color:#aaa;text-transform:uppercase;font-weight:700;letter-spacing:.06em">Total</div>
+          <div style="font-size:1rem;font-weight:800;color:var(--red)" id="comanda-total-geral">R$ 0,00</div>
+        </div>
       </div>
     </div>
 
