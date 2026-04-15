@@ -24,13 +24,13 @@
     @media (prefers-color-scheme: dark) {
       :root { --bg: #f0e9e0 !important; --card: #fff !important; --text: #1a1a1a !important; --muted: #888 !important; --border: #ede8e0 !important; }
       body { background: #f0e9e0 !important; color: #1a1a1a !important; }
-    }F
+    }
 
     /* ── HEADER ── */
     #main-header {
-      position: relative; overflow: hidden; min-height: 160px;
+      position: relative; overflow: hidden; min-height: 220px;
       display: flex; align-items: center; justify-content: center;
-      padding: 28px 24px;
+      padding: 36px 24px 32px;
       background: var(--header-bg, linear-gradient(160deg,#1e0a02,#2e1208));
       transition: background 0.4s ease;
     }
@@ -41,10 +41,10 @@
       width: 100%; max-width: 480px;
     }
     #logo-wrap {
-      flex-shrink: 0; width: 100px; height: 100px; border-radius: 20px; overflow: hidden;
+      flex-shrink: 0; width: 110px; height: 110px; border-radius: 22px; overflow: hidden;
       background: #111;
-      border: 3px solid rgba(255,255,255,0.18);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.25), 0 1px 4px rgba(0,0,0,0.15);
+      border: 3px solid rgba(255,255,255,0.22);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.15);
     }
     #logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
     #logo-emoji { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.4rem; }
@@ -349,6 +349,7 @@
         <div class="qtd-num" id="modal-qtd">1</div>
         <button class="qtd-btn" onclick="mudaQtd(1)">+</button>
       </div>
+      <div id="modal-adicionais-cli" style="display:none;margin-bottom:14px"></div>
       <button class="btn-add-cart" onclick="adicionarAoCarrinho()">Adicionar ao carrinho</button>
     </div>
   </div>
@@ -807,9 +808,65 @@ window.abrirProduto = function(p) {
   $('modal-nome').textContent = p.nome;
   $('modal-desc').textContent = p.descricao || '';
   $('modal-preco').textContent = fmt(p.preco);
+
+  // Adicionais
+  const grupos = Array.isArray(p.adicionais) ? p.adicionais : [];
+  const adicEl = $('modal-adicionais-cli');
+  if (adicEl) {
+    if (!grupos.length) { adicEl.innerHTML = ''; adicEl.style.display='none'; }
+    else {
+      adicEl.style.display = 'block';
+      adicEl.innerHTML = grupos.map((g, gi) => {
+        const maxTxt = g.max === 1 ? 'Escolha 1' : g.min > 0 ? 'Mín. '+g.min+', Máx. '+g.max : 'Até '+g.max;
+        return '<div style="margin-bottom:14px">'
+          + '<div style="font-size:.8rem;font-weight:800;margin-bottom:2px">' + g.grupo
+          + (g.min>0 ? ' <span style="color:#C0392B;font-size:.65rem">*</span>' : '')
+          + '</div>'
+          + '<div style="font-size:.68rem;color:#aaa;margin-bottom:8px">' + maxTxt + '</div>'
+          + g.opcoes.map((o, oi) => '<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1.5px solid #e0dbd5;border-radius:10px;cursor:pointer;margin-bottom:6px;transition:border-color .15s" '
+            + 'onclick="toggleAdicCli(this,' + gi + ',' + oi + ',' + g.max + ')">'
+            + '<div style="display:flex;align-items:center;gap:10px">'
+            + '<div id="cli-adic-check-'+gi+'-'+oi+'" style="width:20px;height:20px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0">　</div>'
+            + '<span style="font-size:.85rem;font-weight:600">' + o.nome + '</span>'
+            + '</div>'
+            + '<span style="font-size:.8rem;font-weight:700;color:#C0392B">' + (Number(o.preco||0)>0 ? '+R$ '+Number(o.preco).toFixed(2).replace('.',',') : 'Grátis') + '</span>'
+            + '<input type="checkbox" id="cli-adic-'+gi+'-'+oi+'" data-gi="'+gi+'" data-max="'+g.max+'" style="display:none">'
+            + '</label>'
+          ).join('')
+          + '<div id="cli-adic-aviso-'+gi+'" style="font-size:.68rem;color:#ef4444;font-weight:700;display:none">Limite de '+g.max+' opções</div>'
+          + '</div>';
+      }).join('');
+    }
+  }
+
   $('modal-prod').classList.add('open');
 };
 window.fecharModal = function() { $('modal-prod').classList.remove('open'); prodAtual = null; };
+
+window.toggleAdicCli = function(label, gi, oi, max) {
+  const cb = document.getElementById('cli-adic-'+gi+'-'+oi);
+  if (!cb) return;
+  const checkEl = document.getElementById('cli-adic-check-'+gi+'-'+oi);
+  if (!cb.checked) {
+    // Conta quantos do mesmo grupo estão marcados
+    const group = document.querySelectorAll('input[data-gi="'+gi+'"]');
+    let cnt = 0; group.forEach(i=>{ if(i.checked) cnt++; });
+    if (cnt >= max) {
+      const aviso = document.getElementById('cli-adic-aviso-'+gi);
+      if (aviso) { aviso.style.display='block'; setTimeout(()=>aviso.style.display='none',2000); }
+      return;
+    }
+    cb.checked = true;
+    label.style.borderColor = 'var(--red)';
+    label.style.background  = '#fff5f5';
+    if (checkEl) { checkEl.style.background=document.documentElement.style.getPropertyValue('--red')||'#C0392B'; checkEl.style.borderColor='#C0392B'; checkEl.style.color='#fff'; checkEl.textContent='✓'; }
+  } else {
+    cb.checked = false;
+    label.style.borderColor = '#e0dbd5';
+    label.style.background  = '';
+    if (checkEl) { checkEl.style.background=''; checkEl.style.borderColor='#ddd'; checkEl.style.color=''; checkEl.textContent='　'; }
+  }
+};
 
 // Fecha fullscreen via listener (funciona mobile)
 document.addEventListener('DOMContentLoaded', function() {
@@ -860,9 +917,35 @@ window.mudaQtd = function(d) {
 };
 window.adicionarAoCarrinho = function() {
   if (!prodAtual) return;
-  adicionarItem(prodAtual, qtdAtual);
+  const grupos = Array.isArray(prodAtual.adicionais) ? prodAtual.adicionais : [];
+  if (grupos.length > 0) {
+    // Tem adicionais — lê selecionados
+    let valido = true;
+    const adicSel = {};
+    grupos.forEach((g, gi) => {
+      const sels = [];
+      g.opcoes.forEach((o, oi) => {
+        const el = document.getElementById('cli-adic-'+gi+'-'+oi);
+        if (el && el.checked) sels.push({ nome: o.nome, preco: Number(o.preco||0) });
+      });
+      if (g.min > 0 && sels.length < g.min) {
+        mostrarToast('Escolha ao menos ' + g.min + ' em "' + g.grupo + '"', '#C0392B');
+        valido = false;
+      }
+      adicSel[gi] = sels;
+    });
+    if (!valido) return;
+    // Calcula extra
+    let extra = 0;
+    Object.values(adicSel).forEach(sels => sels.forEach(s => extra += s.preco));
+    const descAdic = Object.values(adicSel).flat().map(s=>s.nome).filter(Boolean);
+    const nomeFinal = descAdic.length ? prodAtual.nome + ' (' + descAdic.join(', ') + ')' : prodAtual.nome;
+    adicionarItem({ ...prodAtual, nome: nomeFinal, preco: prodAtual.preco + extra }, qtdAtual);
+  } else {
+    adicionarItem(prodAtual, qtdAtual);
+  }
   fecharModal();
-  mostrarToast(`${prodAtual.nome} adicionado! 🛒`, '#1a1a1a');
+  mostrarToast('Adicionado! 🛒', '#1a1a1a');
 };
 window.adicionarDireto = function(p) {
   adicionarItem(p, 1);
