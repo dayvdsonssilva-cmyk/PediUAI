@@ -499,7 +499,6 @@ export function abrirModalItem() {
   fotosFiles = []; fotosPosX = []; fotosPosY = [];
   renderFotosGrid();
   emojiSel = '🍔'; renderEmojiGrid();
-  resetAddGrupos();
   // Reset botão salvar
   const btn = document.querySelector('#modal-item .btn-primary');
   if (btn) { btn.textContent = 'Salvar item'; btn.onclick = salvarItem; }
@@ -708,14 +707,12 @@ export async function salvarItem() {
     const foto_url = fotos_urls[0] || null;
     const promocao   = $('item-promocao')?.checked || false;
     const preco_orig = parseFloat($('item-preco-orig')?.value) || null;
-    const adicionais = getAddGruposValidos();
     const { error } = await getSupa().from('produtos').insert({
       estabelecimento_id: estab.id, nome,
       descricao:    $('item-desc')?.value.trim(),
       categoria:    $('item-cat')?.value.trim().toUpperCase(),
       preco, preco_original: promocao ? preco_orig : null,
       foto_url, fotos_urls, emoji: emojiSel, disponivel: true, promocao,
-      adicionais,
     });
     if (error) throw new Error(error.message);
     await renderCardapio(); fecharModal(); showToast('Item adicionado! ✅');
@@ -736,9 +733,6 @@ export async function editarItem(id) {
     set('item-preco-orig', p.preco_original||'');
     const pr = $('item-promocao'); if (pr) { pr.checked = !!p.promocao; const g=$('preco-orig-group'); if(g) g.style.display=p.promocao?'flex':'none'; }
     emojiSel = p.emoji || '🍔'; renderEmojiGrid();
-    // Carrega adicionais existentes
-    _addGrupos = Array.isArray(p.adicionais) ? JSON.parse(JSON.stringify(p.adicionais)) : [];
-    renderAddGrupos();
     // Fotos existentes no modal
     const fotosExist = (p.fotos_urls && p.fotos_urls.length) ? p.fotos_urls : (p.foto_url ? [p.foto_url] : []);
     if (fotosExist.length) {
@@ -775,7 +769,6 @@ export async function editarItem(id) {
           const foto_url   = fotos_urls[0] || null;
           const promocao   = $('item-promocao')?.checked || false;
           const preco_orig = parseFloat($('item-preco-orig')?.value) || null;
-          const adicionaisUpd = getAddGruposValidos();
           const { error } = await getSupa().from('produtos').update({
             nome:         $('item-nome')?.value.trim(),
             descricao:    $('item-desc')?.value.trim(),
@@ -783,7 +776,6 @@ export async function editarItem(id) {
             preco:        parseFloat($('item-preco')?.value),
             preco_original: promocao ? preco_orig : null,
             foto_url, fotos_urls, emoji: emojiSel, promocao,
-            adicionais: adicionaisUpd,
           }).eq('id', id);
           if (error) throw new Error(error.message);
           await renderCardapio(); fecharModal(); showToast('Item atualizado!');
@@ -1399,94 +1391,6 @@ function atualizarBotaoCancelar(estab) {
 
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ADICIONAIS — GERENCIAMENTO NO FORMULÁRIO DE PRODUTO
-// ─────────────────────────────────────────────────────────────────────────────
-let _addGrupos = []; // array de grupos ao editar/criar produto
-
-function resetAddGrupos() { _addGrupos = []; renderAddGrupos(); }
-
-window.adicionarGrupoAdd = function() {
-  _addGrupos.push({ grupo: '', min: 0, max: 1, opcoes: [{ nome: '', preco: 0 }] });
-  renderAddGrupos();
-};
-
-window.removerGrupoAdd = function(gi) {
-  _addGrupos.splice(gi, 1);
-  renderAddGrupos();
-};
-
-window.adicionarOpcaoAdd = function(gi) {
-  _addGrupos[gi].opcoes.push({ nome: '', preco: 0 });
-  renderAddGrupos();
-};
-
-window.removerOpcaoAdd = function(gi, oi) {
-  _addGrupos[gi].opcoes.splice(oi, 1);
-  renderAddGrupos();
-};
-
-window.syncAddGrupo = function(gi) {
-  const g = _addGrupos[gi];
-  g.grupo = document.getElementById('ag-nome-'+gi)?.value || '';
-  g.min   = parseInt(document.getElementById('ag-min-'+gi)?.value||'0');
-  g.max   = parseInt(document.getElementById('ag-max-'+gi)?.value||'1');
-  g.opcoes.forEach((o, oi) => {
-    o.nome  = document.getElementById('ag-on-'+gi+'-'+oi)?.value || '';
-    o.preco = parseFloat(document.getElementById('ag-op-'+gi+'-'+oi)?.value||'0') || 0;
-  });
-};
-
-function renderAddGrupos() {
-  const el = document.getElementById('add-grupos-list'); if (!el) return;
-  if (!_addGrupos.length) { el.innerHTML = ''; return; }
-
-  el.innerHTML = _addGrupos.map((g, gi) => `
-    <div style="border:1.5px solid var(--border);border-radius:12px;padding:12px;background:#faf8f5">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <input id="ag-nome-${gi}" value="${g.grupo}" placeholder="Nome do grupo (ex: Complementos)"
-          oninput="syncAddGrupo(${gi})"
-          style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-family:'Poppins',sans-serif;font-size:.82rem;outline:none">
-        <button onclick="removerGrupoAdd(${gi})" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:1rem;flex-shrink:0">🗑️</button>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <div style="flex:1">
-          <label style="font-size:.65rem;font-weight:700;color:#888;display:block;margin-bottom:3px">Mínimo</label>
-          <input id="ag-min-${gi}" type="number" value="${g.min}" min="0" oninput="syncAddGrupo(${gi})"
-            style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-family:'Poppins',sans-serif;font-size:.82rem;outline:none;text-align:center">
-        </div>
-        <div style="flex:1">
-          <label style="font-size:.65rem;font-weight:700;color:#888;display:block;margin-bottom:3px">Máximo</label>
-          <input id="ag-max-${gi}" type="number" value="${g.max}" min="1" oninput="syncAddGrupo(${gi})"
-            style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-family:'Poppins',sans-serif;font-size:.82rem;outline:none;text-align:center">
-        </div>
-      </div>
-      <div style="font-size:.68rem;font-weight:700;color:#555;margin-bottom:6px">Opções:</div>
-      ${g.opcoes.map((o, oi) => `
-        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-          <input id="ag-on-${gi}-${oi}" value="${o.nome}" placeholder="Nome da opção" oninput="syncAddGrupo(${gi})"
-            style="flex:2;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-family:'Poppins',sans-serif;font-size:.8rem;outline:none">
-          <input id="ag-op-${gi}-${oi}" type="number" value="${o.preco||0}" placeholder="+ R$" step="0.50" min="0" oninput="syncAddGrupo(${gi})"
-            style="width:72px;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-family:'Poppins',sans-serif;font-size:.8rem;outline:none;text-align:right">
-          <button onclick="removerOpcaoAdd(${gi},${oi})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:.9rem;flex-shrink:0">✕</button>
-        </div>`).join('')}
-      <button onclick="adicionarOpcaoAdd(${gi})" style="background:none;border:1.5px dashed var(--border);border-radius:8px;padding:6px;width:100%;font-family:'Poppins',sans-serif;font-size:.72rem;color:#aaa;cursor:pointer;font-weight:600">+ Opção</button>
-    </div>`).join('');
-}
-
-function getAddGruposValidos() {
-  // Lê estado atual dos inputs antes de salvar
-  _addGrupos.forEach((g, gi) => {
-    g.grupo = document.getElementById('ag-nome-'+gi)?.value?.trim() || '';
-    g.min   = parseInt(document.getElementById('ag-min-'+gi)?.value||'0');
-    g.max   = parseInt(document.getElementById('ag-max-'+gi)?.value||'1');
-    g.opcoes.forEach((o, oi) => {
-      o.nome  = (document.getElementById('ag-on-'+gi+'-'+oi)?.value||'').trim();
-      o.preco = parseFloat(document.getElementById('ag-op-'+gi+'-'+oi)?.value||'0')||0;
-    });
-  });
-  return _addGrupos.filter(g => g.grupo && g.opcoes.some(o=>o.nome));
-}
 
 // ═══════════════════════════════════════════════════════════
 // SISTEMA DE ADICIONAIS (comanda garçom + cardápio)
@@ -1497,6 +1401,7 @@ let _adicionalMesaKey   = null;
 
 window.fecharAdicionais = function() {
   document.getElementById('modal-adicionais')?.classList.remove('open');
+  document.body.style.overflow = '';
   _adicionalProduto = null;
   _adicionalSel = {};
 };
@@ -1660,6 +1565,247 @@ window.imprimirComanda = function() {
   setTimeout(()=>w.print(), 400);
 };
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GRUPOS DE ADICIONAIS — SISTEMA SEPARADO
+// ═══════════════════════════════════════════════════════════════════════════════
+let _gruposAdicionais = [];  // grupos do estabelecimento
+let _produtosCache    = [];  // produtos para vincular
+let _grupoEditando    = null; // grupo em edição (null = novo)
+let _opcoesTmp        = [];  // opções do grupo sendo editado
+
+// ── Abre gerenciador de grupos ──────────────────────────────────────────────────
+window.abrirGerenciadorAdicionais = async function() {
+  document.getElementById('modal-gerenciador-add').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  await carregarGruposAdicionais();
+};
+
+window.fecharGerenciadorAdicionais = function() {
+  document.getElementById('modal-gerenciador-add').style.display = 'none';
+  document.body.style.overflow = '';
+};
+
+async function carregarGruposAdicionais() {
+  const estab = getEstab(); if (!estab) return;
+  const el = document.getElementById('ger-add-lista'); if (!el) return;
+
+  const { data: grupos } = await getSupa()
+    .from('grupos_adicionais')
+    .select('*')
+    .eq('estabelecimento_id', estab.id)
+    .order('created_at', { ascending: true });
+
+  _gruposAdicionais = grupos || [];
+
+  // Busca produtos para mostrar vinculações
+  const { data: prods } = await getSupa()
+    .from('produtos').select('id, nome, emoji, grupo_adicional_id')
+    .eq('estabelecimento_id', estab.id);
+  _produtosCache = prods || [];
+
+  if (!_gruposAdicionais.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#aaa">'
+      + '<div style="font-size:2rem;margin-bottom:10px">🧩</div>'
+      + '<div style="font-size:.88rem;font-weight:600;margin-bottom:4px">Nenhum grupo criado</div>'
+      + '<div style="font-size:.78rem">Crie grupos de adicionais como "Complementos Açaí" e vincule aos produtos</div>'
+      + '</div>';
+    return;
+  }
+
+  el.innerHTML = _gruposAdicionais.map(g => {
+    const prods_vinc = _produtosCache.filter(p => p.grupo_adicional_id === g.id);
+    const opcStr = (g.opcoes||[]).slice(0,3).map(o=>o.nome).join(', ') + ((g.opcoes||[]).length>3?'...':'');
+    return '<div style="border:1.5px solid #e0dbd5;border-radius:14px;padding:14px;margin-bottom:10px;background:#fff">'
+      + '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">'
+      + '<div>'
+      + '<div style="font-size:.92rem;font-weight:800">' + g.nome + '</div>'
+      + '<div style="font-size:.68rem;color:#aaa;margin-top:2px">Mín. ' + g.min + ' · Máx. ' + g.max + ' · ' + (g.opcoes||[]).length + ' opções</div>'
+      + '<div style="font-size:.72rem;color:#888;margin-top:2px">' + opcStr + '</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:6px">'
+      + '<button onclick="editarGrupoAdicional('' + g.id + '')" style="padding:6px 10px;border:1.5px solid #e0dbd5;background:#fff;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer">✏️ Editar</button>'
+      + '<button onclick="deletarGrupoAdicional('' + g.id + '')" style="padding:6px 10px;border:1.5px solid #fee2e2;background:#fff;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer;color:#ef4444">🗑️</button>'
+      + '</div></div>'
+      + (prods_vinc.length
+        ? '<div style="display:flex;flex-wrap:wrap;gap:5px">'
+          + prods_vinc.map(p=>'<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.68rem;font-weight:600">'+(p.emoji||'🍽️')+' '+p.nome+'</span>').join('')
+          + '</div>'
+        : '<div style="font-size:.68rem;color:#ccc">Nenhum produto vinculado</div>')
+      + '</div>';
+  }).join('');
+}
+
+// ── Criar/Editar grupo ─────────────────────────────────────────────────────────
+window.criarNovoGrupoAdicional = function() {
+  _grupoEditando = null;
+  _opcoesTmp = [{ nome: '', preco: 0 }, { nome: '', preco: 0 }];
+  document.getElementById('eger-titulo').textContent = 'Novo grupo de adicionais';
+  document.getElementById('eger-nome').value = '';
+  document.getElementById('eger-min').value  = '0';
+  document.getElementById('eger-max').value  = '3';
+  renderOpcoesTmp();
+  renderProdutosVincular(null);
+  document.getElementById('modal-editar-grupo-add').style.display = 'flex';
+};
+
+window.editarGrupoAdicional = async function(id) {
+  const g = _gruposAdicionais.find(x => x.id === id);
+  if (!g) return;
+  _grupoEditando = g;
+  _opcoesTmp     = JSON.parse(JSON.stringify(g.opcoes || []));
+  document.getElementById('eger-titulo').textContent = 'Editar — ' + g.nome;
+  document.getElementById('eger-nome').value = g.nome;
+  document.getElementById('eger-min').value  = g.min;
+  document.getElementById('eger-max').value  = g.max;
+  renderOpcoesTmp();
+  renderProdutosVincular(id);
+  document.getElementById('modal-editar-grupo-add').style.display = 'flex';
+};
+
+window.fecharEditarGrupoAdd = function() {
+  document.getElementById('modal-editar-grupo-add').style.display = 'none';
+  _grupoEditando = null; _opcoesTmp = [];
+};
+
+function renderOpcoesTmp() {
+  const el = document.getElementById('eger-opcoes'); if (!el) return;
+  el.innerHTML = _opcoesTmp.map((o, i) => '<div style="display:flex;gap:8px;align-items:center">'
+    + '<input value="' + (o.nome||'') + '" placeholder="Nome da opção (ex: Ninho)" oninput="syncOpcao(' + i + ','nome',this.value)" '
+    + 'style="flex:2;border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none">'
+    + '<input type="number" value="' + (o.preco||0) + '" placeholder="R$" step="0.50" min="0" oninput="syncOpcao(' + i + ','preco',parseFloat(this.value)||0)" '
+    + 'style="width:72px;border:1.5px solid var(--border);border-radius:9px;padding:9px 8px;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none;text-align:right">'
+    + '<button onclick="rmOpcao(' + i + ')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:4px;flex-shrink:0">✕</button>'
+    + '</div>').join('');
+}
+
+window.syncOpcao = function(i, campo, val) { if (_opcoesTmp[i]) _opcoesTmp[i][campo] = val; };
+window.rmOpcao   = function(i) { _opcoesTmp.splice(i,1); renderOpcoesTmp(); };
+window.addOpcaoGrupo = function() { _opcoesTmp.push({nome:'',preco:0}); renderOpcoesTmp(); };
+
+function renderProdutosVincular(grupoId) {
+  const el = document.getElementById('eger-produtos'); if (!el) return;
+  if (!_produtosCache.length) { el.innerHTML = '<div style="color:#aaa;font-size:.8rem">Nenhum produto cadastrado</div>'; return; }
+  el.innerHTML = _produtosCache.map(p => {
+    const vinculado = p.grupo_adicional_id === grupoId;
+    return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid ' + (vinculado?'var(--red)':'#e0dbd5') + ';border-radius:10px;cursor:pointer;transition:all .15s;background:' + (vinculado?'#fff5f5':'#fff') + '">'
+      + '<input type="checkbox" id="vp-' + p.id + '" ' + (vinculado?'checked':'') + ' style="accent-color:var(--red);width:18px;height:18px">'
+      + '<span style="font-size:.88rem;font-weight:600">' + (p.emoji||'🍽️') + ' ' + p.nome + '</span>'
+      + '</label>';
+  }).join('');
+}
+
+window.salvarGrupoAdicional = async function() {
+  const estab = getEstab(); if (!estab) return;
+  const nome = document.getElementById('eger-nome')?.value?.trim();
+  const min  = parseInt(document.getElementById('eger-min')?.value||'0');
+  const max  = parseInt(document.getElementById('eger-max')?.value||'3');
+  if (!nome) return showToast('Digite o nome do grupo.', 'error');
+
+  const opcoes = _opcoesTmp.filter(o => o.nome?.trim());
+  if (!opcoes.length) return showToast('Adicione pelo menos uma opção.', 'error');
+
+  const btn = document.getElementById('btn-salvar-grupo');
+  if (btn) { btn.disabled=true; btn.textContent='Salvando...'; }
+
+  try {
+    let grupoId;
+    if (_grupoEditando) {
+      const { error } = await getSupa().from('grupos_adicionais')
+        .update({ nome, min, max, opcoes })
+        .eq('id', _grupoEditando.id);
+      if (error) throw error;
+      grupoId = _grupoEditando.id;
+    } else {
+      const { data, error } = await getSupa().from('grupos_adicionais')
+        .insert({ estabelecimento_id: estab.id, nome, min, max, opcoes })
+        .select().single();
+      if (error) throw error;
+      grupoId = data.id;
+    }
+
+    // Atualiza vinculações dos produtos
+    const checks = document.querySelectorAll('#eger-produtos input[type=checkbox]');
+    for (const cb of checks) {
+      const prodId  = cb.id.replace('vp-','');
+      const marcado = cb.checked;
+      const prod    = _produtosCache.find(p=>p.id===prodId);
+      if (!prod) continue;
+      const novoGrupo = marcado ? grupoId : (prod.grupo_adicional_id===grupoId ? null : prod.grupo_adicional_id);
+      if (novoGrupo !== prod.grupo_adicional_id) {
+        await getSupa().from('produtos').update({ grupo_adicional_id: novoGrupo }).eq('id', prodId);
+      }
+    }
+
+    showToast('Grupo salvo! ✅');
+    window.fecharEditarGrupoAdd();
+    await carregarGruposAdicionais();
+    _cardapioCache = null; // limpa cache para recarregar adicionais
+
+  } catch(e) {
+    showToast('Erro: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled=false; btn.textContent='Salvar grupo'; }
+  }
+};
+
+window.deletarGrupoAdicional = async function(id) {
+  if (!confirm('Remover este grupo? Os produtos vinculados perderão os adicionais.')) return;
+  await getSupa().from('grupos_adicionais').delete().eq('id', id);
+  showToast('Grupo removido.');
+  await carregarGruposAdicionais();
+  _cardapioCache = null;
+};
+
+
+// ── Handler de clique em item do cardápio da comanda ─────────────────────────
+window.tcmdItem = function(el) {
+  const mesaKey = el.dataset.mesa;
+  const pid     = el.dataset.pid;
+  const nome    = el.dataset.nome;
+  const preco   = parseFloat(el.dataset.preco);
+  const emoji   = el.dataset.emoji;
+  const grupoEnc= el.dataset.grupo;
+
+  if (grupoEnc) {
+    try {
+      const grupo = JSON.parse(decodeURIComponent(grupoEnc));
+      abrirAdicionaisGrupo(mesaKey, pid, nome, preco, emoji, grupo);
+    } catch(e) {
+      addItemComanda(mesaKey, pid, nome, preco, emoji);
+    }
+  } else {
+    addItemComanda(mesaKey, pid, nome, preco, emoji);
+  }
+};
+
+function abrirAdicionaisGrupo(mesaKey, prodId, nome, preco, emoji, grupo) {
+  _adicionalMesaKey = mesaKey;
+  _adicionalProduto = { id: prodId, nome, preco, emoji, adicionais: [grupo] };
+  _adicionalSel     = {};
+
+  document.getElementById('adicionais-nome').textContent       = nome;
+  document.getElementById('adicionais-preco-base').textContent = 'R$ ' + Number(preco).toFixed(2).replace('.',',');
+
+  const el = document.getElementById('adicionais-grupos'); if (!el) return;
+  const maxTxt = grupo.max === 1 ? 'Escolha 1' : grupo.min > 0 ? 'Mín. '+grupo.min+', Máx. '+grupo.max : 'Até '+grupo.max;
+  el.innerHTML = '<div class="adicional-grupo">'
+    + '<div class="adicional-grupo-titulo">' + grupo.nome + (grupo.min > 0 ? ' <span style="color:var(--red);font-size:.65rem">*obrigatório</span>' : '') + '</div>'
+    + '<div class="adicional-grupo-desc">' + maxTxt + '</div>'
+    + (grupo.opcoes||[]).map((o, oi) =>
+        '<div class="adicional-opt" id="aopt-0-' + oi + '" onclick="toggleAdicional(0,' + oi + ',' + grupo.max + ')">'
+        + '<div class="adicional-opt-left"><div class="adicional-opt-check">✓</div><span class="adicional-opt-nome">' + o.nome + '</span></div>'
+        + '<span class="adicional-opt-preco">' + (Number(o.preco||0)>0 ? '+R$ '+Number(o.preco).toFixed(2).replace('.',',') : 'Grátis') + '</span>'
+        + '</div>'
+      ).join('')
+    + '<div class="adicional-limite-aviso" id="aviso-0">Limite de ' + grupo.max + ' opções</div>'
+    + '</div>';
+
+  calcTotalAdicionais();
+  document.getElementById('modal-adicionais')?.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS GLOBAIS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1776,10 +1922,21 @@ async function carregarCardapioComanda() {
   if (_cardapioCache) return _cardapioCache;
   const estab = getEstab(); if (!estab) return [];
   const { data } = await getSupa()
-    .from('produtos').select('id,nome,preco,emoji,categoria,disponivel')
+    .from('produtos').select('id,nome,preco,emoji,categoria,disponivel,grupo_adicional_id')
     .eq('estabelecimento_id', estab.id)
     .eq('disponivel', true)
     .order('categoria');
+  
+  // Enriquece com dados do grupo de adicionais
+  if (data) {
+    const grupoIds = [...new Set(data.filter(p=>p.grupo_adicional_id).map(p=>p.grupo_adicional_id))];
+    if (grupoIds.length) {
+      const { data: grupos } = await getSupa().from('grupos_adicionais').select('*').in('id', grupoIds);
+      const grupoMap = {};
+      (grupos||[]).forEach(g=>{ grupoMap[g.id]=g; });
+      data.forEach(p=>{ if(p.grupo_adicional_id) p.adicionais_grupo = grupoMap[p.grupo_adicional_id]; });
+    }
+  }
   _cardapioCache = data || [];
   return _cardapioCache;
 }
@@ -1916,7 +2073,8 @@ function renderCardapioComanda(mesaKey, prods) {
   el.innerHTML = Object.entries(cats).map(([cat,items])=>
     '<span class="cmd-cat-label">' + cat + '</span>' +
     items.map(p=>
-      '<div class="cmd-item" onclick="' + (p.adicionais && p.adicionais.length ? 'abrirAdicionais(\'' + mesaKey + '\',encodeURIComponent(JSON.stringify(' + JSON.stringify(p) + ')))' : 'addItemComanda(\'' + mesaKey + '\',\'' + p.id + '\',\'' + p.nome.replace(/'/g,"\\'") + '\',' + p.preco + ',\'' + (p.emoji||'🍽️') + '\')') + '">' +
+      // ← onclick tratado inline abaixo
+      '<div class="cmd-item" onclick="tcmdItem(this)" data-pid="' + p.id + '" data-nome="' + p.nome.replace(/"/g,'&quot;') + '" data-preco="' + p.preco + '" data-emoji="' + (p.emoji||'🍽️') + '" data-grupo="' + (p.adicionais_grupo ? encodeURIComponent(JSON.stringify(p.adicionais_grupo)) : '') + '" data-mesa="' + mesaKey + '">' +
       '<span class="cmd-item-emoji">' + (p.emoji||'🍽️') + '</span>' +
       '<span class="cmd-item-nome">' + p.nome + '</span>' +
       '<span class="cmd-item-preco">R$ ' + Number(p.preco).toFixed(2).replace('.',',') + '</span>' +
