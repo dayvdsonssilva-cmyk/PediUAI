@@ -711,3 +711,112 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 /* ── SEM ZOOM NO MOBILE ── */
 html { touch-action: pan-y; }
 input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se font>=16px */
+
+/* ── SEÇÕES DO FINANCEIRO ─────────────────────────────────── */
+.fin-section-card {
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 20px;
+}
+.fin-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.fin-section-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #f5f0eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.fin-section-title {
+  font-size: .9rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 2px;
+}
+.fin-section-sub {
+  font-size: .68rem;
+  color: #aaa;
+  font-weight: 500;
+}
+
+/* Tabela financeiro melhorada */
+.fin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 480px;
+  font-size: .82rem;
+}
+.fin-table thead {
+  background: #faf8f5;
+}
+.fin-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: .62rem;
+  color: #888;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+.fin-table td {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  vertical-align: middle;
+}
+.fin-table tr:hover td { background: #faf8f5; }
+.fin-table tr:last-child td { }
+
+/* Barras de pagamento redesenhadas */
+#fin-pags-est .pag-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+#fin-pags-est .pag-row:last-child { border-bottom: none; }
+#fin-pags-est .pag-label {
+  font-size: .82rem;
+  font-weight: 700;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+#fin-pags-est .pag-bar-wrap {
+  flex: 1;
+  background: #f0e9e0;
+  border-radius: 50px;
+  height: 8px;
+  overflow: hidden;
+}
+#fin-pags-est .pag-bar-fill {
+  height: 100%;
+  border-radius: 50px;
+  background: var(--red);
+  transition: width .4s;
+}
+#fin-pags-est .pag-val {
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--red);
+  min-width: 80px;
+  text-align: right;
+  flex-shrink: 0;
+}
+#fin-pags-est .pag-pct {
+  font-size: .7rem;
+  color: #aaa;
+  min-width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
