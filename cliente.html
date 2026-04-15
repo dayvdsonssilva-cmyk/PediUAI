@@ -324,7 +324,7 @@
 </div>
 
 <!-- MODAL IMAGEM FULL -->
-<div id="modal-img-full" style="position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:400;display:none;align-items:center;justify-content:center;flex-direction:column;">
+<div id="modal-img-full" style="position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:400;display:none;align-items:center;justify-content:center;flex-direction:column;" onclick="if(event.target===this||event.target.id==='modal-img-full')$('modal-img-full').style.display='none'">
   <button id="btn-fechar-full" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:1.3rem;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center">✕</button>
   <img id="modal-img-full-src" style="max-width:96vw;max-height:88vh;object-fit:contain;border-radius:8px;display:block">
   <div id="modal-full-controls" style="display:none;align-items:center;gap:16px;margin-top:14px">
@@ -702,6 +702,20 @@ async function carregarProdutos() {
     .eq('disponivel', true)
     .order('created_at', { ascending: false });
   produtos = data || [];
+
+  // Carrega grupos de adicionais vinculados
+  const gIds = [...new Set((produtos).filter(p=>p.grupo_adicional_id).map(p=>p.grupo_adicional_id))];
+  if (gIds.length) {
+    try {
+      const { data: grupos } = await supa.from('grupos_adicionais').select('*').in('id', gIds);
+      const gMap = {};
+      (grupos||[]).forEach(g => { gMap[g.id] = g; });
+      produtos.forEach(p => {
+        if (p.grupo_adicional_id) p.grupo_adicionais = gMap[p.grupo_adicional_id] || null;
+      });
+    } catch(e) { console.warn('grupos adicionais:', e); }
+  }
+
   renderProdutos('Todos');
   renderFiltros();
   renderPromos();
