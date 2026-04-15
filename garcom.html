@@ -7,616 +7,317 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{height:100%;font-family:'Poppins',sans-serif;background:#f0e9e0;color:#1a1a1a}
+    html,body{height:100%;font-family:'Poppins',sans-serif;background:#f5f0eb;color:#1a1a1a}
     :root{--red:#C0392B;--border:#e0dbd5}
-
-    /* HEADER */
-    .gc-header{background:#1a1a1a;color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-    .gc-logo{font-size:1rem;font-weight:800;letter-spacing:-.3px}
-    .gc-logo span{color:var(--red)}
-    .gc-loja{font-size:.75rem;color:#aaa;margin-top:1px}
-    .gc-badge{background:rgba(255,255,255,.12);padding:4px 10px;border-radius:50px;font-size:.7rem;font-weight:700;color:#aaa;white-space:nowrap}
-
-    /* LOADING */
-    #loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px;color:#aaa}
-    .spinner{width:36px;height:36px;border:3px solid #e0dbd5;border-top-color:var(--red);border-radius:50%;animation:spin .7s linear infinite}
+    .gc-header{background:#1a1a1a;color:#fff;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .gc-logo{font-weight:800;font-size:1rem}.gc-logo span{color:var(--red)}
+    .gc-loja{font-size:.72rem;color:#aaa;font-weight:500;margin-top:1px}
+    .gc-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);padding:4px 10px;border-radius:50px;font-size:.68rem;font-weight:700;color:#ddd}
+    .loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px;color:#aaa}
+    .spinner{width:34px;height:34px;border:3px solid #e0dbd5;border-top-color:var(--red);border-radius:50%;animation:spin .7s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-
-    /* RESUMO STATS */
     .gc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px 14px 0}
-    .gc-stat{background:#fff;border-radius:12px;padding:12px 10px;text-align:center;border:1px solid var(--border)}
-    .gc-stat-lbl{font-size:.58rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
-    .gc-stat-val{font-size:1.2rem;font-weight:800}
-    .gc-stat-val.red{color:var(--red)}
-    .gc-stat-val.green{color:#22c55e}
-
-    /* GRID DE MESAS */
-    .gc-section-title{font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;padding:16px 14px 8px}
-    .gc-mesas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;padding:0 14px 20px}
-
-    .gc-mesa{background:#fff;border:2px solid var(--border);border-radius:14px;padding:14px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;min-height:105px;justify-content:center;transition:all .2s;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.04)}
-    .gc-mesa:active{transform:scale(.97)}
-    .gc-mesa.ocupada{border-color:var(--red);background:linear-gradient(135deg,#fff5f5,#fff);animation:mesa-pulse 2.5s ease-in-out infinite}
-    .gc-mesa.fechando{border-color:#22c55e;background:#f0fdf4;animation:none}
-    @keyframes mesa-pulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.08)}50%{box-shadow:0 0 0 8px rgba(192,57,43,0)}}
-
-    .gc-mesa-dot{width:8px;height:8px;border-radius:50%;position:absolute;top:9px;right:9px}
-    .gc-mesa-dot.livre{background:#d1d5db}
-    .gc-mesa-dot.ocup{background:var(--red);animation:dot-blink 1.2s ease-in-out infinite}
-    @keyframes dot-blink{0%,100%{opacity:1}50%{opacity:.4}}
-
-    .gc-mesa-num{font-size:1.7rem;font-weight:800;line-height:1;color:#1a1a1a}
-    .gc-mesa-lbl{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#bbb}
-    .gc-mesa-total{font-size:.85rem;font-weight:800;color:var(--red)}
-    .gc-mesa-qtd{font-size:.65rem;color:#aaa}
-
-    /* MODAL COMANDA GARÇOM */
-    #gc-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:flex-end;justify-content:center}
+    .stat-box{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px 10px;text-align:center}
+    .stat-label{font-size:.58rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+    .stat-num{font-size:1.3rem;font-weight:800}
+    .stat-num.red{color:var(--red)}.stat-num.green{color:#22c55e}
+    .section-title{font-size:.7rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;padding:14px 14px 8px}
+    .mesas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;padding:0 14px 100px}
+    .mesa-card{background:#fff;border:2px solid var(--border);border-radius:14px;padding:14px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;min-height:105px;justify-content:center;transition:all .2s;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+    .mesa-card:active{transform:scale(.97)}
+    .mesa-card.ocupada{border-color:var(--red);background:linear-gradient(135deg,#fff5f5,#fff);animation:pulse 2.5s ease-in-out infinite}
+    .mesa-card.fechando{border-color:#22c55e;background:#f0fdf4;animation:none}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.08)}50%{box-shadow:0 0 0 8px rgba(192,57,43,0)}}
+    .mesa-dot{width:8px;height:8px;border-radius:50%;position:absolute;top:9px;right:9px}
+    .mesa-dot.livre{background:#d1d5db}.mesa-dot.ocup{background:var(--red);animation:blink 1.2s ease-in-out infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+    .mesa-num{font-size:1.8rem;font-weight:800;line-height:1}
+    .mesa-lbl{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#bbb}
+    .mesa-total{font-size:.85rem;font-weight:800;color:var(--red)}.mesa-qtd{font-size:.65rem;color:#aaa}
+    #gc-modal{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:flex-end;justify-content:center}
     #gc-modal.open{display:flex}
-    #gc-sheet{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;display:flex;flex-direction:column;height:94vh;max-height:820px;overflow:hidden}
-
-    /* Header do modal */
-    .gc-modal-hdr{padding:16px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px}
-    .gc-modal-mesa{font-size:1.2rem;font-weight:800}
-    .gc-modal-sub{font-size:.62rem;color:#aaa;margin-top:1px}
-    .gc-modal-total{text-align:right;flex-shrink:0}
-    .gc-modal-total-lbl{font-size:.58rem;color:#aaa;text-transform:uppercase;letter-spacing:.05em}
-    .gc-modal-total-val{font-size:1.1rem;font-weight:800;color:var(--red)}
-    .gc-x{background:none;border:none;font-size:1.2rem;cursor:pointer;color:#aaa;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;transition:background .15s}
-    .gc-x:hover{background:#f0e9e0}
-
-    /* Campo nome */
-    .gc-nome-wrap{padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
-    .gc-nome-input{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-family:'Poppins',sans-serif;font-size:.88rem;outline:none;background:#faf8f5;transition:border-color .2s}
-    .gc-nome-input:focus{border-color:var(--red);background:#fff}
-
-    /* Tabs */
-    .gc-tabs{display:flex;border-bottom:2px solid var(--border);flex-shrink:0}
-    .gc-tab{flex:1;padding:11px;border:none;background:none;font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:600;color:#aaa;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;transition:all .15s}
-    .gc-tab.on{color:var(--red);border-bottom-color:var(--red);font-weight:700}
-
-    /* Painéis */
-    .gc-panel{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
-
-    /* Cardápio */
+    #gc-sheet{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;display:flex;flex-direction:column;height:94vh;overflow:hidden}
+    .modal-hdr{padding:15px 16px 11px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
+    .modal-mesa{font-size:1.2rem;font-weight:800}.modal-sub{font-size:.6rem;color:#aaa;margin-top:1px}
+    .modal-total-lbl{font-size:.58rem;color:#aaa;text-transform:uppercase;letter-spacing:.05em}
+    .modal-total-val{font-size:1.1rem;font-weight:800;color:var(--red)}
+    .btn-x{background:none;border:none;font-size:1.2rem;cursor:pointer;color:#aaa;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0}
+    .btn-x:hover{background:#f0e9e0}
+    .nome-wrap{padding:9px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+    .nome-input{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-family:'Poppins',sans-serif;font-size:.88rem;outline:none;background:#faf8f5;transition:border-color .2s}
+    .nome-input:focus{border-color:var(--red);background:#fff}
+    .modal-tabs{display:flex;border-bottom:2px solid var(--border);flex-shrink:0}
+    .mtab{flex:1;padding:11px;border:none;background:none;font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:600;color:#aaa;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;transition:all .15s}
+    .mtab.on{color:var(--red);border-bottom-color:var(--red);font-weight:700}
+    .panel{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
     #gc-cardapio{overflow-y:auto;flex:1;padding:8px 12px;-webkit-overflow-scrolling:touch}
-    .gc-cat-lbl{font-size:.6rem;font-weight:800;color:#aaa;text-transform:uppercase;letter-spacing:.08em;padding:8px 0 4px;display:block}
-    .gc-item{display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:10px;cursor:pointer;border:1.5px solid transparent;transition:all .15s;margin-bottom:2px;-webkit-tap-highlight-color:transparent}
-    .gc-item:active{background:#f0e9e0;transform:scale(.98)}
-    .gc-item-emoji{font-size:1.4rem;width:34px;text-align:center;flex-shrink:0}
-    .gc-item-nome{font-size:.86rem;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .gc-item-preco{font-size:.85rem;font-weight:800;color:var(--red);flex-shrink:0}
-
-    /* Carrinho */
-    .gc-carr-sep{border-top:2px dashed var(--border);background:#faf8f5;flex-shrink:0}
-    .gc-carr-top{padding:8px 14px;display:flex;justify-content:space-between;align-items:center}
-    .gc-carr-lbl{font-size:.68rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em}
-    .gc-carr-subtotal{font-size:.9rem;font-weight:800;color:var(--red)}
-    #gc-carrinho{max-height:160px;overflow-y:auto;padding:0 12px 4px;-webkit-overflow-scrolling:touch}
-    .gc-carr-empty{color:#ccc;font-size:.75rem;text-align:center;padding:10px 0}
-    .gc-carr-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--border)}
-    .gc-carr-row:last-child{border-bottom:none}
-    .gc-carr-emoji{font-size:1rem;flex-shrink:0}
-    .gc-carr-nome{font-size:.82rem;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .gc-carr-ctrl{display:flex;align-items:center;gap:4px;flex-shrink:0}
-    .gc-carr-btn{width:25px;height:25px;border-radius:50%;border:1.5px solid var(--border);background:#fff;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:800;transition:all .12s}
-    .gc-carr-btn.minus:hover{border-color:var(--red);color:var(--red)}
-    .gc-carr-btn.plus{border:none;background:var(--red);color:#fff}
-    .gc-carr-qtd{font-size:.88rem;font-weight:800;min-width:16px;text-align:center}
-    .gc-carr-sub{font-size:.78rem;font-weight:700;color:var(--red);min-width:56px;text-align:right}
-
-    /* Botões ação */
+    .cat-lbl{font-size:.6rem;font-weight:800;color:#aaa;text-transform:uppercase;letter-spacing:.08em;padding:8px 0 4px;display:block}
+    .prod-item{display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:10px;cursor:pointer;transition:background .15s;margin-bottom:2px;user-select:none}
+    .prod-item:active{background:#f0e9e0;transform:scale(.98)}
+    .prod-emoji{font-size:1.4rem;width:34px;text-align:center;flex-shrink:0}
+    .prod-nome{font-size:.86rem;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .prod-preco{font-size:.85rem;font-weight:800;color:var(--red);flex-shrink:0}
+    .carr-sep{border-top:2px dashed var(--border);background:#faf8f5;flex-shrink:0}
+    .carr-top{padding:8px 14px;display:flex;justify-content:space-between;align-items:center}
+    .carr-top-lbl{font-size:.68rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em}
+    .carr-subtotal{font-size:.9rem;font-weight:800;color:var(--red)}
+    #gc-carr{max-height:155px;overflow-y:auto;padding:0 12px 4px;-webkit-overflow-scrolling:touch}
+    .carr-empty{color:#ccc;font-size:.75rem;text-align:center;padding:10px 0}
+    .carr-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--border)}
+    .carr-row:last-child{border-bottom:none}
+    .carr-emoji{font-size:1rem;flex-shrink:0}.carr-nome{font-size:.82rem;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .carr-ctrl{display:flex;align-items:center;gap:4px;flex-shrink:0}
+    .carr-btn{width:25px;height:25px;border-radius:50%;border:1.5px solid var(--border);background:#fff;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:800}
+    .carr-btn.plus{border:none;background:var(--red);color:#fff}
+    .carr-qtd{font-size:.88rem;font-weight:800;min-width:16px;text-align:center}
+    .carr-sub{font-size:.78rem;font-weight:700;color:var(--red);min-width:56px;text-align:right}
     .gc-actions{padding:10px 14px 20px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;border-top:1px solid var(--border)}
-    .gc-btn-enviar{background:var(--red);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;transition:background .2s;width:100%}
-    .gc-btn-enviar:disabled{opacity:.4;cursor:not-allowed}
-    .gc-btn-fechar{background:#1a1a1a;color:#fff;border:none;border-radius:12px;padding:12px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;width:100%}
-
-    /* Histórico */
-    .gc-hist-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:#faf8f5;flex-shrink:0}
-    #gc-historico{overflow-y:auto;flex:1;padding:10px 12px;-webkit-overflow-scrolling:touch;-webkit-overflow-scrolling:touch}
-    .gc-hist-bloco{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;background:#fff}
-    .gc-hist-id{font-size:.68rem;font-weight:700;color:#aaa;margin-bottom:5px}
-    .gc-hist-item{display:flex;justify-content:space-between;font-size:.82rem;padding:2px 0}
-    .gc-hist-status-novo{color:#f59e0b;font-weight:700}
-    .gc-hist-status-preparo{color:#3b82f6;font-weight:700}
-    .gc-hist-status-pronto{color:#22c55e;font-weight:700}
-    .gc-hist-sub{text-align:right;font-size:.78rem;color:var(--red);font-weight:700;margin-top:4px}
-
-    /* Toast */
-    #gc-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;padding:10px 20px;border-radius:50px;font-weight:700;font-size:.82rem;z-index:9999;display:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.3)}
-
-    @media(min-width:520px){
-      #gc-sheet{height:88vh}
-    }
+    .btn-enviar{background:var(--red);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;width:100%;transition:opacity .2s}
+    .btn-enviar:disabled{opacity:.4;cursor:not-allowed}
+    .btn-fechar{background:#1a1a1a;color:#fff;border:none;border-radius:12px;padding:12px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;width:100%}
+    .hist-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:#faf8f5;flex-shrink:0}
+    .hist-hdr-lbl{font-size:.7rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em}
+    .btn-print{display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;font-family:'Poppins',sans-serif;font-size:.7rem;font-weight:700;color:#555;cursor:pointer}
+    #gc-historico{overflow-y:auto;flex:1;padding:10px 12px;-webkit-overflow-scrolling:touch}
+    .hist-bloco{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;background:#fff}
+    .hist-id{font-size:.68rem;font-weight:700;color:#aaa;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center}
+    .hist-item-row{display:flex;justify-content:space-between;font-size:.82rem;padding:2px 0}
+    .hist-sub{text-align:right;font-size:.78rem;color:var(--red);font-weight:700;margin-top:4px}
+    .s-novo{color:#f59e0b;font-weight:700}.s-preparo{color:#3b82f6;font-weight:700}.s-pronto{color:#22c55e;font-weight:700}
+    #gc-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;padding:10px 20px;border-radius:50px;font-weight:700;font-size:.82rem;z-index:9999;display:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.25);pointer-events:none}
   </style>
 </head>
 <body>
-
 <div class="gc-header">
   <div>
     <div class="gc-logo">PEDI<span>WAY</span></div>
     <div class="gc-loja" id="gc-loja-nome">Carregando...</div>
   </div>
-  <div class="gc-badge">🍽️ Modo Garçom</div>
+  <div class="gc-badge">&#127829; Garçom</div>
 </div>
-
-<div id="loading">
-  <div class="spinner"></div>
-  <div style="font-size:.85rem">Carregando...</div>
-</div>
-
+<div id="gc-loading" class="loading-wrap"><div class="spinner"></div><div style="font-size:.82rem">Carregando...</div></div>
 <div id="gc-main" style="display:none">
-  <!-- Stats -->
   <div class="gc-stats">
-    <div class="gc-stat">
-      <div class="gc-stat-lbl">Ocupadas</div>
-      <div class="gc-stat-val red" id="gc-st-ocup">0</div>
-    </div>
-    <div class="gc-stat">
-      <div class="gc-stat-lbl">Pedidos</div>
-      <div class="gc-stat-val" id="gc-st-peds">0</div>
-    </div>
-    <div class="gc-stat">
-      <div class="gc-stat-lbl">Total</div>
-      <div class="gc-stat-val green" id="gc-st-total">R$0</div>
-    </div>
+    <div class="stat-box"><div class="stat-label">Ocupadas</div><div class="stat-num red" id="gc-ocup">0</div></div>
+    <div class="stat-box"><div class="stat-label">Pedidos</div><div class="stat-num" id="gc-peds">0</div></div>
+    <div class="stat-box"><div class="stat-label">Total</div><div class="stat-num green" id="gc-total">R$0</div></div>
   </div>
-
-  <div class="gc-section-title">Mesas</div>
-  <div class="gc-mesas-grid" id="gc-mesas-grid"></div>
+  <div class="section-title">Mesas</div>
+  <div class="mesas-grid" id="gc-grid"></div>
 </div>
-
-<!-- MODAL COMANDA -->
 <div id="gc-modal">
   <div id="gc-sheet">
-
-    <!-- Header -->
-    <div class="gc-modal-hdr">
+    <div class="modal-hdr">
       <div style="flex:1;min-width:0">
-        <div class="gc-modal-mesa" id="gc-modal-mesa">Mesa --</div>
-        <div class="gc-modal-sub">Comanda digital</div>
+        <div class="modal-mesa" id="gc-modal-mesa">Mesa --</div>
+        <div class="modal-sub">Comanda digital</div>
       </div>
-      <div class="gc-modal-total">
-        <div class="gc-modal-total-lbl">Total mesa</div>
-        <div class="gc-modal-total-val" id="gc-modal-total">R$ 0,00</div>
+      <div style="text-align:right;flex-shrink:0">
+        <div class="modal-total-lbl">Total da mesa</div>
+        <div class="modal-total-val" id="gc-modal-total">R$ 0,00</div>
       </div>
-      <button class="gc-x" onclick="gcFechar()">✕</button>
+      <button class="btn-x" onclick="gcFechar()">&#10005;</button>
     </div>
-
-    <!-- Nome -->
-    <div class="gc-nome-wrap">
-      <input class="gc-nome-input" id="gc-nome-cli" placeholder="Nome do cliente (opcional)" oninput="gcSalvarNome(this.value)">
+    <div class="nome-wrap">
+      <input class="nome-input" id="gc-nome" placeholder="Nome do cliente (opcional)" oninput="gcSalvarNome(this.value)">
     </div>
-
-    <!-- Tabs -->
-    <div class="gc-tabs">
-      <button class="gc-tab on" id="gc-tab-novo"  onclick="gcTab('novo')">➕ Novo pedido</button>
-      <button class="gc-tab"    id="gc-tab-hist"  onclick="gcTab('hist')">📋 Comanda</button>
+    <div class="modal-tabs">
+      <button class="mtab on" id="tab-novo" onclick="gcTab('novo')">&#10133; Novo pedido</button>
+      <button class="mtab"    id="tab-hist" onclick="gcTab('hist')">&#128203; Comanda</button>
     </div>
-
-    <!-- Painel: Novo pedido -->
-    <div id="gc-panel-novo" class="gc-panel">
-      <div id="gc-cardapio" style="flex:1;overflow-y:auto;padding:8px 12px;-webkit-overflow-scrolling:touch"></div>
-
-      <div class="gc-carr-sep">
-        <div class="gc-carr-top">
-          <span class="gc-carr-lbl">Selecionados</span>
-          <span class="gc-carr-subtotal" id="gc-carr-subtotal">R$ 0,00</span>
-        </div>
-        <div id="gc-carrinho"><div class="gc-carr-empty">Nenhum item ainda</div></div>
+    <div id="gc-novo-panel" class="panel">
+      <div id="gc-cardapio"></div>
+      <div class="carr-sep">
+        <div class="carr-top"><span class="carr-top-lbl">Selecionados</span><span class="carr-subtotal" id="gc-carr-sub">R$ 0,00</span></div>
+        <div id="gc-carr"><div class="carr-empty">Nenhum item</div></div>
       </div>
-
       <div class="gc-actions">
-        <button class="gc-btn-enviar" id="gc-btn-enviar" disabled onclick="gcEnviar()">Enviar para cozinha 🍳</button>
-        <button class="gc-btn-fechar" onclick="gcFecharComanda()">Fechar comanda ✅</button>
+        <button class="btn-enviar" id="gc-btn-env" disabled onclick="gcEnviar()">Enviar para cozinha &#127859;</button>
+        <button class="btn-fechar" onclick="gcFecharComanda()">Fechar comanda &#9989;</button>
       </div>
     </div>
-
-    <!-- Painel: Comanda (histórico) -->
-    <div id="gc-panel-hist" class="gc-panel" style="display:none;flex-direction:column">
-      <div class="gc-hist-hdr">
-        <span style="font-size:.72rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em">Pedidos da mesa</span>
-        <button onclick="gcImprimirComanda()" style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;font-family:'Poppins',sans-serif;font-size:.7rem;font-weight:700;color:#555;cursor:pointer">🖨️ Imprimir</button>
+    <div id="gc-hist-panel" class="panel" style="display:none;flex-direction:column">
+      <div class="hist-hdr">
+        <span class="hist-hdr-lbl">Pedidos da mesa</span>
+        <button class="btn-print" onclick="gcImprimir()">&#128424; Imprimir</button>
       </div>
       <div id="gc-historico"></div>
-      <div class="gc-actions" style="border-top:1px solid var(--border)">
-        <button class="gc-btn-fechar" onclick="gcFecharComanda()">Fechar comanda ✅</button>
-      </div>
+      <div class="gc-actions"><button class="btn-fechar" onclick="gcFecharComanda()">Fechar comanda &#9989;</button></div>
     </div>
-
   </div>
 </div>
-
 <div id="gc-toast"></div>
-
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const SUPA_URL='https://nmttkjmfazcipefeakkx.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmFra3giLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NDA0OTQ0NiwiZXhwIjoyMDU5NjI1NDQ2fQ.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+const db=createClient(SUPA_URL,SUPA_KEY);
+const $=id=>document.getElementById(id);
+const fmtR=v=>'R$ '+Number(v||0).toFixed(2).replace('.',',');
 
-// ── Config ────────────────────────────────────────────────────────────────────
-const SURL = 'https://nmttkjmfazcipefeakkx.supabase.co';
-const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmFra3giLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NDA0OTQ0NiwiZXhwIjoyMDU5NjI1NDQ2fQ.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
-const db   = createClient(SURL, SKEY);
+// EXTRAI SLUG — /comandas/nome_da_loja → nome_da_loja
+// Usa o mesmo padrão do cliente.html mas pega o 2o segmento
+const _p=location.pathname;
+const _segs=_p.replace(/^\/|\/$/g,'').split('/');
+// _segs = ['comandas','nome_da_loja'] → slug = _segs[1]
+// ou _segs = ['nome_da_loja'] → slug = _segs[0] (fallback)
+const slug=_segs.length>=2&&_segs[0]==='comandas'?_segs[1]:_segs[_segs.length-1]||'';
+console.log('[Garcom] pathname='+_p+' slug='+slug);
 
-const $ = id => document.getElementById(id);
-const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+let estab=null,produtos=[],pedMesas={},nomes={},carrinhos={},mesaAtual=null,fechadas=new Set();
 
-// ── Estado ────────────────────────────────────────────────────────────────────
-let estab        = null;
-let produtos     = [];
-let pedidosMesas = {}; // { "Mesa 3": [pedido, ...] }
-let nomesMesa    = {}; // { "Mesa 3": "João" }
-let carrinho     = {}; // { "Mesa 3": [{id, nome, preco, emoji, qtd}] }
-let mesaAtiva    = null;
-let mesasFechas  = new Set();
-let realtimeSub  = null;
-
-// ── Pega slug da URL (/comandas/slug) ─────────────────────────────────────────
-// Extrai slug da URL: /comandas/nome_da_loja → 'nome_da_loja'
-// Mesmo padrão que o cliente.html usa (comprovado funcionar)
-const _rawPath   = location.pathname.replace(/^\//, ''); // remove barra inicial
-const _pathSegs  = _rawPath.split('/').filter(Boolean);   // ['comandas','slug']
-// Pega o segmento após 'comandas', ou o último segmento como fallback
-const slug = _pathSegs.length >= 2
-  ? _pathSegs[_pathSegs.length - 1]   // último segmento = slug
-  : _pathSegs[0] || '';
-console.log('[Garcom] URL:', location.href, '| segs:', _pathSegs, '| slug:', slug);
-
-// ── Init ──────────────────────────────────────────────────────────────────────
-async function init() {
-  if (!slug) { $('loading').innerHTML = '<p style="color:#aaa;padding:40px;text-align:center">Link inválido</p>'; return; }
-
-  if (!slug) {
-    $('loading').innerHTML = '<p style="color:#aaa;padding:40px;text-align:center">Link inválido — slug não encontrado na URL</p>';
+async function init(){
+  if(!slug){$('gc-loading').innerHTML='<p style="color:#aaa;padding:40px;text-align:center">Link invalido - slug nao encontrado</p>';return;}
+  const{data:est,error}=await db.from('estabelecimentos').select('*').eq('slug',slug).maybeSingle();
+  console.log('[Garcom] resultado:',est?.nome,'erro:',error?.message);
+  if(!est){
+    $('gc-loading').innerHTML='<p style="color:#aaa;padding:40px;text-align:center;line-height:2">Loja nao encontrada<br><small style="font-size:.7rem">slug: "'+slug+'"</small></p>';
     return;
   }
-  console.log('[Garcom] Buscando slug:', slug);
-  const { data: est, error: estErr } = await db.from('estabelecimentos').select('*').eq('slug', slug).maybeSingle();
-  console.log('[Garcom] Resultado:', est?.nome, '| Erro:', estErr?.message);
-  if (!est) {
-    $('loading').innerHTML = `<p style="color:#aaa;padding:40px;text-align:center">Loja não encontrada<br><small style="font-size:.7rem">Slug: "${slug}"</small></p>`;
-    return;
-  }
-  estab = est;
-  $('gc-loja-nome').textContent = est.nome;
-  document.title = `Garçom — ${est.nome}`;
-
-  // Carrega produtos
-  const { data: prods } = await db.from('produtos').select('id,nome,preco,emoji,categoria,disponivel')
-    .eq('estabelecimento_id', est.id).eq('disponivel', true).order('categoria');
-  produtos = prods || [];
-
-  // Carrega pedidos ativos de mesa
-  await carregarPedidosMesas();
-
-  // Inicia realtime
-  iniciarRealtime();
-
-  $('loading').style.display = 'none';
-  $('gc-main').style.display = 'block';
-  renderMesas();
+  estab=est;$('gc-loja-nome').textContent=est.nome;document.title='Garcom - '+est.nome;
+  const{data:prods}=await db.from('produtos').select('id,nome,preco,emoji,categoria,disponivel').eq('estabelecimento_id',est.id).eq('disponivel',true).order('categoria');
+  produtos=prods||[];
+  await loadPedidos();iniciarRealtime();
+  $('gc-loading').style.display='none';$('gc-main').style.display='block';renderMesas();
 }
 
-async function carregarPedidosMesas() {
-  const { data } = await db.from('pedidos').select('*')
-    .eq('estabelecimento_id', estab.id)
-    .ilike('endereco', 'No local%')
-    .in('status', ['novo', 'preparo'])
-    .order('created_at', { ascending: true });
-
-  pedidosMesas = {};
-  (data || []).forEach(p => {
-    const parts = (p.endereco||'').split('—');
-    if (parts.length < 2) return;
-    const key = parts[1].trim();
-    if (!pedidosMesas[key]) pedidosMesas[key] = [];
-    pedidosMesas[key].push(p);
-  });
+async function loadPedidos(){
+  const{data}=await db.from('pedidos').select('*').eq('estabelecimento_id',estab.id).ilike('endereco','No local%').in('status',['novo','preparo']).order('created_at',{ascending:true});
+  pedMesas={};
+  (data||[]).forEach(p=>{const parts=(p.endereco||'').split('—');if(parts.length<2)return;const key=parts[1].trim();if(!pedMesas[key])pedMesas[key]=[];pedMesas[key].push(p);});
 }
 
-// ── Realtime ──────────────────────────────────────────────────────────────────
-function iniciarRealtime() {
-  realtimeSub = db.channel('garcom-' + estab.id)
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos' }, payload => {
-      const p = payload.new;
-      if (!p || p.estabelecimento_id !== estab.id) return;
-      if (!p.endereco?.startsWith('No local')) return;
-      if (!['novo','preparo'].includes(p.status)) return;
-      const parts = (p.endereco||'').split('—');
-      if (parts.length < 2) return;
-      const key = parts[1].trim();
-      if (!pedidosMesas[key]) pedidosMesas[key] = [];
-      if (!pedidosMesas[key].find(x=>x.id===p.id)) {
-        pedidosMesas[key].push(p);
-        renderMesas();
-        gcToast('🍽️ Novo pedido na ' + key + '!');
-        if (mesaAtiva === key) gcRenderHistorico();
-      }
+function iniciarRealtime(){
+  db.channel('gc-'+estab.id)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'pedidos'},async payload=>{
+      const p=payload.new;
+      if(!p||p.estabelecimento_id!==estab.id)return;
+      if(!p.endereco?.startsWith('No local'))return;
+      if(!['novo','preparo'].includes(p.status))return;
+      const key=(p.endereco||'').split('—')[1]?.trim();if(!key)return;
+      if(!pedMesas[key])pedMesas[key]=[];
+      if(!pedMesas[key].find(x=>x.id===p.id)){pedMesas[key].push(p);renderMesas();toast('Novo pedido na '+key+'!');if(mesaAtual===key)renderHistorico();}
     })
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos' }, payload => {
-      const p = payload.new;
-      if (p.estabelecimento_id !== estab.id) return;
-      // Atualiza status na lista
-      Object.values(pedidosMesas).forEach(arr => {
-        const idx = arr.findIndex(x=>x.id===p.id);
-        if (idx >= 0) arr[idx] = { ...arr[idx], ...p };
-      });
-      if (['pronto','recusado'].includes(p.status)) {
-        Object.keys(pedidosMesas).forEach(k => {
-          pedidosMesas[k] = pedidosMesas[k].filter(x=>x.id!==p.id);
-          if (!pedidosMesas[k].length) delete pedidosMesas[k];
-        });
-      }
-      renderMesas();
-      if (mesaAtiva) gcRenderHistorico();
-    })
-    .subscribe();
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'pedidos'},payload=>{
+      const p=payload.new;if(p.estabelecimento_id!==estab.id)return;
+      Object.keys(pedMesas).forEach(k=>{const idx=pedMesas[k].findIndex(x=>x.id===p.id);if(idx>=0){if(['pronto','recusado'].includes(p.status)){pedMesas[k].splice(idx,1);if(!pedMesas[k].length)delete pedMesas[k];}else{pedMesas[k][idx]={...pedMesas[k][idx],...p};}}});
+      renderMesas();if(mesaAtual)renderHistorico();
+    }).subscribe();
 }
 
-// ── Mesas ─────────────────────────────────────────────────────────────────────
-function numMesas() {
-  const salvo = localStorage.getItem('gc_num_mesas_' + estab.id);
-  return parseInt(salvo || '10', 10);
-}
+function numMesas(){return parseInt(localStorage.getItem('gc_num_mesas_'+(estab?.id||''))||'10',10);}
 
-function renderMesas() {
-  const n    = numMesas();
-  const grid = $('gc-mesas-grid'); if (!grid) return;
-
-  const allPeds = Object.values(pedidosMesas).flat();
-  const mOcup   = Object.keys(pedidosMesas).filter(k=>pedidosMesas[k].length>0).length;
-  const totGeral = allPeds.reduce((s,p)=>s+Number(p.total||0),0);
-
-  $('gc-st-ocup').textContent  = mOcup;
-  $('gc-st-peds').textContent  = allPeds.length;
-  $('gc-st-total').textContent = 'R$'+totGeral.toFixed(0);
-
-  grid.innerHTML = Array.from({length:n},(_,i) => {
-    const num   = i+1;
-    const key   = 'Mesa '+num;
-    const peds  = pedidosMesas[key]||[];
-    const ativa = peds.length>0;
-    const fech  = mesasFechas.has(key);
-    const tot   = peds.reduce((s,p)=>s+Number(p.total||0),0);
-    const qtdIt = peds.reduce((s,p)=>s+(Array.isArray(p.itens)?p.itens.reduce((a,i)=>a+(i.qtd||1),0):0),0);
-
-    let cls='', dot='livre', info='<span class="gc-mesa-lbl">Livre</span>';
-    if (fech) {
-      cls='fechando'; info='<span class="gc-mesa-lbl" style="color:#22c55e">✓ Fechada</span>';
-    } else if (ativa) {
-      cls='ocupada'; dot='ocup';
-      info=`<span class="gc-mesa-total">${fmtR(tot)}</span><span class="gc-mesa-qtd">${peds.length} ped · ${qtdIt} itens</span>`;
-    }
-    return `<div class="gc-mesa ${cls}" onclick="gcAbrirMesa(${num})">
-      <div class="gc-mesa-dot ${dot}"></div>
-      <div class="gc-mesa-num">${num}</div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">${info}</div>
-    </div>`;
+function renderMesas(){
+  const n=numMesas();const grid=$('gc-grid');if(!grid)return;
+  const allP=Object.values(pedMesas).flat();
+  const mOcup=Object.keys(pedMesas).filter(k=>pedMesas[k].length>0).length;
+  const tot=allP.reduce((s,p)=>s+Number(p.total||0),0);
+  $('gc-ocup').textContent=mOcup;$('gc-peds').textContent=allP.length;$('gc-total').textContent='R$'+tot.toFixed(0);
+  grid.innerHTML=Array.from({length:n},(_,i)=>{
+    const num=i+1,key='Mesa '+num,peds=pedMesas[key]||[],ativ=peds.length>0,fech=fechadas.has(key);
+    const t=peds.reduce((s,p)=>s+Number(p.total||0),0);
+    const q=peds.reduce((s,p)=>s+(Array.isArray(p.itens)?p.itens.reduce((a,i)=>a+(i.qtd||1),0):0),0);
+    let cls='',dot='livre',info='<span class="mesa-lbl">Livre</span>';
+    if(fech){cls='fechando';info='<span class="mesa-lbl" style="color:#22c55e">&#10003; Fechada</span>';}
+    else if(ativ){cls='ocupada';dot='ocup';info='<span class="mesa-total">'+fmtR(t)+'</span><span class="mesa-qtd">'+peds.length+' ped &#183; '+q+' itens</span>';}
+    return '<div class="mesa-card '+cls+'" onclick="gcAbrir('+num+')"><div class="mesa-dot '+dot+'"></div><div class="mesa-num">'+num+'</div><div style="display:flex;flex-direction:column;align-items:center;gap:3px">'+info+'</div></div>';
   }).join('');
 }
 
-// ── Abrir mesa ────────────────────────────────────────────────────────────────
-window.gcAbrirMesa = function(num) {
-  mesaAtiva = 'Mesa ' + num;
-  if (!carrinho[mesaAtiva]) carrinho[mesaAtiva] = [];
-
-  $('gc-modal-mesa').textContent = mesaAtiva;
-  $('gc-nome-cli').value = nomesMesa[mesaAtiva] || '';
-
-  gcRenderCardapio();
-  gcRenderCarrinho();
-  gcRenderHistorico();
-  gcAtualizarTotalMesa();
-  gcTab('novo');
-
-  $('gc-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
+window.gcAbrir=async function(num){
+  mesaAtual='Mesa '+num;if(!carrinhos[mesaAtual])carrinhos[mesaAtual]=[];
+  $('gc-modal-mesa').textContent=mesaAtual;$('gc-nome').value=nomes[mesaAtual]||'';
+  renderCardapio();renderCarrinho();renderHistorico();atualizarTotalMesa();gcTab('novo');
+  $('gc-modal').classList.add('open');document.body.style.overflow='hidden';
 };
+window.gcFechar=function(){$('gc-modal').classList.remove('open');document.body.style.overflow='';mesaAtual=null;};
+window.gcSalvarNome=function(v){if(mesaAtual)nomes[mesaAtual]=v.trim();};
+window.gcTab=function(t){['novo','hist'].forEach(x=>{$('tab-'+x).classList.toggle('on',x===t);$('gc-'+x+'-panel').style.display=x===t?'flex':'none';});};
 
-window.gcFechar = function() {
-  $('gc-modal').classList.remove('open');
-  document.body.style.overflow = '';
-  mesaAtiva = null;
-};
-
-window.gcSalvarNome = function(val) {
-  if (mesaAtiva) nomesMesa[mesaAtiva] = val.trim();
-};
-
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-window.gcTab = function(tab) {
-  ['novo','hist'].forEach(t => {
-    $('gc-tab-'+t).classList.toggle('on', t===tab);
-    $('gc-panel-'+t).style.display = t===tab ? 'flex' : 'none';
-  });
-  if (tab === 'hist') gcRenderHistorico();
-};
-
-// ── Cardápio (garçom) ─────────────────────────────────────────────────────────
-function gcRenderCardapio() {
-  const el = $('gc-cardapio'); if (!el) return;
-  if (!produtos.length) { el.innerHTML='<div style="color:#aaa;text-align:center;padding:24px;font-size:.82rem">Nenhum produto disponível</div>'; return; }
-
-  const cats = {};
-  produtos.forEach(p => { const c=p.categoria||'Outros'; if(!cats[c])cats[c]=[]; cats[c].push(p); });
-
-  el.innerHTML = Object.entries(cats).map(([cat,items]) =>
-    `<span class="gc-cat-lbl">${cat}</span>` +
-    items.map(p =>
-      `<div class="gc-item" onclick="gcAdd('${p.id}','${p.nome.replace(/'/g,"\\'")}',${p.preco},'${p.emoji||'🍽️'}')">
-        <span class="gc-item-emoji">${p.emoji||'🍽️'}</span>
-        <span class="gc-item-nome">${p.nome}</span>
-        <span class="gc-item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</span>
-      </div>`
-    ).join('')
-  ).join('');
+function renderCardapio(){
+  const el=$('gc-cardapio');if(!el)return;
+  if(!produtos.length){el.innerHTML='<div style="color:#aaa;text-align:center;padding:24px;font-size:.82rem">Nenhum produto disponivel</div>';return;}
+  const cats={};
+  produtos.forEach(p=>{const c=p.categoria||'Outros';if(!cats[c])cats[c]=[];cats[c].push(p);});
+  el.innerHTML=Object.entries(cats).map(([cat,items])=>'<span class="cat-lbl">'+cat+'</span>'+items.map(p=>'<div class="prod-item" onclick="gcAdd(''+p.id+'',''+p.nome.replace(/'/g,"\'")+'','+p.preco+',''+( p.emoji||'🍽️')+'')"><span class="prod-emoji">'+(p.emoji||'🍽️')+'</span><span class="prod-nome">'+p.nome+'</span><span class="prod-preco">R$ '+Number(p.preco).toFixed(2).replace('.',',')+'</span></div>').join('')).join('');
 }
 
-// ── Carrinho ──────────────────────────────────────────────────────────────────
-window.gcAdd = function(id, nome, preco, emoji) {
-  if (!mesaAtiva) return;
-  if (!carrinho[mesaAtiva]) carrinho[mesaAtiva] = [];
-  const ex = carrinho[mesaAtiva].find(x=>x.id===id);
-  if (ex) ex.qtd++;
-  else carrinho[mesaAtiva].push({id, nome, preco, emoji, qtd:1});
-  gcRenderCarrinho();
+window.gcAdd=function(id,nome,preco,emoji){
+  if(!mesaAtual)return;if(!carrinhos[mesaAtual])carrinhos[mesaAtual]=[];
+  const ex=carrinhos[mesaAtual].find(x=>x.id===id);
+  if(ex)ex.qtd++;else carrinhos[mesaAtual].push({id,nome,preco:Number(preco),emoji,qtd:1});
+  renderCarrinho();
+};
+window.gcRm=function(id){
+  if(!mesaAtual||!carrinhos[mesaAtual])return;
+  const ex=carrinhos[mesaAtual].find(x=>x.id===id);if(!ex)return;
+  if(ex.qtd>1)ex.qtd--;else carrinhos[mesaAtual]=carrinhos[mesaAtual].filter(x=>x.id!==id);
+  renderCarrinho();
 };
 
-window.gcRm = function(id) {
-  if (!mesaAtiva||!carrinho[mesaAtiva]) return;
-  const ex = carrinho[mesaAtiva].find(x=>x.id===id);
-  if (!ex) return;
-  if (ex.qtd>1) ex.qtd--;
-  else carrinho[mesaAtiva] = carrinho[mesaAtiva].filter(x=>x.id!==id);
-  gcRenderCarrinho();
-};
-
-function gcRenderCarrinho() {
-  const carr = carrinho[mesaAtiva]||[];
-  const tot  = carr.reduce((s,i)=>s+i.preco*i.qtd,0);
-  const el   = $('gc-carrinho');
-  const btn  = $('gc-btn-enviar');
-  $('gc-carr-subtotal').textContent = fmtR(tot);
-  if (btn) btn.disabled = !carr.length;
-  if (!el) return;
-  if (!carr.length) { el.innerHTML='<div class="gc-carr-empty">Nenhum item ainda</div>'; return; }
-  el.innerHTML = carr.map(i=>
-    `<div class="gc-carr-row">
-      <span class="gc-carr-emoji">${i.emoji||'🍽️'}</span>
-      <span class="gc-carr-nome">${i.nome}</span>
-      <div class="gc-carr-ctrl">
-        <button class="gc-carr-btn minus" onclick="gcRm('${i.id}')">−</button>
-        <span class="gc-carr-qtd">${i.qtd}</span>
-        <button class="gc-carr-btn plus" onclick="gcAdd('${i.id}','${i.nome.replace(/'/g,"\\'")}',${i.preco},'${i.emoji||''}')">+</button>
-      </div>
-      <span class="gc-carr-sub">${fmtR(i.preco*i.qtd)}</span>
-    </div>`
-  ).join('');
+function renderCarrinho(){
+  const carr=carrinhos[mesaAtual]||[];const tot=carr.reduce((s,i)=>s+i.preco*i.qtd,0);
+  const el=$('gc-carr'),btn=$('gc-btn-env');
+  if($('gc-carr-sub'))$('gc-carr-sub').textContent=fmtR(tot);
+  if(btn)btn.disabled=!carr.length;if(!el)return;
+  if(!carr.length){el.innerHTML='<div class="carr-empty">Nenhum item</div>';return;}
+  el.innerHTML=carr.map(i=>'<div class="carr-row"><span class="carr-emoji">'+(i.emoji||'🍽️')+'</span><span class="carr-nome">'+i.nome+'</span><div class="carr-ctrl"><button class="carr-btn" onclick="gcRm(''+i.id+'')">&#8722;</button><span class="carr-qtd">'+i.qtd+'</span><button class="carr-btn plus" onclick="gcAdd(''+i.id+'',''+i.nome.replace(/'/g,"\'")+'','+i.preco+',''+( i.emoji||'')+'')">+</button></div><span class="carr-sub">'+fmtR(i.preco*i.qtd)+'</span></div>').join('');
 }
 
-// ── Enviar pedido ─────────────────────────────────────────────────────────────
-window.gcEnviar = async function() {
-  if (!mesaAtiva) return;
-  const carr = carrinho[mesaAtiva]||[];
-  if (!carr.length) return;
-  const btn  = $('gc-btn-enviar');
-  if (btn) { btn.disabled=true; btn.textContent='Enviando...'; }
-  try {
-    const nome  = nomesMesa[mesaAtiva] || mesaAtiva;
-    const total = carr.reduce((s,i)=>s+i.preco*i.qtd,0);
-    const {error} = await db.from('pedidos').insert({
-      estabelecimento_id: estab.id,
-      cliente_nome:       nome,
-      cliente_whats:      '',
-      endereco:           'No local — ' + mesaAtiva,
-      itens:              carr.map(i=>({nome:i.nome,preco:i.preco,qtd:i.qtd,emoji:i.emoji})),
-      total,
-      status:             'novo',
-      pagamento:          'No local',
-    });
-    if (error) throw error;
-    carrinho[mesaAtiva] = [];
-    gcRenderCarrinho();
-    gcToast('Pedido enviado! 🍳');
-    await carregarPedidosMesas();
-    gcRenderHistorico();
-    gcAtualizarTotalMesa();
-    renderMesas();
-  } catch(e) {
-    gcToast('Erro: ' + e.message, '#ef4444');
-  } finally {
-    if (btn) { btn.disabled=false; btn.textContent='Enviar para cozinha 🍳'; }
-  }
+window.gcEnviar=async function(){
+  if(!mesaAtual)return;const carr=carrinhos[mesaAtual]||[];if(!carr.length)return;
+  const btn=$('gc-btn-env');if(btn){btn.disabled=true;btn.textContent='Enviando...';}
+  try{
+    const nome=nomes[mesaAtual]||mesaAtual;const total=carr.reduce((s,i)=>s+i.preco*i.qtd,0);
+    const{error}=await db.from('pedidos').insert({estabelecimento_id:estab.id,cliente_nome:nome,cliente_whats:'',endereco:'No local — '+mesaAtual,itens:carr.map(i=>({nome:i.nome,preco:i.preco,qtd:i.qtd,emoji:i.emoji})),total,status:'novo',pagamento:'No local'});
+    if(error)throw error;
+    carrinhos[mesaAtual]=[];renderCarrinho();toast('Pedido enviado! 🍳');
+    await loadPedidos();renderMesas();renderHistorico();atualizarTotalMesa();
+  }catch(e){toast('Erro: '+e.message,'#ef4444');}
+  finally{if(btn){btn.disabled=false;btn.textContent='Enviar para cozinha 🍳';}}
 };
 
-// ── Fechar comanda ────────────────────────────────────────────────────────────
-window.gcFecharComanda = async function() {
-  if (!mesaAtiva) return;
-  const peds = pedidosMesas[mesaAtiva]||[];
-  const carr = carrinho[mesaAtiva]||[];
-  const total = peds.reduce((s,p)=>s+Number(p.total||0),0);
-
-  if (carr.length>0 && !confirm('Há itens não enviados. Fechar mesmo assim?')) return;
-  if (!confirm(`Fechar comanda da ${mesaAtiva}?\n\nTotal: ${fmtR(total)}\nPedidos: ${peds.length}`)) return;
-
-  if (peds.length) {
-    await db.from('pedidos').update({status:'pronto'}).in('id', peds.map(p=>p.id));
-  }
-  delete pedidosMesas[mesaAtiva];
-  delete carrinho[mesaAtiva];
-  mesasFechas.add(mesaAtiva);
-  const mf = mesaAtiva;
-  setTimeout(()=>{ mesasFechas.delete(mf); renderMesas(); }, 5000);
-  gcToast(`Comanda da ${mesaAtiva} fechada! ${fmtR(total)}`);
-  gcFechar();
-  renderMesas();
+window.gcFecharComanda=async function(){
+  if(!mesaAtual)return;
+  const peds=pedMesas[mesaAtual]||[];const carr=carrinhos[mesaAtual]||[];
+  const total=peds.reduce((s,p)=>s+Number(p.total||0),0);
+  if(carr.length&&!confirm('Ha itens nao enviados. Fechar mesmo assim?'))return;
+  if(!confirm('Fechar comanda da '+mesaAtual+'?\n\nTotal: '+fmtR(total)+'\nPedidos: '+peds.length+'\n\nA mesa sera liberada.'))return;
+  if(peds.length)await db.from('pedidos').update({status:'pronto'}).in('id',peds.map(p=>p.id));
+  delete pedMesas[mesaAtual];delete carrinhos[mesaAtual];fechadas.add(mesaAtual);
+  const mf=mesaAtual;setTimeout(()=>{fechadas.delete(mf);renderMesas();},5000);
+  toast('Comanda da '+mesaAtual+' fechada! '+fmtR(total));gcFechar();renderMesas();
 };
 
-// ── Histórico ─────────────────────────────────────────────────────────────────
-function gcRenderHistorico() {
-  const el   = $('gc-historico'); if (!el) return;
-  const peds = pedidosMesas[mesaAtiva]||[];
-  const stLbl = {novo:'⏳ Aguardando',preparo:'🍳 Preparando',pronto:'✅ Pronto'};
-  const stCls = {novo:'gc-hist-status-novo',preparo:'gc-hist-status-preparo',pronto:'gc-hist-status-pronto'};
-
-  gcAtualizarTotalMesa();
-
-  if (!peds.length) { el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:24px">Nenhum pedido lançado</div>'; return; }
-  el.innerHTML = peds.map((p,i) => {
-    const itens = Array.isArray(p.itens)?p.itens:[];
-    const dt    = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    return `<div class="gc-hist-bloco">
-      <div class="gc-hist-id">Pedido ${i+1} · #${p.id.slice(-4).toUpperCase()} · ${dt} <span class="${stCls[p.status]||''}">${stLbl[p.status]||p.status}</span></div>
-      ${itens.map(it=>`<div class="gc-hist-item"><span>${it.qtd||1}x ${it.nome}</span><span>R$ ${((it.preco||0)*(it.qtd||1)).toFixed(2).replace('.',',')}</span></div>`).join('')}
-      <div class="gc-hist-sub">${fmtR(p.total)}</div>
-    </div>`;
-  }).join('');
-}
-
-function gcAtualizarTotalMesa() {
-  const peds = pedidosMesas[mesaAtiva]||[];
-  $('gc-modal-total').textContent = fmtR(peds.reduce((s,p)=>s+Number(p.total||0),0));
-}
-
-// ── Imprimir ─────────────────────────────────────────────────────────────────
-window.gcImprimirComanda = function() {
-  if (!mesaAtiva) return;
-  const peds  = pedidosMesas[mesaAtiva]||[];
-  const total = peds.reduce((s,p)=>s+Number(p.total||0),0);
-  const nome  = nomesMesa[mesaAtiva]||mesaAtiva;
-  const agora = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  const pedRows = peds.map((p,i)=>{
+function renderHistorico(){
+  atualizarTotalMesa();const el=$('gc-historico');if(!el)return;
+  const peds=pedMesas[mesaAtual]||[];
+  const stC={novo:'s-novo',preparo:'s-preparo',pronto:'s-pronto'};
+  const stL={novo:'⏳ Aguardando',preparo:'🍳 Preparando',pronto:'✅ Pronto'};
+  if(!peds.length){el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:24px">Nenhum pedido lancado</div>';return;}
+  el.innerHTML=peds.map((p,i)=>{
     const itens=Array.isArray(p.itens)?p.itens:[];
     const dt=new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    return '<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed #ddd">'
-      +'<div style="font-size:10px;color:#888;margin-bottom:4px">Pedido '+(i+1)+' · '+dt+'</div>'
-      +itens.map(it=>'<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0"><span>'+it.qtd+'x '+it.nome+'</span><span>R$ '+((it.preco||0)*(it.qtd||1)).toFixed(2).replace('.',',')+'</span></div>').join('')
-      +'<div style="text-align:right;font-size:11px;color:#C0392B;font-weight:700;margin-top:2px">'+fmtR(p.total)+'</div>'
-      +'</div>';
+    return '<div class="hist-bloco"><div class="hist-id"><span>Pedido '+(i+1)+' #'+p.id.slice(-4).toUpperCase()+' '+dt+'</span><span class="'+(stC[p.status]||'')+'">'+(stL[p.status]||p.status)+'</span></div>'+itens.map(it=>'<div class="hist-item-row"><span>'+(it.qtd||1)+'x '+it.nome+'</span><span>R$ '+((it.preco||0)*(it.qtd||1)).toFixed(2).replace('.',',')+'</span></div>').join('')+'<div class="hist-sub">'+fmtR(p.total)+'</div></div>';
   }).join('');
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comanda</title>
-    <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;padding:16px;max-width:300px;margin:0 auto}
-    .logo{font-size:16px;font-weight:900;text-align:center;margin-bottom:4px}.logo span{color:#C0392B}
-    .total-row{display:flex;justify-content:space-between;font-size:14px;font-weight:800;margin-top:8px;border-top:2px solid #1a1a1a;padding-top:8px}
-    hr{border:none;border-top:1px dashed #ddd;margin:8px 0}@media print{body{padding:0}}</style></head>
-    <body><div class="logo">PEDI<span>WAY</span></div>
-    <div style="text-align:center;font-size:11px;color:#888;margin-bottom:8px">${estab?.nome||''}</div>
-    <hr><div style="font-size:14px;font-weight:800;text-align:center;margin:6px 0">${mesaAtiva}</div>
-    ${nome!==mesaAtiva?'<div style="font-size:11px;text-align:center;color:#888;margin-bottom:6px">Cliente: '+nome+'</div>':''}
-    <div style="font-size:9px;text-align:center;color:#aaa;margin-bottom:8px">${agora}</div>
-    <hr>${pedRows}
-    <div class="total-row"><span>TOTAL</span><span style="color:#C0392B">${fmtR(total)}</span></div>
-    <div style="text-align:center;font-size:9px;color:#aaa;margin-top:12px">PEDIWAY</div></body></html>`;
-  const w=window.open('','_blank','width=320,height=600');
-  if(!w){alert('Permita pop-ups para imprimir.');return;}
-  w.document.write(html);w.document.close();w.focus();
-  setTimeout(()=>w.print(),400);
+}
+
+function atualizarTotalMesa(){
+  const peds=pedMesas[mesaAtual]||[];const el=$('gc-modal-total');
+  if(el)el.textContent=fmtR(peds.reduce((s,p)=>s+Number(p.total||0),0));
+}
+
+window.gcImprimir=function(){
+  if(!mesaAtual)return;
+  const peds=pedMesas[mesaAtual]||[];const total=peds.reduce((s,p)=>s+Number(p.total||0),0);
+  const nome=nomes[mesaAtual]||mesaAtual;const agora=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const rows=peds.map((p,i)=>{const itens=Array.isArray(p.itens)?p.itens:[];const dt=new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});return '<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed #ddd"><div style="font-size:10px;color:#888;margin-bottom:4px">Pedido '+(i+1)+' - '+dt+'</div>'+itens.map(it=>'<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0"><span>'+(it.qtd||1)+'x '+it.nome+'</span><span>R$ '+((it.preco||0)*(it.qtd||1)).toFixed(2).replace('.',',')+'</span></div>').join('')+'<div style="text-align:right;font-size:11px;color:#C0392B;font-weight:700;margin-top:2px">'+fmtR(p.total)+'</div></div>';}).join('');
+  const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comanda</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;padding:16px;max-width:300px;margin:0 auto}.logo{font-size:16px;font-weight:900;text-align:center;margin-bottom:4px}.logo span{color:#C0392B}hr{border:none;border-top:1px dashed #ddd;margin:8px 0}.total{display:flex;justify-content:space-between;font-size:14px;font-weight:800;margin-top:8px;border-top:2px solid #1a1a1a;padding-top:8px}@media print{body{padding:0}}</style></head><body><div class="logo">PEDI<span>WAY</span></div><div style="text-align:center;font-size:11px;color:#888;margin-bottom:6px">'+(estab?.nome||'')+'</div><hr><div style="font-size:14px;font-weight:800;text-align:center;margin:6px 0">'+mesaAtual+'</div>'+(nome!==mesaAtual?'<div style="font-size:11px;text-align:center;color:#888;margin-bottom:4px">Cliente: '+nome+'</div>':'')+'<div style="font-size:9px;text-align:center;color:#aaa;margin-bottom:8px">'+agora+'</div><hr>'+rows+'<div class="total"><span>TOTAL</span><span style="color:#C0392B">'+fmtR(total)+'</span></div><div style="text-align:center;font-size:9px;color:#aaa;margin-top:12px">PEDIWAY</div></body></html>';
+  const w=window.open('','_blank','width=320,height=600');if(!w){alert('Permita pop-ups para imprimir.');return;}
+  w.document.write(html);w.document.close();w.focus();setTimeout(()=>w.print(),400);
 };
 
-// ── Toast ─────────────────────────────────────────────────────────────────────
-function gcToast(msg, cor='#22c55e') {
-  const t=$('gc-toast'); t.textContent=msg; t.style.background=cor; t.style.display='block';
-  setTimeout(()=>t.style.display='none',3000);
-}
+function toast(msg,cor='#22c55e'){const t=$('gc-toast');t.textContent=msg;t.style.background=cor;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
 
 init();
 </script>
