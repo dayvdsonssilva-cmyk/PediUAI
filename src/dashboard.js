@@ -246,6 +246,8 @@ function preencherConfig(estab) {
   set('cfg-tempo',    estab.tempo_entrega || '30-45 min');
   const cfgLink = $('cfg-link-preview');
   if (cfgLink) cfgLink.textContent = `${BASE_URL}/${estab.slug}`;
+  const cfgLinkGarcom = $('cfg-link-garcom');
+  if (cfgLinkGarcom) cfgLinkGarcom.textContent = `${BASE_URL}/comandas/${estab.slug}`;
   const ce = $('cfg-entrega');  if (ce) ce.checked = estab.faz_entrega  !== false;
   const cr = $('cfg-retirada'); if (cr) cr.checked = estab.faz_retirada !== false;
   const ct = $('cfg-taxa');     if (ct) ct.value   = estab.taxa_entrega || '';
@@ -422,6 +424,8 @@ export async function salvarConfig() {
     const sn = $('dash-store-name'); if (sn) sn.textContent = nome;
     const lu = $('link-url');        if (lu) lu.textContent = `${BASE_URL}/${slug}`;
     const cl = $('cfg-link-preview');if (cl) cl.textContent = `${BASE_URL}/${slug}`;
+    const clg = $('cfg-link-garcom');if (clg) clg.textContent = `${BASE_URL}/comandas/${slug}`;
+  const clg = $('cfg-link-garcom');if (clg) clg.textContent = `${BASE_URL}/comandas/${slug}`;
     atualizarBadgeLoja(aberto);
     aplicarCorDash(cor_primaria);
 
@@ -1845,6 +1849,24 @@ function abrirAdicionaisGrupo(mesaKey, prodId, nome, preco, emoji, grupo) {
   document.getElementById('modal-adicionais')?.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
+
+
+window.copiarLinkGarcom = function() {
+  const estab = getEstab(); if (!estab) return;
+  const url = `${BASE_URL}/comandas/${estab.slug}`;
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('Link copiado! ✅');
+  }).catch(() => {
+    // fallback
+    const el = document.createElement('input');
+    el.value = url;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast('Link copiado! ✅');
+  });
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS GLOBAIS
