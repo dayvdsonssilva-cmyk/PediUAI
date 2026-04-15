@@ -187,14 +187,11 @@ async function init(){
 }
 
 async function loadPedidos(){
-  // Carrega TODOS os pedidos da sessão atual (não filtra por status)
-  // para manter histórico completo até fechar a comanda
-  const hoje=new Date();hoje.setHours(0,0,0,0);
+  // Só carrega pedidos ATIVOS — mesa fica limpa após fechar comanda
   const{data}=await db.from('pedidos').select('*')
     .eq('estabelecimento_id',estab.id)
     .ilike('endereco','No local%')
-    .neq('status','recusado')
-    .gte('created_at',hoje.toISOString())
+    .in('status',['novo','preparo'])
     .order('created_at',{ascending:true});
   pedMesas={};
   (data||[]).forEach(p=>{const parts=(p.endereco||'').split('—');if(parts.length<2)return;const key=parts[1].trim();if(!pedMesas[key])pedMesas[key]=[];pedMesas[key].push(p);});
@@ -213,8 +210,18 @@ function iniciarRealtime(){
     })
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'pedidos'},payload=>{
       const p=payload.new;if(p.estabelecimento_id!==estab.id)return;
-      // Só atualiza o status — não remove (histórico fica visível até fechar comanda)
-Object.keys(pedMesas).forEach(k=>{const idx=pedMesas[k].findIndex(x=>x.id===p.id);if(idx>=0){pedMesas[k][idx]={...pedMesas[k][idx],...p};}});
+      // Atualiza status; remove se virou pronto/recusado (mesa fica limpa)
+Object.keys(pedMesas).forEach(k=>{
+  const idx=pedMesas[k].findIndex(x=>x.id===p.id);
+  if(idx>=0){
+    if(['pronto','recusado'].includes(p.status)){
+      pedMesas[k].splice(idx,1);
+      if(!pedMesas[k].length)delete pedMesas[k];
+    } else {
+      pedMesas[k][idx]={...pedMesas[k][idx],...p};
+    }
+  }
+});
       renderMesas();if(mesaAtual)renderHistorico();
     }).subscribe();
 }
