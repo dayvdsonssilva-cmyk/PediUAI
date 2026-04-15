@@ -428,8 +428,8 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 // ── CONFIG (salva no localStorage) ───────────────────────────────────────────
-const SURL  = 'https://nmttkjmfazcipefeakkx.supabase.co';
-const SKEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmFra3giLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NDA0OTQ0NiwiZXhwIjoyMDU5NjI1NDQ2fQ.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+const SURL = 'https://nmttkjmfazcipefeakkx.supabase.co';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
 const db    = createClient(SURL, SKEY);
 
 const CFG_KEY   = 'pw_ceo_cfg';
@@ -549,6 +549,9 @@ async function load() {
     db.from('estabelecimentos').select('*').order('created_at', { ascending: false }),
     db.from('pedidos').select('id,cliente_nome,cliente_whats,status,total,pagamento,troco,taxa_entrega,endereco,itens,created_at,estabelecimento_id,estabelecimentos(nome,slug)').order('created_at', { ascending: false }).limit(1000),
   ]);
+  if (r1.error) console.error('[CEO] Erro ao carregar lojas:', r1.error);
+  if (r2.error) console.error('[CEO] Erro ao carregar pedidos:', r2.error);
+  console.log('[CEO] Lojas:', r1.data?.length, '| Pedidos:', r2.data?.length);
   lojas = r1.data || [];
   peds  = r2.data || [];
   renderVisao();
