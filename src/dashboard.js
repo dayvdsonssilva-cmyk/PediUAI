@@ -76,33 +76,55 @@ async function uploadFile(bucket, path, file) {
 // ─────────────────────────────────────────────────────────────────────────────
 // ── Restrição por plano ──────────────────────────────────────────────────────
 function aplicarRestricaoPlano(estab) {
-  const plano = estab?.plano || 'basico';
+  const plano   = estab?.plano || 'basico';
+  const criado  = estab?.created_at ? new Date(estab.created_at) : null;
+  const diasTrial = criado ? Math.floor((Date.now() - criado) / 86400000) : 999;
+  const trialAtivo = plano === 'basico' && diasTrial <= 15;
+  const diasRestantes = Math.max(0, 15 - diasTrial);
 
-  // Financeiro — só Pro e Premium
-  const tabFin = document.querySelector('[data-tab="financeiro"]');
-  const pgFin  = document.getElementById('tab-financeiro');
-  if (plano === 'basico') {
-    if (tabFin) tabFin.style.display = 'none';
-    if (pgFin)  pgFin.style.display  = 'none';
-  } else {
-    if (tabFin) tabFin.style.display = '';
-    if (pgFin)  pgFin.style.display  = '';
+  // Tabs disponíveis por plano:
+  // Trial (basico, até 15 dias): TUDO
+  // Pro: visao, pedidos, cardapio, fresquinho, configuracoes
+  // Premium: visao, pedidos, comandas, cardapio, fresquinho, financeiro, configuracoes
+  // Trial vencido (basico > 15 dias): apenas visao + configuracoes (forçar upgrade)
+
+  const CONFIG_PLANOS = {
+    basico_ativo:  ['visao-geral','pedidos-tab','comandas','cardapio','fresquinho','financeiro','configuracoes'],
+    basico_vencido:['visao-geral','configuracoes'],
+    pro:           ['visao-geral','pedidos-tab','cardapio','fresquinho','configuracoes'],
+    premium:       ['visao-geral','pedidos-tab','comandas','cardapio','fresquinho','financeiro','configuracoes'],
+  };
+
+  const chave = plano === 'basico'
+    ? (trialAtivo ? 'basico_ativo' : 'basico_vencido')
+    : (plano === 'pro' ? 'pro' : 'premium');
+
+  const permitidas = CONFIG_PLANOS[chave] || CONFIG_PLANOS.pro;
+
+  // Aplica visibilidade em todas as abas
+  ['visao-geral','pedidos-tab','comandas','cardapio','fresquinho','financeiro','configuracoes'].forEach(tab => {
+    const btn = document.querySelector(`[data-tab="${tab}"]`);
+    const pg  = document.getElementById(`tab-${tab}`);
+    const vis = permitidas.includes(tab);
+    if (btn) btn.style.display = vis ? '' : 'none';
+    if (pg)  pg.style.display  = vis ? '' : 'none';
+  });
+
+  // Banner trial
+  const bannerTrial = document.getElementById('banner-trial');
+  if (bannerTrial) {
+    if (plano === 'basico' && trialAtivo) {
+      bannerTrial.style.display = 'flex';
+      const diasEl = document.getElementById('trial-dias');
+      if (diasEl) diasEl.textContent = diasRestantes === 0 ? 'Último dia!' : `${diasRestantes} dia${diasRestantes !== 1 ? 's' : ''} restante${diasRestantes !== 1 ? 's' : ''}`;
+    } else {
+      bannerTrial.style.display = 'none';
+    }
   }
 
-  // Comandas — só Pro e Premium
-  const tabCmd = document.querySelector('[data-tab="comandas"]');
-  const pgCmd  = document.getElementById('tab-comandas');
-  if (plano === 'basico') {
-    if (tabCmd) tabCmd.style.display = 'none';
-    if (pgCmd)  pgCmd.style.display  = 'none';
-  } else {
-    if (tabCmd) tabCmd.style.display = '';
-    if (pgCmd)  pgCmd.style.display  = '';
-  }
-
-  // Banner de upgrade se for trial/básico
+  // Banner upgrade (trial vencido ou plano básico expirado)
   const banner = document.getElementById('banner-upgrade');
-  if (banner) banner.style.display = plano === 'basico' ? 'flex' : 'none';
+  if (banner) banner.style.display = (plano === 'basico' && !trialAtivo) ? 'flex' : 'none';
 }
 
 // ── Link ME AJUDA PEDIWAY — usa config do CEO ──────────────────────────────
@@ -893,21 +915,41 @@ async function renderPedidos() {
   // Histórico
   const lu = $('ultimos-pedidos'); const td = $('todos-pedidos');
   const cardHtml = p => {
-    const cls = { novo:'status-novo', preparo:'status-preparo', pronto:'status-pronto', recusado:'status-recusado' }[p.status] || 'status-novo';
-    const lbl = { novo:'NOVO', preparo:'PREPARO', pronto:'PRONTO', recusado:'RECUSADO' }[p.status] || 'NOVO';
+    const CLS = { novo:'status-novo', preparo:'status-preparo', pronto:'status-pronto', recusado:'status-recusado' };
+    const LBL = { novo:'Novo', preparo:'Em preparo', pronto:'Pronto', recusado:'Recusado' };
+    const ICONS = { novo:'🔔', preparo:'👨‍🍳', pronto:'✅', recusado:'❌' };
+    const cls = CLS[p.status] || 'status-novo';
+    const lbl = LBL[p.status] || 'Novo';
+    const ico = ICONS[p.status] || '🔔';
     const min = Math.floor((Date.now() - new Date(p.created_at)) / 60000);
-    return `<div class="pedido-card">
-      <div class="pedido-top">
-        <div><div class="pedido-id">#${p.id.slice(-4).toUpperCase()} — ${p.cliente_nome||'Cliente'}</div>
-        <div class="pedido-tempo">há ${min < 1 ? 'menos de 1' : min} min</div></div>
-        <span class="pedido-status ${cls}">${lbl}</span>
+    const tempoStr = min < 1 ? 'agora' : min < 60 ? `${min}min` : `${Math.floor(min/60)}h${min%60>0?min%60+'min':''}`;
+    const itensStr = Array.isArray(p.itens) ? p.itens.map(i=>`${i.qtd}x ${i.nome}`).join(' · ') : '';
+    const totalFmt = 'R$ ' + Number(p.total||0).toFixed(2).replace('.',',');
+    const endStr   = p.endereco === 'Retirada no local' ? '🏃 Retirada' : p.endereco ? `🛵 ${p.endereco.split(',')[0]}` : '🏃 Retirada';
+    const pgto     = p.pagamento ? p.pagamento.toUpperCase() : '';
+    return `<div class="pedido-card ped-status-${p.status||'novo'}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0">
+          <div style="width:38px;height:38px;border-radius:10px;background:#f5f0eb;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">${ico}</div>
+          <div style="min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <span style="font-size:.92rem;font-weight:800">#${p.id.slice(-4).toUpperCase()}</span>
+              <span style="font-size:.82rem;font-weight:600;color:#555;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">${p.cliente_nome||'Cliente'}</span>
+            </div>
+            <div style="font-size:.7rem;color:#aaa;margin-top:2px">${tempoStr} atrás · ${endStr}</div>
+          </div>
+        </div>
+        <span class="pedido-status ${cls}" style="white-space:nowrap;flex-shrink:0">${lbl}</span>
       </div>
-      <div class="pedido-itens">${Array.isArray(p.itens) ? p.itens.map(i=>`${i.qtd}x ${i.nome}`).join(' · ') : ''}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
-        <div class="pedido-total">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
-        <div class="pedido-actions">
+      ${itensStr ? `<div style="font-size:.82rem;color:#666;background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.5">${itensStr}</div>` : ''}
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:1rem;font-weight:800;color:var(--red)">${totalFmt}</span>
+          ${pgto ? `<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700;color:#888">${pgto}</span>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
           ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}')">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}')">Recusar</button>`:''}
-          ${p.status==='preparo'?`<button class="btn-ped-aceitar" onclick="marcarPronto('${p.id}')">Marcar pronto</button>`:''}
+          ${p.status==='preparo'?`<button class="btn-ped-aceitar" onclick="marcarPronto('${p.id}')">✅ Marcar pronto</button>`:''}
           <button class="btn-ped-imprimir" onclick="verPedido('${p.id}')">Ver mais</button>
         </div>
       </div>
