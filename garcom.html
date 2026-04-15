@@ -251,14 +251,31 @@ let mesasFechas  = new Set();
 let realtimeSub  = null;
 
 // ── Pega slug da URL (/comandas/slug) ─────────────────────────────────────────
-const slug = location.pathname.replace('/comandas/', '').replace(/^\/|\/$/g, '');
+// Extrai slug da URL: /comandas/nome_da_loja → 'nome_da_loja'
+// Mesmo padrão que o cliente.html usa (comprovado funcionar)
+const _rawPath   = location.pathname.replace(/^\//, ''); // remove barra inicial
+const _pathSegs  = _rawPath.split('/').filter(Boolean);   // ['comandas','slug']
+// Pega o segmento após 'comandas', ou o último segmento como fallback
+const slug = _pathSegs.length >= 2
+  ? _pathSegs[_pathSegs.length - 1]   // último segmento = slug
+  : _pathSegs[0] || '';
+console.log('[Garcom] URL:', location.href, '| segs:', _pathSegs, '| slug:', slug);
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
   if (!slug) { $('loading').innerHTML = '<p style="color:#aaa;padding:40px;text-align:center">Link inválido</p>'; return; }
 
-  const { data: est } = await db.from('estabelecimentos').select('*').eq('slug', slug).maybeSingle();
-  if (!est) { $('loading').innerHTML = '<p style="color:#aaa;padding:40px;text-align:center">Loja não encontrada</p>'; return; }
+  if (!slug) {
+    $('loading').innerHTML = '<p style="color:#aaa;padding:40px;text-align:center">Link inválido — slug não encontrado na URL</p>';
+    return;
+  }
+  console.log('[Garcom] Buscando slug:', slug);
+  const { data: est, error: estErr } = await db.from('estabelecimentos').select('*').eq('slug', slug).maybeSingle();
+  console.log('[Garcom] Resultado:', est?.nome, '| Erro:', estErr?.message);
+  if (!est) {
+    $('loading').innerHTML = `<p style="color:#aaa;padding:40px;text-align:center">Loja não encontrada<br><small style="font-size:.7rem">Slug: "${slug}"</small></p>`;
+    return;
+  }
   estab = est;
   $('gc-loja-nome').textContent = est.nome;
   document.title = `Garçom — ${est.nome}`;
