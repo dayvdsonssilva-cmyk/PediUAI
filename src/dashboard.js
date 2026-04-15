@@ -227,6 +227,7 @@ export async function initDashboard() {
     iniciarRealtime();
     await carregarPedidosMesas();
     renderMesas();
+    window.renderHistoricoMesas();
     renderEmojiGrid();
   } else {
     renderCardapioDemo();
@@ -1190,6 +1191,7 @@ function iniciarRealtime() {
         if ((p.endereco||'').startsWith('No local')) {
           await carregarPedidosMesas();
           renderMesas();
+          window.renderHistoricoMesas();
         }
       }
     )
@@ -1879,6 +1881,88 @@ window.copiarLinkGarcom = function() {
     document.body.removeChild(el);
     showToast('Link copiado! ✅');
   });
+};
+
+
+// ── Histórico de pedidos das mesas (aba Comandas) ────────────────────────────
+window.renderHistoricoMesas = async function() {
+  const estab = getEstab(); if (!estab) return;
+  const lista = document.getElementById('mesas-historico-lista');
+  if (!lista) return;
+
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const { data } = await getSupa().from('pedidos').select('*')
+    .eq('estabelecimento_id', estab.id)
+    .ilike('endereco', 'No local%')
+    .neq('status', 'recusado')
+    .gte('created_at', hoje.toISOString())
+    .order('created_at', { ascending: false });
+
+  if (!data?.length) {
+    lista.innerHTML = '<div style="color:#aaa;font-size:.82rem;text-align:center;padding:20px">Nenhum pedido de mesa hoje</div>';
+    return;
+  }
+
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const stCls = { novo:'#f59e0b', preparo:'#3b82f6', pronto:'#22c55e', recusado:'#ef4444' };
+  const stLbl = { novo:'Aguardando', preparo:'Preparando', pronto:'Pronto', recusado:'Recusado' };
+  const ICONS = { novo:'⏳', preparo:'🍳', pronto:'✅', recusado:'❌' };
+
+  // Agrupa por mesa
+  const porMesa = {};
+  data.forEach(p => {
+    const parts = (p.endereco||'').split('—');
+    const mesa  = parts.length >= 2 ? parts[1].trim() : 'Mesa';
+    if (!porMesa[mesa]) porMesa[mesa] = [];
+    porMesa[mesa].push(p);
+  });
+
+  lista.innerHTML = Object.entries(porMesa).map(([mesa, peds]) => {
+    const totalMesa = peds.reduce((s,p) => s + Number(p.total||0), 0);
+    const temAtivo  = peds.some(p => ['novo','preparo'].includes(p.status));
+
+    const pedRows = peds.map(p => {
+      const itens   = Array.isArray(p.itens) ? p.itens : [];
+      const dt      = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      const nomeDisplay = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '—';
+      return `<div class="pedido-card ped-status-${p.status||'novo'}" style="margin-bottom:8px;border-left:3px solid ${stCls[p.status]||'#aaa'}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:1.1rem">${ICONS[p.status]||'⏳'}</span>
+            <div>
+              <div style="font-size:.82rem;font-weight:800">${nomeDisplay} <span style="color:#aaa;font-weight:500">· ${dt}</span></div>
+              <div style="font-size:.7rem;color:#aaa">#${p.id.slice(-4).toUpperCase()}</div>
+            </div>
+          </div>
+          <span style="background:${stCls[p.status]||'#aaa'}22;color:${stCls[p.status]||'#aaa'};padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700;flex-shrink:0">${stLbl[p.status]||'—'}</span>
+        </div>
+        ${itens.length ? `<div style="font-size:.8rem;color:#666;background:#faf8f5;border-radius:8px;padding:7px 10px;margin-bottom:8px;line-height:1.6">
+          ${itens.map(i => `${i.qtd||1}x ${i.nome}`).join(' · ')}
+        </div>` : ''}
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap">
+          <span style="font-size:.88rem;font-weight:800;color:var(--red)">${fmtR(p.total)}</span>
+          <div style="display:flex;gap:6px">
+            ${p.status==='novo' ? `<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}')">Aceitar</button>
+            <button class="btn-ped-recusar" onclick="recusarPedido('${p.id}')">Recusar</button>` : ''}
+            ${p.status==='preparo' ? `<button class="btn-ped-aceitar" onclick="marcarPronto('${p.id}')">✅ Marcar pronto</button>` : ''}
+            <button class="btn-ped-imprimir" onclick="verPedido('${p.id}')">Ver mais</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#fff;border:1.5px solid ${temAtivo ? 'var(--red)' : '#e0dbd5'};border-radius:12px 12px 0 0;border-bottom:none">
+        <span style="font-size:1.1rem">${temAtivo ? '🔴' : '🟢'}</span>
+        <span style="font-size:.92rem;font-weight:800">${mesa}</span>
+        <span style="font-size:.72rem;color:#888">${peds.length} pedido${peds.length!==1?'s':''}</span>
+        <span style="margin-left:auto;font-size:.85rem;font-weight:800;color:var(--red)">${fmtR(totalMesa)}</span>
+      </div>
+      <div style="border:1.5px solid #e0dbd5;border-top:none;border-radius:0 0 12px 12px;padding:10px">
+        ${pedRows}
+      </div>
+    </div>`;
+  }).join('');
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
