@@ -198,6 +198,7 @@ export async function initDashboard() {
   // Textos do header
   const sn = $('dash-store-name'); if (sn) sn.textContent = estab.nome;
   const lu = $('link-url');        if (lu) lu.textContent = `${BASE_URL}/${estab.slug}`;
+  const lug = $('link-url-garcom');if (lug) lug.textContent = `${BASE_URL}/comandas/${estab.slug}`;
 
   // Preenche configurações
   preencherConfig(estab);
@@ -422,9 +423,10 @@ export async function salvarConfig() {
 
     // Atualiza UI
     const sn = $('dash-store-name'); if (sn) sn.textContent = nome;
-    const lu = $('link-url');        if (lu) lu.textContent = `${BASE_URL}/${slug}`;
-    const cl = $('cfg-link-preview');if (cl) cl.textContent = `${BASE_URL}/${slug}`;
-    const clg = $('cfg-link-garcom');if (clg) clg.textContent = `${BASE_URL}/comandas/${slug}`;
+    const lu  = $('link-url');        if (lu)  lu.textContent  = `${BASE_URL}/${slug}`;
+    const lug = $('link-url-garcom'); if (lug) lug.textContent = `${BASE_URL}/comandas/${slug}`;
+    const cl  = $('cfg-link-preview');if (cl)  cl.textContent  = `${BASE_URL}/${slug}`;
+    const clg = $('cfg-link-garcom'); if (clg) clg.textContent = `${BASE_URL}/comandas/${slug}`;
     atualizarBadgeLoja(aberto);
     aplicarCorDash(cor_primaria);
 
