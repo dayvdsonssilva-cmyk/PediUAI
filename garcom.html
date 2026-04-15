@@ -93,7 +93,7 @@
     <div class="gc-logo">PEDI<span>WAY</span></div>
     <div class="gc-loja" id="gc-loja-nome">Carregando...</div>
   </div>
-  <div class="gc-badge">&#127829; Garçom</div>
+  <div class="gc-badge" id="gc-badge-nome">&#127829; Carregando...</div>
 </div>
 <div id="gc-loading" class="loading-wrap"><div class="spinner"></div><div style="font-size:.82rem">Carregando...</div></div>
 <div id="gc-main" style="display:none">
@@ -126,6 +126,11 @@
       <button class="mtab"    id="tab-hist" onclick="gcTab('hist')">&#128203; Comanda</button>
     </div>
     <div id="gc-novo-panel" class="panel">
+      <!-- Busca de produto -->
+      <div style="padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0;background:#fff">
+        <input id="gc-busca" placeholder="&#128269; Buscar item..." oninput="gcBuscar(this.value)"
+          style="width:100%;border:1.5px solid var(--border);border-radius:9px;padding:8px 12px;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none;background:#faf8f5;transition:border-color .2s">
+      </div>
       <div id="gc-cardapio"></div>
       <div class="carr-sep">
         <div class="carr-top"><span class="carr-top-lbl">Selecionados</span><span class="carr-subtotal" id="gc-carr-sub">R$ 0,00</span></div>
@@ -174,7 +179,7 @@ async function init(){
     $('gc-loading').innerHTML='<p style="color:#aaa;padding:40px;text-align:center;line-height:2">Loja nao encontrada<br><small style="font-size:.7rem">slug: "'+slug+'"</small></p>';
     return;
   }
-  estab=est;$('gc-loja-nome').textContent=est.nome;document.title='Garcom - '+est.nome;
+  estab=est;$('gc-loja-nome').textContent=est.nome;document.title='Garcom - '+est.nome;var b=$('gc-badge-nome');if(b)b.textContent='🍽️ '+est.nome;
   const{data:prods}=await db.from('produtos').select('id,nome,preco,emoji,categoria,disponivel').eq('estabelecimento_id',est.id).eq('disponivel',true).order('categoria');
   produtos=prods||[];
   await loadPedidos();iniciarRealtime();
@@ -182,7 +187,15 @@ async function init(){
 }
 
 async function loadPedidos(){
-  const{data}=await db.from('pedidos').select('*').eq('estabelecimento_id',estab.id).ilike('endereco','No local%').in('status',['novo','preparo']).order('created_at',{ascending:true});
+  // Carrega TODOS os pedidos da sessão atual (não filtra por status)
+  // para manter histórico completo até fechar a comanda
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const{data}=await db.from('pedidos').select('*')
+    .eq('estabelecimento_id',estab.id)
+    .ilike('endereco','No local%')
+    .neq('status','recusado')
+    .gte('created_at',hoje.toISOString())
+    .order('created_at',{ascending:true});
   pedMesas={};
   (data||[]).forEach(p=>{const parts=(p.endereco||'').split('—');if(parts.length<2)return;const key=parts[1].trim();if(!pedMesas[key])pedMesas[key]=[];pedMesas[key].push(p);});
 }
@@ -200,26 +213,30 @@ function iniciarRealtime(){
     })
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'pedidos'},payload=>{
       const p=payload.new;if(p.estabelecimento_id!==estab.id)return;
-      Object.keys(pedMesas).forEach(k=>{const idx=pedMesas[k].findIndex(x=>x.id===p.id);if(idx>=0){if(['pronto','recusado'].includes(p.status)){pedMesas[k].splice(idx,1);if(!pedMesas[k].length)delete pedMesas[k];}else{pedMesas[k][idx]={...pedMesas[k][idx],...p};}}});
+      // Só atualiza o status — não remove (histórico fica visível até fechar comanda)
+Object.keys(pedMesas).forEach(k=>{const idx=pedMesas[k].findIndex(x=>x.id===p.id);if(idx>=0){pedMesas[k][idx]={...pedMesas[k][idx],...p};}});
       renderMesas();if(mesaAtual)renderHistorico();
     }).subscribe();
 }
 
-function numMesas(){return parseInt(localStorage.getItem('gc_num_mesas_'+(estab?.id||''))||'10',10);}
+function numMesas(){return parseInt(localStorage.getItem('pw_num_mesas_'+(estab?.id||''))||localStorage.getItem('gc_num_mesas_'+(estab?.id||''))||'10',10);}
 
 function renderMesas(){
   const n=numMesas();const grid=$('gc-grid');if(!grid)return;
   const allP=Object.values(pedMesas).flat();
-  const mOcup=Object.keys(pedMesas).filter(k=>pedMesas[k].length>0).length;
-  const tot=allP.reduce((s,p)=>s+Number(p.total||0),0);
+  const allAtivos=allP.filter(p=>['novo','preparo'].includes(p.status));
+  const mOcup=Object.keys(pedMesas).filter(k=>pedMesas[k].some(p=>['novo','preparo'].includes(p.status))).length;
+  const tot=allAtivos.reduce((s,p)=>s+Number(p.total||0),0);
   $('gc-ocup').textContent=mOcup;$('gc-peds').textContent=allP.length;$('gc-total').textContent='R$'+tot.toFixed(0);
   grid.innerHTML=Array.from({length:n},(_,i)=>{
     const num=i+1,key='Mesa '+num,peds=pedMesas[key]||[],ativ=peds.length>0,fech=fechadas.has(key);
-    const t=peds.reduce((s,p)=>s+Number(p.total||0),0);
-    const q=peds.reduce((s,p)=>s+(Array.isArray(p.itens)?p.itens.reduce((a,i)=>a+(i.qtd||1),0):0),0);
+    const ativos=peds.filter(p=>['novo','preparo'].includes(p.status));
+    const t=ativos.reduce((s,p)=>s+Number(p.total||0),0);
+    const q=ativos.reduce((s,p)=>s+(Array.isArray(p.itens)?p.itens.reduce((a,i)=>a+(i.qtd||1),0):0),0);
+    const ativ2=ativos.length>0;
     let cls='',dot='livre',info='<span class="mesa-lbl">Livre</span>';
     if(fech){cls='fechando';info='<span class="mesa-lbl" style="color:#22c55e">&#10003; Fechada</span>';}
-    else if(ativ){cls='ocupada';dot='ocup';info='<span class="mesa-total">'+fmtR(t)+'</span><span class="mesa-qtd">'+peds.length+' ped &#183; '+q+' itens</span>';}
+    else if(ativ2){cls='ocupada';dot='ocup';info='<span class="mesa-total">'+fmtR(t)+'</span><span class="mesa-qtd">'+peds.length+' ped &#183; '+q+' itens</span>';}
     return '<div class="mesa-card '+cls+'" onclick="gcAbrir('+num+')"><div class="mesa-dot '+dot+'"></div><div class="mesa-num">'+num+'</div><div style="display:flex;flex-direction:column;align-items:center;gap:3px">'+info+'</div></div>';
   }).join('');
 }
@@ -228,6 +245,7 @@ window.gcAbrir=async function(num){
   mesaAtual='Mesa '+num;if(!carrinhos[mesaAtual])carrinhos[mesaAtual]=[];
   $('gc-modal-mesa').textContent=mesaAtual;$('gc-nome').value=nomes[mesaAtual]||'';
   renderCardapio();renderCarrinho();renderHistorico();atualizarTotalMesa();gcTab('novo');
+  const buscaEl=$('gc-busca');if(buscaEl)buscaEl.value='';
   $('gc-modal').classList.add('open');document.body.style.overflow='hidden';
 };
 window.gcFechar=function(){$('gc-modal').classList.remove('open');document.body.style.overflow='';mesaAtual=null;};
@@ -252,6 +270,22 @@ function renderCardapio(){
     }).join('')
   ).join('');
 }
+
+window.gcBuscar=function(termo){
+  const t=(termo||'').toLowerCase().trim();
+  const items=document.querySelectorAll('#gc-cardapio .prod-item');
+  const labels=document.querySelectorAll('#gc-cardapio .cat-lbl');
+  items.forEach(el=>{
+    const txt=el.querySelector('.prod-nome')?.textContent?.toLowerCase()||'';
+    el.style.display=(!t||txt.includes(t))?'':'none';
+  });
+  // Esconde categoria se todos os itens estão ocultos
+  labels.forEach(lbl=>{
+    let next=lbl.nextElementSibling;let algumVisivel=false;
+    while(next&&next.classList.contains('prod-item')){if(next.style.display!=='none')algumVisivel=true;next=next.nextElementSibling;}
+    lbl.style.display=algumVisivel?'':'none';
+  });
+};
 
 window.gcAdd=function(id,nome,preco,emoji){
   if(!mesaAtual)return;if(!carrinhos[mesaAtual])carrinhos[mesaAtual]=[];
@@ -295,7 +329,10 @@ window.gcEnviar=async function(){
     const nome=nomes[mesaAtual]||mesaAtual;const total=carr.reduce((s,i)=>s+i.preco*i.qtd,0);
     const{error}=await db.from('pedidos').insert({estabelecimento_id:estab.id,cliente_nome:nome,cliente_whats:'',endereco:'No local — '+mesaAtual,itens:carr.map(i=>({nome:i.nome,preco:i.preco,qtd:i.qtd,emoji:i.emoji})),total,status:'novo',pagamento:'No local'});
     if(error)throw error;
-    carrinhos[mesaAtual]=[];renderCarrinho();toast('Pedido enviado! 🍳');
+    carrinhos[mesaAtual]=[];renderCarrinho();
+    // Limpa nome para próxima pessoa na mesa
+    const nomeEl=$('gc-nome');if(nomeEl)nomeEl.value='';nomes[mesaAtual]='';
+    toast('Pedido de '+nome+' enviado! 🍳');
     await loadPedidos();renderMesas();renderHistorico();atualizarTotalMesa();
   }catch(e){toast('Erro: '+e.message,'#ef4444');}
   finally{if(btn){btn.disabled=false;btn.textContent='Enviar para cozinha 🍳';}}
@@ -319,10 +356,38 @@ function renderHistorico(){
   const stC={novo:'s-novo',preparo:'s-preparo',pronto:'s-pronto'};
   const stL={novo:'⏳ Aguardando',preparo:'🍳 Preparando',pronto:'✅ Pronto'};
   if(!peds.length){el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:24px">Nenhum pedido lancado</div>';return;}
-  el.innerHTML=peds.map((p,i)=>{
-    const itens=Array.isArray(p.itens)?p.itens:[];
-    const dt=new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    return '<div class="hist-bloco"><div class="hist-id"><span>Pedido '+(i+1)+' #'+p.id.slice(-4).toUpperCase()+' '+dt+'</span><span class="'+(stC[p.status]||'')+'">'+(stL[p.status]||p.status)+'</span></div>'+itens.map(it=>'<div class="hist-item-row"><span>'+(it.qtd||1)+'x '+it.nome+'</span><span>R$ '+((it.preco||0)*(it.qtd||1)).toFixed(2).replace('.',',')+'</span></div>').join('')+'<div class="hist-sub">'+fmtR(p.total)+'</div></div>';
+
+  // Agrupa pedidos pelo nome do cliente
+  const grupos={};
+  peds.forEach(p=>{
+    const nm=p.cliente_nome||'Cliente';
+    if(!grupos[nm])grupos[nm]=[];
+    grupos[nm].push(p);
+  });
+
+  el.innerHTML=Object.entries(grupos).map(([nome,gpeds])=>{
+    const subtotal=gpeds.reduce((s,p)=>s+Number(p.total||0),0);
+    const itensHtml=gpeds.map(p=>{
+      const itens=Array.isArray(p.itens)?p.itens:[];
+      const dt=new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      return '<div style="margin-bottom:4px;padding-bottom:4px;border-bottom:1px dashed #f0e9e0">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'
+        +'<span style="font-size:.65rem;color:#aaa">'+dt+'</span>'
+        +'<span class="'+(stC[p.status]||'')+'" style="font-size:.65rem">'+(stL[p.status]||p.status)+'</span>'
+        +'</div>'
+        +itens.map(it=>'<div class="hist-item-row"><span>'+(it.qtd||1)+'x '+it.nome+'</span><span>R$ '+((it.preco||0)*(it.qtd||1)).toFixed(2).replace('.',',')+'</span></div>').join('')
+        +'</div>';
+    }).join('');
+    return '<div class="hist-bloco">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+      +'<div style="display:flex;align-items:center;gap:7px">'
+      +'<div style="width:30px;height:30px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;flex-shrink:0">'+nome.charAt(0).toUpperCase()+'</div>'
+      +'<span style="font-size:.9rem;font-weight:800">'+nome+'</span>'
+      +'</div>'
+      +'<span style="font-size:.82rem;font-weight:800;color:var(--red)">'+fmtR(subtotal)+'</span>'
+      +'</div>'
+      +itensHtml
+      +'</div>';
   }).join('');
 }
 
@@ -334,9 +399,19 @@ function atualizarTotalMesa(){
 window.gcImprimir=function(){
   if(!mesaAtual)return;
   const peds=pedMesas[mesaAtual]||[];const total=peds.reduce((s,p)=>s+Number(p.total||0),0);
-  const nome=nomes[mesaAtual]||mesaAtual;const agora=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  const rows=peds.map((p,i)=>{const itens=Array.isArray(p.itens)?p.itens:[];const dt=new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});return '<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed #ddd"><div style="font-size:10px;color:#888;margin-bottom:4px">Pedido '+(i+1)+' - '+dt+'</div>'+itens.map(it=>'<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0"><span>'+(it.qtd||1)+'x '+it.nome+'</span><span>R$ '+((it.preco||0)*(it.qtd||1)).toFixed(2).replace('.',',')+'</span></div>').join('')+'<div style="text-align:right;font-size:11px;color:#C0392B;font-weight:700;margin-top:2px">'+fmtR(p.total)+'</div></div>';}).join('');
-  const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comanda</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;padding:16px;max-width:300px;margin:0 auto}.logo{font-size:16px;font-weight:900;text-align:center;margin-bottom:4px}.logo span{color:#C0392B}hr{border:none;border-top:1px dashed #ddd;margin:8px 0}.total{display:flex;justify-content:space-between;font-size:14px;font-weight:800;margin-top:8px;border-top:2px solid #1a1a1a;padding-top:8px}@media print{body{padding:0}}</style></head><body><div class="logo">PEDI<span>WAY</span></div><div style="text-align:center;font-size:11px;color:#888;margin-bottom:6px">'+(estab?.nome||'')+'</div><hr><div style="font-size:14px;font-weight:800;text-align:center;margin:6px 0">'+mesaAtual+'</div>'+(nome!==mesaAtual?'<div style="font-size:11px;text-align:center;color:#888;margin-bottom:4px">Cliente: '+nome+'</div>':'')+'<div style="font-size:9px;text-align:center;color:#aaa;margin-bottom:8px">'+agora+'</div><hr>'+rows+'<div class="total"><span>TOTAL</span><span style="color:#C0392B">'+fmtR(total)+'</span></div><div style="text-align:center;font-size:9px;color:#aaa;margin-top:12px">PEDIWAY</div></body></html>';
+  const agora=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  // Agrupa por nome
+  const grupos={};
+  peds.forEach(p=>{const nm=p.cliente_nome||'Cliente';if(!grupos[nm])grupos[nm]=[];grupos[nm].push(p);});
+  const rows=Object.entries(grupos).map(([nome,gpeds])=>{
+    const sub=gpeds.reduce((s,p)=>s+Number(p.total||0),0);
+    return '<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1.5px solid #ddd">'
+      +'<div style="font-size:12px;font-weight:800;margin-bottom:5px">'+nome+'</div>'
+      +gpeds.map(p=>{const itens=Array.isArray(p.itens)?p.itens:[];const dt=new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});return '<div style="font-size:10px;color:#888;margin-bottom:2px">'+dt+'</div>'+itens.map(it=>'<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0"><span>'+(it.qtd||1)+'x '+it.nome+'</span><span>R$ '+((it.preco||0)*(it.qtd||1)).toFixed(2).replace('.',',')+'</span></div>').join('');}).join('<div style="height:4px"></div>')
+      +'<div style="text-align:right;font-size:11px;color:#C0392B;font-weight:700;margin-top:4px">'+fmtR(sub)+'</div>'
+      +'</div>';
+  }).join('');
+  const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comanda</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;padding:16px;max-width:300px;margin:0 auto}.logo{font-size:16px;font-weight:900;text-align:center;margin-bottom:4px}.logo span{color:#C0392B}hr{border:none;border-top:1px dashed #ddd;margin:8px 0}.total{display:flex;justify-content:space-between;font-size:14px;font-weight:800;margin-top:8px;border-top:2px solid #1a1a1a;padding-top:8px}@media print{body{padding:0}}</style></head><body><div class="logo">PEDI<span>WAY</span></div><div style="text-align:center;font-size:11px;color:#888;margin-bottom:6px">'+(estab?.nome||'')+'</div><hr><div style="font-size:14px;font-weight:800;text-align:center;margin:6px 0">'+mesaAtual+'</div><div style="font-size:9px;text-align:center;color:#aaa;margin-bottom:8px">'+agora+'</div><hr>'+rows+'<div class="total"><span>TOTAL</span><span style="color:#C0392B">'+fmtR(total)+'</span></div><div style="text-align:center;font-size:9px;color:#aaa;margin-top:12px">PEDIWAY</div></body></html>';
   const w=window.open('','_blank','width=320,height=600');if(!w){alert('Permita pop-ups para imprimir.');return;}
   w.document.write(html);w.document.close();w.focus();setTimeout(()=>w.print(),400);
 };
