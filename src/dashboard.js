@@ -425,7 +425,6 @@ export async function salvarConfig() {
     const lu = $('link-url');        if (lu) lu.textContent = `${BASE_URL}/${slug}`;
     const cl = $('cfg-link-preview');if (cl) cl.textContent = `${BASE_URL}/${slug}`;
     const clg = $('cfg-link-garcom');if (clg) clg.textContent = `${BASE_URL}/comandas/${slug}`;
-  const clg = $('cfg-link-garcom');if (clg) clg.textContent = `${BASE_URL}/comandas/${slug}`;
     atualizarBadgeLoja(aberto);
     aplicarCorDash(cor_primaria);
 
