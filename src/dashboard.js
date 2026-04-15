@@ -899,15 +899,18 @@ async function renderPedidos() {
   const { data } = await getSupa().from('pedidos').select('*')
     .eq('estabelecimento_id', estab.id).order('created_at', { ascending: false }).limit(50);
 
+  // Filtra SOMENTE pedidos de delivery/retirada — mesas ficam na aba Comandas
+  const pedidos = (data || []).filter(p => !((p.endereco||'').startsWith('No local')));
+
   const hoje    = new Date().toDateString();
-  const pedHoje = (data || []).filter(p => new Date(p.created_at).toDateString() === hoje);
+  const pedHoje = pedidos.filter(p => new Date(p.created_at).toDateString() === hoje);
   const fatHoje = pedHoje.reduce((s, p) => s + Number(p.total || 0), 0);
 
   const sp = $('stat-pedidos'); if (sp) sp.textContent = pedHoje.length;
   const sf = $('stat-faturamento'); if (sf) sf.textContent = `R$ ${fatHoje.toFixed(2).replace('.',',')}`;
 
   // Área de novos pedidos
-  const novos = (data||[]).filter(p => p.status === 'novo');
+  const novos = pedidos.filter(p => p.status === 'novo');
   novos.forEach(p => pedidosConhecidos.add(p.id));
   const lista = $('pedidos-novos-lista');
   if (lista) {
@@ -961,7 +964,7 @@ async function renderPedidos() {
     </div>`;
   };
   if (lu) lu.innerHTML = pedHoje.length ? pedHoje.slice(0,3).map(cardHtml).join('') : '<div class="empty-state-light"><span>🛵</span><p>Nenhum pedido ainda.</p></div>';
-  if (td) td.innerHTML = data?.length ? data.map(cardHtml).join('') : '<div class="empty-state-light"><span>📋</span><p>Nenhum pedido ainda.</p></div>';
+  if (td) td.innerHTML = pedidos.length ? pedidos.map(cardHtml).join('') : '<div class="empty-state-light"><span>📋</span><p>Nenhum pedido ainda.</p></div>';
 }
 
 function cardNovoHTML(p) {
@@ -1004,7 +1007,8 @@ window.aceitarPedido = async function(id) {
   pararNotif();
   const { error } = await getSupa().from('pedidos').update({ status:'preparo' }).eq('id', id);
   if (error) return showToast('Erro ao aceitar.','error');
-  removerCardNovo(id); showToast('Pedido aceito! Cliente notificado.');
+  removerCardNovo(id); showToast('Pedido aceito! 👍');
+  await carregarPedidosMesas(); renderMesas();
   await renderPedidos();
 };
 
@@ -1013,6 +1017,7 @@ window.recusarPedido = async function(id) {
   pararNotif();
   await getSupa().from('pedidos').update({ status:'recusado' }).eq('id', id);
   removerCardNovo(id); showToast('Pedido recusado.');
+  await carregarPedidosMesas(); renderMesas();
   await renderPedidos();
 };
 
@@ -1160,7 +1165,8 @@ function iniciarRealtime() {
           }
         }
 
-        // ── Pedido normal na aba Pedidos ──────────────────────────
+        // ── Pedido normal (delivery/retirada) — só aparece na aba Pedidos ─
+        if ((p.endereco||'').startsWith('No local')) return; // mesas ficam na aba Comandas
         if (pedidosConhecidos.has(p.id)) return;
         pedidosConhecidos.add(p.id);
         const lista = $('pedidos-novos-lista');
@@ -1176,9 +1182,15 @@ function iniciarRealtime() {
     .on(
       'postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'pedidos' },
-      payload => {
+      async payload => {
         const p = payload.new;
-        if (p?.estabelecimento_id === estab.id) renderPedidos();
+        if (!p || p.estabelecimento_id !== estab.id) return;
+        renderPedidos();
+        // Se é pedido de mesa, re-sincroniza mesas (ex: garçom fechou comanda)
+        if ((p.endereco||'').startsWith('No local')) {
+          await carregarPedidosMesas();
+          renderMesas();
+        }
       }
     )
     .subscribe((status) => {
@@ -1953,6 +1965,37 @@ function renderMesas() {
   if (elOcup)  elOcup.textContent  = mOcup;
   if (elPeds)  elPeds.textContent  = allPeds.length;
   if (elTotal) elTotal.textContent = fmt(totalAb);
+
+  // Pedidos novos aguardando nas mesas (área de destaque)
+  const novosM     = allPeds.filter(p => p.status === 'novo');
+  const wrapNovos  = document.getElementById('mesas-pedidos-novos-wrap');
+  const listaNovos = document.getElementById('mesas-pedidos-novos-lista');
+  const badgeNovos = document.getElementById('badge-mesas-novos');
+  if (wrapNovos)  wrapNovos.style.display  = novosM.length ? 'block' : 'none';
+  if (badgeNovos) badgeNovos.textContent   = novosM.length;
+  if (listaNovos && novosM.length) {
+    listaNovos.innerHTML = novosM.map(p => {
+      const itens = Array.isArray(p.itens) ? p.itens.map(i => `${i.qtd}x ${i.nome}`).join(', ') : '';
+      const parts = (p.endereco||'').split('—');
+      const mesa  = parts.length >= 2 ? parts[1].trim() : p.endereco || 'Mesa';
+      const nome  = p.cliente_nome && p.cliente_nome !== mesa ? p.cliente_nome : '';
+      return `<div style="background:#fff;border:1.5px solid #f0e9e0;border-left:4px solid var(--red);border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span style="font-weight:800;font-size:.88rem">${mesa}</span>
+            ${nome ? `<span style="font-size:.72rem;color:#888">${nome}</span>` : ''}
+            <span style="background:#fef3c7;color:#92400e;padding:1px 7px;border-radius:50px;font-size:.62rem;font-weight:700">NOVO</span>
+          </div>
+          <div style="font-size:.75rem;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${itens}</div>
+          <div style="font-size:.8rem;font-weight:700;color:var(--red);margin-top:2px">${fmt(p.total)}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn-ped-aceitar" style="padding:7px 12px;font-size:.75rem" onclick="aceitarPedido('${p.id}')">Aceitar</button>
+          <button class="btn-ped-recusar" style="padding:7px 10px;font-size:.75rem" onclick="recusarPedido('${p.id}')">Recusar</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
 
   grid.innerHTML = Array.from({ length: n }, (_, i) => {
     const num    = i + 1;
