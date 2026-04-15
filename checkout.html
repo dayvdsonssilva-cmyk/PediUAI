@@ -121,7 +121,7 @@
 <div class="plans-row" id="plans-section">
 
   <!-- PRO -->
-  <div class="plan-card sel" id="card-pro" onclick="selPlano('pro')">
+  <div class="plan-card sel" id="card-pro" onclick="selPlano('pro')" style="display:flex;flex-direction:column">
     <div class="chk">✓</div>
     <div class="plan-head">
       <div class="plan-badge badge-pop">⭐ Mais popular</div>
@@ -133,7 +133,7 @@
       </div>
       <div class="plan-desc">Tudo que você precisa para vender mais</div>
     </div>
-    <div class="plan-feats">
+    <div class="plan-feats" style="flex:1">
       <div class="feat"><div class="feat-ok">✓</div><span>Cardápio digital completo</span></div>
       <div class="feat"><div class="feat-ok">✓</div><span>Pedidos em tempo real</span></div>
       <div class="feat"><div class="feat-ok">✓</div><span>Fresquinho (stories)</span></div>
@@ -143,7 +143,7 @@
   </div>
 
   <!-- PREMIUM -->
-  <div class="plan-card prem-card" id="card-premium" onclick="selPlano('premium')">
+  <div class="plan-card prem-card" id="card-premium" onclick="selPlano('premium')" style="display:flex;flex-direction:column">
     <div class="chk">✓</div>
     <div class="plan-head dark">
       <div class="plan-badge badge-best">🏆 Melhor valor</div>
@@ -155,14 +155,14 @@
       </div>
       <div class="plan-desc" style="color:#888">Para quem quer o máximo</div>
     </div>
-    <div class="plan-feats">
+    <div class="plan-feats" style="flex:1">
       <div class="feat"><div class="feat-ok">✓</div><span>Cardápio digital completo</span></div>
       <div class="feat"><div class="feat-ok">✓</div><span>Pedidos em tempo real</span></div>
       <div class="feat"><div class="feat-ok">✓</div><span>Suporte prioritário</span></div>
       <div class="feat"><div class="feat-ok">✓</div><span>Financeiro e relatórios</span></div>
       <div class="feat"><div class="feat-ok">✓</div><span>Exportar CSV/PDF</span></div>
       <div class="feat"><div class="feat-ok">✓</div><span>Fresquinho (stories)</span></div>
-      <div class="feat"><div class="feat-ok">✓</div><span>SLA de suporte garantido</span></div>
+      <div class="feat"><div class="feat-ok">✓</div><span>Comandas digitais</span></div>
       <div class="feat"><div class="feat-ok">✓</div><span>Onboarding dedicado</span></div>
     </div>
     <button class="plan-btn plan-btn-dark" onclick="selPlano('premium');event.stopPropagation()">Escolher Premium</button>
