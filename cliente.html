@@ -349,7 +349,6 @@
         <div class="qtd-num" id="modal-qtd">1</div>
         <button class="qtd-btn" onclick="mudaQtd(1)">+</button>
       </div>
-      <div id="modal-adicionais-cli" style="display:none;margin-bottom:14px"></div>
       <button class="btn-add-cart" onclick="adicionarAoCarrinho()">Adicionar ao carrinho</button>
     </div>
   </div>
@@ -809,37 +808,6 @@ window.abrirProduto = function(p) {
   $('modal-desc').textContent = p.descricao || '';
   $('modal-preco').textContent = fmt(p.preco);
 
-  // Adicionais — usa grupo vinculado
-  const grupoVinc = p.grupo_adicionais;
-  const grupos = grupoVinc ? [grupoVinc] : (Array.isArray(p.adicionais) ? p.adicionais : []);
-  const adicEl = $('modal-adicionais-cli');
-  if (adicEl) {
-    if (!grupos.length) { adicEl.innerHTML = ''; adicEl.style.display='none'; }
-    else {
-      adicEl.style.display = 'block';
-      adicEl.innerHTML = grupos.map((g, gi) => {
-        const maxTxt = g.max === 1 ? 'Escolha 1' : g.min > 0 ? 'Mín. '+g.min+', Máx. '+g.max : 'Até '+g.max;
-        return '<div style="margin-bottom:14px">'
-          + '<div style="font-size:.8rem;font-weight:800;margin-bottom:2px">' + g.grupo
-          + (g.min>0 ? ' <span style="color:#C0392B;font-size:.65rem">*</span>' : '')
-          + '</div>'
-          + '<div style="font-size:.68rem;color:#aaa;margin-bottom:8px">' + maxTxt + '</div>'
-          + g.opcoes.map((o, oi) => '<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1.5px solid #e0dbd5;border-radius:10px;cursor:pointer;margin-bottom:6px;transition:border-color .15s" '
-            + 'onclick="toggleAdicCli(this,' + gi + ',' + oi + ',' + g.max + ')">'
-            + '<div style="display:flex;align-items:center;gap:10px">'
-            + '<div id="cli-adic-check-'+gi+'-'+oi+'" style="width:20px;height:20px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0">　</div>'
-            + '<span style="font-size:.85rem;font-weight:600">' + o.nome + '</span>'
-            + '</div>'
-            + '<span style="font-size:.8rem;font-weight:700;color:#C0392B">' + (Number(o.preco||0)>0 ? '+R$ '+Number(o.preco).toFixed(2).replace('.',',') : 'Grátis') + '</span>'
-            + '<input type="checkbox" id="cli-adic-'+gi+'-'+oi+'" data-gi="'+gi+'" data-max="'+g.max+'" style="display:none">'
-            + '</label>'
-          ).join('')
-          + '<div id="cli-adic-aviso-'+gi+'" style="font-size:.68rem;color:#ef4444;font-weight:700;display:none">Limite de '+g.max+' opções</div>'
-          + '</div>';
-      }).join('');
-    }
-  }
-
   $('modal-prod').classList.add('open');
   document.body.style.overflow = 'hidden';
 };
@@ -923,6 +891,12 @@ window.mudaQtd = function(d) {
 };
 window.adicionarAoCarrinho = function() {
   if (!prodAtual) return;
+  // Se tem grupo vinculado, abre modal de adicionais
+  if (prodAtual.grupo_adicionais) {
+    fecharModal();
+    abrirModalAdicionaisCli(prodAtual, prodAtual.grupo_adicionais);
+    return;
+  }
   const grupos = Array.isArray(prodAtual.adicionais) ? prodAtual.adicionais : [];
   if (grupos.length > 0) {
     // Tem adicionais — lê selecionados
@@ -954,8 +928,14 @@ window.adicionarAoCarrinho = function() {
   mostrarToast('Adicionado! 🛒', '#1a1a1a');
 };
 window.adicionarDireto = function(p) {
-  adicionarItem(p, 1);
-  mostrarToast(`${p.nome} adicionado! 🛒`, '#1a1a1a');
+  const grupo = p.grupo_adicionais;
+  if (grupo) {
+    // Abre modal de adicionais
+    abrirModalAdicionaisCli(p, grupo);
+  } else {
+    adicionarItem(p, 1);
+    mostrarToast(`${p.nome} adicionado! 🛒`, '#1a1a1a');
+  }
 };
 
 // ── CARRINHO ──────────────────────────────────────────────────────────────────
@@ -1307,6 +1287,120 @@ async function init() {
 }
 
 init();
+
+
+// ── Modal de adicionais do cliente ────────────────────────────────────────────
+let _adicCliProd   = null;
+let _adicCliGrupo  = null;
+let _adicCliSel    = {};
+
+window.abrirModalAdicionaisCli = function(p, grupo) {
+  _adicCliProd  = p;
+  _adicCliGrupo = grupo;
+  _adicCliSel   = {};
+
+  $('adic-cli-nome').textContent = p.nome;
+  $('adic-cli-base').textContent = fmt(p.preco);
+
+  const maxTxt = grupo.max === 1 ? 'Escolha 1' : grupo.min > 0 ? 'Mín. '+grupo.min+', Máx. '+grupo.max : 'Até '+grupo.max;
+  $('adic-cli-grupos').innerHTML = `<div style="margin-bottom:4px">
+    <div style="font-size:.82rem;font-weight:800;margin-bottom:3px">${grupo.nome}${grupo.min>0?' <span style="color:var(--red);font-size:.65rem">*obrigatório</span>':''}</div>
+    <div style="font-size:.68rem;color:#aaa;margin-bottom:10px">${maxTxt}</div>
+    ${(grupo.opcoes||[]).map((o,oi)=>`
+      <div id="adic-opt-${oi}" onclick="toggleAdicCli2(${oi},${grupo.max})"
+        style="display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border:1.5px solid #e0dbd5;border-radius:11px;cursor:pointer;margin-bottom:7px;transition:all .15s">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div id="adic-chk-${oi}" style="width:20px;height:20px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:transparent;flex-shrink:0;transition:all .15s">✓</div>
+          <span style="font-size:.85rem;font-weight:600">${o.nome}</span>
+        </div>
+        <span style="font-size:.8rem;font-weight:700;color:var(--red)">${Number(o.preco||0)>0?'+R$ '+Number(o.preco).toFixed(2).replace('.',','):'Grátis'}</span>
+      </div>`).join('')}
+    <div id="adic-aviso" style="font-size:.68rem;color:#ef4444;font-weight:700;display:none">Limite de ${grupo.max} opções atingido</div>
+  </div>`;
+
+  calcAdicCli();
+  $('modal-adic-cli').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+
+window.toggleAdicCli2 = function(oi, max) {
+  if (!_adicCliSel[oi]) {
+    const qtdSel = Object.keys(_adicCliSel).length;
+    if (qtdSel >= max) {
+      const av = $('adic-aviso');
+      if (av) { av.style.display='block'; setTimeout(()=>av.style.display='none',2000); }
+      return;
+    }
+    _adicCliSel[oi] = true;
+    const el = $('adic-opt-'+oi), chk = $('adic-chk-'+oi);
+    if (el)  { el.style.borderColor='var(--red)'; el.style.background='#fff5f5'; }
+    if (chk) { chk.style.background='var(--red)'; chk.style.borderColor='var(--red)'; chk.style.color='#fff'; }
+  } else {
+    delete _adicCliSel[oi];
+    const el = $('adic-opt-'+oi), chk = $('adic-chk-'+oi);
+    if (el)  { el.style.borderColor='#e0dbd5'; el.style.background=''; }
+    if (chk) { chk.style.background=''; chk.style.borderColor='#ddd'; chk.style.color='transparent'; }
+  }
+  calcAdicCli();
+};
+
+function calcAdicCli() {
+  if (!_adicCliProd || !_adicCliGrupo) return;
+  let extra = 0;
+  Object.keys(_adicCliSel).forEach(oi => {
+    extra += Number(_adicCliGrupo.opcoes[oi]?.preco || 0);
+  });
+  $('adic-cli-total').textContent = fmt(Number(_adicCliProd.preco) + extra);
+}
+
+window.confirmarAdicCli = function() {
+  if (!_adicCliProd || !_adicCliGrupo) return;
+  const g = _adicCliGrupo;
+  const qtdSel = Object.keys(_adicCliSel).length;
+  if (g.min > 0 && qtdSel < g.min) {
+    mostrarToast('Escolha ao menos ' + g.min + ' opção em "' + g.nome + '"', '#C0392B');
+    return;
+  }
+  const selecionados = Object.keys(_adicCliSel).map(oi => g.opcoes[parseInt(oi)]);
+  const extra = selecionados.reduce((s,o)=>s+Number(o.preco||0),0);
+  const descAdic = selecionados.map(o=>o.nome).filter(Boolean);
+  const nomeFinal = descAdic.length ? _adicCliProd.nome + ' (' + descAdic.join(', ') + ')' : _adicCliProd.nome;
+  adicionarItem({ ..._adicCliProd, nome: nomeFinal, preco: _adicCliProd.preco + extra }, qtdAtual || 1);
+  mostrarToast(nomeFinal + ' adicionado! 🛒', '#1a1a1a');
+  fecharModalAdicCli();
+};
+
+window.fecharModalAdicCli = function() {
+  $('modal-adic-cli').style.display = 'none';
+  document.body.style.overflow = '';
+  _adicCliProd = null; _adicCliGrupo = null; _adicCliSel = {};
+};
+
 </script>
+
+<!-- MODAL ADICIONAIS DO PRODUTO -->
+<div id="modal-adic-cli" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:none;align-items:flex-end;justify-content:center">
+  <div style="background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:520px;display:flex;flex-direction:column;max-height:88vh;overflow:hidden">
+    <div style="padding:16px 16px 12px;border-bottom:1px solid #e0dbd5;display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0">
+      <div>
+        <div style="font-size:.62rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Personalizar</div>
+        <div style="font-size:1rem;font-weight:800" id="adic-cli-nome">Produto</div>
+        <div style="font-size:.85rem;font-weight:700;color:var(--red)" id="adic-cli-base">R$ 0,00</div>
+      </div>
+      <button onclick="fecharModalAdicCli()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#aaa;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:14px 16px;-webkit-overflow-scrolling:touch" id="adic-cli-grupos"></div>
+    <div style="padding:12px 16px 24px;border-top:1px solid #e0dbd5;flex-shrink:0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:.82rem;color:#888;font-weight:600">Total do item</span>
+        <span style="font-size:1.1rem;font-weight:800;color:var(--red)" id="adic-cli-total">R$ 0,00</span>
+      </div>
+      <button onclick="confirmarAdicCli()"
+        style="width:100%;background:var(--red);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.92rem;cursor:pointer">
+        Adicionar ao carrinho 🛒
+      </button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
