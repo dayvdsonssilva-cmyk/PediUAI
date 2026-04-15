@@ -135,12 +135,24 @@
   <!-- Visao Geral -->
   <div class="tab-content active" id="tab-visao-geral">
     <div class="dash-container">
-      <div class="link-box">
-        <div>
-          <div class="link-label">SEU LINK DO CLIENTE</div>
-          <div class="link-url" id="link-url">pediway.vercel.app/meu-estabelecimento</div>
+      <!-- Links da loja -->
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+        <!-- Link clientes -->
+        <div class="link-box" style="margin-bottom:0">
+          <div>
+            <div class="link-label">🛵 LINK DO CARDÁPIO</div>
+            <div class="link-url" id="link-url">pediway.vercel.app/meu-estabelecimento</div>
+          </div>
+          <button class="btn-copiar" onclick="copiarLink()">Copiar</button>
         </div>
-        <button class="btn-copiar" onclick="copiarLink()">Copiar</button>
+        <!-- Link garçons -->
+        <div class="link-box" style="margin-bottom:0;background:#1a1a1a;border-color:#333">
+          <div>
+            <div class="link-label" style="color:#aaa">🍽️ LINK DAS COMANDAS <span style="background:rgba(255,255,255,.1);padding:1px 7px;border-radius:50px;font-size:.58rem;margin-left:4px">GARÇOM</span></div>
+            <div class="link-url" id="link-url-garcom" style="color:#fff">pediway.vercel.app/comandas/...</div>
+          </div>
+          <button class="btn-copiar" onclick="copiarLinkGarcom()" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2)">Copiar</button>
+        </div>
       </div>
       <div class="stats-grid">
         <div class="stat-box"><div class="stat-label">HOJE</div><div class="stat-num red" id="stat-pedidos">0</div><div class="stat-desc">pedidos</div></div>
