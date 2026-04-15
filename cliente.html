@@ -335,7 +335,7 @@
 </div>
 
 <!-- MODAL PRODUTO -->
-<div class="modal-bg" id="modal-prod" onclick="if(event.target===this)fecharModal()">
+<div class="modal-bg" id="modal-prod" >
   <div class="modal-sheet" style="position:relative">
     <button class="modal-close" onclick="fecharModal()">✕</button>
     <div id="modal-prod-media"></div>
@@ -356,7 +356,7 @@
 </div>
 
 <!-- CARRINHO -->
-<div id="carr-bg" onclick="if(event.target===this)fecharCarrinho()">
+<div id="carr-bg" >
   <div id="carr-sheet">
     <div class="carr-header">
       <div class="carr-title">🛒 Sua sacola</div>
@@ -809,8 +809,9 @@ window.abrirProduto = function(p) {
   $('modal-desc').textContent = p.descricao || '';
   $('modal-preco').textContent = fmt(p.preco);
 
-  // Adicionais
-  const grupos = Array.isArray(p.adicionais) ? p.adicionais : [];
+  // Adicionais — usa grupo vinculado
+  const grupoVinc = p.grupo_adicionais;
+  const grupos = grupoVinc ? [grupoVinc] : (Array.isArray(p.adicionais) ? p.adicionais : []);
   const adicEl = $('modal-adicionais-cli');
   if (adicEl) {
     if (!grupos.length) { adicEl.innerHTML = ''; adicEl.style.display='none'; }
@@ -840,8 +841,13 @@ window.abrirProduto = function(p) {
   }
 
   $('modal-prod').classList.add('open');
+  document.body.style.overflow = 'hidden';
 };
-window.fecharModal = function() { $('modal-prod').classList.remove('open'); prodAtual = null; };
+window.fecharModal = function() {
+  $('modal-prod').classList.remove('open');
+  prodAtual = null;
+  document.body.style.overflow = '';
+};
 
 window.toggleAdicCli = function(label, gi, oi, max) {
   const cb = document.getElementById('cli-adic-'+gi+'-'+oi);
@@ -976,8 +982,12 @@ function atualizarFab() {
 window.abrirCarrinho = function() {
   renderCarrinho();
   $('carr-bg').classList.add('open');
+  document.body.style.overflow = 'hidden';
 };
-window.fecharCarrinho = function() { $('carr-bg').classList.remove('open'); };
+window.fecharCarrinho = function() {
+  $('carr-bg').classList.remove('open');
+  document.body.style.overflow = '';
+};
 
 function renderCarrinho() {
   const el = $('carr-itens'); if (!el) return;
