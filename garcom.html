@@ -149,8 +149,8 @@
 <div id="gc-toast"></div>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-const SUPA_URL='https://nmttkjmfazcipefeakkx.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmFra3giLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NDA0OTQ0NiwiZXhwIjoyMDU5NjI1NDQ2fQ.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
 const db=createClient(SUPA_URL,SUPA_KEY);
 const $=id=>document.getElementById(id);
 const fmtR=v=>'R$ '+Number(v||0).toFixed(2).replace('.',',');
@@ -238,8 +238,19 @@ function renderCardapio(){
   const el=$('gc-cardapio');if(!el)return;
   if(!produtos.length){el.innerHTML='<div style="color:#aaa;text-align:center;padding:24px;font-size:.82rem">Nenhum produto disponivel</div>';return;}
   const cats={};
-  produtos.forEach(p=>{const c=p.categoria||'Outros';if(!cats[c])cats[c]=[];cats[c].push(p);});
-  el.innerHTML=Object.entries(cats).map(([cat,items])=>'<span class="cat-lbl">'+cat+'</span>'+items.map(p=>'<div class="prod-item" onclick="gcAdd(''+p.id+'',''+p.nome.replace(/'/g,"\'")+'','+p.preco+',''+( p.emoji||'🍽️')+'')"><span class="prod-emoji">'+(p.emoji||'🍽️')+'</span><span class="prod-nome">'+p.nome+'</span><span class="prod-preco">R$ '+Number(p.preco).toFixed(2).replace('.',',')+'</span></div>').join('')).join('');
+  produtos.forEach(p=>{const cat=p.categoria||'Outros';if(!cats[cat])cats[cat]=[];cats[cat].push(p);});
+  el.innerHTML=Object.entries(cats).map(([cat,items])=>
+    `<span class="cat-lbl">${cat}</span>` +
+    items.map(p=>{
+      const nm=p.nome.replace(/"/g,'&quot;');
+      const em=p.emoji||'🍽️';
+      return `<div class="prod-item" onclick="gcAdd('${p.id}','${p.nome.replace(/'/g,"\'")}',${p.preco},'${em}')">
+        <span class="prod-emoji">${em}</span>
+        <span class="prod-nome">${p.nome}</span>
+        <span class="prod-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</span>
+      </div>`;
+    }).join('')
+  ).join('');
 }
 
 window.gcAdd=function(id,nome,preco,emoji){
@@ -261,7 +272,20 @@ function renderCarrinho(){
   if($('gc-carr-sub'))$('gc-carr-sub').textContent=fmtR(tot);
   if(btn)btn.disabled=!carr.length;if(!el)return;
   if(!carr.length){el.innerHTML='<div class="carr-empty">Nenhum item</div>';return;}
-  el.innerHTML=carr.map(i=>'<div class="carr-row"><span class="carr-emoji">'+(i.emoji||'🍽️')+'</span><span class="carr-nome">'+i.nome+'</span><div class="carr-ctrl"><button class="carr-btn" onclick="gcRm(''+i.id+'')">&#8722;</button><span class="carr-qtd">'+i.qtd+'</span><button class="carr-btn plus" onclick="gcAdd(''+i.id+'',''+i.nome.replace(/'/g,"\'")+'','+i.preco+',''+( i.emoji||'')+'')">+</button></div><span class="carr-sub">'+fmtR(i.preco*i.qtd)+'</span></div>').join('');
+  el.innerHTML=carr.map(i=>{
+    const em=i.emoji||'🍽️';
+    const nm=i.nome.replace(/'/g,"\'");
+    return `<div class="carr-row">
+      <span class="carr-emoji">${em}</span>
+      <span class="carr-nome">${i.nome}</span>
+      <div class="carr-ctrl">
+        <button class="carr-btn" onclick="gcRm('${i.id}')">&#8722;</button>
+        <span class="carr-qtd">${i.qtd}</span>
+        <button class="carr-btn plus" onclick="gcAdd('${i.id}','${nm}',${i.preco},'${em}')">+</button>
+      </div>
+      <span class="carr-sub">${fmtR(i.preco*i.qtd)}</span>
+    </div>`;
+  }).join('');
 }
 
 window.gcEnviar=async function(){
