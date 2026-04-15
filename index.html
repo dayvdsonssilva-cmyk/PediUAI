@@ -263,6 +263,15 @@
         <div style="margin-left:auto;font-size:.72rem;color:#aaa">Clique em uma mesa para ver a comanda</div>
       </div>
 
+      <!-- Pedidos ativos nas mesas -->
+      <div id="mesas-pedidos-novos-wrap" style="margin-bottom:16px;display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:.72rem;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.05em">🔔 Pedidos nas mesas aguardando</div>
+          <span id="badge-mesas-novos" style="background:var(--red);color:#fff;padding:1px 8px;border-radius:50px;font-size:.68rem;font-weight:700">0</span>
+        </div>
+        <div id="mesas-pedidos-novos-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
       <!-- Grid de mesas -->
       <div class="mesas-grid" id="mesas-grid"></div>
 
