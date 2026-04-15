@@ -1212,6 +1212,7 @@ function iniciarRealtime() {
       .eq('estabelecimento_id', est.id).eq('status','novo').order('created_at',{ascending:false}).limit(20);
     if (!data) return;
     data.forEach(p => {
+      if ((p.endereco||'').startsWith('No local')) return; // mesa → aba Comandas
       if (!pedidosConhecidos.has(p.id)) {
         pedidosConhecidos.add(p.id);
         const lista = $('pedidos-novos-lista');
@@ -1899,14 +1900,13 @@ window.renderHistoricoMesas = async function() {
     .order('created_at', { ascending: false });
 
   if (!data?.length) {
-    lista.innerHTML = '<div style="color:#aaa;font-size:.82rem;text-align:center;padding:20px">Nenhum pedido de mesa hoje</div>';
+    lista.innerHTML = '<div style="color:#aaa;font-size:.82rem;text-align:center;padding:32px">Nenhum pedido de mesa hoje</div>';
     return;
   }
 
   const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  const stCls = { novo:'#f59e0b', preparo:'#3b82f6', pronto:'#22c55e', recusado:'#ef4444' };
-  const stLbl = { novo:'Aguardando', preparo:'Preparando', pronto:'Pronto', recusado:'Recusado' };
-  const ICONS = { novo:'⏳', preparo:'🍳', pronto:'✅', recusado:'❌' };
+  const stCor = { novo:'#f59e0b', preparo:'#3b82f6', pronto:'#22c55e' };
+  const stLbl = { novo:'⏳ Aguardando', preparo:'🍳 Preparando', pronto:'✅ Pronto' };
 
   // Agrupa por mesa
   const porMesa = {};
@@ -1918,51 +1918,91 @@ window.renderHistoricoMesas = async function() {
   });
 
   lista.innerHTML = Object.entries(porMesa).map(([mesa, peds]) => {
-    const totalMesa = peds.reduce((s,p) => s + Number(p.total||0), 0);
+    const totalMesa = peds.reduce((s,p) => s+Number(p.total||0), 0);
     const temAtivo  = peds.some(p => ['novo','preparo'].includes(p.status));
 
-    const pedRows = peds.map(p => {
-      const itens   = Array.isArray(p.itens) ? p.itens : [];
-      const dt      = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-      const nomeDisplay = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '—';
-      return `<div class="pedido-card ped-status-${p.status||'novo'}" style="margin-bottom:8px;border-left:3px solid ${stCls[p.status]||'#aaa'}">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:1.1rem">${ICONS[p.status]||'⏳'}</span>
-            <div>
-              <div style="font-size:.82rem;font-weight:800">${nomeDisplay} <span style="color:#aaa;font-weight:500">· ${dt}</span></div>
-              <div style="font-size:.7rem;color:#aaa">#${p.id.slice(-4).toUpperCase()}</div>
+    const pedCards = peds.map(p => {
+      const itens = Array.isArray(p.itens) ? p.itens : [];
+      const dt    = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      const nome  = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';
+      const cor   = stCor[p.status] || '#aaa';
+      return `<div style="background:#fff;border:1.5px solid #f0e9e0;border-radius:12px;padding:14px;margin-bottom:10px;position:relative;border-top:4px solid ${cor}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:10px">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:1.5rem;font-weight:900;color:#1a1a1a">${mesa}</span>
+              ${nome ? `<span style="background:#f0e9e0;padding:3px 10px;border-radius:50px;font-size:.78rem;font-weight:700;color:#555">${nome}</span>` : ''}
             </div>
+            <div style="font-size:.68rem;color:#aaa;margin-top:2px">#${p.id.slice(-4).toUpperCase()} · ${dt}</div>
           </div>
-          <span style="background:${stCls[p.status]||'#aaa'}22;color:${stCls[p.status]||'#aaa'};padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700;flex-shrink:0">${stLbl[p.status]||'—'}</span>
+          <span style="background:${cor}22;color:${cor};padding:4px 10px;border-radius:50px;font-size:.72rem;font-weight:700;flex-shrink:0;white-space:nowrap">${stLbl[p.status]||p.status}</span>
         </div>
-        ${itens.length ? `<div style="font-size:.8rem;color:#666;background:#faf8f5;border-radius:8px;padding:7px 10px;margin-bottom:8px;line-height:1.6">
-          ${itens.map(i => `${i.qtd||1}x ${i.nome}`).join(' · ')}
-        </div>` : ''}
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap">
-          <span style="font-size:.88rem;font-weight:800;color:var(--red)">${fmtR(p.total)}</span>
-          <div style="display:flex;gap:6px">
-            ${p.status==='novo' ? `<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}')">Aceitar</button>
-            <button class="btn-ped-recusar" onclick="recusarPedido('${p.id}')">Recusar</button>` : ''}
-            ${p.status==='preparo' ? `<button class="btn-ped-aceitar" onclick="marcarPronto('${p.id}')">✅ Marcar pronto</button>` : ''}
-            <button class="btn-ped-imprimir" onclick="verPedido('${p.id}')">Ver mais</button>
+        <div style="background:#faf8f5;border-radius:8px;padding:10px 12px;margin-bottom:12px">
+          ${itens.map(i=>`<div style="display:flex;justify-content:space-between;font-size:.85rem;padding:3px 0;border-bottom:1px solid #f0e9e0">
+            <span style="font-weight:600">${i.qtd||1}x ${i.nome}</span>
+            <span style="color:#888">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span>
+          </div>`).join('')}
+          <div style="display:flex;justify-content:flex-end;margin-top:8px">
+            <span style="font-size:.95rem;font-weight:800;color:var(--red)">${fmtR(p.total)}</span>
           </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${p.status==='novo' ? `<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}')">Aceitar</button>
+          <button class="btn-ped-recusar" onclick="recusarPedido('${p.id}')">Recusar</button>` : ''}
+          <button class="btn-ped-imprimir" onclick="imprimirCozinha('${p.id}')">🖨️ Cozinha</button>
+          <button class="btn-ped-imprimir" onclick="verPedido('${p.id}')">Ver mais</button>
         </div>
       </div>`;
     }).join('');
 
-    return `<div style="margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#fff;border:1.5px solid ${temAtivo ? 'var(--red)' : '#e0dbd5'};border-radius:12px 12px 0 0;border-bottom:none">
-        <span style="font-size:1.1rem">${temAtivo ? '🔴' : '🟢'}</span>
-        <span style="font-size:.92rem;font-weight:800">${mesa}</span>
-        <span style="font-size:.72rem;color:#888">${peds.length} pedido${peds.length!==1?'s':''}</span>
-        <span style="margin-left:auto;font-size:.85rem;font-weight:800;color:var(--red)">${fmtR(totalMesa)}</span>
+    return `<div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:12px 16px;background:${temAtivo?'#fff5f5':'#f9fafb'};border:1.5px solid ${temAtivo?'var(--red)':'#e0dbd5'};border-radius:12px">
+        <div style="width:42px;height:42px;border-radius:10px;background:${temAtivo?'var(--red)':'#e0dbd5'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:900;flex-shrink:0">${mesa.replace('Mesa ','')}</div>
+        <div style="flex:1">
+          <div style="font-size:.95rem;font-weight:800">${mesa}</div>
+          <div style="font-size:.72rem;color:#888">${peds.length} pedido${peds.length!==1?'s':''} · ${temAtivo?'<span style="color:var(--red);font-weight:700">ativa</span>':'<span style="color:#22c55e;font-weight:700">encerrada</span>'}</div>
+        </div>
+        <div style="font-size:1rem;font-weight:800;color:var(--red)">${fmtR(totalMesa)}</div>
       </div>
-      <div style="border:1.5px solid #e0dbd5;border-top:none;border-radius:0 0 12px 12px;padding:10px">
-        ${pedRows}
+      <div style="padding-left:8px">
+        ${pedCards}
       </div>
     </div>`;
   }).join('');
+};
+
+
+
+// ── Imprimir ticket de cozinha (pedido individual) ────────────────────────────
+window.imprimirCozinha = function(pedidoId) {
+  getSupa().from('pedidos').select('*').eq('id', pedidoId).maybeSingle().then(({ data: p }) => {
+    if (!p) return;
+    const itens   = Array.isArray(p.itens) ? p.itens : [];
+    const parts   = (p.endereco||'').split('—');
+    const mesa    = parts.length >= 2 ? parts[1].trim() : p.endereco || '—';
+    const nome    = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';
+    const dt      = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cozinha</title>
+      <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:13px;padding:14px;max-width:280px;margin:0 auto}
+      .title{font-size:22px;font-weight:900;text-align:center;letter-spacing:.05em;margin-bottom:2px}
+      .sub{text-align:center;font-size:11px;color:#555;margin-bottom:8px}
+      .mesa{font-size:28px;font-weight:900;text-align:center;margin:10px 0 4px;border-top:2px dashed #000;border-bottom:2px dashed #000;padding:6px 0}
+      .nome{text-align:center;font-size:12px;color:#555;margin-bottom:10px}
+      .item{display:flex;justify-content:space-between;font-size:14px;font-weight:700;padding:4px 0;border-bottom:1px solid #ddd}
+      .hora{text-align:center;font-size:10px;color:#aaa;margin-top:10px}
+      @media print{body{padding:0}}</style></head><body>
+      <div class="title">🍽️ COZINHA</div>
+      <div class="sub">${getEstab()?.nome||''}</div>
+      <div class="mesa">${mesa}</div>
+      ${nome ? `<div class="nome">${nome}</div>` : ''}
+      ${itens.map(i=>`<div class="item"><span>${i.qtd||1}x ${i.nome}</span></div>`).join('')}
+      <div class="hora">#${p.id.slice(-4).toUpperCase()} · ${dt}</div>
+    </body></html>`;
+    const w = window.open('','_blank','width=300,height=500');
+    if (!w) { alert('Permita pop-ups.'); return; }
+    w.document.write(html); w.document.close(); w.focus();
+    setTimeout(()=>w.print(), 300);
+  });
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2234,6 +2274,10 @@ async function abrirComanda(num) {
   const modal = document.getElementById('modal-comanda');
   const title = document.getElementById('comanda-title');
   if (title) title.textContent = key;
+
+  // Número grande da mesa
+  const numEl = document.getElementById('comanda-num-mesa');
+  if (numEl) numEl.textContent = num;
 
   // Carrega cardápio
   const prods = await carregarCardapioComanda();
