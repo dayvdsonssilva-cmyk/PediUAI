@@ -820,3 +820,9 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
   text-align: right;
   flex-shrink: 0;
 }
+
+/* ── CARDS DE PEDIDO REDESENHADOS ─────────────────────────────── */
+.ped-status-novo     { border-left: 3px solid #f59e0b !important; }
+.ped-status-preparo  { border-left: 3px solid #3b82f6 !important; }
+.ped-status-pronto   { border-left: 3px solid #22c55e !important; }
+.ped-status-recusado { border-left: 3px solid #ef4444 !important; opacity: .7; }
