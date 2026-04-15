@@ -302,20 +302,30 @@
         </div>
       </div>
 
-      <!-- Linha: pagamentos + gráfico rápido -->
-      <div class="fin-meio-row">
-        <div class="config-card" style="flex:1">
-          <div class="fin-card-titulo">Por forma de pagamento</div>
-          <div id="fin-pags-est">
-            <div style="color:#aaa;font-size:0.82rem;text-align:center;padding:16px">Carregando...</div>
+      <!-- Formas de Pagamento -->
+      <div class="fin-section-card" style="margin-bottom:16px">
+        <div class="fin-section-header">
+          <div class="fin-section-icon">💳</div>
+          <div>
+            <div class="fin-section-title">Formas de Pagamento</div>
+            <div class="fin-section-sub">Distribuição por método no período</div>
           </div>
+        </div>
+        <div id="fin-pags-est" style="padding:0 4px">
+          <div style="color:#aaa;font-size:0.82rem;text-align:center;padding:20px">Carregando...</div>
         </div>
       </div>
 
-      <!-- Histórico -->
-      <div class="config-card" style="margin-top:16px">
-        <div class="fin-card-titulo">Histórico de pedidos</div>
-        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <!-- Histórico de Pedidos -->
+      <div class="fin-section-card">
+        <div class="fin-section-header" style="margin-bottom:14px">
+          <div class="fin-section-icon">📋</div>
+          <div style="flex:1">
+            <div class="fin-section-title">Histórico de Pedidos</div>
+            <div class="fin-section-sub">Últimos 100 pedidos do período</div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid var(--border)">
           <table class="fin-table">
             <thead>
               <tr>
@@ -328,7 +338,7 @@
               </tr>
             </thead>
             <tbody id="fin-hist-est">
-              <tr><td colspan="6" style="text-align:center;padding:24px;color:#aaa;font-size:0.82rem">Carregando...</td></tr>
+              <tr><td colspan="6" style="text-align:center;padding:28px;color:#aaa;font-size:0.82rem">Carregando...</td></tr>
             </tbody>
           </table>
         </div>
