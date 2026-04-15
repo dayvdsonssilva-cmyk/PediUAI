@@ -1209,23 +1209,20 @@ function renderFinanceiro() {
   if (se('fin-tick-est')) se('fin-tick-est').textContent = fmtR(tick);
   if (se('fin-taxa-est')) se('fin-taxa-est').textContent = fmtR(taxa);
 
-  // Pagamentos
+  // Formas de Pagamento
   const pm = {};
   peds.forEach(p => { const k=(p.pagamento||'Não informado').toUpperCase(); pm[k]=(pm[k]||0)+Number(p.total||0); });
   const totPag = Object.values(pm).reduce((s,v)=>s+v,0)||1;
   const pagsEl = se('fin-pags-est');
   if (pagsEl) pagsEl.innerHTML = Object.entries(pm).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
     const pct = Math.round(v/totPag*100);
-    return `<div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:6px">
-        <span style="font-weight:600">${k}</span>
-        <span style="color:var(--red);font-weight:700">${fmtR(v)} <span style="color:#aaa;font-weight:500">(${pct}%)</span></span>
-      </div>
-      <div style="background:#f0e9e0;border-radius:50px;height:8px">
-        <div style="background:var(--red);width:${pct}%;height:100%;border-radius:50px;transition:width 0.4s"></div>
-      </div>
+    return `<div class="pag-row">
+      <span class="pag-label">${k}</span>
+      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pct}%"></div></div>
+      <span class="pag-val">${fmtR(v)}</span>
+      <span class="pag-pct">${pct}%</span>
     </div>`;
-  }).join('') || '<div style="color:#aaa;font-size:0.82rem;text-align:center;padding:20px">Sem pedidos no período</div>';
+  }).join('') || '<div style="color:#aaa;font-size:.82rem;text-align:center;padding:20px">Sem pedidos no período</div>';
 
   // Histórico
   const histEl = se('fin-hist-est');
@@ -1235,13 +1232,14 @@ function renderFinanceiro() {
         const dt = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
         const fmtV = v => 'R$ '+Number(v||0).toFixed(2).replace('.',',');
         const stCls = {novo:'#f59e0b',preparo:'#3b82f6',pronto:'#22c55e',recusado:'#ef4444'}[p.status]||'#aaa';
+        const endCurto = (p.endereco||'Retirada').length > 22 ? (p.endereco||'Retirada').slice(0,22)+'…' : (p.endereco||'Retirada');
         return `<tr>
-          <td style="font-weight:700">#${p.id.slice(-4).toUpperCase()}</td>
-          <td>${p.cliente_nome||'—'}</td>
-          <td style="font-size:0.72rem;color:#aaa;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.endereco||'Retirada'}</td>
-          <td style="font-size:0.75rem;color:#888">${p.pagamento||'—'}</td>
-          <td style="text-align:right;color:var(--red);font-weight:700">${fmtV(p.total)}</td>
-          <td style="color:#aaa;font-size:0.72rem;white-space:nowrap">${dt}</td>
+          <td style="font-weight:800;color:var(--red)">#${p.id.slice(-4).toUpperCase()}</td>
+          <td style="font-weight:600">${p.cliente_nome||'—'}</td>
+          <td style="font-size:.72rem;color:#aaa" title="${p.endereco||''}">${endCurto}</td>
+          <td><span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.68rem;font-weight:700">${(p.pagamento||'—').toUpperCase()}</span></td>
+          <td style="text-align:right;font-weight:800;color:var(--red)">${fmtV(p.total)}</td>
+          <td style="color:#aaa;font-size:.7rem;white-space:nowrap">${dt}</td>
         </tr>`;
       }).join('');
 }
