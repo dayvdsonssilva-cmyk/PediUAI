@@ -1765,18 +1765,25 @@ window.deletarGrupoAdicional = async function(id) {
 
 // ── Handler de clique em item do cardápio da comanda ─────────────────────────
 window.tcmdItem = function(el) {
-  const mesaKey = el.dataset.mesa;
-  const pid     = el.dataset.pid;
-  const nome    = el.dataset.nome;
-  const preco   = parseFloat(el.dataset.preco);
-  const emoji   = el.dataset.emoji;
-  const grupoEnc= el.dataset.grupo;
+  // Garante que pegamos o elemento com os data-attributes, mesmo se clicou num filho
+  const item    = el.closest ? el.closest('[data-mesa]') : el;
+  if (!item) return;
 
-  if (grupoEnc) {
+  const mesaKey = item.dataset.mesa;
+  const pid     = item.dataset.pid;
+  const nome    = item.dataset.nome;
+  const preco   = parseFloat(item.dataset.preco);
+  const emoji   = item.dataset.emoji || '🍽️';
+  const grupoEnc= item.dataset.grupo;
+
+  if (!mesaKey || !pid) return;
+
+  if (grupoEnc && grupoEnc.length > 0) {
     try {
       const grupo = JSON.parse(decodeURIComponent(grupoEnc));
       abrirAdicionaisGrupo(mesaKey, pid, nome, preco, emoji, grupo);
     } catch(e) {
+      console.warn('tcmdItem grupo parse error:', e);
       addItemComanda(mesaKey, pid, nome, preco, emoji);
     }
   } else {
@@ -2082,8 +2089,12 @@ function renderCardapioComanda(mesaKey, prods) {
 
   el.innerHTML = Object.entries(cats).map(([cat, items]) => {
     const itemsHtml = items.map(p => {
-      const grupoEnc = p.adicionais_grupo ? encodeURIComponent(JSON.stringify(p.adicionais_grupo)) : '';
-      const nomeEnc  = p.nome.replace(/"/g, '&quot;');
+      // encodeURIComponent garante que aspas e chars especiais não quebram o atributo HTML
+      const grupoEnc = p.adicionais_grupo
+        ? encodeURIComponent(JSON.stringify(p.adicionais_grupo)).replace(/'/g, '%27')
+        : '';
+      const nomeEnc  = p.nome.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      const precoFmt = Number(p.preco).toFixed(2).replace('.',',');
       return `<div class="cmd-item" onclick="tcmdItem(this)"
         data-pid="${p.id}"
         data-nome="${nomeEnc}"
@@ -2093,7 +2104,7 @@ function renderCardapioComanda(mesaKey, prods) {
         data-mesa="${mesaKey}">
         <span class="cmd-item-emoji">${p.emoji||'🍽️'}</span>
         <span class="cmd-item-nome">${p.nome}</span>
-        <span class="cmd-item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</span>
+        <span class="cmd-item-preco">R$ ${precoFmt}</span>
       </div>`;
     }).join('');
     return `<span class="cmd-cat-label">${cat}</span>${itemsHtml}`;
