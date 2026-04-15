@@ -1598,43 +1598,43 @@ async function carregarGruposAdicionais() {
 
   _gruposAdicionais = grupos || [];
 
-  // Busca produtos para mostrar vinculações
   const { data: prods } = await getSupa()
     .from('produtos').select('id, nome, emoji, grupo_adicional_id')
     .eq('estabelecimento_id', estab.id);
   _produtosCache = prods || [];
 
   if (!_gruposAdicionais.length) {
-    el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#aaa">'
-      + '<div style="font-size:2rem;margin-bottom:10px">🧩</div>'
-      + '<div style="font-size:.88rem;font-weight:600;margin-bottom:4px">Nenhum grupo criado</div>'
-      + '<div style="font-size:.78rem">Crie grupos de adicionais como "Complementos Açaí" e vincule aos produtos</div>'
-      + '</div>';
+    el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#aaa">
+      <div style="font-size:2rem;margin-bottom:10px">🧩</div>
+      <div style="font-size:.88rem;font-weight:600;margin-bottom:4px">Nenhum grupo criado</div>
+      <div style="font-size:.78rem">Crie grupos como "Complementos Açaí" e vincule aos produtos</div>
+    </div>`;
     return;
   }
 
   el.innerHTML = _gruposAdicionais.map(g => {
-    const prods_vinc = _produtosCache.filter(p => p.grupo_adicional_id === g.id);
-    const opcStr = (g.opcoes||[]).slice(0,3).map(o=>o.nome).join(', ') + ((g.opcoes||[]).length>3?'...':'');
-    return '<div style="border:1.5px solid #e0dbd5;border-radius:14px;padding:14px;margin-bottom:10px;background:#fff">'
-      + '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">'
-      + '<div>'
-      + '<div style="font-size:.92rem;font-weight:800">' + g.nome + '</div>'
-      + '<div style="font-size:.68rem;color:#aaa;margin-top:2px">Mín. ' + g.min + ' · Máx. ' + g.max + ' · ' + (g.opcoes||[]).length + ' opções</div>'
-      + '<div style="font-size:.72rem;color:#888;margin-top:2px">' + opcStr + '</div>'
-      + '</div>'
-      + '<div style="display:flex;gap:6px">'
-      + '<button onclick="editarGrupoAdicional('' + g.id + '')" style="padding:6px 10px;border:1.5px solid #e0dbd5;background:#fff;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer">✏️ Editar</button>'
-      + '<button onclick="deletarGrupoAdicional('' + g.id + '')" style="padding:6px 10px;border:1.5px solid #fee2e2;background:#fff;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer;color:#ef4444">🗑️</button>'
-      + '</div></div>'
-      + (prods_vinc.length
-        ? '<div style="display:flex;flex-wrap:wrap;gap:5px">'
-          + prods_vinc.map(p=>'<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.68rem;font-weight:600">'+(p.emoji||'🍽️')+' '+p.nome+'</span>').join('')
-          + '</div>'
-        : '<div style="font-size:.68rem;color:#ccc">Nenhum produto vinculado</div>')
-      + '</div>';
+    const prodsV = _produtosCache.filter(p => p.grupo_adicional_id === g.id);
+    const opcStr = (g.opcoes||[]).slice(0,3).map(o=>o.nome).join(', ') + ((g.opcoes||[]).length>3?'…':'');
+    const prodsHtml = prodsV.length
+      ? prodsV.map(p=>`<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.68rem;font-weight:600">${p.emoji||'🍽️'} ${p.nome}</span>`).join('')
+      : '<span style="font-size:.68rem;color:#ccc">Nenhum produto vinculado</span>';
+    return `<div style="border:1.5px solid #e0dbd5;border-radius:14px;padding:14px;margin-bottom:10px;background:#fff">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <div style="font-size:.92rem;font-weight:800">${g.nome}</div>
+          <div style="font-size:.68rem;color:#aaa;margin-top:2px">Mín. ${g.min} · Máx. ${g.max} · ${(g.opcoes||[]).length} opções</div>
+          <div style="font-size:.72rem;color:#888;margin-top:2px">${opcStr}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button onclick="editarGrupoAdicional('${g.id}')" style="padding:6px 10px;border:1.5px solid #e0dbd5;background:#fff;border-radius:8px;font-size:.72rem;font-weight:600;cursor:pointer">✏️ Editar</button>
+          <button onclick="deletarGrupoAdicional('${g.id}')" style="padding:6px 10px;border:1.5px solid #fee2e2;background:#fff;border-radius:8px;font-size:.72rem;font-weight:600;cursor:pointer;color:#ef4444">🗑️</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">${prodsHtml}</div>
+    </div>`;
   }).join('');
 }
+
 
 // ── Criar/Editar grupo ─────────────────────────────────────────────────────────
 window.criarNovoGrupoAdicional = function() {
@@ -1672,9 +1672,9 @@ function renderOpcoesTmp() {
   const el = document.getElementById('eger-opcoes'); if (!el) return;
   el.innerHTML = _opcoesTmp.map((o, i) => '<div style="display:flex;gap:8px;align-items:center">'
     + '<input value="' + (o.nome||'') + '" placeholder="Nome da opção (ex: Ninho)" oninput="syncOpcao(' + i + ','nome',this.value)" '
-    + 'style="flex:2;border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none">'
+    + 'style="flex:2;border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-family:Poppins,sans-serif;font-size:.85rem;outline:none">'
     + '<input type="number" value="' + (o.preco||0) + '" placeholder="R$" step="0.50" min="0" oninput="syncOpcao(' + i + ','preco',parseFloat(this.value)||0)" '
-    + 'style="width:72px;border:1.5px solid var(--border);border-radius:9px;padding:9px 8px;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none;text-align:right">'
+    + 'style="width:72px;border:1.5px solid var(--border);border-radius:9px;padding:9px 8px;font-family:Poppins,sans-serif;font-size:.85rem;outline:none;text-align:right">'
     + '<button onclick="rmOpcao(' + i + ')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:4px;flex-shrink:0">✕</button>'
     + '</div>').join('');
 }
