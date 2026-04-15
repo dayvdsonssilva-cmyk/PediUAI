@@ -33,6 +33,10 @@
       "destination": "/cliente.html"
     },
     {
+      "source": "/comandas/:slug",
+      "destination": "/garcom.html"
+    },
+    {
       "source": "/:slug",
       "destination": "/cliente.html"
     }
