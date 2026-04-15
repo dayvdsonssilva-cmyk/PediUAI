@@ -275,6 +275,20 @@
       <!-- Grid de mesas -->
       <div class="mesas-grid" id="mesas-grid"></div>
 
+      <!-- Histórico de pedidos das mesas (todos do dia) -->
+      <div style="margin-top:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div>
+            <div style="font-size:.88rem;font-weight:800">Pedidos das mesas — hoje</div>
+            <div style="font-size:.68rem;color:#aaa;margin-top:1px">Histórico completo com nomes e status</div>
+          </div>
+          <button onclick="renderHistoricoMesas()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer">↻ Atualizar</button>
+        </div>
+        <div id="mesas-historico-lista">
+          <div style="color:#aaa;font-size:.82rem;text-align:center;padding:20px">Carregando...</div>
+        </div>
+      </div>
+
     </div>
   </div>
 
