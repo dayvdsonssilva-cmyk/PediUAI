@@ -1668,16 +1668,21 @@ window.fecharEditarGrupoAdd = function() {
   _grupoEditando = null; _opcoesTmp = [];
 };
 
+
 function renderOpcoesTmp() {
   const el = document.getElementById('eger-opcoes'); if (!el) return;
-  el.innerHTML = _opcoesTmp.map((o, i) => '<div style="display:flex;gap:8px;align-items:center">'
-    + '<input value="' + (o.nome||'') + '" placeholder="Nome da opção (ex: Ninho)" oninput="syncOpcao(' + i + ','nome',this.value)" '
-    + 'style="flex:2;border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-family:Poppins,sans-serif;font-size:.85rem;outline:none">'
-    + '<input type="number" value="' + (o.preco||0) + '" placeholder="R$" step="0.50" min="0" oninput="syncOpcao(' + i + ','preco',parseFloat(this.value)||0)" '
-    + 'style="width:72px;border:1.5px solid var(--border);border-radius:9px;padding:9px 8px;font-family:Poppins,sans-serif;font-size:.85rem;outline:none;text-align:right">'
-    + '<button onclick="rmOpcao(' + i + ')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:4px;flex-shrink:0">✕</button>'
-    + '</div>').join('');
+  el.innerHTML = _opcoesTmp.map((o, i) => `
+    <div style="display:flex;gap:8px;align-items:center">
+      <input value="${o.nome||''}" placeholder="Nome da opção (ex: Ninho)"
+        oninput="syncOpcao(${i},'nome',this.value)"
+        style="flex:2;border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-family:Poppins,sans-serif;font-size:.85rem;outline:none">
+      <input type="number" value="${o.preco||0}" placeholder="R$" step="0.50" min="0"
+        oninput="syncOpcao(${i},'preco',parseFloat(this.value)||0)"
+        style="width:72px;border:1.5px solid var(--border);border-radius:9px;padding:9px 8px;font-family:Poppins,sans-serif;font-size:.85rem;outline:none;text-align:right">
+      <button onclick="rmOpcao(${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:4px;flex-shrink:0">✕</button>
+    </div>`).join('');
 }
+
 
 window.syncOpcao = function(i, campo, val) { if (_opcoesTmp[i]) _opcoesTmp[i][campo] = val; };
 window.rmOpcao   = function(i) { _opcoesTmp.splice(i,1); renderOpcoesTmp(); };
@@ -2065,23 +2070,36 @@ function renderCardapioComanda(mesaKey, prods) {
   const el = document.getElementById('comanda-cardapio');
   if (!el) return;
   if (!prods.length) {
-    el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:24px">Nenhum produto disponível</div>';
+    el.innerHTML = '<div style="color:#aaa;font-size:.8rem;text-align:center;padding:24px">Nenhum produto disponível</div>';
     return;
   }
   const cats = {};
-  prods.forEach(p=>{ const cat=p.categoria||'Outros'; if(!cats[cat])cats[cat]=[]; cats[cat].push(p); });
-  el.innerHTML = Object.entries(cats).map(([cat,items])=>
-    '<span class="cmd-cat-label">' + cat + '</span>' +
-    items.map(p=>
-      // ← onclick tratado inline abaixo
-      '<div class="cmd-item" onclick="tcmdItem(this)" data-pid="' + p.id + '" data-nome="' + p.nome.replace(/"/g,'&quot;') + '" data-preco="' + p.preco + '" data-emoji="' + (p.emoji||'🍽️') + '" data-grupo="' + (p.adicionais_grupo ? encodeURIComponent(JSON.stringify(p.adicionais_grupo)) : '') + '" data-mesa="' + mesaKey + '">' +
-      '<span class="cmd-item-emoji">' + (p.emoji||'🍽️') + '</span>' +
-      '<span class="cmd-item-nome">' + p.nome + '</span>' +
-      '<span class="cmd-item-preco">R$ ' + Number(p.preco).toFixed(2).replace('.',',') + '</span>' +
-      '</div>'
-    ).join('')
-  ).join('');
+  prods.forEach(p => {
+    const cat = p.categoria || 'Outros';
+    if (!cats[cat]) cats[cat] = [];
+    cats[cat].push(p);
+  });
+
+  el.innerHTML = Object.entries(cats).map(([cat, items]) => {
+    const itemsHtml = items.map(p => {
+      const grupoEnc = p.adicionais_grupo ? encodeURIComponent(JSON.stringify(p.adicionais_grupo)) : '';
+      const nomeEnc  = p.nome.replace(/"/g, '&quot;');
+      return `<div class="cmd-item" onclick="tcmdItem(this)"
+        data-pid="${p.id}"
+        data-nome="${nomeEnc}"
+        data-preco="${p.preco}"
+        data-emoji="${p.emoji||'🍽️'}"
+        data-grupo="${grupoEnc}"
+        data-mesa="${mesaKey}">
+        <span class="cmd-item-emoji">${p.emoji||'🍽️'}</span>
+        <span class="cmd-item-nome">${p.nome}</span>
+        <span class="cmd-item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</span>
+      </div>`;
+    }).join('');
+    return `<span class="cmd-cat-label">${cat}</span>${itemsHtml}`;
+  }).join('');
 }
+
 
 function renderPedidosComanda(mesaKey) {
   const el   = document.getElementById('comanda-historico');
