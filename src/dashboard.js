@@ -736,6 +736,9 @@ export async function editarItem(id) {
     set('item-preco-orig', p.preco_original||'');
     const pr = $('item-promocao'); if (pr) { pr.checked = !!p.promocao; const g=$('preco-orig-group'); if(g) g.style.display=p.promocao?'flex':'none'; }
     emojiSel = p.emoji || '🍔'; renderEmojiGrid();
+    // Carrega adicionais existentes
+    _addGrupos = Array.isArray(p.adicionais) ? JSON.parse(JSON.stringify(p.adicionais)) : [];
+    renderAddGrupos();
     // Fotos existentes no modal
     const fotosExist = (p.fotos_urls && p.fotos_urls.length) ? p.fotos_urls : (p.foto_url ? [p.foto_url] : []);
     if (fotosExist.length) {
@@ -772,6 +775,7 @@ export async function editarItem(id) {
           const foto_url   = fotos_urls[0] || null;
           const promocao   = $('item-promocao')?.checked || false;
           const preco_orig = parseFloat($('item-preco-orig')?.value) || null;
+          const adicionaisUpd = getAddGruposValidos();
           const { error } = await getSupa().from('produtos').update({
             nome:         $('item-nome')?.value.trim(),
             descricao:    $('item-desc')?.value.trim(),
@@ -779,6 +783,7 @@ export async function editarItem(id) {
             preco:        parseFloat($('item-preco')?.value),
             preco_original: promocao ? preco_orig : null,
             foto_url, fotos_urls, emoji: emojiSel, promocao,
+            adicionais: adicionaisUpd,
           }).eq('id', id);
           if (error) throw new Error(error.message);
           await renderCardapio(); fecharModal(); showToast('Item atualizado!');
@@ -1707,7 +1712,7 @@ async function carregarPedidosMesas() {
     .select('*')
     .eq('estabelecimento_id', estab.id)
     .ilike('endereco', 'No local%')
-    .neq('status', 'recusado')
+    .in('status', ['novo', 'preparo'])   // só pedidos ativos
     .order('created_at', { ascending: true });
 
   _pedidosMesas = {};
