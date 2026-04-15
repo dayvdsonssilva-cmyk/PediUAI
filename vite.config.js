@@ -9,6 +9,7 @@ export default defineConfig({
         cliente:  resolve(__dirname, 'cliente.html'),
         admin:    resolve(__dirname, 'admin.html'),
         checkout: resolve(__dirname, 'checkout.html'),
+        garcom:   resolve(__dirname, 'garcom.html'),
       },
     },
   },
