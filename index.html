@@ -602,7 +602,13 @@
 
     <!-- Painel Histórico -->
     <div id="cpanel-hist" class="comanda-panel" style="display:none">
-      <div style="overflow-y:auto;height:100%;padding:12px 14px;-webkit-overflow-scrolling:touch" id="comanda-historico"></div>
+      <div style="padding:10px 14px;border-bottom:1px solid #f0e9e0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;background:#faf8f5">
+        <span style="font-size:.72rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em">Resumo da comanda</span>
+        <button onclick="imprimirComanda()" style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid #e0dbd5;border-radius:8px;padding:6px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer">
+          🖨️ Imprimir
+        </button>
+      </div>
+      <div style="overflow-y:auto;flex:1;padding:12px 14px;-webkit-overflow-scrolling:touch" id="comanda-historico"></div>
     </div>
 
   </div>
