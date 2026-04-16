@@ -1960,7 +1960,7 @@ window.renderHistoricoMesas = async function() {
           </div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:.88rem;font-weight:800;color:var(--red)">${fmtR(totalMesa)}</div>
+          <div style="font-size:.88rem;font-weight:800;color:var(--red)">${temAtivo ? fmtR(totalMesa) : 'R$ 0,00'}</div>
           <button id="${mesaId}-btn" style="margin-top:4px;background:none;border:1.5px solid var(--border);border-radius:8px;padding:5px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer;white-space:nowrap">Ver pedidos ▼</button>
         </div>
       </div>
