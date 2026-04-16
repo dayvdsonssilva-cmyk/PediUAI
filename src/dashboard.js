@@ -1978,30 +1978,51 @@ function _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl) {
   const itens   = Array.isArray(p.itens) ? p.itens : [];
   const dt      = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   const nome    = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';
-  const cor     = stCor[p.status] || '#aaa';
   const enviado = getEnviadosCozinha().has(p.id);
 
-  return `<div style="background:#fff;border:1.5px solid #f0e9e0;border-top:3px solid ${cor};border-radius:10px;padding:12px;margin-bottom:8px">
+  // Cor da borda: vermelho = não foi pra cozinha, verde = foi pra cozinha, cinza = pronto/outro
+  const bordaCor = p.status === 'pronto' ? '#aaa'
+    : enviado ? '#16a34a'
+    : '#C0392B';
+
+  // Badge de status — destaque visual forte
+  const stBadge = {
+    novo:    { bg:'#fef3c7', cor:'#92400e', icon:'🔔', txt:'Aguardando' },
+    preparo: { bg:'#dbeafe', cor:'#1d4ed8', icon:'🍳', txt:'Preparando' },
+    pronto:  { bg:'#dcfce7', cor:'#15803d', icon:'✅', txt:'Pronto'     },
+  }[p.status] || { bg:'#f3f4f6', cor:'#555', icon:'', txt: p.status };
+
+  return `<div style="background:#fff;border:1.5px solid #f0e9e0;border-left:5px solid ${bordaCor};border-radius:10px;padding:12px;margin-bottom:8px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
         ${nome ? `<span style="background:#f0e9e0;padding:3px 10px;border-radius:50px;font-size:.78rem;font-weight:700;color:#555">${nome}</span>` : ''}
         <span style="font-size:.68rem;color:#aaa">#${p.id.slice(-4).toUpperCase()} · ${dt}</span>
-        ${enviado
-          ? `<span id="ck-badge-${p.id}" style="display:flex;align-items:center;gap:3px;background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700">✓ Cozinha</span>`
-          : `<span id="ck-badge-${p.id}" style="display:none;align-items:center;gap:3px;background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700">✓ Cozinha</span>`}
       </div>
-      <span style="background:${cor}22;color:${cor};padding:3px 9px;border-radius:50px;font-size:.66rem;font-weight:700;flex-shrink:0;white-space:nowrap">${stLbl[p.status]||p.status}</span>
+      <!-- Status badge bem destacado -->
+      <span style="display:inline-flex;align-items:center;gap:4px;background:${stBadge.bg};color:${stBadge.cor};padding:5px 12px;border-radius:50px;font-size:.75rem;font-weight:800;flex-shrink:0;white-space:nowrap;letter-spacing:.01em">
+        ${stBadge.icon} ${stBadge.txt}
+      </span>
     </div>
+
+    <!-- Indicador cozinha inline -->
+    ${p.status !== 'pronto' ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:5px 10px;border-radius:8px;background:${enviado?'#f0fdf4':'#fff5f5'};border:1px solid ${enviado?'#bbf7d0':'#fecaca'}">
+      <span style="font-size:.75rem">${enviado ? '✅' : '⏳'}</span>
+      <span style="font-size:.72rem;font-weight:700;color:${enviado?'#15803d':'#C0392B'}">${enviado ? 'Enviado para a cozinha' : 'Aguardando envio para cozinha'}</span>
+    </div>` : ''}
+
+    <!-- Itens -->
     <div style="background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px">
       ${itens.map(i=>`<div style="display:flex;justify-content:space-between;font-size:.83rem;padding:2px 0"><span style="font-weight:600">${i.qtd||1}x ${i.nome}</span><span style="color:#888">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span></div>`).join('')}
       <div style="text-align:right;font-size:.9rem;font-weight:800;color:var(--red);margin-top:6px;border-top:1px solid #f0e9e0;padding-top:6px">${fmtR(p.total)}</div>
     </div>
+
+    <!-- Ações -->
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       ${p.status==='novo' ? `<button class="btn-ped-aceitar" style="padding:7px 12px;font-size:.75rem" onclick="aceitarPedido('${p.id}')">Aceitar</button>
       <button class="btn-ped-recusar" style="padding:7px 10px;font-size:.75rem" onclick="recusarPedido('${p.id}')">Recusar</button>` : ''}
-      <button class="btn-ped-imprimir" style="font-size:.75rem;${enviado?'opacity:.5;':''}border:${enviado?'1.5px solid #16a34a;color:#16a34a;':''}" onclick="imprimirCozinha('${p.id}')">
-        ${enviado ? '✓ Cozinha' : '🖨️ Cozinha'}
-      </button>
+      ${p.status !== 'pronto' ? `<button class="btn-ped-imprimir" style="font-size:.75rem;background:${enviado?'#f0fdf4':'#fff5f5'};border:1.5px solid ${enviado?'#16a34a':'#C0392B'};color:${enviado?'#16a34a':'#C0392B'};font-weight:700" onclick="imprimirCozinha('${p.id}')">
+        ${enviado ? '✓ Reenviado' : '🖨️ Enviar cozinha'}
+      </button>` : ''}
       <button class="btn-ped-imprimir" style="font-size:.75rem" onclick="verPedido('${p.id}')">Ver mais</button>
     </div>
   </div>`;
