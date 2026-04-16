@@ -1918,58 +1918,106 @@ window.renderHistoricoMesas = async function() {
   });
 
   lista.innerHTML = Object.entries(porMesa).map(([mesa, peds]) => {
+    const num       = mesa.replace('Mesa ','');
     const totalMesa = peds.reduce((s,p) => s+Number(p.total||0), 0);
-    const temAtivo  = peds.some(p => ['novo','preparo'].includes(p.status));
+    const ativos    = peds.filter(p => ['novo','preparo'].includes(p.status));
+    const prontos   = peds.filter(p => p.status === 'pronto');
+    const temAtivo  = ativos.length > 0;
+    const mesaId    = 'hmesa-' + mesa.replace(/\s/g,'');
 
-    const pedCards = peds.map(p => {
-      const itens = Array.isArray(p.itens) ? p.itens : [];
-      const dt    = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-      const nome  = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';
-      const cor   = stCor[p.status] || '#aaa';
-      return `<div style="background:#fff;border:1.5px solid #f0e9e0;border-radius:12px;padding:14px;margin-bottom:10px;position:relative;border-top:4px solid ${cor}">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:10px">
-          <div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-              <span style="font-size:1.5rem;font-weight:900;color:#1a1a1a">${mesa}</span>
-              ${nome ? `<span style="background:#f0e9e0;padding:3px 10px;border-radius:50px;font-size:.78rem;font-weight:700;color:#555">${nome}</span>` : ''}
-            </div>
-            <div style="font-size:.68rem;color:#aaa;margin-top:2px">#${p.id.slice(-4).toUpperCase()} · ${dt}</div>
-          </div>
-          <span style="background:${cor}22;color:${cor};padding:4px 10px;border-radius:50px;font-size:.72rem;font-weight:700;flex-shrink:0;white-space:nowrap">${stLbl[p.status]||p.status}</span>
+    // Cards de pedidos ativos
+    const ativosHtml = ativos.map(p => _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl)).join('');
+
+    // Cards de pedidos histórico (prontos)
+    const histHtml = prontos.length ? `
+      <div style="margin-top:10px">
+        <button onclick="toggleHistMesa('${mesaId}-hist')" style="width:100%;display:flex;align-items:center;justify-content:between;gap:8px;background:#f5f0eb;border:1.5px dashed #d4c4b0;border-radius:8px;padding:8px 12px;font-family:'Poppins',sans-serif;font-size:.75rem;font-weight:700;color:#888;cursor:pointer">
+          <span style="flex:1;text-align:left">📋 Histórico de pedidos (${prontos.length})</span>
+          <span id="${mesaId}-hist-arrow">▼</span>
+        </button>
+        <div id="${mesaId}-hist" style="display:none;margin-top:8px">
+          ${prontos.map(p => _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl)).join('')}
         </div>
-        <div style="background:#faf8f5;border-radius:8px;padding:10px 12px;margin-bottom:12px">
-          ${itens.map(i=>`<div style="display:flex;justify-content:space-between;font-size:.85rem;padding:3px 0;border-bottom:1px solid #f0e9e0">
-            <span style="font-weight:600">${i.qtd||1}x ${i.nome}</span>
-            <span style="color:#888">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span>
-          </div>`).join('')}
-          <div style="display:flex;justify-content:flex-end;margin-top:8px">
-            <span style="font-size:.95rem;font-weight:800;color:var(--red)">${fmtR(p.total)}</span>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${p.status==='novo' ? `<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}')">Aceitar</button>
-          <button class="btn-ped-recusar" onclick="recusarPedido('${p.id}')">Recusar</button>` : ''}
-          <button class="btn-ped-imprimir" onclick="imprimirCozinha('${p.id}')">🖨️ Cozinha</button>
-          <button class="btn-ped-imprimir" onclick="verPedido('${p.id}')">Ver mais</button>
-        </div>
+      </div>` : '';
+
+    // Conteúdo expandível
+    const conteudo = `
+      <div id="${mesaId}" style="display:none;padding:10px 0 4px">
+        ${ativosHtml || '<div style="color:#aaa;font-size:.8rem;padding:8px 0">Nenhum pedido ativo</div>'}
+        ${histHtml}
       </div>`;
-    }).join('');
 
-    return `<div style="margin-bottom:24px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:12px 16px;background:${temAtivo?'#fff5f5':'#f9fafb'};border:1.5px solid ${temAtivo?'var(--red)':'#e0dbd5'};border-radius:12px">
-        <div style="width:42px;height:42px;border-radius:10px;background:${temAtivo?'var(--red)':'#e0dbd5'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:900;flex-shrink:0">${mesa.replace('Mesa ','')}</div>
-        <div style="flex:1">
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;padding:13px 16px;background:#fff;border:1.5px solid ${temAtivo?'#16a34a':'#e0dbd5'};border-radius:12px;cursor:pointer" onclick="togglePedidosMesa('${mesaId}')">
+        <div style="width:42px;height:42px;border-radius:10px;background:${temAtivo?'#16a34a':'#e0dbd5'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;flex-shrink:0">${num}</div>
+        <div style="flex:1;min-width:0">
           <div style="font-size:.95rem;font-weight:800">${mesa}</div>
-          <div style="font-size:.72rem;color:#888">${peds.length} pedido${peds.length!==1?'s':''} · ${temAtivo?'<span style="color:var(--red);font-weight:700">ativa</span>':'<span style="color:#22c55e;font-weight:700">encerrada</span>'}</div>
+          <div style="font-size:.72rem;margin-top:1px">
+            <span style="color:#888">${peds.length} pedido${peds.length!==1?'s':''}</span>
+            ${temAtivo
+              ? `<span style="color:var(--red);font-weight:700;margin-left:6px">● ativa</span>`
+              : `<span style="color:#22c55e;font-weight:700;margin-left:6px">✓ encerrada</span>`}
+          </div>
         </div>
-        <div style="font-size:1rem;font-weight:800;color:var(--red)">${fmtR(totalMesa)}</div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:.88rem;font-weight:800;color:var(--red)">${fmtR(totalMesa)}</div>
+          <button id="${mesaId}-btn" style="margin-top:4px;background:none;border:1.5px solid var(--border);border-radius:8px;padding:5px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer;white-space:nowrap">Ver pedidos ▼</button>
+        </div>
       </div>
-      <div style="padding-left:8px">
-        ${pedCards}
+      <div style="padding:0 6px">
+        ${conteudo}
       </div>
     </div>`;
   }).join('');
 };
+
+// Função auxiliar — card de pedido individual
+function _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl) {
+  const itens = Array.isArray(p.itens) ? p.itens : [];
+  const dt    = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const nome  = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';
+  const cor   = stCor[p.status] || '#aaa';
+  return `<div style="background:#fff;border:1.5px solid #f0e9e0;border-top:3px solid ${cor};border-radius:10px;padding:12px;margin-bottom:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ${nome ? `<span style="background:#f0e9e0;padding:3px 10px;border-radius:50px;font-size:.78rem;font-weight:700;color:#555">${nome}</span>` : ''}
+        <span style="font-size:.68rem;color:#aaa">#${p.id.slice(-4).toUpperCase()} · ${dt}</span>
+      </div>
+      <span style="background:${cor}22;color:${cor};padding:3px 9px;border-radius:50px;font-size:.66rem;font-weight:700;flex-shrink:0;white-space:nowrap">${stLbl[p.status]||p.status}</span>
+    </div>
+    <div style="background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px">
+      ${itens.map(i=>`<div style="display:flex;justify-content:space-between;font-size:.83rem;padding:2px 0"><span style="font-weight:600">${i.qtd||1}x ${i.nome}</span><span style="color:#888">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span></div>`).join('')}
+      <div style="text-align:right;font-size:.9rem;font-weight:800;color:var(--red);margin-top:6px;border-top:1px solid #f0e9e0;padding-top:6px">${fmtR(p.total)}</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${p.status==='novo' ? `<button class="btn-ped-aceitar" style="padding:7px 12px;font-size:.75rem" onclick="aceitarPedido('${p.id}')">Aceitar</button>
+      <button class="btn-ped-recusar" style="padding:7px 10px;font-size:.75rem" onclick="recusarPedido('${p.id}')">Recusar</button>` : ''}
+      <button class="btn-ped-imprimir" style="font-size:.75rem" onclick="imprimirCozinha('${p.id}')">🖨️ Cozinha</button>
+      <button class="btn-ped-imprimir" style="font-size:.75rem" onclick="verPedido('${p.id}')">Ver mais</button>
+    </div>
+  </div>`;
+}
+
+// Expande/colapsa lista de pedidos de uma mesa
+window.togglePedidosMesa = function(id) {
+  const el   = document.getElementById(id);
+  const btn  = document.getElementById(id + '-btn');
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display  = open ? 'none' : 'block';
+  if (btn) btn.innerHTML = open ? 'Ver pedidos ▼' : 'Ocultar ▲';
+};
+
+// Expande/colapsa histórico (prontos) de uma mesa
+window.toggleHistMesa = function(id) {
+  const el  = document.getElementById(id);
+  const arr = document.getElementById(id + '-arrow');
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (arr) arr.textContent = open ? '▼' : '▲';
+};
+
 
 
 
@@ -2133,7 +2181,7 @@ function renderMesas() {
     let cls = 'vazia', dot = 'livre', info = '<span class="mesa-label">Livre</span>';
     if (fechada) {
       cls  = 'fechando'; dot = '';
-      info = '<span class="mesa-label" style="color:#22c55e">✓ Fechada</span>';
+      info = '<span class="mesa-label" style="color:var(--red)">✗ Fechada</span>';
     } else if (ativa) {
       cls  = 'ocupada'; dot = 'ocup';
       info = '<span class="mesa-total">' + fmt(total) + '</span><span class="mesa-qtd">' + peds.length + ' ped · ' + qtdIt + ' itens</span>';
