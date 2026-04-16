@@ -1886,6 +1886,7 @@ window.copiarLinkGarcom = function() {
 
 
 // ── Histórico de pedidos das mesas (aba Comandas) ────────────────────────────
+// Chamável pelo botão de atualizar no HTML
 window.renderHistoricoMesas = async function() {
   const estab = getEstab(); if (!estab) return;
   const lista = document.getElementById('mesas-historico-lista');
@@ -1919,10 +1920,11 @@ window.renderHistoricoMesas = async function() {
 
   lista.innerHTML = Object.entries(porMesa).map(([mesa, peds]) => {
     const num       = mesa.replace('Mesa ','');
-    const totalMesa = peds.reduce((s,p) => s+Number(p.total||0), 0);
     const ativos    = peds.filter(p => ['novo','preparo'].includes(p.status));
     const prontos   = peds.filter(p => p.status === 'pronto');
     const temAtivo  = ativos.length > 0;
+    // Total = só pedidos ativos (mesa aberta). Histórico tem o total completo separado.
+    const totalMesa = ativos.reduce((s,p) => s+Number(p.total||0), 0);
     const mesaId    = 'hmesa-' + mesa.replace(/\s/g,'');
 
     // Cards de pedidos ativos
@@ -1973,15 +1975,20 @@ window.renderHistoricoMesas = async function() {
 
 // Função auxiliar — card de pedido individual
 function _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl) {
-  const itens = Array.isArray(p.itens) ? p.itens : [];
-  const dt    = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  const nome  = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';
-  const cor   = stCor[p.status] || '#aaa';
+  const itens   = Array.isArray(p.itens) ? p.itens : [];
+  const dt      = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const nome    = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';
+  const cor     = stCor[p.status] || '#aaa';
+  const enviado = getEnviadosCozinha().has(p.id);
+
   return `<div style="background:#fff;border:1.5px solid #f0e9e0;border-top:3px solid ${cor};border-radius:10px;padding:12px;margin-bottom:8px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         ${nome ? `<span style="background:#f0e9e0;padding:3px 10px;border-radius:50px;font-size:.78rem;font-weight:700;color:#555">${nome}</span>` : ''}
         <span style="font-size:.68rem;color:#aaa">#${p.id.slice(-4).toUpperCase()} · ${dt}</span>
+        ${enviado
+          ? `<span id="ck-badge-${p.id}" style="display:flex;align-items:center;gap:3px;background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700">✓ Cozinha</span>`
+          : `<span id="ck-badge-${p.id}" style="display:none;align-items:center;gap:3px;background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700">✓ Cozinha</span>`}
       </div>
       <span style="background:${cor}22;color:${cor};padding:3px 9px;border-radius:50px;font-size:.66rem;font-weight:700;flex-shrink:0;white-space:nowrap">${stLbl[p.status]||p.status}</span>
     </div>
@@ -1992,7 +1999,9 @@ function _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl) {
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       ${p.status==='novo' ? `<button class="btn-ped-aceitar" style="padding:7px 12px;font-size:.75rem" onclick="aceitarPedido('${p.id}')">Aceitar</button>
       <button class="btn-ped-recusar" style="padding:7px 10px;font-size:.75rem" onclick="recusarPedido('${p.id}')">Recusar</button>` : ''}
-      <button class="btn-ped-imprimir" style="font-size:.75rem" onclick="imprimirCozinha('${p.id}')">🖨️ Cozinha</button>
+      <button class="btn-ped-imprimir" style="font-size:.75rem;${enviado?'opacity:.5;':''}border:${enviado?'1.5px solid #16a34a;color:#16a34a;':''}" onclick="imprimirCozinha('${p.id}')">
+        ${enviado ? '✓ Cozinha' : '🖨️ Cozinha'}
+      </button>
       <button class="btn-ped-imprimir" style="font-size:.75rem" onclick="verPedido('${p.id}')">Ver mais</button>
     </div>
   </div>`;
@@ -2021,8 +2030,31 @@ window.toggleHistMesa = function(id) {
 
 
 
+
+// ── Controle de "enviado para cozinha" ──────────────────────────────────────
+const _COZINHA_KEY = 'pw_enviados_cozinha';
+
+function getEnviadosCozinha() {
+  try { return new Set(JSON.parse(localStorage.getItem(_COZINHA_KEY)||'[]')); }
+  catch(e) { return new Set(); }
+}
+
+function marcarEnviadoCozinha(pedidoId) {
+  const set = getEnviadosCozinha();
+  set.add(pedidoId);
+  // Limpa IDs antigos (mais de 24h) — mantém localStorage limpo
+  localStorage.setItem(_COZINHA_KEY, JSON.stringify([...set]));
+}
+
 // ── Imprimir ticket de cozinha (pedido individual) ────────────────────────────
 window.imprimirCozinha = function(pedidoId) {
+  // Marca como enviado para cozinha visualmente
+  marcarEnviadoCozinha(pedidoId);
+  // Atualiza badge no card sem re-renderizar tudo
+  const badge = document.getElementById('ck-badge-'+pedidoId);
+  if (badge) badge.style.display = 'flex';
+  // Re-renderiza histórico para atualizar (leve)
+  window.renderHistoricoMesas();
   getSupa().from('pedidos').select('*').eq('id', pedidoId).maybeSingle().then(({ data: p }) => {
     if (!p) return;
     const itens   = Array.isArray(p.itens) ? p.itens : [];
