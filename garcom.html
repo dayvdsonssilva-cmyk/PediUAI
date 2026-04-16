@@ -25,11 +25,11 @@
     .mesas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;padding:0 14px 100px}
     .mesa-card{background:#fff;border:2px solid var(--border);border-radius:14px;padding:14px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;min-height:105px;justify-content:center;transition:all .2s;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.04)}
     .mesa-card:active{transform:scale(.97)}
-    .mesa-card.ocupada{border-color:var(--red);background:linear-gradient(135deg,#fff5f5,#fff);animation:pulse 2.5s ease-in-out infinite}
-    .mesa-card.fechando{border-color:#22c55e;background:#f0fdf4;animation:none}
-    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.08)}50%{box-shadow:0 0 0 8px rgba(192,57,43,0)}}
+    .mesa-card.ocupada{border-color:#16a34a;background:linear-gradient(135deg,#f0fdf4,#fff);animation:pulse 2.5s ease-in-out infinite}
+    .mesa-card.fechando{border-color:var(--red);background:#fff5f5;animation:none}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(22,163,74,.1)}50%{box-shadow:0 0 0 8px rgba(22,163,74,0)}}
     .mesa-dot{width:8px;height:8px;border-radius:50%;position:absolute;top:9px;right:9px}
-    .mesa-dot.livre{background:#d1d5db}.mesa-dot.ocup{background:var(--red);animation:blink 1.2s ease-in-out infinite}
+    .mesa-dot.livre{background:#d1d5db}.mesa-dot.ocup{background:#16a34a;animation:blink 1.2s ease-in-out infinite}
     @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
     .mesa-num{font-size:1.8rem;font-weight:800;line-height:1}
     .mesa-lbl{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#bbb}
@@ -242,7 +242,7 @@ function renderMesas(){
     const q=ativos.reduce((s,p)=>s+(Array.isArray(p.itens)?p.itens.reduce((a,i)=>a+(i.qtd||1),0):0),0);
     const ativ2=ativos.length>0;
     let cls='',dot='livre',info='<span class="mesa-lbl">Livre</span>';
-    if(fech){cls='fechando';info='<span class="mesa-lbl" style="color:#22c55e">&#10003; Fechada</span>';}
+    if(fech){cls='fechando';info='<span class="mesa-lbl" style="color:var(--red)">✗ Fechada</span>';}
     else if(ativ2){cls='ocupada';dot='ocup';info='<span class="mesa-total">'+fmtR(t)+'</span><span class="mesa-qtd">'+peds.length+' ped &#183; '+q+' itens</span>';}
     return '<div class="mesa-card '+cls+'" onclick="gcAbrir('+num+')"><div class="mesa-dot '+dot+'"></div><div class="mesa-num">'+num+'</div><div style="display:flex;flex-direction:column;align-items:center;gap:3px">'+info+'</div></div>';
   }).join('');
