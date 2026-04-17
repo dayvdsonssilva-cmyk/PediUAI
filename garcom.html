@@ -154,8 +154,8 @@
 <div id="gc-toast"></div>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
+const SUPA_URL='https://nmttkjmfazcipefeakkx.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmFra3giLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NDA0OTQ0NiwiZXhwIjoyMDU5NjI1NDQ2fQ.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
 const db=createClient(SUPA_URL,SUPA_KEY);
 const $=id=>document.getElementById(id);
 const fmtR=v=>'R$ '+Number(v||0).toFixed(2).replace('.',',');
@@ -337,8 +337,9 @@ window.gcEnviar=async function(){
     const{error}=await db.from('pedidos').insert({estabelecimento_id:estab.id,cliente_nome:nome,cliente_whats:'',endereco:'No local — '+mesaAtual,itens:carr.map(i=>({nome:i.nome,preco:i.preco,qtd:i.qtd,emoji:i.emoji})),total,status:'novo',pagamento:'No local'});
     if(error)throw error;
     carrinhos[mesaAtual]=[];renderCarrinho();
-    // Limpa nome para próxima pessoa na mesa
-    const nomeEl=$('gc-nome');if(nomeEl)nomeEl.value='';nomes[mesaAtual]='';
+    // Limpa nome para próxima pessoa poder se identificar
+    const nomeEl=$('gc-nome');if(nomeEl)nomeEl.value='';
+    delete nomes[mesaAtual]; // próxima pessoa começa sem nome
     toast('Pedido de '+nome+' enviado! 🍳');
     await loadPedidos();renderMesas();renderHistorico();atualizarTotalMesa();
   }catch(e){toast('Erro: '+e.message,'#ef4444');}
@@ -409,16 +410,37 @@ window.gcImprimir=function(){
   const agora=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   // Agrupa por nome
   const grupos={};
-  peds.forEach(p=>{const nm=p.cliente_nome||'Cliente';if(!grupos[nm])grupos[nm]=[];grupos[nm].push(p);});
+  peds.forEach(p=>{const nm=p.cliente_nome||'Mesa';if(!grupos[nm])grupos[nm]=[];grupos[nm].push(p);});
   const rows=Object.entries(grupos).map(([nome,gpeds])=>{
     const sub=gpeds.reduce((s,p)=>s+Number(p.total||0),0);
-    return '<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1.5px solid #ddd">'
-      +'<div style="font-size:12px;font-weight:800;margin-bottom:5px">'+nome+'</div>'
-      +gpeds.map(p=>{const itens=Array.isArray(p.itens)?p.itens:[];const dt=new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});return '<div style="font-size:10px;color:#888;margin-bottom:2px">'+dt+'</div>'+itens.map(it=>'<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0"><span>'+(it.qtd||1)+'x '+it.nome+'</span><span>R$ '+((it.preco||0)*(it.qtd||1)).toFixed(2).replace('.',',')+'</span></div>').join('');}).join('<div style="height:4px"></div>')
-      +'<div style="text-align:right;font-size:11px;color:#C0392B;font-weight:700;margin-top:4px">'+fmtR(sub)+'</div>'
+    return '<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:2px dashed #ddd">'
+      +'<div style="font-size:14px;font-weight:800;margin-bottom:6px;letter-spacing:.03em">'+nome+'</div>'
+      +gpeds.map(p=>{const itens=Array.isArray(p.itens)?p.itens:[];const dt=new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        return '<div style="font-size:10px;color:#666;margin-bottom:2px">'+dt+'</div>'
+          +itens.map(it=>'<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0;font-weight:600"><span>'+( it.qtd||1)+'x '+it.nome+'</span></div>').join('');
+      }).join('<div style="height:4px"></div>')
+      +'<div style="text-align:right;font-size:12px;color:#C0392B;font-weight:800;margin-top:6px;border-top:1px solid #ddd;padding-top:4px">Subtotal: R$ '+sub.toFixed(2).replace('.',',')+'</div>'
       +'</div>';
   }).join('');
-  const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comanda</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;padding:16px;max-width:300px;margin:0 auto}.logo{font-size:16px;font-weight:900;text-align:center;margin-bottom:4px}.logo span{color:#C0392B}hr{border:none;border-top:1px dashed #ddd;margin:8px 0}.total{display:flex;justify-content:space-between;font-size:14px;font-weight:800;margin-top:8px;border-top:2px solid #1a1a1a;padding-top:8px}@media print{body{padding:0}}</style></head><body><div class="logo">PEDI<span>WAY</span></div><div style="text-align:center;font-size:11px;color:#888;margin-bottom:6px">'+(estab?.nome||'')+'</div><hr><div style="font-size:14px;font-weight:800;text-align:center;margin:6px 0">'+mesaAtual+'</div><div style="font-size:9px;text-align:center;color:#aaa;margin-bottom:8px">'+agora+'</div><hr>'+rows+'<div class="total"><span>TOTAL</span><span style="color:#C0392B">'+fmtR(total)+'</span></div><div style="text-align:center;font-size:9px;color:#aaa;margin-top:12px">PEDIWAY</div></body></html>';
+  const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comanda</title>'
+    +'<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;padding:16px;max-width:300px;margin:0 auto}'
+    +'.logo{font-size:18px;font-weight:900;text-align:center;letter-spacing:.05em}.logo span{color:#C0392B}'
+    +'.empresa{font-size:12px;text-align:center;color:#555;margin-bottom:2px;font-weight:700}'
+    +'.tag{text-align:center;font-size:9px;color:#aaa;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}'
+    +'hr{border:none;border-top:2px dashed #ddd;margin:8px 0}'
+    +'.mesa-label{font-size:22px;font-weight:900;text-align:center;margin:8px 0;letter-spacing:.05em}'
+    +'.total{display:flex;justify-content:space-between;font-size:15px;font-weight:800;margin-top:8px;border-top:2px solid #000;padding-top:8px}'
+    +'@media print{body{padding:0}}</style></head><body>'
+    +'<div class="logo">PEDI<span>WAY</span></div>'
+    +'<div class="empresa">'+(estab?.nome||'Estabelecimento')+'</div>'
+    +'<div class="tag">Comanda digital</div>'
+    +'<hr>'
+    +'<div class="mesa-label">'+mesaAtual+'</div>'
+    +'<div style="font-size:9px;text-align:center;color:#aaa;margin-bottom:8px">'+agora+'</div>'
+    +'<hr>'+rows
+    +'<div class="total"><span>TOTAL</span><span style="color:#C0392B">R$ '+total.toFixed(2).replace('.',',')+'</span></div>'
+    +'<div style="text-align:center;font-size:9px;color:#aaa;margin-top:12px">PEDIWAY — Sistema de Gestão</div>'
+    +'</body></html>';
   const w=window.open('','_blank','width=320,height=600');if(!w){alert('Permita pop-ups para imprimir.');return;}
   w.document.write(html);w.document.close();w.focus();setTimeout(()=>w.print(),400);
 };
