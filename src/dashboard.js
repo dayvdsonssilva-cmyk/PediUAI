@@ -141,7 +141,10 @@ function atualizarLinkSuporte() {
 window.irCheckout = function(plano) {
   const estab = getEstab();
   if (!estab) return showToast('Faça login primeiro.', 'error');
-  window.open(`/checkout?plano=${plano}&estab=${estab.id}`, '_blank');
+  const cfg  = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
+  const pro  = cfg.precoPro  || '49';
+  const prem = cfg.precoPrem || '99';
+  window.open(`/checkout?plano=${plano}&estab=${estab.id}&precoPro=${pro}&precoPrem=${prem}`, '_blank');
 };
 
 // Atualiza preços no dashboard conforme config do CEO
