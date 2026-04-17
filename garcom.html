@@ -191,6 +191,15 @@ async function init(){
   produtos=prods||[];
   await loadPedidos();iniciarRealtime();
   $('gc-loading').style.display='none';$('gc-main').style.display='block';renderMesas();
+  // Polling de sincronização do estab a cada 30s (pega mudanças de mesas, etc.)
+  setInterval(async()=>{
+    try{
+      const{data:fresh}=await db.from('estabelecimentos').select('*').eq('id',estab.id).maybeSingle();
+      if(fresh&&fresh.num_mesas!==estab.num_mesas){
+        estab=fresh;renderMesas();
+      }
+    }catch(e){}
+  },30000);
 }
 
 async function loadPedidos(){
@@ -233,7 +242,11 @@ Object.keys(pedMesas).forEach(k=>{
     }).subscribe();
 }
 
-function numMesas(){return parseInt(localStorage.getItem('pw_num_mesas_'+(estab?.id||''))||localStorage.getItem('gc_num_mesas_'+(estab?.id||''))||'10',10);}
+function numMesas(){
+  // Lê do banco (estab.num_mesas) — sincronizado com o dashboard
+  // Fallback: localStorage → padrão 10
+  return parseInt(estab?.num_mesas||localStorage.getItem('pw_num_mesas_'+(estab?.id||''))||'10',10);
+}
 
 function renderMesas(){
   const n=numMesas();const grid=$('gc-grid');if(!grid)return;
