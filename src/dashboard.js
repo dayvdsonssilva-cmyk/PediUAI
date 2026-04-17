@@ -2168,12 +2168,27 @@ function getNumMesas() {
 window.salvarNumMesas = async function(val) {
   const estab = getEstab(); if (!estab) return;
   const n = Math.max(1, Math.min(200, parseInt(val) || 10));
-  // Salva localmente para uso imediato
+
+  // Atualiza o estab em memória IMEDIATAMENTE para renderMesas() pegar o valor novo
+  estab.num_mesas = n;
+  window._estab = { ...window._estab, num_mesas: n };
+  const stored = JSON.parse(localStorage.getItem('pw_estab') || '{}');
+  localStorage.setItem('pw_estab', JSON.stringify({ ...stored, num_mesas: n }));
   localStorage.setItem('pw_num_mesas_' + estab.id, String(n));
-  // Salva no Supabase para sincronizar com outros dispositivos (garçom, celular)
-  await getSupa().from('estabelecimentos').update({ num_mesas: n }).eq('id', estab.id);
+
+  // Atualiza o input visualmente com o valor normalizado
+  const inp = document.getElementById('cfg-num-mesas');
+  if (inp) inp.value = n;
+
+  // Re-renderiza imediatamente
   renderMesas();
-  showToast('Mesas atualizadas! ✅');
+
+  // Salva no banco em background (não bloqueia)
+  getSupa().from('estabelecimentos').update({ num_mesas: n }).eq('id', estab.id)
+    .then(({ error }) => {
+      if (error) console.error('[mesas] erro ao salvar:', error);
+      else showToast(`${n} mesas configuradas ✅`);
+    });
 };
 
 async function carregarPedidosMesas() {
@@ -2515,33 +2530,34 @@ async function confirmarFecharComanda() {
   const fmt   = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
   const carr  = _carrinhoComanda[_mesaAtual] || [];
   const totalMesa = peds.reduce((s,p)=>s+Number(p.total||0),0);
+  const mesaFechando = _mesaAtual;
 
   if (carr.length > 0) {
     if (!confirm('Há itens não enviados no carrinho. Deseja fechar mesmo assim?')) return;
   }
-  if (!confirm(`Fechar comanda da ${_mesaAtual}?
 
-Total: ${fmt(totalMesa)}
-Pedidos: ${peds.length}
+  // 1º — Abre a notinha para imprimir
+  window.imprimirComanda();
 
-A mesa será liberada.`)) return;
+  // 2º — Após pequeno delay (janela de impressão abre), pede confirmação
+  setTimeout(async () => {
+    if (!confirm(`Confirmar fechamento da ${mesaFechando}?\n\nTotal: ${fmt(totalMesa)}\nPedidos: ${peds.length}\n\nA mesa será liberada.`)) return;
 
-  const ids = peds.map(p=>p.id);
-  if (ids.length) await getSupa().from('pedidos').update({ status:'pronto' }).in('id', ids);
+    const ids = peds.map(p=>p.id);
+    if (ids.length) await getSupa().from('pedidos').update({ status:'pronto' }).in('id', ids);
 
-  delete _pedidosMesas[_mesaAtual];
-  delete _carrinhoComanda[_mesaAtual];
-  _mesasFechadas.add(_mesaAtual);
-  const mf = _mesaAtual;
-  setTimeout(()=>{ _mesasFechadas.delete(mf); renderMesas(); }, 5000);
+    delete _pedidosMesas[mesaFechando];
+    delete _carrinhoComanda[mesaFechando];
+    _mesasFechadas.add(mesaFechando);
+    setTimeout(()=>{ _mesasFechadas.delete(mesaFechando); renderMesas(); }, 5000);
 
-  window.fecharComanda();
-  showToast('Comanda da ' + mf + ' fechada! Total: ' + fmt(totalMesa));
-  renderMesas();
+    window.fecharComanda();
+    showToast('Comanda da ' + mesaFechando + ' fechada! ' + fmt(totalMesa));
+    renderMesas();
+    window.renderHistoricoMesas();
+  }, 500);
 }
 
-window.renderMesas            = renderMesas;
-window.abrirComanda           = abrirComanda;
 // fecharComanda já está em window.fecharComanda
 window.confirmarFecharComanda = confirmarFecharComanda;
 window.salvarNumMesas         = window.salvarNumMesas;
