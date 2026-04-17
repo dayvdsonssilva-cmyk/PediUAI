@@ -194,6 +194,10 @@ export async function initDashboard() {
         estab = fresh;
         window._estab = fresh;
         localStorage.setItem('pw_estab', JSON.stringify(fresh));
+        // Sincroniza número de mesas do banco para o localStorage local
+        if (fresh.num_mesas) {
+          localStorage.setItem('pw_num_mesas_' + fresh.id, String(fresh.num_mesas));
+        }
       }
     } catch(e) { console.log('Sync estab:', e); }
   }
@@ -2156,15 +2160,20 @@ let _nomeComanda      = {};     // { "Mesa 3": "João" }
 
 function getNumMesas() {
   const estab = getEstab();
-  const salvo = localStorage.getItem('pw_num_mesas_' + (estab?.id || ''));
-  return parseInt(salvo || '10', 10);
+  // Prioridade: 1) banco (num_mesas no estab) 2) localStorage 3) padrão 10
+  const doLocalStorage = localStorage.getItem('pw_num_mesas_' + (estab?.id || ''));
+  return parseInt(estab?.num_mesas || doLocalStorage || '10', 10);
 }
 
-window.salvarNumMesas = function(val) {
-  const estab = getEstab();
+window.salvarNumMesas = async function(val) {
+  const estab = getEstab(); if (!estab) return;
   const n = Math.max(1, Math.min(99, parseInt(val) || 10));
-  localStorage.setItem('pw_num_mesas_' + (estab?.id || ''), String(n));
+  // Salva localmente para uso imediato
+  localStorage.setItem('pw_num_mesas_' + estab.id, String(n));
+  // Salva no Supabase para sincronizar com outros dispositivos (garçom, celular)
+  await getSupa().from('estabelecimentos').update({ num_mesas: n }).eq('id', estab.id);
   renderMesas();
+  showToast('Mesas atualizadas! ✅');
 };
 
 async function carregarPedidosMesas() {
