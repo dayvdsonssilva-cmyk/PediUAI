@@ -2449,7 +2449,7 @@ function renderCardapioComanda(mesaKey, prods) {
 function renderPedidosComanda(mesaKey) {
   const el   = document.getElementById('comanda-historico');
   const peds = _pedidosMesas[mesaKey] || [];
-  const fmtR = v=>'R$ '+Number(v||0).toFixed(2).replace('.',',');
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
   const stLbl = {novo:'⏳ Aguardando',preparo:'🍳 Preparando',pronto:'✅ Pronto'};
   const stClr = {novo:'#f59e0b',preparo:'#3b82f6',pronto:'#22c55e'};
 
@@ -2460,20 +2460,37 @@ function renderPedidosComanda(mesaKey) {
   if (!el) return;
   if (!peds.length) { el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:12px">Nenhum pedido lançado</div>'; return; }
 
-  el.innerHTML = peds.map((p,idx)=>{
-    const itens = Array.isArray(p.itens)?p.itens:[];
-    const dt    = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    return `<div style="border:1px solid #f0e9e0;border-radius:10px;padding:10px;margin-bottom:8px;background:#faf8f5">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <span style="font-size:.72rem;font-weight:700;color:#aaa">Pedido ${idx+1} · ${dt}</span>
-        <span style="font-size:.72rem;font-weight:700;color:${stClr[p.status]||'#aaa'}">${stLbl[p.status]||p.status}</span>
-      </div>
-      ${itens.map(i=>`<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:2px 0">
-        <span>${i.qtd||1}x ${i.nome}</span>
-        <span style="font-weight:600">${fmtR((i.preco||0)*(i.qtd||1))}</span>
-      </div>`).join('')}
-      <div style="text-align:right;font-size:.78rem;color:var(--red);font-weight:700;margin-top:4px">${fmtR(p.total)}</div>
-    </div>`;
+  // Agrupa por nome do cliente
+  const grupos = {};
+  peds.forEach(p => {
+    const nm = p.cliente_nome || 'Cliente';
+    if (!grupos[nm]) grupos[nm] = [];
+    grupos[nm].push(p);
+  });
+
+  el.innerHTML = Object.entries(grupos).map(([nome, gpeds]) => {
+    const subtotal = gpeds.reduce((s,p)=>s+Number(p.total||0),0);
+    const inicial  = nome.charAt(0).toUpperCase();
+    const pedRows  = gpeds.map(p => {
+      const itens = Array.isArray(p.itens) ? p.itens : [];
+      const dt    = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      return '<div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px dashed #f0e9e0">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'
+        +'<span style="font-size:.65rem;color:#aaa">'+dt+'</span>'
+        +'<span style="font-size:.65rem;font-weight:700;color:'+stClr[p.status]+'">'+(stLbl[p.status]||p.status)+'</span>'
+        +'</div>'
+        +itens.map(i=>'<div style="display:flex;justify-content:space-between;font-size:.82rem"><span>'+(i.qtd||1)+'x '+i.nome+'</span><span>R$ '+((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')+'</span></div>').join('')
+        +'</div>';
+    }).join('');
+
+    return '<div style="border:1.5px solid #f0e9e0;border-radius:10px;padding:10px;margin-bottom:10px;background:#fff">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #f0e9e0">'
+      +'<div style="width:32px;height:32px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;flex-shrink:0">'+inicial+'</div>'
+      +'<span style="font-size:.92rem;font-weight:800;flex:1">'+nome+'</span>'
+      +'<span style="font-size:.85rem;font-weight:800;color:var(--red)">'+fmtR(subtotal)+'</span>'
+      +'</div>'
+      +pedRows
+      +'</div>';
   }).join('');
 }
 
