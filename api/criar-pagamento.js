@@ -29,7 +29,12 @@ export default async function handler(req, res) {
   if (!plano || !PRECOS[plano]) return res.status(400).json({ error: 'Plano inválido.' });
   if (!estabId)                  return res.status(400).json({ error: 'Estabelecimento não identificado.' });
 
-  const valor = PRECOS[plano];
+  // Usa o valor enviado pelo frontend (respeitando preços configurados pelo CEO)
+  // mas valida para não aceitar valores menores que o mínimo seguro
+  const MINIMOS = { pro: 10, premium: 10 };
+  const valorBody = Number(req.body.valor);
+  const valor = valorBody >= MINIMOS[plano] ? valorBody : PRECOS[plano];
+  console.log('[criar-pagamento] plano:', plano, '| valor:', valor, '| valorBody:', valorBody);
   const extRef = `${estabId}__${plano}__${Date.now()}`;
   const notifUrl = `${SITE_URL}/api/webhook-mp`;
 
@@ -123,8 +128,9 @@ export default async function handler(req, res) {
     }
 
     if (mpData.status === 'rejected') {
-      const detail = mpData.status_detail || 'Pagamento recusado. Verifique os dados e tente novamente.';
-      return res.status(400).json({ error: detalharRejeicao(detail) });
+      const detail = mpData.status_detail || 'cc_rejected_other_reason';
+      console.log('[MP] Rejeitado — status_detail:', detail, '| payment_method:', body.payment_method_id, '| ambiente:', MP_TOKEN?.startsWith('TEST') ? 'TESTE' : 'PRODUÇÃO');
+      return res.status(400).json({ error: detalharRejeicao(detail), status_detail: detail });
     }
 
     // ── Aprova imediatamente (cartão) → ativa plano ────────────────────────────
@@ -150,17 +156,20 @@ export default async function handler(req, res) {
 // ── Traduz motivos de rejeição do MP ─────────────────────────────────────────
 function detalharRejeicao(detail) {
   const map = {
-    'cc_rejected_insufficient_amount':    'Saldo insuficiente no cartão.',
-    'cc_rejected_bad_filled_security_code':'Código de segurança (CVV) incorreto.',
-    'cc_rejected_bad_filled_date':        'Data de validade incorreta.',
-    'cc_rejected_bad_filled_other':       'Dados do cartão incorretos. Verifique e tente novamente.',
-    'cc_rejected_call_for_authorize':     'Cartão requer autorização. Contate seu banco.',
-    'cc_rejected_card_disabled':          'Cartão desabilitado. Contate seu banco.',
-    'cc_rejected_duplicated_payment':     'Pagamento duplicado detectado.',
-    'cc_rejected_high_risk':              'Pagamento recusado por risco. Tente outro cartão.',
-    'cc_rejected_max_attempts':           'Muitas tentativas. Tente novamente mais tarde.',
+    'cc_rejected_insufficient_amount':    'Saldo insuficiente no cartão. Tente outro cartão.',
+    'cc_rejected_bad_filled_security_code':'Código de segurança (CVV) incorreto. Verifique e tente novamente.',
+    'cc_rejected_bad_filled_date':        'Data de validade incorreta. Verifique e tente novamente.',
+    'cc_rejected_bad_filled_other':       'Dados do cartão incorretos. Confira o número, validade e CVV.',
+    'cc_rejected_call_for_authorize':     'Seu banco precisa autorizar este pagamento. Ligue para o banco e tente novamente.',
+    'cc_rejected_card_disabled':          'Este cartão está desabilitado. Entre em contato com seu banco.',
+    'cc_rejected_duplicated_payment':     'Já existe um pagamento igual recente. Aguarde alguns minutos.',
+    'cc_rejected_high_risk':              'Pagamento recusado por segurança. Tente outro cartão.',
+    'cc_rejected_max_attempts':           'Muitas tentativas recusadas. Aguarde alguns minutos e tente novamente.',
+    'cc_rejected_other_reason':           'Pagamento recusado pelo banco. Tente outro cartão ou use PIX.',
+    'pending_waiting_payment':            'Aguardando confirmação do pagamento.',
+    'pending_contingency':                'Pagamento em análise. Aguarde a confirmação por e-mail.',
   };
-  return map[detail] || `Pagamento recusado (${detail}). Tente outro cartão.`;
+  return map[detail] || `Pagamento recusado. Tente outro cartão ou use PIX. (${detail})`;
 }
 
 // ── Ativa o plano no Supabase ──────────────────────────────────────────────────
