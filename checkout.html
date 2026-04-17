@@ -64,12 +64,12 @@
     .sec-label{font-size:.65rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
 
     /* Método */
-    .methods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
-    .method{border:1.5px solid #e0dbd5;border-radius:11px;padding:11px 6px;text-align:center;cursor:pointer;transition:all .15s;background:#faf8f5;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:68px;justify-content:center}
-    .method:hover{border-color:#C0392B}
-    .method.on{border-color:#C0392B;background:#fff5f5}
-    .method-icon{font-size:1.4rem;line-height:1}
-    .method-lbl{font-size:.65rem;font-weight:700;color:#555}
+    .methods{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+    .method{border:2px solid #e0dbd5;border-radius:14px;padding:16px 12px;text-align:center;cursor:pointer;transition:all .18s;background:#faf8f5;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:80px;justify-content:center;font-weight:700}
+    .method:hover{border-color:#C0392B;background:#fff5f5;transform:translateY(-1px)}
+    .method.on{border-color:#C0392B;background:#fff5f5;box-shadow:0 0 0 3px rgba(192,57,43,.12)}
+    .method-icon{font-size:1.8rem;line-height:1}
+    .method-lbl{font-size:.78rem;font-weight:700;color:#555}
 
     /* Campos genéricos */
     .fgroup{margin-bottom:13px}
@@ -88,7 +88,7 @@
     .bol-info{background:#fef9ef;border:1.5px solid #fde68a;border-radius:10px;padding:11px;font-size:.74rem;color:#92400e;margin-bottom:13px}
 
     /* Botão pagar (PIX/Boleto) */
-    .btn-pay{width:100%;background:#C0392B;color:#fff;border:none;border-radius:13px;padding:15px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.92rem;cursor:pointer;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px}
+    .btn-pay{width:100%;background:#C0392B;color:#fff;border:none;border-radius:14px;padding:18px;font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:8px;min-height:56px;letter-spacing:.01em}
     .btn-pay:hover{background:#922B21}
     .btn-pay:disabled{background:#ccc;cursor:not-allowed}
     .safe{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:10px;font-size:.68rem;color:#bbb}
@@ -201,7 +201,7 @@
   </div>
 
   <!-- Body pagamento -->
-  <div class="pay-body" id="pay-body">
+  <div class="pay-body" id="pay-body" style="padding:24px">
 
     <div class="sec-label">Forma de pagamento</div>
     <div class="methods">
@@ -290,7 +290,7 @@
 
 <script>
 // ── CONFIG ─────────────────────────────────────────────────────────────────────
-const MP_PUBLIC_KEY = 'TEST-3499aeb1-4d4b-4525-b26a-7228d0b5dabb'; // ← substitua pela APP_USR- de produção
+const MP_PUBLIC_KEY = 'APP_USR-0553d16b-7c51-4121-8cf3-aebcd8436a73';
   const IS_TESTE = MP_PUBLIC_KEY.startsWith('TEST-');
 
 const params  = new URLSearchParams(location.search);
@@ -306,8 +306,8 @@ let PRECOS = {
 
 async function carregarPrecos() {
   try {
-    const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
+    const SURL = 'https://nmttkjmfazcipefeakkx.supabase.co';
+    const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmFra3giLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NDA0OTQ0NiwiZXhwIjoyMDU5NjI1NDQ2fQ.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
     const res = await fetch(SURL + '/rest/v1/pediway_config?id=eq.global&select=preco_pro,preco_prem', {
       headers: { apikey: SKEY, Authorization: 'Bearer ' + SKEY }
     });
@@ -326,6 +326,8 @@ async function carregarPrecos() {
   if (ep) ep.textContent = PRECOS.pro.toFixed(2).replace('.',',');
   if (em) em.textContent = PRECOS.premium.toFixed(2).replace('.',',');
   if (sv) sv.textContent = 'R$ ' + PRECOS[planoSel].toFixed(2).replace('.',',');
+  const bp = document.getElementById('btn-pix');
+  if (bp) bp.textContent = '🔒 Gerar QR Code PIX — R$ ' + PRECOS[planoSel].toFixed(2).replace('.',',');
 }
 
 let brickController = null; // guarda o controller para destruir antes de recriar
@@ -334,6 +336,9 @@ let brickController = null; // guarda o controller para destruir antes de recria
 document.addEventListener('DOMContentLoaded', () => {
   selPlano(planoSel, true);
   carregarPrecos(); // busca preços atualizados do Supabase
+  // Botão PIX com valor inicial
+  const btnPix = document.getElementById('btn-pix');
+  if (btnPix) btnPix.textContent = '🔒 Gerar QR Code PIX — R$ ' + PRECOS[planoSel].toFixed(2).replace('.',',');
 
   const s = document.createElement('script');
   s.src = 'https://sdk.mercadopago.com/js/v2';
@@ -366,7 +371,19 @@ function selPlano(p, skip) {
   if (snEl) snEl.textContent = 'Plano ' + nome;
   if (svEl) svEl.textContent = 'R$ ' + preco.toFixed(2).replace('.',',');
   if (siEl) siEl.textContent = icon;
+  // Atualiza valor no botão do PIX também
+  const btnPix = document.getElementById('btn-pix');
+  if (btnPix) btnPix.textContent = '🔒 Gerar QR Code PIX — R$ ' + preco.toFixed(2).replace('.',',');
   if (!skip && metodo === 'card') recriarBrick();
+  // Se estiver no PIX e mudar de plano, reativa o form para gerar novo QR
+  if (!skip && metodo === 'pix') {
+    const ps = document.getElementById('pix-screen');
+    const pb = document.getElementById('pay-body');
+    if (ps && ps.classList.contains('show')) {
+      ps.classList.remove('show');
+      if (pb) pb.style.display = 'block';
+    }
+  }
 }
 
 // ── BRICK ─────────────────────────────────────────────────────────────────────
