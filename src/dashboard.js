@@ -2167,7 +2167,7 @@ function getNumMesas() {
 
 window.salvarNumMesas = async function(val) {
   const estab = getEstab(); if (!estab) return;
-  const n = Math.max(1, Math.min(99, parseInt(val) || 10));
+  const n = Math.max(1, Math.min(200, parseInt(val) || 10));
   // Salva localmente para uso imediato
   localStorage.setItem('pw_num_mesas_' + estab.id, String(n));
   // Salva no Supabase para sincronizar com outros dispositivos (garçom, celular)
