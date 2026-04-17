@@ -13,7 +13,7 @@
     .logo span{color:#C0392B}
 
     /* ── PLANOS ── */
-    .plans-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:860px;margin:0 auto 28px}
+    .plans-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:860px;margin:0 auto 0;border-radius:20px 20px 0 0;overflow:hidden}
     .plan-card{background:#fff;border-radius:20px;border:2.5px solid #e0dbd5;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
     .plan-card:hover{border-color:#C0392B;box-shadow:0 6px 24px rgba(192,57,43,.12)}
     .plan-card.sel{border-color:#C0392B;box-shadow:0 6px 24px rgba(192,57,43,.18)}
@@ -46,7 +46,7 @@
     .plan-card.sel .plan-btn{background:#C0392B !important;color:#fff !important}
 
     /* ── CHECKOUT ── */
-    .checkout-box{background:#fff;border-radius:20px;max-width:520px;margin:0 auto;box-shadow:0 4px 24px rgba(0,0,0,.08);overflow:hidden}
+    .checkout-box{background:#fff;border-radius:0 0 20px 20px;max-width:860px;margin:0 auto 40px;box-shadow:0 8px 32px rgba(0,0,0,.12);overflow:hidden}
 
     .sum-bar{padding:18px 22px;background:#faf8f5;border-bottom:1px solid #f0e9e0;display:flex;justify-content:space-between;align-items:center}
     .sum-bar-label{font-size:.78rem;font-weight:700;color:#555}
@@ -108,7 +108,7 @@
     .suc-sub{font-size:.83rem;color:#888;line-height:1.6;margin-bottom:20px}
 
     @media(max-width:580px){
-      .plans-row{grid-template-columns:1fr}
+      .plans-row{grid-template-columns:1fr;border-radius:0}
       body{padding:20px 12px 50px}
     }
   </style>
@@ -177,12 +177,19 @@
 <!-- ── FORMULÁRIO DE PAGAMENTO ── -->
 <div class="checkout-box">
 
-  <div class="sum-bar">
-    <div>
-      <div class="sum-bar-label">Plano selecionado</div>
-      <div class="sum-bar-plano" id="sum-plano">Pro</div>
+  <!-- Barra do plano selecionado — de ponta a ponta, alinhada com os cards -->
+  <div id="sum-bar-wrap" style="padding:16px 22px;background:#1a1a1a;display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:38px;height:38px;border-radius:10px;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">⭐</div>
+      <div>
+        <div style="font-size:.62rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.08em">Plano selecionado</div>
+        <div style="font-size:1rem;font-weight:800;color:#fff" id="sum-plano">Pro</div>
+      </div>
     </div>
-    <div class="sum-bar-val" id="sum-val">R$ 49,00</div>
+    <div style="text-align:right">
+      <div style="font-size:.62rem;color:#888;text-transform:uppercase;letter-spacing:.06em">Total mensal</div>
+      <div style="font-size:1.3rem;font-weight:800;color:#fff" id="sum-val">R$ 49,00</div>
+    </div>
   </div>
 
   <!-- Loading -->
@@ -242,22 +249,7 @@
     </div>
 
     <!-- BOLETO -->
-    <div id="form-boleto" style="display:none">
-      <div class="bol-info">⏱ Boleto vence em 3 dias úteis. Loja liberada após compensação bancária.</div>
-      <div class="fgroup">
-        <label>Nome completo</label>
-        <input class="finput" id="bol-nome" placeholder="Seu nome completo">
-      </div>
-      <div class="fgroup">
-        <label>CPF ou CNPJ</label>
-        <input class="finput" id="bol-doc" placeholder="000.000.000-00">
-      </div>
-      <div class="fgroup">
-        <label>E-mail</label>
-        <input class="finput" id="bol-email" type="email" placeholder="seu@email.com">
-      </div>
-      <button class="btn-pay" id="btn-boleto">🔒 Gerar Boleto</button>
-    </div>
+    
 
     <div class="safe">🔒 Pagamento seguro via Mercado Pago</div>
   </div>
@@ -296,10 +288,11 @@ const estabId = params.get('estab') || '';
 let planoSel  = params.get('plano') || 'pro';
 let metodo    = 'card';
 
+// Preços: URL params (passados pelo dashboard) > localStorage > padrão
 const ceoCfg = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
 const PRECOS = {
-  pro:     Number(ceoCfg.precoPro  || 49),
-  premium: Number(ceoCfg.precoPrem || 99),
+  pro:     Number(params.get('precoPro')  || ceoCfg.precoPro  || 49),
+  premium: Number(params.get('precoPrem') || ceoCfg.precoPrem || 99),
 };
 
 let brickController = null; // guarda o controller para destruir antes de recriar
@@ -309,6 +302,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('preco-pro').textContent     = PRECOS.pro.toFixed(2).replace('.',',');
   document.getElementById('preco-premium').textContent = PRECOS.premium.toFixed(2).replace('.',',');
   selPlano(planoSel, true);
+  // Garante que o valor na sum-bar reflete o preço dinâmico
+  const sv = document.getElementById('sum-val');
+  if (sv) sv.textContent = 'R$ ' + PRECOS[planoSel].toFixed(2).replace('.',',');
 
   const s = document.createElement('script');
   s.src = 'https://sdk.mercadopago.com/js/v2';
@@ -334,8 +330,11 @@ function selPlano(p, skip) {
   document.getElementById('card-' + p).classList.add('sel');
   const nome  = p === 'pro' ? 'Pro' : 'Premium';
   const preco = PRECOS[p];
+  const icon = p === 'pro' ? '⭐' : '🏆';
   document.getElementById('sum-plano').textContent = 'Plano ' + nome;
   document.getElementById('sum-val').textContent   = 'R$ ' + preco.toFixed(2).replace('.',',');
+  const iconEl = document.querySelector('#sum-bar-wrap [style*="border-radius:10px"]');
+  if (iconEl) iconEl.textContent = icon;
   if (!skip && metodo === 'card') recriarBrick();
 }
 
@@ -437,17 +436,6 @@ async function pagarPix() {
   setBtnLoad('btn-pix', true);
   await enviar({ type:'pix', doc, email });
   setBtnLoad('btn-pix', false);
-}
-async function pagarBoleto() {
-  const nome  = document.getElementById('bol-nome').value.trim();
-  const doc   = document.getElementById('bol-doc').value.replace(/\D/g,'');
-  const email = document.getElementById('bol-email').value.trim();
-  if (!nome)               return alert('Nome obrigatório.');
-  if (!doc||doc.length<11) return alert('CPF/CNPJ inválido.');
-  if (!email)              return alert('E-mail obrigatório.');
-  setBtnLoad('btn-boleto', true);
-  await enviar({ type:'boleto', nome, doc, email });
-  setBtnLoad('btn-boleto', false);
 }
 function setBtnLoad(id, on) {
   const b = document.getElementById(id);
