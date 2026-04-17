@@ -13,7 +13,7 @@
     .logo span{color:#C0392B}
 
     /* ── PLANOS ── */
-    .plans-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:860px;margin:0 auto 0;border-radius:20px 20px 0 0;overflow:hidden}
+    .plans-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:860px;margin:0 auto 0}
     .plan-card{background:#fff;border-radius:20px;border:2.5px solid #e0dbd5;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
     .plan-card:hover{border-color:#C0392B;box-shadow:0 6px 24px rgba(192,57,43,.12)}
     .plan-card.sel{border-color:#C0392B;box-shadow:0 6px 24px rgba(192,57,43,.18)}
@@ -46,7 +46,7 @@
     .plan-card.sel .plan-btn{background:#C0392B !important;color:#fff !important}
 
     /* ── CHECKOUT ── */
-    .checkout-box{background:#fff;border-radius:0 0 20px 20px;max-width:860px;margin:0 auto 40px;box-shadow:0 8px 32px rgba(0,0,0,.12);overflow:hidden}
+    .checkout-box{background:#fff;border-radius:20px;max-width:860px;margin:16px auto 40px;box-shadow:0 6px 28px rgba(0,0,0,.1);overflow:hidden}
 
     .sum-bar{padding:18px 22px;background:#faf8f5;border-bottom:1px solid #f0e9e0;display:flex;justify-content:space-between;align-items:center}
     .sum-bar-label{font-size:.78rem;font-weight:700;color:#555}
@@ -177,18 +177,18 @@
 <!-- ── FORMULÁRIO DE PAGAMENTO ── -->
 <div class="checkout-box">
 
-  <!-- Barra do plano selecionado — de ponta a ponta, alinhada com os cards -->
-  <div id="sum-bar-wrap" style="padding:16px 22px;background:#1a1a1a;display:flex;align-items:center;justify-content:space-between;gap:12px">
+  <!-- Barra do plano selecionado -->
+  <div id="sum-bar-wrap" style="padding:18px 28px;background:#fff;border-bottom:2px solid #f0e9e0;display:flex;align-items:center;justify-content:space-between;gap:12px">
     <div style="display:flex;align-items:center;gap:12px">
-      <div style="width:38px;height:38px;border-radius:10px;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">⭐</div>
+      <div style="width:40px;height:40px;border-radius:10px;background:#fdf0ee;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0" id="sum-icon">⭐</div>
       <div>
-        <div style="font-size:.62rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.08em">Plano selecionado</div>
-        <div style="font-size:1rem;font-weight:800;color:#fff" id="sum-plano">Pro</div>
+        <div style="font-size:.6rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.08em">Plano selecionado</div>
+        <div style="font-size:1rem;font-weight:800;color:#1a1a1a" id="sum-plano">Pro</div>
       </div>
     </div>
     <div style="text-align:right">
-      <div style="font-size:.62rem;color:#888;text-transform:uppercase;letter-spacing:.06em">Total mensal</div>
-      <div style="font-size:1.3rem;font-weight:800;color:#fff" id="sum-val">R$ 49,00</div>
+      <div style="font-size:.6rem;color:#aaa;text-transform:uppercase;letter-spacing:.06em">Total mensal</div>
+      <div style="font-size:1.4rem;font-weight:800;color:#C0392B" id="sum-val">R$ 49,00</div>
     </div>
   </div>
 
@@ -288,23 +288,42 @@ const estabId = params.get('estab') || '';
 let planoSel  = params.get('plano') || 'pro';
 let metodo    = 'card';
 
-// Preços: URL params (passados pelo dashboard) > localStorage > padrão
-const ceoCfg = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
-const PRECOS = {
-  pro:     Number(params.get('precoPro')  || ceoCfg.precoPro  || 49),
-  premium: Number(params.get('precoPrem') || ceoCfg.precoPrem || 99),
+// Preços carregados do Supabase (fonte única de verdade)
+let PRECOS = {
+  pro:     Number(params.get('precoPro')  || 49),
+  premium: Number(params.get('precoPrem') || 99),
 };
+
+async function carregarPrecos() {
+  try {
+    const SURL = 'https://nmttkjmfazcipefeakkx.supabase.co';
+    const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmFra3giLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NDA0OTQ0NiwiZXhwIjoyMDU5NjI1NDQ2fQ.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+    const res = await fetch(SURL + '/rest/v1/pediway_config?id=eq.global&select=preco_pro,preco_prem', {
+      headers: { apikey: SKEY, Authorization: 'Bearer ' + SKEY }
+    });
+    if (res.ok) {
+      const [cfg] = await res.json();
+      if (cfg) {
+        PRECOS.pro     = Number(cfg.preco_pro  || PRECOS.pro);
+        PRECOS.premium = Number(cfg.preco_prem || PRECOS.premium);
+      }
+    }
+  } catch(e) { console.warn('[checkout] preços do Supabase:', e); }
+  // Atualiza UI com preços carregados
+  const ep = document.getElementById('preco-pro');
+  const em = document.getElementById('preco-premium');
+  const sv = document.getElementById('sum-val');
+  if (ep) ep.textContent = PRECOS.pro.toFixed(2).replace('.',',');
+  if (em) em.textContent = PRECOS.premium.toFixed(2).replace('.',',');
+  if (sv) sv.textContent = 'R$ ' + PRECOS[planoSel].toFixed(2).replace('.',',');
+}
 
 let brickController = null; // guarda o controller para destruir antes de recriar
 
 // ── INIT ────────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('preco-pro').textContent     = PRECOS.pro.toFixed(2).replace('.',',');
-  document.getElementById('preco-premium').textContent = PRECOS.premium.toFixed(2).replace('.',',');
   selPlano(planoSel, true);
-  // Garante que o valor na sum-bar reflete o preço dinâmico
-  const sv = document.getElementById('sum-val');
-  if (sv) sv.textContent = 'R$ ' + PRECOS[planoSel].toFixed(2).replace('.',',');
+  carregarPrecos(); // busca preços atualizados do Supabase
 
   const s = document.createElement('script');
   s.src = 'https://sdk.mercadopago.com/js/v2';
@@ -331,10 +350,12 @@ function selPlano(p, skip) {
   const nome  = p === 'pro' ? 'Pro' : 'Premium';
   const preco = PRECOS[p];
   const icon = p === 'pro' ? '⭐' : '🏆';
-  document.getElementById('sum-plano').textContent = 'Plano ' + nome;
-  document.getElementById('sum-val').textContent   = 'R$ ' + preco.toFixed(2).replace('.',',');
-  const iconEl = document.querySelector('#sum-bar-wrap [style*="border-radius:10px"]');
-  if (iconEl) iconEl.textContent = icon;
+  const snEl = document.getElementById('sum-plano');
+  const svEl = document.getElementById('sum-val');
+  const siEl = document.getElementById('sum-icon');
+  if (snEl) snEl.textContent = 'Plano ' + nome;
+  if (svEl) svEl.textContent = 'R$ ' + preco.toFixed(2).replace('.',',');
+  if (siEl) siEl.textContent = icon;
   if (!skip && metodo === 'card') recriarBrick();
 }
 
