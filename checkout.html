@@ -100,6 +100,8 @@
     .pix-code{font-size:.72rem;word-break:break-all;color:#166534;margin-bottom:8px;line-height:1.5}
     .btn-copy{background:#16a34a;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer}
     .btn-back{background:#C0392B;color:#fff;border:none;border-radius:12px;padding:13px 28px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer}
+    .pix-timer{font-size:.82rem;color:#f59e0b;font-weight:700;margin:8px 0;display:flex;align-items:center;justify-content:center;gap:6px}
+    .pix-aprovado{display:none;padding:20px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:14px;margin:12px 0}
 
     .suc-screen{display:none;padding:40px 22px;text-align:center}
     .suc-screen.show{display:block}
@@ -211,10 +213,7 @@
         <div class="method-icon">📱</div>
         <div class="method-lbl">PIX</div>
       </div>
-      <div class="method" data-m="boleto" onclick="setMetodo('boleto')">
-        <div class="method-icon">🧾</div>
-        <div class="method-lbl">Boleto</div>
-      </div>
+
     </div>
 
     <!-- CARTÃO: MP Bricks renderiza o form + botão aqui -->
@@ -256,19 +255,30 @@
 
   <!-- PIX gerado -->
   <div class="pix-screen" id="pix-screen">
-    <div style="font-size:1.05rem;font-weight:800;margin-bottom:4px">QR Code PIX gerado!</div>
-    <div style="font-size:.76rem;color:#888;margin-bottom:14px">Escaneie ou copie o código abaixo para pagar</div>
-    <img id="pix-qr-img" src="" alt="QR PIX" style="width:180px;height:180px;border-radius:12px;margin:0 auto 14px;display:none">
-    <div class="pix-code-box">
-      <div style="font-size:.68rem;color:#555;margin-bottom:5px;font-weight:600">Código copia e cola:</div>
-      <div class="pix-code" id="pix-code-txt"></div>
-      <button class="btn-copy" id="btn-copy-pix">Copiar código PIX</button>
+    <!-- Estado: aguardando pagamento -->
+    <div id="pix-aguardando">
+      <div style="font-size:2.2rem;margin-bottom:8px">📱</div>
+      <div style="font-size:1.05rem;font-weight:800;margin-bottom:4px">Aguardando pagamento</div>
+      <div style="font-size:.76rem;color:#888;margin-bottom:4px">Escaneie o QR Code ou copie o código abaixo</div>
+      <div class="pix-timer" id="pix-timer">⏱ Código expira em <span id="pix-countdown">05:00</span></div>
+      <img id="pix-qr-img" src="" alt="QR PIX" style="width:190px;height:190px;border-radius:14px;margin:12px auto;display:none;box-shadow:0 4px 16px rgba(0,0,0,.1)">
+      <div class="pix-code-box">
+        <div style="font-size:.68rem;color:#555;margin-bottom:5px;font-weight:600">Código copia e cola:</div>
+        <div class="pix-code" id="pix-code-txt"></div>
+        <button class="btn-copy" id="btn-copy-pix">📋 Copiar código PIX</button>
+      </div>
+      <div style="font-size:.72rem;color:#aaa;margin-top:10px">Após pagar, a confirmação aparece automaticamente aqui.</div>
     </div>
-    <div style="font-size:.72rem;color:#888;margin:12px 0">Após pagar, seu plano é ativado automaticamente.</div>
-    <button class="btn-back" onclick="window.location.href='/'">Voltar ao painel</button>
+    <!-- Estado: aprovado -->
+    <div id="pix-aprovado" style="display:none">
+      <div style="font-size:3rem;margin-bottom:12px">✅</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#16a34a;margin-bottom:6px">Pagamento aprovado!</div>
+      <div style="font-size:.82rem;color:#555;margin-bottom:20px">Seu plano foi ativado com sucesso.<br>Bem-vindo ao PEDIWAY Premium!</div>
+      <button class="btn-back" onclick="window.location.href='/'">Ir para o painel →</button>
+    </div>
   </div>
 
-  <!-- Sucesso -->
+  <!-- Sucesso (cartão) -->
   <div class="suc-screen" id="suc-screen">
     <div class="suc-icon">🎉</div>
     <div class="suc-title" id="suc-title">Pagamento confirmado!</div>
@@ -280,7 +290,7 @@
 
 <script>
 // ── CONFIG ─────────────────────────────────────────────────────────────────────
-const MP_PUBLIC_KEY = 'APP_USR-0553d16b-7c51-4121-8cf3-aebcd8436a73';
+const MP_PUBLIC_KEY = 'TEST-3499aeb1-4d4b-4525-b26a-7228d0b5dabb'; // ← substitua pela APP_USR- de produção
   const IS_TESTE = MP_PUBLIC_KEY.startsWith('TEST-');
 
 const params  = new URLSearchParams(location.search);
@@ -296,8 +306,8 @@ let PRECOS = {
 
 async function carregarPrecos() {
   try {
-    const SURL = 'https://nmttkjmfazcipefeakkx.supabase.co';
-    const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmFra3giLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NDA0OTQ0NiwiZXhwIjoyMDU5NjI1NDQ2fQ.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+    const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
     const res = await fetch(SURL + '/rest/v1/pediway_config?id=eq.global&select=preco_pro,preco_prem', {
       headers: { apikey: SKEY, Authorization: 'Bearer ' + SKEY }
     });
@@ -526,23 +536,52 @@ function mostrarPix(data) {
   document.getElementById('pix-screen').classList.add('show');
   if (data.qr_code_base64) {
     const img = document.getElementById('pix-qr-img');
-    img.src = 'data:image/png;base64,'+data.qr_code_base64;
+    img.src = 'data:image/png;base64,' + data.qr_code_base64;
     img.style.display = 'block';
   }
-  document.getElementById('pix-code-txt').textContent = data.qr_code||'';
-}
-function mostrarSucesso(tipo) {
-  document.getElementById('pay-body').style.display = 'none';
-  document.getElementById('pix-screen').classList.remove('show');
-  document.getElementById('suc-screen').classList.add('show');
-  const msgs = {
-    card:    ['🎉 Pagamento aprovado!',  'Seu plano foi ativado. Volte ao painel.'],
-    boleto:  ['🧾 Boleto gerado!',       'Ative em até 1 dia útil após o pagamento.'],
-    pending: ['⏳ Em análise',            'Seu plano será ativado automaticamente.'],
+  document.getElementById('pix-code-txt').textContent = data.qr_code || '';
+  const copyBtn = document.getElementById('btn-copy-pix');
+  if (copyBtn) copyBtn.onclick = () => {
+    navigator.clipboard.writeText(data.qr_code || '').then(() => {
+      copyBtn.textContent = '✓ Copiado!';
+      setTimeout(() => { copyBtn.textContent = '📋 Copiar código PIX'; }, 2000);
+    });
   };
-  const [t,s] = msgs[tipo]||msgs.card;
-  document.getElementById('suc-title').textContent = t;
-  document.getElementById('suc-sub').textContent   = s;
+
+  // Countdown 5min
+  let secsLeft = 5 * 60;
+  const timerEl = document.getElementById('pix-countdown');
+  const timerWrap = document.getElementById('pix-timer');
+  const timerInt = setInterval(() => {
+    secsLeft--;
+    if (secsLeft <= 0) {
+      clearInterval(timerInt);
+      if (timerWrap) timerWrap.textContent = '⚠️ Código expirado. Gere um novo pagamento.';
+      return;
+    }
+    const mm = String(Math.floor(secsLeft / 60)).padStart(2, '0');
+    const ss = String(secsLeft % 60).padStart(2, '0');
+    if (timerEl) timerEl.textContent = mm + ':' + ss;
+  }, 1000);
+
+  // Polling verificar aprovação a cada 6s
+  if (data.id) {
+    const pollInt = setInterval(async () => {
+      try {
+        const res = await fetch('/api/verificar-pagamento?id=' + data.id);
+        if (!res.ok) return;
+        const d = await res.json();
+        if (d.status === 'approved') {
+          clearInterval(pollInt);
+          clearInterval(timerInt);
+          const aw = document.getElementById('pix-aguardando');
+          const ap = document.getElementById('pix-aprovado');
+          if (aw) aw.style.display = 'none';
+          if (ap) ap.style.display = 'block';
+        }
+      } catch(e) {}
+    }, 6000);
+  }
 }
 
 </script>
