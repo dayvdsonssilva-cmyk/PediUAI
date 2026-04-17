@@ -154,8 +154,8 @@
 <div id="gc-toast"></div>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-const SURL = 'https://nmttkjmfazcipefeakkx.supabase.co';
-const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
+const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
 const db=createClient(SUPA_URL,SUPA_KEY);
 const $=id=>document.getElementById(id);
 const fmtR=v=>'R$ '+Number(v||0).toFixed(2).replace('.',',');
@@ -176,7 +176,14 @@ async function init(){
   const{data:est,error}=await db.from('estabelecimentos').select('*').eq('slug',slug).maybeSingle();
   console.log('[Garcom] resultado:',est?.nome,'erro:',error?.message);
   if(!est){
-    $('gc-loading').innerHTML='<p style="color:#aaa;padding:40px;text-align:center;line-height:2">Loja nao encontrada<br><small style="font-size:.7rem">slug: "'+slug+'"</small></p>';
+    $('gc-loading').innerHTML='<div style="padding:40px;text-align:center;line-height:2;color:#aaa">'
+      +'<div style="font-size:2rem;margin-bottom:12px">😕</div>'
+      +'<div style="font-size:.92rem;font-weight:700;color:#555;margin-bottom:8px">Loja não encontrada</div>'
+      +'<div style="font-size:.72rem;background:#f5f0eb;border-radius:8px;padding:8px 12px;display:inline-block;margin-bottom:8px">'
+      +'🔑 slug: <strong>'+slug+'</strong></div><br>'
+      +'<div style="font-size:.7rem">Verifique se o link está correto.<br>'
+      +'URL: <span style="color:#555">'+location.href+'</span></div>'
+      +'</div>';
     return;
   }
   estab=est;$('gc-loja-nome').textContent=est.nome;document.title='Garcom - '+est.nome;var b=$('gc-badge-nome');if(b)b.textContent='🍽️ '+est.nome;
