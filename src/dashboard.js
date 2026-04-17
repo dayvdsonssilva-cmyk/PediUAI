@@ -627,44 +627,51 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function renderFotosGrid() {
   const grid = $('fotos-grid'); if (!grid) return;
-  let html = fotosFiles.map((f, i) => {
-    const url = URL.createObjectURL(f);
-    const px  = fotosPosX[i], py = fotosPosY[i];
-    return `
-    <div class="foto-thumb-wrap" id="foto-wrap-${i}">
-      <!-- Preview grande com drag -->
-      <!-- Preview grande estilo crop da logo -->
-      <div style="position:relative;width:100%;aspect-ratio:1/1;max-height:280px;border-radius:14px;overflow:hidden;background:#f0ebe4;border:2px solid var(--border);margin-bottom:8px;touch-action:none"
-           id="foto-drag-${i}">
-        <!-- Imagem draggável -->
+
+  const fotoHtml = (url, i) => {
+    const px = fotosPosX[i] ?? 50;
+    const py = fotosPosY[i] ?? 50;
+    const eh = fotosFiles[i]?._urlExistente ? '📎 Existente' : '✨ Nova';
+    return `<div class="foto-thumb-wrap" id="foto-wrap-${i}">
+      <div style="position:relative;width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:#f0ebe4;border:2px solid var(--border);margin-bottom:8px;cursor:grab;touch-action:none" id="foto-drag-${i}">
         <img src="${url}" id="foto-img-${i}" draggable="false"
-             style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:${px}% ${py}%;pointer-events:none;user-select:none">
-        <!-- Badge principal -->
-        ${i===0?`<div style="position:absolute;top:10px;left:10px;background:var(--red);color:#fff;font-size:0.65rem;font-weight:800;padding:3px 10px;border-radius:50px;z-index:2">PRINCIPAL</div>`:''}
-        <!-- Instrução centralizada -->
-        <div style="position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;pointer-events:none">
-          <div style="background:rgba(0,0,0,0.5);color:#fff;font-size:0.65rem;font-weight:600;padding:4px 12px;border-radius:50px;backdrop-filter:blur(4px)">✋ Arraste para ajustar</div>
+          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:${px}% ${py}%;pointer-events:none;user-select:none;transition:object-position .05s">
+        ${i===0 ? '<div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:.62rem;font-weight:800;padding:3px 10px;border-radius:50px;z-index:3;letter-spacing:.04em">PRINCIPAL</div>' : ''}
+        <!-- Instrução -->
+        <div style="position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;pointer-events:none;z-index:2">
+          <div style="background:rgba(0,0,0,.55);color:#fff;font-size:.62rem;font-weight:600;padding:4px 12px;border-radius:50px;backdrop-filter:blur(6px)">
+            ✋ Arraste para reposicionar
+          </div>
         </div>
-        <!-- Minimap canto inferior direito -->
-        <div style="position:absolute;bottom:10px;right:10px;width:48px;height:48px;border-radius:8px;background:rgba(0,0,0,0.6);overflow:hidden;border:2px solid rgba(255,255,255,0.4);z-index:2">
-          <img src="${url}" style="width:100%;height:100%;object-fit:cover;opacity:0.75">
-          <div id="foto-pin-${i}" style="position:absolute;width:9px;height:9px;background:#fff;border-radius:50%;border:2px solid var(--red);transform:translate(-50%,-50%);left:${px}%;top:${py}%;box-shadow:0 1px 4px rgba(0,0,0,0.5)"></div>
+        <!-- Minimap -->
+        <div style="position:absolute;bottom:10px;right:10px;width:44px;height:44px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,.6);border:2px solid rgba(255,255,255,.35);z-index:3">
+          <img src="${url}" style="width:100%;height:100%;object-fit:cover;opacity:.7">
+          <div id="foto-pin-${i}" style="position:absolute;width:8px;height:8px;background:#fff;border-radius:50%;border:1.5px solid var(--red);transform:translate(-50%,-50%);left:${px}%;top:${py}%;box-shadow:0 1px 4px rgba(0,0,0,.5)"></div>
         </div>
       </div>
-      <div style="display:flex;justify-content:flex-end">
-        <button onclick="removerFotoItem(${i})" style="background:none;border:1px solid #ddd;color:#aaa;padding:4px 12px;border-radius:8px;font-size:0.72rem;font-weight:600;cursor:pointer">🗑 Remover</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:.65rem;color:#aaa">${eh}</span>
+        <button onclick="removerFotoItem(${i})" style="background:none;border:1px solid #e0dbd5;color:#aaa;padding:4px 12px;border-radius:8px;font-size:.7rem;font-weight:600;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='#e0dbd5';this.style.color='#aaa'">🗑 Remover</button>
       </div>
     </div>`;
+  };
+
+  let html = fotosFiles.map((f, i) => {
+    const url = f._urlExistente ? f._urlExistente : URL.createObjectURL(f);
+    return fotoHtml(url, i);
   }).join('');
-  if (fotosFiles.length < 5) html += `
-    <div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
+
+  if (fotosFiles.length < 5) {
+    html += `<div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
       <span style="font-size:1.5rem">📷</span>
-      <span style="font-size:0.72rem;color:#aaa">Adicionar foto</span>
+      <span style="font-size:.72rem;color:#aaa">Adicionar foto</span>
     </div>`;
+  }
+
   grid.innerHTML = html;
-  // Reinicia drag nos novos elementos
   fotosFiles.forEach((_, i) => iniciarDragFoto(null, i, true));
 }
+
 
 let _fotoDrag = { ativo:false, idx:-1, startX:0, startY:0 };
 
@@ -761,22 +768,27 @@ export async function editarItem(id) {
     set('item-preco-orig', p.preco_original||'');
     const pr = $('item-promocao'); if (pr) { pr.checked = !!p.promocao; const g=$('preco-orig-group'); if(g) g.style.display=p.promocao?'flex':'none'; }
     emojiSel = p.emoji || '🍔'; renderEmojiGrid();
-    // Fotos existentes no modal
+    // Fotos existentes — carrega no mesmo sistema de drag 1:1
     const fotosExist = (p.fotos_urls && p.fotos_urls.length) ? p.fotos_urls : (p.foto_url ? [p.foto_url] : []);
-    if (fotosExist.length) {
-      const grid = $('fotos-grid');
-      if (grid) {
-        const html = fotosExist.map((url, idx) => `
-          <div class="foto-thumb-item" style="position:relative" data-exist-url="${url}">
-            <div style="width:80px;height:80px;border-radius:10px;overflow:hidden;border:2px solid var(--red)">
-              <img src="${url}" style="width:100%;height:100%;object-fit:cover">
-            </div>
-            ${idx===0?`<div style="position:absolute;top:2px;left:2px;background:var(--red);color:#fff;font-size:0.5rem;font-weight:700;padding:2px 5px;border-radius:4px">PRINCIPAL</div>`:''}
-            <button onclick="removerFotoExistente(this)" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.65);border:none;color:#fff;width:18px;height:18px;border-radius:50%;font-size:0.6rem;cursor:pointer">✕</button>
-          </div>`).join('');
-        grid.insertAdjacentHTML('afterbegin', html);
+    // Converte URLs existentes para Blob para entrar no mesmo array fotosFiles
+    const carregarFotosExist = async () => {
+      for (const url of fotosExist) {
+        try {
+          const resp = await fetch(url);
+          const blob = await resp.blob();
+          const ext  = url.split('.').pop().split('?')[0] || 'jpg';
+          const file = new File([blob], 'existente.' + ext, { type: blob.type });
+          file._urlExistente = url; // marca URL original para salvar sem re-upload
+          fotosFiles.push(file);
+          fotosPosX.push(50);
+          fotosPosY.push(50);
+        } catch(e) {
+          console.warn('Foto não carregou:', url, e);
+        }
       }
-    }
+      renderFotosGrid();
+    };
+    carregarFotosExist();
     // Botão salvar
     const btn = document.querySelector('#modal-item .btn-primary');
     if (btn) {
@@ -784,17 +796,18 @@ export async function editarItem(id) {
       btn.onclick = async () => {
         btn.disabled = true; btn.textContent = 'Salvando...';
         try {
-          // Upload novas fotos
-          const novas_urls = [];
+          // Upload só das fotos novas; fotos existentes (com _urlExistente) reutilizam a URL
+          const fotos_urls = [];
           for (let fi = 0; fi < fotosFiles.length; fi++) {
             const file = fotosFiles[fi];
-            const url  = await uploadFile('fotos', `${estab.id}/${Date.now()}_${fi}.${file.name.split('.').pop()}`, file);
-            novas_urls.push(url);
+            if (file._urlExistente) {
+              fotos_urls.push(file._urlExistente); // reusa URL original — sem re-upload
+            } else {
+              const url = await uploadFile('fotos', `${estab.id}/${Date.now()}_${fi}.${file.name.split('.').pop()}`, file);
+              fotos_urls.push(url);
+            }
           }
-          // Mantém fotos existentes + adiciona novas
-          const fotos_existentes = (p.fotos_urls && p.fotos_urls.length) ? p.fotos_urls : (p.foto_url ? [p.foto_url] : []);
-          const fotos_urls = [...fotos_existentes, ...novas_urls].slice(0, 5);
-          const foto_url   = fotos_urls[0] || null;
+          const foto_url = fotos_urls[0] || null;
           const promocao   = $('item-promocao')?.checked || false;
           const preco_orig = parseFloat($('item-preco-orig')?.value) || null;
           const { error } = await getSupa().from('produtos').update({
