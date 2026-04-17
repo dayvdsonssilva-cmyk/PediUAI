@@ -134,10 +134,14 @@
       <div class="plan-desc">Tudo que você precisa para vender mais</div>
     </div>
     <div class="plan-feats" style="flex:1">
-      <div class="feat"><div class="feat-ok">✓</div><span>Cardápio digital completo</span></div>
-      <div class="feat"><div class="feat-ok">✓</div><span>Pedidos em tempo real</span></div>
-      <div class="feat"><div class="feat-ok">✓</div><span>Fresquinho (stories)</span></div>
-      <div class="feat"><div class="feat-ok">✓</div><span>Suporte prioritário</span></div>
+      <div class="feat feat-on"><div class="feat-ok">✓</div><span>Cardápio digital completo</span></div>
+      <div class="feat feat-on"><div class="feat-ok">✓</div><span>Pedidos em tempo real</span></div>
+      <div class="feat feat-on"><div class="feat-ok">✓</div><span>Suporte prioritário</span></div>
+      <div class="feat feat-on"><div class="feat-ok">✓</div><span>Fresquinho (stories)</span></div>
+      <div class="feat feat-off"><div class="feat-no">✕</div><span>Financeiro e relatórios</span></div>
+      <div class="feat feat-off"><div class="feat-no">✕</div><span>Exportar CSV/PDF</span></div>
+      <div class="feat feat-off"><div class="feat-no">✕</div><span>Comandas digitais</span></div>
+      <div class="feat feat-off"><div class="feat-no">✕</div><span>Onboarding dedicado</span></div>
     </div>
     <button class="plan-btn plan-btn-red" onclick="selPlano('pro');event.stopPropagation()">Escolher Pro</button>
   </div>
@@ -156,14 +160,14 @@
       <div class="plan-desc" style="color:#888">Para quem quer o máximo</div>
     </div>
     <div class="plan-feats" style="flex:1">
-      <div class="feat"><div class="feat-ok">✓</div><span>Cardápio digital completo</span></div>
-      <div class="feat"><div class="feat-ok">✓</div><span>Pedidos em tempo real</span></div>
-      <div class="feat"><div class="feat-ok">✓</div><span>Suporte prioritário</span></div>
-      <div class="feat"><div class="feat-ok">✓</div><span>Financeiro e relatórios</span></div>
-      <div class="feat"><div class="feat-ok">✓</div><span>Exportar CSV/PDF</span></div>
-      <div class="feat"><div class="feat-ok">✓</div><span>Fresquinho (stories)</span></div>
-      <div class="feat"><div class="feat-ok">✓</div><span>Comandas digitais</span></div>
-      <div class="feat"><div class="feat-ok">✓</div><span>Onboarding dedicado</span></div>
+      <div class="feat feat-on"><div class="feat-ok">✓</div><span>Cardápio digital completo</span></div>
+      <div class="feat feat-on"><div class="feat-ok">✓</div><span>Pedidos em tempo real</span></div>
+      <div class="feat feat-on"><div class="feat-ok">✓</div><span>Suporte prioritário</span></div>
+      <div class="feat feat-on"><div class="feat-ok">✓</div><span>Fresquinho (stories)</span></div>
+      <div class="feat feat-on"><div class="feat-ok">✓</div><span>Financeiro e relatórios</span></div>
+      <div class="feat feat-on"><div class="feat-ok">✓</div><span>Exportar CSV/PDF</span></div>
+      <div class="feat feat-on"><div class="feat-ok">✓</div><span>Comandas digitais</span></div>
+      <div class="feat feat-on"><div class="feat-ok">✓</div><span>Onboarding dedicado</span></div>
     </div>
     <button class="plan-btn plan-btn-dark" onclick="selPlano('premium');event.stopPropagation()">Escolher Premium</button>
   </div>
@@ -208,6 +212,14 @@
 
     <!-- CARTÃO: MP Bricks renderiza o form + botão aqui -->
     <div id="form-card">
+      <div id="aviso-teste" style="display:none;background:#fef9c3;border:1.5px solid #fde047;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.78rem;line-height:1.6">
+        <div style="font-weight:800;color:#854d0e;margin-bottom:4px">⚠️ Ambiente de teste — use cartão de teste</div>
+        <div style="color:#713f12">
+          N°: <strong>5031 4332 1540 6351</strong> &nbsp;|&nbsp; Venc: <strong>11/25</strong> &nbsp;|&nbsp; CVV: <strong>123</strong><br>
+          Nome: <strong>APRO</strong> &nbsp;|&nbsp; CPF: <strong>123.456.789-09</strong><br>
+          <span style="font-size:.7rem;color:#a16207">Cartões reais são bloqueados em modo de teste.</span>
+        </div>
+      </div>
       <div id="mp-card-container"></div>
       <!-- Nota: o botão de pagamento é o do próprio MP Bricks -->
     </div>
@@ -277,6 +289,7 @@
 <script>
 // ── CONFIG ─────────────────────────────────────────────────────────────────────
 const MP_PUBLIC_KEY = 'APP_USR-0553d16b-7c51-4121-8cf3-aebcd8436a73';
+  const IS_TESTE = MP_PUBLIC_KEY.startsWith('TEST-');
 
 const params  = new URLSearchParams(location.search);
 const estabId = params.get('estab') || '';
@@ -366,6 +379,11 @@ async function iniciarBrick() {
         onReady: () => {
           document.getElementById('loading-mp').style.display = 'none';
           document.getElementById('pay-body').style.display   = 'block';
+          // Aviso de modo teste
+          if (IS_TESTE) {
+            const aviso = document.getElementById('aviso-teste');
+            if (aviso) aviso.style.display = 'block';
+          }
         },
         onSubmit: async (data) => {
           // Captura TUDO que o Brick envia — independente do formato da versão
@@ -443,6 +461,7 @@ async function enviar(payload) {
   try {
     payload.plano   = planoSel;
     payload.estabId = estabId;
+    payload.valor   = PRECOS[planoSel]; // valor atual (pode ter sido alterado pelo CEO)
     const res  = await fetch('/api/criar-pagamento', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -451,8 +470,8 @@ async function enviar(payload) {
     const data = await res.json();
 
     if (!res.ok) {
-      alert(data.error || 'Erro ao processar. Tente novamente.');
-      if (payload.type === 'card') recriarBrick(); // reseta o Brick
+      mostrarErroCheckout(data.error || 'Erro ao processar. Tente novamente.');
+      if (payload.type === 'card') recriarBrick();
       return;
     }
 
@@ -460,14 +479,37 @@ async function enviar(payload) {
     else if (data.boleto_url){ window.open(data.boleto_url,'_blank'); mostrarSucesso('boleto'); }
     else if (data.status === 'approved')                               mostrarSucesso('card');
     else if (['pending','in_process'].includes(data.status))           mostrarSucesso('pending');
-    else alert('Status: '+(data.status||'desconhecido')+'. Entre em contato com o suporte.');
+    else mostrarErroCheckout('Status inesperado. Entre em contato com o suporte.');
 
   } catch (e) {
     console.error('[enviar]', e);
-    alert('Erro de conexão. Verifique sua internet e tente novamente.');
+    mostrarErroCheckout('Erro de conexão. Verifique sua internet e tente novamente.');
     if (payload.type === 'card') recriarBrick();
   }
 }
+
+function mostrarErroCheckout(msg) {
+  let el = document.getElementById('checkout-erro-box');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'checkout-erro-box';
+    el.style.cssText = 'background:#fff5f5;border:1.5px solid #fecaca;border-radius:10px;padding:12px 16px;margin:12px 0;font-size:.82rem;line-height:1.6;display:flex;align-items:flex-start;gap:10px';
+    const payBody = document.getElementById('pay-body');
+    if (payBody) payBody.prepend(el);
+  }
+  el.innerHTML = `<span style="font-size:1.2rem;flex-shrink:0">❌</span>
+    <div>
+      <div style="font-weight:700;color:#C0392B;margin-bottom:2px">Pagamento recusado</div>
+      <div style="color:#7f1d1d">${msg}</div>
+      ${msg.includes('PIX') || msg.includes('outro cartão') ? `<div style="margin-top:6px"><button onclick="setMetodo('pix')" style="background:none;border:1.5px solid #C0392B;color:#C0392B;border-radius:8px;padding:4px 12px;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer">Pagar com PIX →</button></div>` : ''}
+    </div>`;
+  el.style.display = 'flex';
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  // Fecha automaticamente após 12s
+  setTimeout(() => { if (el) el.style.display = 'none'; }, 12000);
+}
+
+
 
 // ── PÓS PAGAMENTO ─────────────────────────────────────────────────────────────────
 function mostrarPix(data) {
