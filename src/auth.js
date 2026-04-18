@@ -33,6 +33,26 @@ function docValido(d) {
   return n.length === 11 ? validarCPF(n) : n.length === 14 ? validarCNPJ(n) : false;
 }
 
+// ── Máscara de telefone ────────────────────────────────────
+window.mascaraTel = function(inp) {
+  let v = inp.value.replace(/\D/g,'').slice(0,11);
+  if (v.length > 10)     v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+  else if (v.length > 6) v = v.replace(/^(\d{2})(\d{4})(\d*)$/, '($1) $2-$3');
+  else if (v.length > 2) v = v.replace(/^(\d{2})(\d*)$/, '($1) $2');
+  else if (v.length > 0) v = '(' + v;
+  inp.value = v;
+};
+
+// ── Toggle mostrar/ocultar senha ──────────────────────────
+window.toggleSenha = function(inputId, btnId) {
+  const inp = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  if (!inp) return;
+  const mostrando = inp.type === 'text';
+  inp.type = mostrando ? 'password' : 'text';
+  if (btn) btn.textContent = mostrando ? '\u{1F441}' : '\u{1F648}';
+};
+
 // ── Slug único ─────────────────────────────────────────────
 async function slugLivre(slug) {
   const { data } = await getSupa()
@@ -42,51 +62,53 @@ async function slugLivre(slug) {
 
 // ── CADASTRO ───────────────────────────────────────────────
 export async function doRegister() {
+  const nomeP = document.getElementById('rnome')?.value.trim();
+  const tel   = document.getElementById('rtel')?.value.trim();
   const nome  = document.getElementById('rn')?.value.trim();
   const doc   = document.getElementById('rdoc')?.value.trim();
   const email = document.getElementById('re')?.value.trim();
   const pass  = document.getElementById('rp')?.value;
 
+  if (!nomeP)          return showToast('Digite seu nome completo.', 'error');
+  if (!tel || tel.replace(/\D/g,'').length < 10) return showToast('Digite um WhatsApp válido com DDD.', 'error');
   if (!nome)           return showToast('Digite o nome do estabelecimento.', 'error');
   if (!doc)            return showToast('Digite o CPF ou CNPJ.', 'error');
-  if (!docValido(doc)) return showToast('CPF ou CNPJ invalido.', 'error');
+  if (!docValido(doc)) return showToast('CPF ou CNPJ inválido.', 'error');
   if (!email)          return showToast('Digite o e-mail.', 'error');
-  if (!pass || pass.length < 6) return showToast('Senha minima: 6 caracteres.', 'error');
+  if (!pass || pass.length < 6) return showToast('Senha mínima: 6 caracteres.', 'error');
 
   const btn = document.querySelector('[onclick="doRegister()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Criando...'; }
 
   try {
-    // 1. Cria o usuário
     const { data: authData, error: authErr } = await getSupa().auth.signUp({ email, password: pass });
     if (authErr) throw new Error(authErr.message);
 
-    // 2. Faz login imediato para garantir sessão ativa
     const { data: loginData, error: loginErr } = await getSupa().auth.signInWithPassword({ email, password: pass });
-    if (loginErr) throw new Error('Conta criada mas erro ao ativar sessao. Tente fazer login.');
+    if (loginErr) throw new Error('Conta criada mas erro ao ativar sessão. Tente fazer login.');
 
-    // 3. Pega o user_id da sessão ativa (100% confiável)
     const userId = loginData?.user?.id;
-    if (!userId) throw new Error('Sessao invalida. Tente fazer login.');
+    if (!userId) throw new Error('Sessão inválida. Tente fazer login.');
 
-    // 4. Garante slug único (verificação no JS + constraint no banco)
     let slug = gerarSlug(nome);
     if (!slug || slug.length < 2) slug = 'loja';
     let t = 0;
     while (!(await slugLivre(slug))) {
       t++;
-      slug = `${gerarSlug(nome)}-${t}`;
+      slug = gerarSlug(nome) + '-' + t;
       if (t > 99) { slug = gerarSlug(nome) + '-' + Date.now(); break; }
     }
 
-    // 5. Insere o estabelecimento com sessão ativa
+    const telSoNumeros = tel.replace(/\D/g,'');
     const { error: dbErr } = await getSupa().from('estabelecimentos').insert({
-      user_id:  userId,
+      user_id:          userId,
       nome,
       slug,
-      cpf_cnpj: doc.replace(/\D/g,''),
-      status:   'ativo',
-      plano:    'basico',
+      cpf_cnpj:         doc.replace(/\D/g,''),
+      nome_responsavel: nomeP,
+      telefone:         telSoNumeros,
+      status:           'ativo',
+      plano:            'basico',
     });
 
     if (dbErr) {
@@ -101,7 +123,7 @@ export async function doRegister() {
   } catch (e) {
     showToast(e.message, 'error');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Criar conta gratis'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Criar conta grátis'; }
   }
 }
 
@@ -117,11 +139,9 @@ export async function doLogin() {
   if (btn) { btn.disabled = true; btn.textContent = 'Entrando...'; }
 
   try {
-    // 1. Autentica no Supabase Auth
     const { data: authData, error: authErr } = await getSupa().auth.signInWithPassword({ email, password: pass });
 
     if (authErr) {
-      // Trata erros específicos com mensagens em português
       const msg = authErr.message || '';
       if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
         throw new Error('E-mail ou senha incorretos. Verifique e tente novamente.');
@@ -138,31 +158,20 @@ export async function doLogin() {
     const userId = authData?.user?.id;
     if (!userId) throw new Error('Sessão inválida. Tente novamente.');
 
-    // 2. Busca estabelecimento do usuário
     const { data: estab, error: dbErr } = await getSupa()
-      .from('estabelecimentos')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .from('estabelecimentos').select('*').eq('user_id', userId).maybeSingle();
 
-    if (dbErr) {
-      console.error('Erro ao buscar estab:', dbErr);
-      throw new Error('Erro ao carregar dados da loja: ' + dbErr.message);
-    }
+    if (dbErr) throw new Error('Erro ao carregar dados da loja: ' + dbErr.message);
 
     if (!estab) {
-      // Usuário existe no Auth mas não tem loja — vai para cadastro de loja
       showToast('Conta encontrada! Complete o cadastro da sua loja.', 'info');
       goTo('s-register');
       return;
     }
 
-    // 3. Salva no state e localStorage
     window._estab = estab;
     localStorage.setItem('pw_estab', JSON.stringify(estab));
     localStorage.setItem('pw_tela_atual', 's-dash');
-
-    // 4. Vai para o dashboard
     goTo('s-dash');
     if (window.initDashboard) await window.initDashboard();
 
@@ -173,3 +182,69 @@ export async function doLogin() {
     if (btn) { btn.disabled = false; btn.textContent = 'Entrar'; }
   }
 }
+
+// ── RECUPERAÇÃO DE SENHA ───────────────────────────────────
+window.verificarRecuperacao = async function() {
+  const email = document.getElementById('rec-email')?.value.trim();
+  const tel4  = document.getElementById('rec-tel4')?.value.trim();
+
+  if (!email)                                    return showToast('Digite seu e-mail.', 'error');
+  if (!tel4 || tel4.length !== 4 || !/^\d{4}$/.test(tel4)) {
+    return showToast('Digite exatamente os 4 últimos dígitos do WhatsApp.', 'error');
+  }
+
+  const btn = document.querySelector('[onclick="verificarRecuperacao()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Verificando...'; }
+
+  try {
+    // Busca estabelecimento cujo telefone termina com os 4 dígitos
+    const { data: estabs, error: dbErr } = await getSupa()
+      .from('estabelecimentos')
+      .select('id, user_id, telefone, nome')
+      .ilike('telefone', '%' + tel4);
+
+    if (dbErr) throw new Error('Erro ao verificar: ' + dbErr.message);
+    if (!estabs || estabs.length === 0) {
+      throw new Error('Não encontramos uma conta com esses dados. Verifique o e-mail e os 4 dígitos do WhatsApp.');
+    }
+
+    // Envia e-mail de redefinição de senha via Supabase
+    const { error: resetErr } = await getSupa().auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+    if (resetErr) throw new Error('Erro ao enviar e-mail: ' + resetErr.message);
+
+    // Mostra passo 2
+    document.getElementById('rec-passo1').style.display = 'none';
+    document.getElementById('rec-passo2').style.display = 'block';
+
+  } catch (e) {
+    showToast(e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Verificar'; }
+  }
+};
+
+window.salvarNovaSenha = async function() {
+  const nova = document.getElementById('rec-nova')?.value;
+  const conf = document.getElementById('rec-conf')?.value;
+
+  if (!nova || nova.length < 6) return showToast('Senha mínima: 6 caracteres.', 'error');
+  if (nova !== conf)            return showToast('As senhas não coincidem.', 'error');
+
+  const btn = document.querySelector('[onclick="salvarNovaSenha()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
+
+  try {
+    const { error } = await getSupa().auth.updateUser({ password: nova });
+    if (error) throw new Error('Erro ao atualizar: ' + error.message);
+
+    showToast('Senha atualizada! Faça login.', 'info');
+    setTimeout(() => goTo('s-login'), 1500);
+
+  } catch (e) {
+    showToast(e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Salvar nova senha'; }
+  }
+};
