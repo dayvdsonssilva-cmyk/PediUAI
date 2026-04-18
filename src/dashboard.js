@@ -2147,6 +2147,10 @@ window.imprimirCozinha = function(pedidoId) {
     if (!w) { alert('Permita pop-ups.'); return; }
     w.document.write(html); w.document.close(); w.focus();
     setTimeout(()=>w.print(), 350);
+
+    // Marca como enviado para cozinha e atualiza UI imediatamente
+    marcarEnviadoCozinha(pedidoId);
+    window.renderHistoricoMesas();
   });
 };
 
