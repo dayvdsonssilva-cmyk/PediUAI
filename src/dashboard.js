@@ -1171,7 +1171,7 @@ function iniciarRealtime() {
     .on(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'pedidos' },
-      payload => {
+      async payload => {
         const p = payload.new;
         if (!p || !p.id) return;
         if (p.estabelecimento_id !== estab.id) return;
@@ -2527,7 +2527,7 @@ function renderPedidosComanda(mesaKey) {
     const subtotal = gpeds.reduce((s,p)=>s+Number(p.total||0),0);
     const inicial  = nome.charAt(0).toUpperCase();
     const pedRows  = gpeds.map(p => {
-      const itens = Array.isArray(p.itens) ? p.itens : []; 
+      const itens = Array.isArray(p.itens) ? p.itens : [];
       const dt    = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
       return '<div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px dashed #f0e9e0">'
         +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'
