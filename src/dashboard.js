@@ -1190,10 +1190,14 @@ function iniciarRealtime() {
           }
         }
 
-        // ── Pedido de mesa: atualiza visão geral e financeiro
+        // ── Pedido de mesa: atualiza visão geral, financeiro e mesas
         if ((p.endereco||'').startsWith('No local')) {
           await carregarPedidosMesas(); renderMesas();
-          await renderPedidos(); // atualiza stats da visão geral
+          await renderPedidos();
+          if (document.querySelector('#tab-financeiro.active') ||
+              document.querySelector('[data-tab="financeiro"].active')) {
+            await carregarFinanceiro();
+          }
           return;
         }
         // ── Pedido normal (delivery/retirada) — aparece na aba Pedidos ─
@@ -1215,8 +1219,13 @@ function iniciarRealtime() {
       async payload => {
         const p = payload.new;
         if (!p || p.estabelecimento_id !== estab.id) return;
-        renderPedidos();
-        // Se é pedido de mesa, re-sincroniza mesas (ex: garçom fechou comanda)
+        await renderPedidos(); // atualiza visão geral (stat-pedidos, stat-faturamento)
+        // Financeiro em tempo real — recarrega se a aba estiver ativa
+        if (document.querySelector('#tab-financeiro.active') ||
+            document.querySelector('[data-tab="financeiro"].active')) {
+          await carregarFinanceiro();
+        }
+        // Se é pedido de mesa, re-sincroniza mesas
         if ((p.endereco||'').startsWith('No local')) {
           await carregarPedidosMesas();
           renderMesas();
