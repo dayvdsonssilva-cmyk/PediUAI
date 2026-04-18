@@ -290,7 +290,7 @@
 
 <script>
 // ── CONFIG ─────────────────────────────────────────────────────────────────────
-const MP_PUBLIC_KEY = 'APP_USR-0553d16b-7c51-4121-8cf3-aebcd8436a73'; 
+const MP_PUBLIC_KEY = 'APP_USR-0553d16b-7c51-4121-8cf3-aebcd8436a73';
   const IS_TESTE = MP_PUBLIC_KEY.startsWith('TEST-');
 
 const params  = new URLSearchParams(location.search);
@@ -306,8 +306,8 @@ let PRECOS = {
 
 async function carregarPrecos() {
   try {
-    const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
+    const SURL = 'https://nmttkjmfazcipefeakkx.supabase.co';
+    const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmFra3giLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NDA0OTQ0NiwiZXhwIjoyMDU5NjI1NDQ2fQ.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
     const res = await fetch(SURL + '/rest/v1/pediway_config?id=eq.global&select=preco_pro,preco_prem', {
       headers: { apikey: SKEY, Authorization: 'Bearer ' + SKEY }
     });
@@ -581,23 +581,28 @@ function mostrarPix(data) {
     if (timerEl) timerEl.textContent = mm + ':' + ss;
   }, 1000);
 
-  // Polling verificar aprovação a cada 6s
+  // Polling verificar aprovação a cada 4s
   if (data.id) {
+    let pollCount = 0;
     const pollInt = setInterval(async () => {
+      pollCount++;
+      // Para de verificar após 10 minutos (150 tentativas)
+      if (pollCount > 150) { clearInterval(pollInt); return; }
       try {
         const res = await fetch('/api/verificar-pagamento?id=' + data.id);
         if (!res.ok) return;
         const d = await res.json();
+        console.log('[PIX poll]', d.status);
         if (d.status === 'approved') {
           clearInterval(pollInt);
           clearInterval(timerInt);
           const aw = document.getElementById('pix-aguardando');
           const ap = document.getElementById('pix-aprovado');
           if (aw) aw.style.display = 'none';
-          if (ap) ap.style.display = 'block';
+          if (ap) { ap.style.display = 'block'; ap.scrollIntoView({behavior:'smooth'}); }
         }
-      } catch(e) {}
-    }, 6000);
+      } catch(e) { console.warn('[PIX poll erro]', e.message); }
+    }, 4000);
   }
 }
 
