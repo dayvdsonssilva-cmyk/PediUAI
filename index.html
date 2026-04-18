@@ -263,13 +263,23 @@
         <div style="margin-left:auto;font-size:.72rem;color:#aaa">Clique em uma mesa para ver a comanda</div>
       </div>
 
-      <!-- Pedidos ativos nas mesas -->
-      <div id="mesas-pedidos-novos-wrap" style="margin-bottom:16px;display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="font-size:.72rem;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.05em">🔔 Pedidos nas mesas aguardando</div>
-          <span id="badge-mesas-novos" style="background:var(--red);color:#fff;padding:1px 8px;border-radius:50px;font-size:.68rem;font-weight:700">0</span>
+      <!-- Pedidos novos de mesa — card destacado igual aba Pedidos -->
+      <div id="mesas-pedidos-novos-wrap" style="display:none;margin-bottom:20px">
+        <div style="background:#fff;border:1.5px solid #fecaca;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(192,57,43,.1)">
+          <!-- Header do card -->
+          <div style="background:linear-gradient(135deg,#C0392B,#E74C3C);padding:14px 18px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:1.3rem">🔔</span>
+              <div>
+                <div style="font-size:.88rem;font-weight:800;color:#fff">Pedidos nas mesas</div>
+                <div style="font-size:.68rem;color:rgba(255,255,255,.75)">Aguardando confirmação</div>
+              </div>
+            </div>
+            <span id="badge-mesas-novos" style="background:rgba(255,255,255,.25);color:#fff;padding:4px 12px;border-radius:50px;font-size:.8rem;font-weight:800;min-width:28px;text-align:center">0</span>
+          </div>
+          <!-- Lista de pedidos -->
+          <div id="mesas-pedidos-novos-lista" style="padding:12px;display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto"></div>
         </div>
-        <div id="mesas-pedidos-novos-lista" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
 
       <!-- Grid de mesas -->
