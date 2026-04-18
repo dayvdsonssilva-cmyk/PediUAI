@@ -2240,23 +2240,31 @@ function renderMesas() {
   if (badgeNovos) badgeNovos.textContent   = novosM.length;
   if (listaNovos && novosM.length) {
     listaNovos.innerHTML = novosM.map(p => {
-      const itens = Array.isArray(p.itens) ? p.itens.map(i => `${i.qtd}x ${i.nome}`).join(', ') : '';
+      const itens = Array.isArray(p.itens) ? p.itens.map(i => `${i.qtd}x ${i.nome}`).join(' · ') : '';
       const parts = (p.endereco||'').split('—');
       const mesa  = parts.length >= 2 ? parts[1].trim() : p.endereco || 'Mesa';
       const nome  = p.cliente_nome && p.cliente_nome !== mesa ? p.cliente_nome : '';
-      return `<div style="background:#fff;border:1.5px solid #f0e9e0;border-left:4px solid var(--red);border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <div style="min-width:0">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
-            <span style="font-weight:800;font-size:.88rem">${mesa}</span>
-            ${nome ? `<span style="font-size:.72rem;color:#888">${nome}</span>` : ''}
-            <span style="background:#fef3c7;color:#92400e;padding:1px 7px;border-radius:50px;font-size:.62rem;font-weight:700">NOVO</span>
+      const numMesa = mesa.replace('Mesa ','');
+      return `<div style="background:#fff;border:1.5px solid #f0e9e0;border-top:3px solid var(--red);border-radius:12px;padding:14px 16px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:42px;height:42px;border-radius:10px;background:#fff5f5;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:900;color:var(--red);flex-shrink:0">${numMesa}</div>
+            <div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <span style="font-size:.95rem;font-weight:800">${mesa}</span>
+                ${nome ? `<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.72rem;font-weight:600;color:#666">${nome}</span>` : ''}
+                <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700">NOVO</span>
+              </div>
+              <div style="font-size:.75rem;color:#aaa;margin-top:2px">${itens}</div>
+            </div>
           </div>
-          <div style="font-size:.75rem;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${itens}</div>
-          <div style="font-size:.8rem;font-weight:700;color:var(--red);margin-top:2px">${fmt(p.total)}</div>
+          <div style="font-size:1.05rem;font-weight:800;color:var(--red);flex-shrink:0">${fmt(p.total)}</div>
         </div>
-        <div style="display:flex;gap:6px;flex-shrink:0">
-          <button class="btn-ped-aceitar" style="padding:7px 12px;font-size:.75rem" onclick="aceitarPedido('${p.id}')">Aceitar</button>
-          <button class="btn-ped-recusar" style="padding:7px 10px;font-size:.75rem" onclick="recusarPedido('${p.id}')">Recusar</button>
+        <div style="font-size:.82rem;color:#666;background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px">${itens||'—'}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}')">✓ Aceitar</button>
+          <button class="btn-ped-recusar" onclick="recusarPedido('${p.id}')">✕ Recusar</button>
+          <button class="btn-ped-imprimir" onclick="imprimirCozinha('${p.id}')">🖨️ Cozinha</button>
         </div>
       </div>`;
     }).join('');
@@ -2558,9 +2566,16 @@ async function confirmarFecharComanda() {
   }, 500);
 }
 
-// fecharComanda já está em window.fecharComanda
+// Exports das comandas — precisam estar em window para o onclick funcionar
+window.abrirComanda           = abrirComanda;
 window.confirmarFecharComanda = confirmarFecharComanda;
+window.renderMesas            = renderMesas;
+window.renderHistoricoMesas   = window.renderHistoricoMesas;
+window.togglePedidosMesa      = window.togglePedidosMesa;
+window.toggleHistMesa         = window.toggleHistMesa;
+window.imprimirCozinha        = window.imprimirCozinha;
 window.salvarNumMesas         = window.salvarNumMesas;
+window.switchComandaTab       = window.switchComandaTab;
 
 window.toggleTaxaEntrega = function(ativo) {
   const w = document.getElementById('taxa-entrega-wrap');
