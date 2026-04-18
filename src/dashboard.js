@@ -920,14 +920,18 @@ async function renderPedidos() {
   const { data } = await getSupa().from('pedidos').select('*')
     .eq('estabelecimento_id', estab.id).order('created_at', { ascending: false }).limit(50);
 
-  // Filtra SOMENTE pedidos de delivery/retirada — mesas ficam na aba Comandas
-  const pedidos = (data || []).filter(p => !((p.endereco||'').startsWith('No local')));
+  // Delivery/retirada na aba Pedidos, mesas na aba Comandas
+  const pedidos    = (data || []).filter(p => !((p.endereco||'').startsWith('No local')));
+  const pedidosMes = (data || []); // TODOS os pedidos para faturamento total
 
-  const hoje    = new Date().toDateString();
-  const pedHoje = pedidos.filter(p => new Date(p.created_at).toDateString() === hoje);
-  const fatHoje = pedHoje.reduce((s, p) => s + Number(p.total || 0), 0);
+  const hoje       = new Date().toDateString();
+  const pedHoje    = pedidos.filter(p => new Date(p.created_at).toDateString() === hoje);
+  // Faturamento inclui MESAS + delivery
+  const todosHoje  = pedidosMes.filter(p => new Date(p.created_at).toDateString() === hoje && p.status !== 'recusado');
+  const fatHoje    = todosHoje.reduce((s, p) => s + Number(p.total || 0), 0);
+  const totalPeds  = todosHoje.length;
 
-  const sp = $('stat-pedidos'); if (sp) sp.textContent = pedHoje.length;
+  const sp = $('stat-pedidos'); if (sp) sp.textContent = totalPeds;
   const sf = $('stat-faturamento'); if (sf) sf.textContent = `R$ ${fatHoje.toFixed(2).replace('.',',')}`;
 
   // Área de novos pedidos
@@ -1186,8 +1190,13 @@ function iniciarRealtime() {
           }
         }
 
-        // ── Pedido normal (delivery/retirada) — só aparece na aba Pedidos ─
-        if ((p.endereco||'').startsWith('No local')) return; // mesas ficam na aba Comandas
+        // ── Pedido de mesa: atualiza visão geral e financeiro
+        if ((p.endereco||'').startsWith('No local')) {
+          await carregarPedidosMesas(); renderMesas();
+          await renderPedidos(); // atualiza stats da visão geral
+          return;
+        }
+        // ── Pedido normal (delivery/retirada) — aparece na aba Pedidos ─
         if (pedidosConhecidos.has(p.id)) return;
         pedidosConhecidos.add(p.id);
         const lista = $('pedidos-novos-lista');
@@ -1262,7 +1271,8 @@ async function carregarFinanceiro() {
     .eq('estabelecimento_id', estab.id)
     .order('created_at', { ascending: false })
     .limit(500);
-  _finPedidos = data || [];
+  // Financeiro inclui TODOS os pedidos: delivery + mesas/comandas
+  _finPedidos = (data || []);
   renderFinanceiro();
 }
 
@@ -2089,13 +2099,6 @@ function marcarEnviadoCozinha(pedidoId) {
 
 // ── Imprimir ticket de cozinha (pedido individual) ────────────────────────────
 window.imprimirCozinha = function(pedidoId) {
-  // Marca como enviado para cozinha visualmente
-  marcarEnviadoCozinha(pedidoId);
-  // Atualiza badge no card sem re-renderizar tudo
-  const badge = document.getElementById('ck-badge-'+pedidoId);
-  if (badge) badge.style.display = 'flex';
-  // Re-renderiza histórico para atualizar (leve)
-  window.renderHistoricoMesas();
   getSupa().from('pedidos').select('*').eq('id', pedidoId).maybeSingle().then(({ data: p }) => {
     if (!p) return;
     const itens   = Array.isArray(p.itens) ? p.itens : [];
@@ -2103,26 +2106,47 @@ window.imprimirCozinha = function(pedidoId) {
     const mesa    = parts.length >= 2 ? parts[1].trim() : p.endereco || '—';
     const nome    = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';
     const dt      = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cozinha</title>
-      <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:13px;padding:14px;max-width:280px;margin:0 auto}
-      .title{font-size:22px;font-weight:900;text-align:center;letter-spacing:.05em;margin-bottom:2px}
-      .sub{text-align:center;font-size:11px;color:#555;margin-bottom:8px}
-      .mesa{font-size:28px;font-weight:900;text-align:center;margin:10px 0 4px;border-top:2px dashed #000;border-bottom:2px dashed #000;padding:6px 0}
-      .nome{text-align:center;font-size:12px;color:#555;margin-bottom:10px}
-      .item{display:flex;justify-content:space-between;font-size:14px;font-weight:700;padding:4px 0;border-bottom:1px solid #ddd}
-      .hora{text-align:center;font-size:10px;color:#aaa;margin-top:10px}
-      @media print{body{padding:0}}</style></head><body>
-      <div class="title">🍽️ COZINHA</div>
-      <div class="sub">${getEstab()?.nome||''}</div>
-      <div class="mesa">${mesa}</div>
-      ${nome ? `<div class="nome">${nome}</div>` : ''}
-      ${itens.map(i=>`<div class="item"><span>${i.qtd||1}x ${i.nome}</span></div>`).join('')}
+    const loja    = getEstab()?.nome || 'Estabelecimento';
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>🍳 Cozinha</title>
+      <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Arial Black', Arial, sans-serif; font-size:16px; padding:20px 16px; max-width:360px; margin:0 auto; background:#fff; }
+        .logo { font-size:22px; font-weight:900; text-align:center; letter-spacing:.05em; margin-bottom:3px; }
+        .logo span { color:#C0392B; }
+        .empresa { font-size:14px; font-weight:700; text-align:center; color:#333; margin-bottom:3px; }
+        .tag { font-size:11px; text-align:center; color:#999; text-transform:uppercase; letter-spacing:.1em; margin-bottom:12px; }
+        hr { border:none; border-top:2px dashed #ccc; margin:12px 0; }
+        hr.bold { border-top:3px solid #000; }
+        .mesa-box { text-align:center; background:#000; color:#fff; border-radius:12px; padding:14px 0 10px; margin:12px 0; }
+        .mesa-lbl { font-size:12px; font-weight:700; letter-spacing:.15em; text-transform:uppercase; color:#aaa; margin-bottom:4px; }
+        .mesa-num { font-size:52px; font-weight:900; line-height:1; }
+        .mesa-nome { font-size:14px; color:#ddd; margin-top:4px; font-weight:600; }
+        .hora { font-size:12px; text-align:center; color:#888; margin-bottom:12px; }
+        .item { display:flex; align-items:baseline; gap:10px; font-size:18px; font-weight:900; padding:8px 0; border-bottom:1px solid #eee; }
+        .item-qtd { font-size:22px; color:#C0392B; min-width:32px; flex-shrink:0; }
+        .item-nome { flex:1; line-height:1.3; }
+        .footer { text-align:center; font-size:11px; color:#bbb; margin-top:14px; letter-spacing:.05em; }
+        @media print { body { padding:10px 8px; } }
+      </style></head><body>
+      <div class="logo">PEDI<span>WAY</span></div>
+      <div class="empresa">${loja}</div>
+      <div class="tag">🍳 Ticket de Cozinha</div>
+      <hr>
+      <div class="mesa-box">
+        <div class="mesa-lbl">Mesa</div>
+        <div class="mesa-num">${mesa.replace('Mesa ','')}</div>
+        ${nome ? `<div class="mesa-nome">${nome}</div>` : ''}
+      </div>
       <div class="hora">#${p.id.slice(-4).toUpperCase()} · ${dt}</div>
+      <hr class="bold">
+      ${itens.map(i=>`<div class="item"><span class="item-qtd">${i.qtd||1}x</span><span class="item-nome">${i.nome}</span></div>`).join('')}
+      <hr>
+      <div class="footer">PEDIWAY — Sistema de Gestão</div>
     </body></html>`;
-    const w = window.open('','_blank','width=300,height=500');
+    const w = window.open('','_blank','width=380,height=640');
     if (!w) { alert('Permita pop-ups.'); return; }
     w.document.write(html); w.document.close(); w.focus();
-    setTimeout(()=>w.print(), 300);
+    setTimeout(()=>w.print(), 350);
   });
 };
 
@@ -2245,26 +2269,25 @@ function renderMesas() {
       const mesa  = parts.length >= 2 ? parts[1].trim() : p.endereco || 'Mesa';
       const nome  = p.cliente_nome && p.cliente_nome !== mesa ? p.cliente_nome : '';
       const numMesa = mesa.replace('Mesa ','');
-      return `<div style="background:#fff;border:1.5px solid #f0e9e0;border-top:3px solid var(--red);border-radius:12px;padding:14px 16px">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:42px;height:42px;border-radius:10px;background:#fff5f5;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:900;color:var(--red);flex-shrink:0">${numMesa}</div>
-            <div>
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                <span style="font-size:.95rem;font-weight:800">${mesa}</span>
-                ${nome ? `<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.72rem;font-weight:600;color:#666">${nome}</span>` : ''}
-                <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700">NOVO</span>
-              </div>
-              <div style="font-size:.75rem;color:#aaa;margin-top:2px">${itens}</div>
-            </div>
-          </div>
-          <div style="font-size:1.05rem;font-weight:800;color:var(--red);flex-shrink:0">${fmt(p.total)}</div>
+      return `<div style="background:#fff;border:2px solid var(--red);border-radius:14px;padding:14px 12px;display:flex;flex-direction:column;gap:8px;min-height:160px">
+        <!-- Número da mesa destaque -->
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="width:46px;height:46px;background:var(--red);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;color:#fff">${numMesa}</div>
+          <span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:50px;font-size:.65rem;font-weight:800">NOVO</span>
         </div>
-        <div style="font-size:.82rem;color:#666;background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px">${itens||'—'}</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}')">✓ Aceitar</button>
-          <button class="btn-ped-recusar" onclick="recusarPedido('${p.id}')">✕ Recusar</button>
-          <button class="btn-ped-imprimir" onclick="imprimirCozinha('${p.id}')">🖨️ Cozinha</button>
+        <!-- Nome e itens -->
+        <div style="flex:1">
+          <div style="font-size:.92rem;font-weight:800;color:#1a1a1a">${mesa}${nome ? ` <span style='font-size:.72rem;color:#888;font-weight:500'>${nome}</span>` : ''}</div>
+          <div style="font-size:.72rem;color:#aaa;margin-top:3px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${itens}</div>
+        </div>
+        <!-- Valor e ações -->
+        <div style="border-top:1px solid #f0e9e0;padding-top:8px">
+          <div style="font-size:1rem;font-weight:800;color:var(--red);margin-bottom:6px">${fmt(p.total)}</div>
+          <div style="display:flex;gap:5px">
+            <button class="btn-ped-aceitar" style="flex:1;padding:6px;font-size:.72rem" onclick="aceitarPedido('${p.id}')">✓ Aceitar</button>
+            <button class="btn-ped-recusar" style="padding:6px 8px;font-size:.72rem" onclick="recusarPedido('${p.id}')">✕</button>
+            <button class="btn-ped-imprimir" style="padding:6px 8px;font-size:.72rem" onclick="imprimirCozinha('${p.id}')">🖨️</button>
+          </div>
         </div>
       </div>`;
     }).join('');
