@@ -183,45 +183,71 @@ export async function doLogin() {
   }
 }
 
-// ── RECUPERAÇÃO DE SENHA ───────────────────────────────────
-window.verificarRecuperacao = async function() {
+// ── RECUPERAÇÃO DE SENHA — 3 passos ──────────────────────
+let _recEmailVerificado = null;
+
+function recAtivarStep(n) {
+  [1,2,3].forEach(i => {
+    const d = document.getElementById('rec-passo' + i);
+    const dot = document.getElementById('step-dot-' + i);
+    if (d) d.style.display = i === n ? 'block' : 'none';
+    if (dot) {
+      dot.style.background = i < n ? '#16a34a' : i === n ? 'var(--red)' : '#2a2a2a';
+      dot.style.color = i <= n ? '#fff' : '#555';
+      dot.textContent = i < n ? '✓' : String(i);
+    }
+    if (i < 3) {
+      const line = document.getElementById('step-line-' + i);
+      if (line) line.style.background = i < n ? '#16a34a' : '#2a2a2a';
+    }
+  });
+}
+
+window.recVoltar = function(passo) { recAtivarStep(passo); };
+
+// Passo 1: valida e-mail (só verifica se está preenchido)
+window.recPasso1 = function() {
   const email = document.getElementById('rec-email')?.value.trim();
-  const tel4  = document.getElementById('rec-tel4')?.value.trim();
+  if (!email || !email.includes('@')) return showToast('Digite um e-mail válido.', 'error');
+  _recEmailVerificado = email;
+  recAtivarStep(2);
+};
 
-  if (!email)                                    return showToast('Digite seu e-mail.', 'error');
-  if (!tel4 || tel4.length !== 4 || !/^\d{4}$/.test(tel4)) {
-    return showToast('Digite exatamente os 4 últimos dígitos do WhatsApp.', 'error');
-  }
+// Passo 2: verifica telefone completo no banco
+window.recPasso2 = async function() {
+  const tel  = document.getElementById('rec-tel')?.value.trim();
+  const tel9 = tel.replace(/\D/g,'');
 
-  const btn = document.querySelector('[onclick="verificarRecuperacao()"]');
+  if (!tel9 || tel9.length < 10) return showToast('Digite o WhatsApp completo com DDD.', 'error');
+
+  const btn = document.querySelector('[onclick="recPasso2()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Verificando...'; }
 
   try {
-    // Busca estabelecimento cujo telefone termina com os 4 dígitos
+    // Busca estab com telefone EXATO
     const { data: estabs, error: dbErr } = await getSupa()
       .from('estabelecimentos')
-      .select('id, user_id, telefone, nome')
-      .ilike('telefone', '%' + tel4);
+      .select('id, user_id, telefone')
+      .eq('telefone', tel9);
 
     if (dbErr) throw new Error('Erro ao verificar: ' + dbErr.message);
     if (!estabs || estabs.length === 0) {
-      throw new Error('Não encontramos uma conta com esses dados. Verifique o e-mail e os 4 dígitos do WhatsApp.');
+      throw new Error('WhatsApp não corresponde à conta. Verifique o número e tente novamente.');
     }
 
-    // Envia e-mail de redefinição de senha via Supabase
-    const { error: resetErr } = await getSupa().auth.resetPasswordForEmail(email, {
+    // Envia e-mail de reset via Supabase Auth
+    const { error: resetErr } = await getSupa().auth.resetPasswordForEmail(_recEmailVerificado, {
       redirectTo: window.location.origin,
     });
-    if (resetErr) throw new Error('Erro ao enviar e-mail: ' + resetErr.message);
+    if (resetErr) throw new Error('Erro ao processar: ' + resetErr.message);
 
-    // Mostra passo 2
-    document.getElementById('rec-passo1').style.display = 'none';
-    document.getElementById('rec-passo2').style.display = 'block';
+    // Avança para o passo 3 (nova senha)
+    recAtivarStep(3);
 
   } catch (e) {
     showToast(e.message, 'error');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Verificar'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Confirmar identidade →'; }
   }
 };
 
@@ -236,15 +262,16 @@ window.salvarNovaSenha = async function() {
   if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
 
   try {
+    // updateUser funciona quando o usuário tem sessão (via link do e-mail ou sessão ativa)
     const { error } = await getSupa().auth.updateUser({ password: nova });
     if (error) throw new Error('Erro ao atualizar: ' + error.message);
 
-    showToast('Senha atualizada! Faça login.', 'info');
-    setTimeout(() => goTo('s-login'), 1500);
+    showToast('✅ Senha atualizada! Faça login.', 'info');
+    setTimeout(() => goTo('s-login'), 1800);
 
   } catch (e) {
     showToast(e.message, 'error');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Salvar nova senha'; }
+    if (btn) { btn.disabled = false; btn.textContent = '🔐 Salvar nova senha'; }
   }
 };
