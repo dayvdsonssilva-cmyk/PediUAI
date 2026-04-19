@@ -79,7 +79,7 @@ function aplicarRestricaoPlano(estab) {
   const plano   = estab?.plano || 'basico';
   const criado  = estab?.created_at ? new Date(estab.created_at) : null;
   const diasTrial = criado ? Math.floor((Date.now() - criado) / 86400000) : 999;
-  const trialAtivo = plano === 'basico' && 15 >= diasTrial; // evita < em HTML
+  const trialAtivo = plano === 'basico' && !(diasTrial > 15);
   const diasRestantes = Math.max(0, 15 - diasTrial);
 
   // Tabs disponíveis por plano:
