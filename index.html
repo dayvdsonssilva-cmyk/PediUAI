@@ -1009,6 +1009,84 @@
 </div>
 
 
+<!-- Modal de item (criar/editar produto) -->
+<div class="modal-overlay" id="modal-item" onclick="fecharModalFora(event,'modal-item','fecharModal')">
+  <div class="modal-box" style="max-width:520px;max-height:90vh;overflow-y:auto">
+    <div class="modal-hdr">
+      <span class="modal-title">Novo item</span>
+      <button class="modal-x" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Fotos -->
+      <div style="margin-bottom:18px">
+        <div style="font-size:.78rem;font-weight:700;color:#555;margin-bottom:10px">📷 Fotos do produto</div>
+        <div id="fotos-grid" style="display:flex;flex-direction:column;gap:12px"></div>
+        <input type="file" id="foto-input" accept="image/*" multiple style="display:none" onchange="adicionarFotos(event)">
+      </div>
+      <!-- Emoji -->
+      <div class="form-group-light" style="margin-bottom:14px">
+        <label>Emoji do item</label>
+        <div id="emoji-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
+      </div>
+      <!-- Campos -->
+      <div class="form-group-light"><label>Nome *</label><input type="text" class="input-light" id="item-nome" placeholder="Ex: X-Burguer Especial"></div>
+      <div class="form-group-light"><label>Descrição</label><input type="text" class="input-light" id="item-desc" placeholder="Ingredientes, detalhes..."></div>
+      <div class="form-group-light"><label>Categoria</label><input type="text" class="input-light" id="item-cat" placeholder="Ex: LANCHES, BEBIDAS..."></div>
+      <div class="form-group-light">
+        <label>Preço *</label>
+        <input type="number" step="0.01" min="0" class="input-light" id="item-preco" placeholder="0,00">
+      </div>
+      <!-- Promoção -->
+      <div class="form-group-light" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <input type="checkbox" id="item-promocao" onchange="togglePromo(this)" style="width:16px;height:16px;accent-color:var(--red)">
+        <label for="item-promocao" style="font-size:.82rem;font-weight:600;color:#555;cursor:pointer">Preço promocional</label>
+      </div>
+      <div id="preco-orig-group" style="display:none" class="form-group-light">
+        <label>Preço original (antes da promoção)</label>
+        <input type="number" step="0.01" min="0" class="input-light" id="item-preco-orig" placeholder="0,00">
+      </div>
+      <!-- Grupo de adicionais -->
+      <div class="form-group-light" style="margin-bottom:0">
+        <label>Grupo de adicionais</label>
+        <select class="input-light" id="item-grupo-adicional">
+          <option value="">Nenhum</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-primary" onclick="salvarItem()">Salvar item</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de grupos de adicionais -->
+<div class="modal-overlay" id="modal-grupos" onclick="fecharModalFora(event,'modal-grupos','fecharAdicionais')">
+  <div class="modal-box" style="max-width:520px;max-height:90vh;overflow-y:auto">
+    <div class="modal-hdr">
+      <span class="modal-title">🧩 Grupos de Adicionais</span>
+      <button class="modal-x" onclick="fecharAdicionais()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="grupos-lista" style="margin-bottom:16px"></div>
+      <div style="border:1.5px solid var(--border);border-radius:12px;padding:14px;background:#faf8f5">
+        <div style="font-size:.8rem;font-weight:700;color:#555;margin-bottom:10px">Novo grupo</div>
+        <div class="form-group-light"><label>Nome do grupo</label><input class="input-light" id="eger-nome" placeholder="Ex: Adicionais Açaí, Molhos, Borda da pizza..."></div>
+        <div style="display:flex;gap:10px;margin-bottom:10px">
+          <div class="form-group-light" style="flex:1;margin-bottom:0"><label>Mín.</label><input class="input-light" id="eger-min" type="number" min="0" value="0" placeholder="0"></div>
+          <div class="form-group-light" style="flex:1;margin-bottom:0"><label>Máx.</label><input class="input-light" id="eger-max" type="number" min="1" value="3" placeholder="3"></div>
+        </div>
+        <div id="eger-opcoes" style="margin-bottom:10px"></div>
+        <button onclick="adicionarOpcaoGrupo()" style="background:none;border:1.5px dashed var(--border);border-radius:8px;padding:7px 14px;font-family:'Poppins',sans-serif;font-size:.75rem;font-weight:600;color:#888;cursor:pointer;width:100%">+ Adicionar opção</button>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn-cancelar" onclick="fecharAdicionais()" style="flex:1">Cancelar</button>
+          <button class="btn-primary" onclick="salvarGrupo()" style="flex:2">Salvar grupo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL DETALHE PEDIDO -->
 <div class="modal-overlay" id="modal-pedido" >
   <div class="modal-pedido-box">
