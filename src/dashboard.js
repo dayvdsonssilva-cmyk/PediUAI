@@ -724,13 +724,881 @@ window.confirmarCropFoto = function() {
     if (!blob) return;
     const file = new File([blob], _cropFotoFile?.name || 'foto.jpg', { type: 'image/jpeg' });
     file._urlExistente = null;
-    _cropFotoPosX = 50; _cropFotoPosY = 50;
-    fotosFiles.push(file); fotosPosX.push(50); fotosPosY.push(50);
+    const editIdx = window._cropFotoEditIdx;
+    if (editIdx != null && editIdx >= 0 && editIdx < fotosFiles.length) {
+      // Reajuste: substitui no índice
+      fotosFiles[editIdx] = file; fotosPosX[editIdx] = 50; fotosPosY[editIdx] = 50;
+      window._cropFotoEditIdx = null;
+    } else {
+      // Nova foto
+      fotosFiles.push(file); fotosPosX.push(50); fotosPosY.push(50);
+    }
     renderFotosGrid();
     const modal = $('modal-crop-foto');
     if (modal) { modal.classList.remove('open'); document.body.style.overflow = ''; }
+    _CRP.img = null;
+    if (_fotoQueue && _fotoQueue.length > 0) {
+      const next = _fotoQueue.shift(); _cropFotoFile = next;
+      setTimeout(() => window.abrirCropFoto(next), 200);
+    }
   });
 };
+
+// Função chamada pelo foto-input (modal de item)
+window.adicionarFotos = function(event) {
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
+  event.target.value = '';
+  // Processa um arquivo de cada vez via fila
+  let idx = 0;
+  const next = () => {
+    if (idx >= files.length) return;
+    _cropFotoFile = files[idx++];
+    window.abrirCropFoto(_cropFotoFile);
+    // Após confirmar, se houver mais arquivos, o próximo será aberto
+    // via _fotoQueue que guardamos aqui
+    _fotoQueue = files.slice(idx);
+  };
+  _fotoQueue = files.slice(1);
+  window.abrirCropFoto(files[0]);
+  _cropFotoFile = files[0];
+};
+
+let _fotoQueue = [];
+
+window.fecharCropFoto = function() {
+  const m = $('modal-crop-foto'); if (m) m.classList.remove('open');
+  document.body.style.overflow = '';
+  _cropFotoFile = null; _CRP.img = null;
+};
+
+// Drag no modal de crop
+document.addEventListener('DOMContentLoaded', function() {
+  const area = $('crop-foto-area'); if (!area) return;
+
+  const start = function(e) {
+    _cropFotoDragAtivo = true;
+    const t = e.touches ? e.touches[0] : e;
+    _cropFotoDragX = t.clientX; _cropFotoDragY = t.clientY;
+    area.style.cursor = 'grabbing';
+    e.preventDefault();
+  };
+  const move = function(e) {
+    if (!_cropFotoDragAtivo) return;
+    const t = e.touches ? e.touches[0] : e;
+    const dx = (t.clientX - _cropFotoDragX) / area.offsetWidth  * 100;
+    const dy = (t.clientY - _cropFotoDragY) / area.offsetHeight * 100;
+    _cropFotoDragX = t.clientX; _cropFotoDragY = t.clientY;
+    _cropFotoPosX = Math.max(0, Math.min(100, _cropFotoPosX - dx * 0.6));
+    _cropFotoPosY = Math.max(0, Math.min(100, _cropFotoPosY - dy * 0.6));
+    const img = $('crop-foto-img');
+    if (img) img.style.objectPosition = _cropFotoPosX + '% ' + _cropFotoPosY + '%';
+    const pin = $('crop-foto-pin');
+    if (pin) { pin.style.left = _cropFotoPosX + '%'; pin.style.top = _cropFotoPosY + '%'; }
+    e.preventDefault();
+  };
+  const end = function() { _cropFotoDragAtivo = false; area.style.cursor = 'grab'; };
+
+  area.addEventListener('mousedown',  start, {passive:false});
+  area.addEventListener('touchstart', start, {passive:false});
+  document.addEventListener('mousemove',  move, {passive:false});
+  document.addEventListener('touchmove',  move, {passive:false});
+  document.addEventListener('mouseup',  end);
+  document.addEventListener('touchend', end);
+});
+
+function renderFotosGrid() {
+  const grid = $('fotos-grid'); if (!grid) return;
+
+  if (!fotosFiles.length) {
+    grid.innerHTML = '';
+    return;
+  }
+
+  grid.innerHTML = fotosFiles.map((f, i) => {
+    const url = f._urlExistente || URL.createObjectURL(f);
+    const px  = fotosPosX[i] ?? 50;
+    const py  = fotosPosY[i] ?? 50;
+    const isExist = !!f._urlExistente;
+    return `<div style="position:relative;border-radius:10px;overflow:hidden;aspect-ratio:1/1;border:2px solid var(--border);background:#f5f0eb;cursor:pointer" onclick="reabrirCropFoto(${i})" title="Clique para reajustar">
+      <img src="${url}" style="width:100%;height:100%;object-fit:cover;object-position:${px}% ${py}%;display:block;pointer-events:none">
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .2s" onmouseover="this.style.background='rgba(0,0,0,.35)'" onmouseout="this.style.background='rgba(0,0,0,0)'">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;opacity:0;transition:opacity .2s" onmouseover="this.style.opacity='1';this.parentElement.style.background='rgba(0,0,0,.35)'" onmouseout="this.style.opacity='0';this.parentElement.style.background='rgba(0,0,0,0)'">
+          <span style="color:#fff;font-size:.65rem;font-weight:700;background:rgba(0,0,0,.5);padding:3px 8px;border-radius:50px">✏️ Reajustar</span>
+        </div>
+      </div>
+      ${i === 0 ? '<div style="position:absolute;top:5px;left:5px;background:var(--red);color:#fff;font-size:.55rem;font-weight:800;padding:2px 7px;border-radius:50px;pointer-events:none">PRINCIPAL</div>' : ''}
+      <button onclick="event.stopPropagation();removerFotoItem(${i})" style="position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:#fff;font-size:.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+    </div>`;
+  }).join('');
+}
+/ src/dashboard.js
+import { getSupa } from './supabase.js';
+import { showToast } from './utils.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTES
+// ─────────────────────────────────────────────────────────────────────────────
+const BASE_URL = 'https://pediway.vercel.app';
+const CORES = [
+  // Cores sólidas
+  '#C0392B','#E74C3C','#E67E22','#F39C12','#F1C40F',
+  '#27AE60','#16A085','#1ABC9C','#2980B9','#3498DB',
+  '#8E44AD','#9B59B6','#2C3E50','#34495E','#7F8C8D',
+  '#D35400','#C0392B','#1A252F','#6C3483','#1B4F72',
+  // Gradientes (salvos como string especial)
+  'grad:linear-gradient(135deg,#C0392B,#E74C3C)',
+  'grad:linear-gradient(135deg,#E67E22,#F39C12)',
+  'grad:linear-gradient(135deg,#27AE60,#1ABC9C)',
+  'grad:linear-gradient(135deg,#2980B9,#8E44AD)',
+  'grad:linear-gradient(135deg,#2C3E50,#4CA1AF)',
+  'grad:linear-gradient(135deg,#C0392B,#8E44AD)',
+  'grad:linear-gradient(135deg,#F39C12,#27AE60)',
+  'grad:linear-gradient(135deg,#2980B9,#16A085)',
+  'grad:linear-gradient(135deg,#1A252F,#C0392B)',
+  'grad:linear-gradient(135deg,#D35400,#F39C12)',
+];
+const EMOJIS   = ['🍔','🍕','🌮','🥪','🍜','🥗','🍗','🥩','🫕','🥘','🍱','🧆','🍣','🍦','🧁','🎂','🥤','🧃','☕','🧋'];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ESTADO
+// ─────────────────────────────────────────────────────────────────────────────
+let emojiSel    = '🍔';
+let fotosFiles  = [];
+let fotosPosX   = [];
+let fotosPosY   = [];
+let logoFile    = null;
+let corAtiva    = '#C0392B';
+let realtimeSub = null;
+let pollingId   = null;
+let _audioAtual = null; // instância de Audio ativa
+let pedidosConhecidos = new Set();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const getEstab = () => {
+  if (window._estab) return window._estab;
+  try { return JSON.parse(localStorage.getItem('pw_estab') || 'null'); } catch(e) { return null; }
+};
+
+function normalizeHex(cor) {
+  if (!cor) return '#C0392B';
+  if (cor.startsWith('grad:')) return cor.replace('grad:', ''); // gradiente
+  if (cor.startsWith('#')) return cor;
+  if (cor.startsWith('linear-gradient')) return cor;
+  const m = cor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (m) return '#' + [m[1],m[2],m[3]].map(n => (+n).toString(16).padStart(2,'0')).join('');
+  return '#C0392B';
+}
+function isGradient(cor) { return cor && (cor.startsWith('grad:') || cor.startsWith('linear-gradient')); }
+function gradToHex(cor) {
+  // Extrai a primeira cor do gradiente para uso em contextos que precisam de hex
+  const m = (cor || '').match(/#[0-9a-fA-F]{6}/);
+  return m ? m[0] : '#C0392B';
+}
+
+async function uploadFile(bucket, path, file) {
+  const { error } = await getSupa().storage.from(bucket).upload(path, file, { upsert: true });
+  if (error) throw new Error('Upload falhou: ' + error.message);
+  return getSupa().storage.from(bucket).getPublicUrl(path).data.publicUrl;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+// ── Restrição por plano ──────────────────────────────────────────────────────
+function aplicarRestricaoPlano(estab) {
+  const plano   = estab?.plano || 'basico';
+  const criado  = estab?.created_at ? new Date(estab.created_at) : null;
+  const diasTrial = criado ? Math.floor((Date.now() - criado) / 86400000) : 999;
+  const trialAtivo = plano === 'basico' && diasTrial <= 15;
+  const diasRestantes = Math.max(0, 15 - diasTrial);
+
+  // Tabs disponíveis por plano:
+  // Trial (basico, até 15 dias): TUDO
+  // Pro: visao, pedidos, cardapio, fresquinho, configuracoes
+  // Premium: visao, pedidos, comandas, cardapio, fresquinho, financeiro, configuracoes
+  // Trial vencido (basico > 15 dias): apenas visao + configuracoes (forçar upgrade)
+
+  const CONFIG_PLANOS = {
+    basico_ativo:  ['visao-geral','pedidos-tab','comandas','cardapio','fresquinho','financeiro','configuracoes'],
+    basico_vencido:['visao-geral','configuracoes'],
+    pro:           ['visao-geral','pedidos-tab','cardapio','fresquinho','configuracoes'],
+    premium:       ['visao-geral','pedidos-tab','comandas','cardapio','fresquinho','financeiro','configuracoes'],
+  };
+
+  const chave = plano === 'basico'
+    ? (trialAtivo ? 'basico_ativo' : 'basico_vencido')
+    : (plano === 'pro' ? 'pro' : 'premium');
+
+  const permitidas = CONFIG_PLANOS[chave] || CONFIG_PLANOS.pro;
+
+  // Aplica visibilidade em todas as abas
+  ['visao-geral','pedidos-tab','comandas','cardapio','fresquinho','financeiro','configuracoes'].forEach(tab => {
+    const btn = document.querySelector(`[data-tab="${tab}"]`);
+    const pg  = document.getElementById(`tab-${tab}`);
+    const vis = permitidas.includes(tab);
+    if (btn) btn.style.display = vis ? '' : 'none';
+    if (pg)  pg.style.display  = vis ? '' : 'none';
+  });
+
+  // Banner trial
+  const bannerTrial = document.getElementById('banner-trial');
+  if (bannerTrial) {
+    if (plano === 'basico' && trialAtivo) {
+      bannerTrial.style.display = 'flex';
+      const diasEl = document.getElementById('trial-dias');
+      if (diasEl) diasEl.textContent = diasRestantes === 0 ? 'Último dia!' : `${diasRestantes} dia${diasRestantes !== 1 ? 's' : ''} restante${diasRestantes !== 1 ? 's' : ''}`;
+    } else {
+      bannerTrial.style.display = 'none';
+    }
+  }
+
+  // Banner upgrade (trial vencido ou plano básico expirado)
+  const banner = document.getElementById('banner-upgrade');
+  if (banner) banner.style.display = (plano === 'basico' && !trialAtivo) ? 'flex' : 'none';
+}
+
+// ── Link ME AJUDA PEDIWAY — usa config do CEO ──────────────────────────────
+function atualizarLinkSuporte() {
+  const cfg = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
+  const wpp = cfg.wpp || '5500000000000';
+  const msg = encodeURIComponent(cfg.wppMsg || 'Olá! Preciso de ajuda com o PEDIWAY.');
+  const link = document.getElementById('link-me-ajuda');
+  if (link) link.href = `https://wa.me/${wpp}?text=${msg}`;
+}
+
+
+// ── CHECKOUT / PLANOS ─────────────────────────────────────────────────────────
+window.irCheckout = function(plano) {
+  const estab = getEstab();
+  if (!estab) return showToast('Faça login primeiro.', 'error');
+  const cfg  = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
+  const pro  = cfg.precoPro  || '49';
+  const prem = cfg.precoPrem || '99';
+  window.open(`/checkout?plano=${plano}&estab=${estab.id}&precoPro=${pro}&precoPrem=${prem}`, '_blank');
+};
+
+// Atualiza preços no dashboard conforme config do CEO
+function atualizarPrecosDash() {
+  const cfg = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
+  const pro  = cfg.precoPro  || '49';
+  const prem = cfg.precoPrem || '99';
+  const elPro  = document.getElementById('dash-preco-pro');
+  const elPrem = document.getElementById('dash-preco-prem') || document.getElementById('dash-preco-premium');
+  if (elPro)  elPro.textContent  = pro;
+  if (elPrem) elPrem.textContent = prem;
+}
+
+function atualizarInfoPlano() {
+  const estab = getEstab();
+  if (!estab) return;
+  const el    = document.getElementById('cfg-plano-atual');
+  const elvenc= document.getElementById('cfg-venc-atual');
+  const nomes = { basico:'Trial (grátis)', pro:'Pro', premium:'Premium' };
+  if (el)    el.textContent = nomes[estab.plano] || 'Trial';
+  if (elvenc && estab.assinatura_vencimento) {
+    const venc = new Date(estab.assinatura_vencimento);
+    const hoje = new Date();
+    const dias = Math.round((venc - hoje) / 86400000);
+    elvenc.textContent = dias > 0
+      ? `Vence em ${dias} dia${dias !== 1 ? 's' : ''} (${venc.toLocaleDateString('pt-BR')})`
+      : `Assinatura vencida em ${venc.toLocaleDateString('pt-BR')}`;
+    if (dias <= 5) elvenc.style.color = '#C0392B';
+  }
+}
+
+export async function initDashboard() {
+  let estab = getEstab();
+  if (!estab) return;
+  atualizarLinkSuporte();
+  atualizarInfoPlano();
+  aplicarRestricaoPlano(estab);
+  atualizarPrecosDash();
+  atualizarBotaoCancelar(estab);
+
+  // SEMPRE busca dados frescos do banco — garante sync entre mobile e desktop
+  if (!window._isDemo) {
+    try {
+      const { data: fresh } = await getSupa()
+        .from('estabelecimentos').select('*').eq('id', estab.id).maybeSingle();
+      if (fresh) {
+        estab = fresh;
+        window._estab = fresh;
+        localStorage.setItem('pw_estab', JSON.stringify(fresh));
+        // Sincroniza número de mesas do banco para o localStorage local
+        if (fresh.num_mesas) {
+          localStorage.setItem('pw_num_mesas_' + fresh.id, String(fresh.num_mesas));
+        }
+      }
+    } catch(e) { console.log('Sync estab:', e); }
+  }
+
+  // Textos do header
+  const sn = $('dash-store-name'); if (sn) sn.textContent = estab.nome;
+  const lu = $('link-url');        if (lu) lu.textContent = `${BASE_URL}/${estab.slug}`;
+  const lug = $('link-url-garcom');if (lug) lug.textContent = `${BASE_URL}/comandas/${estab.slug}`;
+
+  // Preenche configurações
+  preencherConfig(estab);
+  if (estab.logo_url) mostrarLogoPreview(estab.logo_url);
+
+  // Cor e capa
+  corAtiva = normalizeHex(estab.cor_primaria || '#C0392B');
+  renderCores(corAtiva);
+  aplicarCorDash(corAtiva);
+  mostrarCapaPreview(corAtiva);
+
+  // Status loja
+  atualizarBadgeLoja(estab.aberto !== false);
+  const cbAberto = $('cfg-aberto');
+  if (cbAberto) cbAberto.checked = estab.aberto !== false;
+  // Taxa entrega
+  const tw = document.getElementById('taxa-entrega-wrap');
+  if (tw) tw.style.display = estab.faz_entrega !== false ? 'block' : 'none';
+
+  // Dados
+  if (!window._isDemo) {
+    await renderCardapio();
+    await renderFresquinho();
+    await renderPedidos();
+    await carregarFinanceiro();
+    iniciarRealtime();
+    await carregarPedidosMesas();
+    renderMesas();
+    window.renderHistoricoMesas();
+    renderEmojiGrid();
+  } else {
+    renderCardapioDemo();
+    renderPedidosDemo();
+    renderEmojiGrid();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────────────────────────────────────
+function preencherConfig(estab) {
+  const set = (id, val) => { const el = $(id); if (el && val != null) el.value = val; };
+  set('cfg-nome',     estab.nome);
+  set('cfg-slug',     estab.slug);
+  set('cfg-whats',    estab.whatsapp || '');
+  set('cfg-desc',     estab.descricao || '');
+  set('cfg-endereco', estab.endereco || '');
+  set('cfg-tempo',    estab.tempo_entrega || '30-45 min');
+  const cfgLink = $('cfg-link-preview');
+  if (cfgLink) cfgLink.textContent = `${BASE_URL}/${estab.slug}`;
+  const cfgLinkGarcom = $('cfg-link-garcom');
+  if (cfgLinkGarcom) cfgLinkGarcom.textContent = `${BASE_URL}/comandas/${estab.slug}`;
+  const ce = $('cfg-entrega');  if (ce) ce.checked = estab.faz_entrega  !== false;
+  const cr = $('cfg-retirada'); if (cr) cr.checked = estab.faz_retirada !== false;
+  const ct = $('cfg-taxa');     if (ct) ct.value   = estab.taxa_entrega || '';
+  const cp = $('cfg-pix');      if (cp) cp.checked = estab.aceita_pix      !== false;
+  const cc = $('cfg-cartao');   if (cc) cc.checked = estab.aceita_cartao   !== false;
+  const cd = $('cfg-dinheiro'); if (cd) cd.checked = estab.aceita_dinheiro !== false;
+}
+
+function aplicarCorDash(cor) {
+  const hex = isGradient(cor) ? gradToHex(cor) : cor;
+  const dash = document.querySelector('[data-screen="s-dash"]');
+  if (dash) dash.style.setProperty('--red', hex);
+  document.querySelectorAll('.dash-nav,.tab-content,.config-card').forEach(el => el.style.setProperty('--red', hex));
+}
+
+function renderCores(ativa) {
+  const grid = $('cores-grid'); if (!grid) return;
+  grid.innerHTML = CORES.map(c => `
+    <div class="cor-opcao ${c === ativa ? 'ativa' : ''}"
+         style="background:${c}"
+         data-hex="${c}"
+         onclick="selecionarCor('${c}',this)"
+         title="${c}"></div>`).join('');
+}
+
+window.selecionarCor = function(hex, el) {
+  corAtiva = hex;
+  document.querySelectorAll('.cor-opcao').forEach(e => e.classList.remove('ativa'));
+  if (el) el.classList.add('ativa');
+  aplicarCorDash(hex);
+  // Atualiza preview da capa se não tiver imagem
+  const prev = $('capa-preview');
+  if (prev) prev.style.background = isGradient(hex) ? hex : hex;
+};
+
+function atualizarBadgeLoja(aberto) {
+  const b = $('loja-status-badge'); if (!b) return;
+  b.className = 'loja-status-badge ' + (aberto ? 'loja-aberta' : 'loja-fechada');
+  b.textContent = aberto ? 'Aberta' : 'Fechada';
+}
+
+window.atualizarStatusLoja = function(aberto) { atualizarBadgeLoja(aberto); };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOGO
+// ─────────────────────────────────────────────────────────────────────────────
+function mostrarLogoPreview(url) {
+  const img = $('logo-preview-img');
+  const txt = $('logo-placeholder-text');
+  if (img) { img.src = url; img.style.display = 'block'; }
+  if (txt) txt.style.display = 'none';
+}
+
+export function previewLogo(event) {
+  const file = event.target.files[0]; if (!file) return;
+  logoFile = file;
+  mostrarLogoPreview(URL.createObjectURL(file));
+}
+window.previewLogo = previewLogo;
+
+// Crop da logo — drag
+let _cropDragging = false, _cropDragX = 0, _cropDragY = 0, _cropOfsX = 0, _cropOfsY = 0, _cropZoom = 100;
+
+// ── Sistema de crop com canvas + safe area ──────────────────────────────────
+let _CRP = { img:null, scale:1, offX:0, offY:0, minScale:0.5, canvasId:'', stageId:'', safePrefix:'' };
+
+function crpDraw() {
+  const cvs = document.getElementById(_CRP.canvasId);
+  if (!cvs || !_CRP.img) return;
+  const stage = document.getElementById(_CRP.stageId);
+  const W = (stage ? stage.offsetWidth : 0) || cvs.offsetWidth || 340;
+  if (W < 10) { setTimeout(crpDraw, 30); return; }
+  const H = W;
+  cvs.width = W; cvs.height = H; cvs.style.height = H + 'px';
+  const ctx = cvs.getContext('2d');
+  ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H);
+  const iw = _CRP.img.naturalWidth, ih = _CRP.img.naturalHeight;
+  const dw = iw * _CRP.scale, dh = ih * _CRP.scale;
+  const dx = W/2 - dw/2 + _CRP.offX, dy = H/2 - dh/2 + _CRP.offY;
+  ctx.drawImage(_CRP.img, dx, dy, dw, dh);
+  const safe = Math.min(W,H) * 0.82;
+  const sx = (W - safe) / 2, sy = (H - safe) / 2;
+  ctx.fillStyle = 'rgba(0,0,0,0.52)';
+  ctx.fillRect(0, 0, W, sy);
+  ctx.fillRect(0, sy + safe, W, H - sy - safe);
+  ctx.fillRect(0, sy, sx, safe);
+  ctx.fillRect(sx + safe, sy, W - sx - safe, safe);
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2;
+  if (_CRP.safePrefix === 'cso') {
+    ctx.beginPath(); ctx.arc(W/2, H/2, safe/2, 0, Math.PI*2); ctx.stroke();
+  } else {
+    ctx.strokeRect(sx, sy, safe, safe);
+  }
+  const cc = '#C0392B', cl = 18;
+  ctx.strokeStyle = cc; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  [[sx,sy],[sx+safe,sy],[sx,sy+safe],[sx+safe,sy+safe]].forEach(([cx,cy],i) => {
+    ctx.beginPath();
+    ctx.moveTo(cx + (i%2===0?cl:0),cy); ctx.lineTo(cx + (i%2===0?0:-cl),cy);
+    ctx.moveTo(cx,cy + (i<2?cl:0)); ctx.lineTo(cx,cy + (i<2?0:-cl));
+    ctx.stroke();
+  });
+}
+
+function crpApplyMinScale() {
+  const stage = document.getElementById(_CRP.stageId);
+  if (!stage || !_CRP.img) return;
+  const W = stage.offsetWidth || 340;
+  const safe = W * 0.82;
+  const ms = Math.max(safe / _CRP.img.naturalWidth, safe / _CRP.img.naturalHeight);
+  _CRP.minScale = ms;
+  if (_CRP.scale < ms) _CRP.scale = ms;
+}
+
+function crpClampOffset() {
+  if (!_CRP.img) return;
+  const stage = document.getElementById(_CRP.stageId);
+  const W = stage ? stage.offsetWidth || 340 : 340;
+  const safe = W * 0.82;
+  const dw = _CRP.img.naturalWidth * _CRP.scale, dh = _CRP.img.naturalHeight * _CRP.scale;
+  const maxX = Math.max(0, (dw - safe) / 2), maxY = Math.max(0, (dh - safe) / 2);
+  _CRP.offX = Math.max(-maxX, Math.min(maxX, _CRP.offX));
+  _CRP.offY = Math.max(-maxY, Math.min(maxY, _CRP.offY));
+}
+
+function crpInitDrag(stageId) {
+  const el = document.getElementById(stageId); if (!el) return;
+  if (el._crpDown) { el.removeEventListener('mousedown', el._crpDown); el.removeEventListener('touchstart', el._crpDown); }
+  if (el._crpWheel) el.removeEventListener('wheel', el._crpWheel);
+  let dragging = false, lx = 0, ly = 0, pinchDist0 = 0, pinchScale0 = 1;
+  const onDown = e => {
+    e.preventDefault();
+    if (e.touches && e.touches.length === 2) {
+      pinchDist0 = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+      pinchScale0 = _CRP.scale; dragging = false; return;
+    }
+    dragging = true;
+    const t = e.touches ? e.touches[0] : e; lx = t.clientX; ly = t.clientY;
+  };
+  const onMove = e => {
+    e.preventDefault();
+    if (e.touches && e.touches.length === 2) {
+      const d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+      _CRP.scale = Math.max(_CRP.minScale, Math.min(8, pinchScale0 * d / pinchDist0));
+      crpClampOffset(); crpDraw(); return;
+    }
+    if (!dragging) return;
+    const t = e.touches ? e.touches[0] : e;
+    _CRP.offX += t.clientX - lx; _CRP.offY += t.clientY - ly;
+    lx = t.clientX; ly = t.clientY;
+    crpClampOffset(); crpDraw();
+  };
+  const onUp = () => { dragging = false; };
+  const onWheel = e => {
+    e.preventDefault();
+    _CRP.scale = Math.max(_CRP.minScale, Math.min(8, _CRP.scale * (1 - e.deltaY * 0.001)));
+    crpClampOffset(); crpDraw();
+  };
+  el._crpDown = onDown; el._crpWheel = onWheel;
+  el.addEventListener('mousedown', onDown, { passive:false });
+  el.addEventListener('touchstart', onDown, { passive:false });
+  el.addEventListener('wheel', onWheel, { passive:false });
+  document.addEventListener('mousemove', onMove, { passive:false });
+  document.addEventListener('touchmove', onMove, { passive:false });
+  document.addEventListener('mouseup', onUp);
+  document.addEventListener('touchend', onUp);
+}
+
+function crpGetBlob(canvasId, stageId, safePrefix, isCircle, callback) {
+  const cvs = document.getElementById(canvasId); if (!cvs || !_CRP.img) { callback(null); return; }
+  const W = cvs.width, safe = Math.floor(W * 0.82), sx = Math.floor((W - safe) / 2);
+  const out = document.createElement('canvas');
+  out.width = safe; out.height = safe;
+  const ctx = out.getContext('2d');
+  if (isCircle) { ctx.beginPath(); ctx.arc(safe/2, safe/2, safe/2, 0, Math.PI*2); ctx.clip(); }
+  ctx.drawImage(cvs, sx, sx, safe, safe, 0, 0, safe, safe);
+  out.toBlob(callback, 'image/jpeg', 0.92);
+}
+// ── Fim sistema crop ─────────────────────────────────────────────────────────
+
+window.abrirCropLogo = function(event) {
+  const file = event.target.files[0]; if (!file) return;
+  logoFile = file;
+  event.target.value = '';
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    _CRP.img = img; _CRP.offX = 0; _CRP.offY = 0;
+    _CRP.canvasId = 'crop-canvas'; _CRP.stageId = 'crop-stage'; _CRP.safePrefix = 'cso';
+    crpApplyMinScale(); _CRP.scale = _CRP.minScale;
+    crpInitDrag('crop-stage');
+    $('crop-overlay')?.classList.add('open');
+    // Delay para garantir que o overlay está visível antes de desenhar
+    setTimeout(() => { crpApplyMinScale(); crpDraw(); }, 50);
+  };
+  img.src = url;
+};
+
+window.aplicarCrop = function() {
+  // Legacy: chamado pelo slider (mantemos por compatibilidade)
+  crpDraw();
+};
+window.fecharCrop = function() { $('crop-overlay')?.classList.remove('open'); logoFile = null; };
+window.confirmarCrop = function() {
+  crpGetBlob('crop-canvas', 'crop-stage', 'cso', true, blob => {
+    if (!blob) return;
+    logoFile = new File([blob], 'logo.jpg', { type: 'image/jpeg' });
+    mostrarLogoPreview(URL.createObjectURL(blob));
+    $('crop-overlay')?.classList.remove('open');
+  });
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CAPA — apenas cor/gradiente (sem upload de imagem)
+// ─────────────────────────────────────────────────────────────────────────────
+function mostrarCapaPreview(cor) {
+  const prev = $('capa-preview');
+  if (prev) prev.style.background = isGradient(cor) ? cor : cor;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SALVAR CONFIG
+// ─────────────────────────────────────────────────────────────────────────────
+export async function salvarConfig() {
+  if (window._isDemo) return showToast('No demo não é possível salvar.', 'error');
+  const estab = getEstab(); if (!estab) return;
+
+  const nome     = $('cfg-nome')?.value.trim();
+  const slug     = $('cfg-slug')?.value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');
+  const whats    = $('cfg-whats')?.value.trim();
+  const desc     = $('cfg-desc')?.value.trim();
+  const endereco = $('cfg-endereco')?.value.trim();
+  const tempo    = $('cfg-tempo')?.value;
+  const aberto   = $('cfg-aberto')?.checked;
+  const entrega  = $('cfg-entrega')?.checked;
+  const retirada = $('cfg-retirada')?.checked;
+
+  if (!nome || !slug) return showToast('Preencha nome e link.', 'error');
+
+  const btn = document.querySelector('[onclick="salvarConfig()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
+
+  try {
+    // Verifica slug único
+    if (slug !== estab.slug) {
+      const { data: ex } = await getSupa().from('estabelecimentos').select('id').eq('slug', slug).maybeSingle();
+      if (ex) throw new Error('Esse link já está em uso.');
+    }
+
+    // Upload logo
+    let logo_url = estab.logo_url || null;
+    if (logoFile) {
+      logo_url = await uploadFile('fotos', `${estab.id}/logo_${Date.now()}.${logoFile.name.split('.').pop()}`, logoFile);
+      logoFile = null;
+    }
+
+    // Cor — suporta gradientes
+    const cor_primaria = normalizeHex(corAtiva);
+
+    const taxa_entrega   = parseFloat($('cfg-taxa')?.value)     || 0;
+    const aceita_pix     = $('cfg-pix')?.checked      !== false;
+    const aceita_cartao  = $('cfg-cartao')?.checked   !== false;
+    const aceita_dinheiro= $('cfg-dinheiro')?.checked !== false;
+
+    const updates = {
+      nome, slug, whatsapp: whats, descricao: desc, endereco,
+      tempo_entrega: tempo, aberto, faz_entrega: entrega, faz_retirada: retirada,
+      cor_primaria, logo_url,
+      capa_url: null, capa_tipo: 'cor',
+      taxa_entrega, aceita_pix, aceita_cartao, aceita_dinheiro,
+    };
+
+    const { error } = await getSupa().from('estabelecimentos').update(updates).eq('id', estab.id);
+    if (error) throw new Error(error.message);
+
+    const novoEstab = { ...estab, ...updates };
+    window._estab = novoEstab;
+    localStorage.setItem('pw_estab', JSON.stringify(novoEstab));
+
+    // Atualiza UI
+    const sn = $('dash-store-name'); if (sn) sn.textContent = nome;
+    const lu  = $('link-url');        if (lu)  lu.textContent  = `${BASE_URL}/${slug}`;
+    const lug = $('link-url-garcom'); if (lug) lug.textContent = `${BASE_URL}/comandas/${slug}`;
+    const cl  = $('cfg-link-preview');if (cl)  cl.textContent  = `${BASE_URL}/${slug}`;
+    const clg = $('cfg-link-garcom'); if (clg) clg.textContent = `${BASE_URL}/comandas/${slug}`;
+    atualizarBadgeLoja(aberto);
+    aplicarCorDash(cor_primaria);
+
+    showToast('Configurações salvas! ✅');
+  } catch (e) {
+    showToast(e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Salvar configurações'; }
+  }
+}
+window.salvarConfig = salvarConfig;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CARDÁPIO
+// ─────────────────────────────────────────────────────────────────────────────
+async function renderCardapio() {
+  const estab = getEstab();
+  const grid  = $('cardapio-grid');
+  const stat  = $('stat-itens');
+  if (!grid || !estab) return;
+
+  const { data } = await getSupa().from('produtos').select('*')
+    .eq('estabelecimento_id', estab.id).order('created_at', { ascending: false });
+
+  if (stat) stat.textContent = data?.length || 0;
+
+  if (!data?.length) {
+    grid.innerHTML = `<div class="empty-state-light" style="grid-column:1/-1">
+      <span>🍽️</span><p>Nenhum item ainda. Adicione seu primeiro produto!</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = data.map(p => `
+    <div class="item-card">
+      <div class="item-card-img">
+        ${p.foto_url
+          ? `<img class="item-img" src="${p.foto_url}" alt="${p.nome}">`
+          : `<div class="item-emoji-bg">${p.emoji || '🍔'}</div>`}
+        <span class="item-disponivel">${p.disponivel ? 'Disponível' : 'Indisponível'}</span>
+        ${p.promocao ? `<span class="item-promo-badge">🔥 Promoção</span>` : ''}
+
+      </div>
+      <div class="item-body">
+        <div class="item-categoria">${p.categoria || 'SEM CATEGORIA'}</div>
+        <div class="item-nome">${p.nome}</div>
+        <div class="item-desc-text">${p.descricao || ''}</div>
+        <div class="item-footer">
+          <div>
+            ${p.promocao && p.preco_original ? `<div class="item-preco-original">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</div>` : ''}
+            <div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>
+          </div>
+          <div class="item-acoes">
+            <button class="btn-icon" onclick="editarItem('${p.id}')">✏️</button>
+            <button class="btn-icon danger" onclick="deletarItem('${p.id}')">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderPedidosDemo() {
+  // Visão geral com dados fictícios mas realistas
+  const sp = $('stat-pedidos');     if (sp) sp.textContent = '12';
+  const sf = $('stat-faturamento'); if (sf) sf.textContent = 'R$ 487,60';
+  const si = $('stat-itens');       // itens no cardápio — já setado abaixo
+
+  const lista = $('pedidos-novos-lista');
+  if (lista) {
+    lista.innerHTML = [
+      { mesa:'Mesa 3', nome:'João Silva',  itens:'2x X-Burguer · 1x Batata Frita', total:71.70, status:'novo'   },
+      { mesa:null,     nome:'Ana Paula',   itens:'1x Açaí 500ml · 2x Refrigerante', total:44.70, status:'preparo'},
+    ].map(p => `<div class="pedido-card ped-status-${p.status}" style="margin-bottom:10px;opacity:.9">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-weight:800;font-size:.9rem">${p.nome}</div>
+        <span class="status-${p.status}" style="font-size:.72rem">${p.status === 'novo' ? '🔔 Novo' : '🍳 Preparando'}</span>
+      </div>
+      <div style="font-size:.78rem;color:#888;margin-bottom:6px">${p.itens}</div>
+      <div style="font-weight:800;color:var(--red)">R$ ${p.total.toFixed(2).replace('.',',')}</div>
+    </div>`).join('');
+  }
+  // Badge pedidos
+  const badge = $('badge-pedidos-count'); if (badge) badge.textContent = '2';
+  const badgeW = $('badge-pedidos-wrap'); if (badgeW) badgeW.style.display = 'flex';
+
+  // Stats visão geral
+  if ($('ultimos-pedidos')) {
+    $('ultimos-pedidos').innerHTML = '<div style="color:#aaa;font-size:.82rem;padding:12px">Este é um demo — faça login para ver seus pedidos reais.</div>';
+  }
+}
+
+function renderCardapioDemo() {
+  const grid = $('cardapio-grid'); const stat = $('stat-itens');
+  if (stat) stat.textContent = '3';
+  if (!grid) return;
+  const demo = [
+    { nome:'X-Burguer Especial', categoria:'LANCHES', preco:28.90, emoji:'🍔', promocao:false },
+    { nome:'Batata Frita Grande', categoria:'ACOMPANHAMENTOS', preco:14.90, emoji:'🍟', promocao:false },
+    { nome:'Refrigerante 350ml', categoria:'BEBIDAS', preco:7.90, emoji:'🥤', promocao:true, preco_original:9.90 },
+  ];
+  grid.innerHTML = demo.map(p => `
+    <div class="item-card">
+      <div class="item-card-img"><div class="item-emoji-bg">${p.emoji}</div></div>
+      <div class="item-body">
+        <div class="item-categoria">${p.categoria}</div>
+        <div class="item-nome">${p.nome}</div>
+        <div class="item-footer">
+          <div class="item-preco">R$ ${p.preco.toFixed(2).replace('.',',')}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderEmojiGrid() {
+  const grid = $('emoji-grid'); if (!grid) return;
+  grid.innerHTML = EMOJIS.map(e =>
+    `<button class="emoji-btn ${e === emojiSel ? 'selected' : ''}" onclick="selecionarEmoji('${e}',this)">${e}</button>`
+  ).join('');
+}
+
+// ─── Modal de item ───────────────────────────────────────────────────────────
+export function abrirModalItem() {
+  if (window._isDemo) return showToast('No demo não é possível salvar.');
+  $('modal-item').classList.add('open');
+  ['item-nome','item-desc','item-cat','item-preco','item-preco-orig'].forEach(id => { const el=$(id); if(el) el.value=''; });
+  const pr = $('item-promocao'); if (pr) pr.checked = false;
+  const pg = $('preco-orig-group'); if (pg) pg.style.display = 'none';
+  fotosFiles = []; fotosPosX = []; fotosPosY = [];
+  renderFotosGrid();
+  emojiSel = '🍔'; renderEmojiGrid();
+  // Reset botão salvar
+  const btn = document.querySelector('#modal-item .btn-primary');
+  if (btn) { btn.textContent = 'Salvar item'; btn.onclick = salvarItem; }
+}
+export function fecharModal() { $('modal-item').classList.remove('open'); }
+export function fecharModalFora(e) { if (e.target.id === 'modal-item') fecharModal(); }
+export function selecionarEmoji(emoji, btn) {
+  emojiSel = emoji;
+  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// ─── Fotos com drag de posição ───────────────────────────────────────────────
+export function previewFotos(event) {
+  const file = event.target.files[0]; if (!file) return;
+  event.target.value = '';
+  // Abre modal de crop para ajuste antes de adicionar
+  abrirCropFoto(file);
+}
+export function previewFoto(e) { previewFotos(e); }
+
+
+
+// ── CROP DE FOTO DO PRODUTO ────────────────────────────────────────────────
+let _cropFotoFile  = null;
+let _cropFotoUrl   = null;
+let _cropFotoPosX  = 50;
+let _cropFotoPosY  = 50;
+let _cropFotoDragAtivo = false;
+let _cropFotoDragX = 0, _cropFotoDragY = 0;
+
+window.abrirCropFoto = function(file) {
+  _cropFotoFile = file;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    _CRP.img = img; _CRP.offX = 0; _CRP.offY = 0;
+    _CRP.canvasId = 'crop-foto-canvas'; _CRP.stageId = 'crop-foto-stage'; _CRP.safePrefix = 'cfso';
+    crpApplyMinScale(); _CRP.scale = _CRP.minScale;
+    crpInitDrag('crop-foto-stage');
+    const modal = $('modal-crop-foto');
+    if (modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    setTimeout(() => { crpApplyMinScale(); crpDraw(); }, 50);
+  };
+  img.src = url;
+  _cropFotoUrl = url;
+};
+
+window.confirmarCropFoto = function() {
+  crpGetBlob('crop-foto-canvas', 'crop-foto-stage', 'cfso', false, blob => {
+    if (!blob) return;
+    const file = new File([blob], _cropFotoFile?.name || 'foto.jpg', { type: 'image/jpeg' });
+    file._urlExistente = null;
+    const editIdx = window._cropFotoEditIdx;
+    if (editIdx != null && editIdx >= 0 && editIdx < fotosFiles.length) {
+      // Reajuste: substitui no índice
+      fotosFiles[editIdx] = file; fotosPosX[editIdx] = 50; fotosPosY[editIdx] = 50;
+      window._cropFotoEditIdx = null;
+    } else {
+      // Nova foto
+      fotosFiles.push(file); fotosPosX.push(50); fotosPosY.push(50);
+    }
+    renderFotosGrid();
+    const modal = $('modal-crop-foto');
+    if (modal) { modal.classList.remove('open'); document.body.style.overflow = ''; }
+    _CRP.img = null;
+    if (_fotoQueue && _fotoQueue.length > 0) {
+      const next = _fotoQueue.shift(); _cropFotoFile = next;
+      setTimeout(() => window.abrirCropFoto(next), 200);
+    }
+  });
+};
+
+// Função chamada pelo foto-input (modal de item)
+window.adicionarFotos = function(event) {
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
+  event.target.value = '';
+  // Processa um arquivo de cada vez via fila
+  let idx = 0;
+  const next = () => {
+    if (idx >= files.length) return;
+    _cropFotoFile = files[idx++];
+    window.abrirCropFoto(_cropFotoFile);
+    // Após confirmar, se houver mais arquivos, o próximo será aberto
+    // via _fotoQueue que guardamos aqui
+    _fotoQueue = files.slice(idx);
+  };
+  _fotoQueue = files.slice(1);
+  window.abrirCropFoto(files[0]);
+  _cropFotoFile = files[0];
+};
+
+let _fotoQueue = [];
 
 window.fecharCropFoto = function() {
   const m = $('modal-crop-foto'); if (m) m.classList.remove('open');
@@ -867,7 +1735,29 @@ window.removerFotoExistente = function(btn) {
   btn.closest('.foto-thumb-item').remove();
 };
 
-window.removerFotoItem = function(i) { fotosFiles.splice(i,1); fotosPosX.splice(i,1); fotosPosY.splice(i,1); renderFotosGrid(); };
+window.removerFotoItem = function(i) {
+  fotosFiles.splice(i,1); fotosPosX.splice(i,1); fotosPosY.splice(i,1);
+  renderFotosGrid();
+};
+
+window.reabrirCropFoto = function(i) {
+  const f = fotosFiles[i]; if (!f) return;
+  const url = f._urlExistente || URL.createObjectURL(f);
+  _cropFotoFile = f;
+  const img = new Image();
+  img.onload = () => {
+    _CRP.img = img; _CRP.offX = 0; _CRP.offY = 0;
+    _CRP.canvasId = 'crop-foto-canvas'; _CRP.stageId = 'crop-foto-stage'; _CRP.safePrefix = 'cfso';
+    crpApplyMinScale(); _CRP.scale = _CRP.minScale;
+    crpInitDrag('crop-foto-stage');
+    const modal = $('modal-crop-foto');
+    if (modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    setTimeout(() => { crpApplyMinScale(); crpDraw(); }, 50);
+    // Ao confirmar esta edição, substituir no índice i
+    window._cropFotoEditIdx = i;
+  };
+  img.src = url;
+};
 
 export async function salvarItem() {
   const estab = getEstab(); if (!estab) return showToast('Faça login novamente.','error');
