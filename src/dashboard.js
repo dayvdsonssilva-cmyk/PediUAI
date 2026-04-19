@@ -384,8 +384,13 @@ function crpClampOffset() {
 
 function crpInitDrag(stageId) {
   const el = document.getElementById(stageId); if (!el) return;
-  if (el._crpDown) { el.removeEventListener('mousedown', el._crpDown); el.removeEventListener('touchstart', el._crpDown); }
+  // Remove listeners antigos do elemento
+  if (el._crpDown)  { el.removeEventListener('mousedown', el._crpDown); el.removeEventListener('touchstart', el._crpDown); }
   if (el._crpWheel) el.removeEventListener('wheel', el._crpWheel);
+  // Remove listeners antigos do document (evita acumulação)
+  if (window._crpMoveHandler)  { document.removeEventListener('mousemove', window._crpMoveHandler); document.removeEventListener('touchmove', window._crpMoveHandler); }
+  if (window._crpUpHandler)    { document.removeEventListener('mouseup', window._crpUpHandler); document.removeEventListener('touchend', window._crpUpHandler); }
+
   let dragging = false, lx = 0, ly = 0, pinchDist0 = 0, pinchScale0 = 1;
   const onDown = e => {
     e.preventDefault();
@@ -397,13 +402,13 @@ function crpInitDrag(stageId) {
     const t = e.touches ? e.touches[0] : e; lx = t.clientX; ly = t.clientY;
   };
   const onMove = e => {
+    if (!dragging && !(e.touches && e.touches.length === 2)) return; // não bloqueia se não está arrastando
     e.preventDefault();
     if (e.touches && e.touches.length === 2) {
       const d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
       _CRP.scale = Math.max(_CRP.minScale, Math.min(8, pinchScale0 * d / pinchDist0));
       crpClampOffset(); crpDraw(); return;
     }
-    if (!dragging) return;
     const t = e.touches ? e.touches[0] : e;
     _CRP.offX += t.clientX - lx; _CRP.offY += t.clientY - ly;
     lx = t.clientX; ly = t.clientY;
@@ -419,10 +424,28 @@ function crpInitDrag(stageId) {
   el.addEventListener('mousedown', onDown, { passive:false });
   el.addEventListener('touchstart', onDown, { passive:false });
   el.addEventListener('wheel', onWheel, { passive:false });
-  document.addEventListener('mousemove', onMove, { passive:false });
-  document.addEventListener('touchmove', onMove, { passive:false });
+  // Salva globalmente para poder remover depois
+  window._crpMoveHandler = onMove;
+  window._crpUpHandler   = onUp;
+  document.addEventListener('mousemove', onMove); // SEM passive:false — não bloqueia scroll do doc
+  document.addEventListener('touchmove', onMove); // SEM passive:false
   document.addEventListener('mouseup', onUp);
   document.addEventListener('touchend', onUp);
+}
+
+// Remove todos os listeners do crop ao fechar o modal
+function crpCleanup() {
+  if (window._crpMoveHandler) {
+    document.removeEventListener('mousemove', window._crpMoveHandler);
+    document.removeEventListener('touchmove', window._crpMoveHandler);
+    window._crpMoveHandler = null;
+  }
+  if (window._crpUpHandler) {
+    document.removeEventListener('mouseup', window._crpUpHandler);
+    document.removeEventListener('touchend', window._crpUpHandler);
+    window._crpUpHandler = null;
+  }
+  _CRP.img = null;
 }
 
 function crpGetBlob(canvasId, stageId, safePrefix, isCircle, callback) {
@@ -459,7 +482,11 @@ window.aplicarCrop = function() {
   // Legacy: chamado pelo slider (mantemos por compatibilidade)
   crpDraw();
 };
-window.fecharCrop = function() { $('crop-overlay')?.classList.remove('open'); logoFile = null; };
+window.fecharCrop = function() {
+  $('crop-overlay')?.classList.remove('open');
+  logoFile = null;
+  crpCleanup();
+};
 window.confirmarCrop = function() {
   crpGetBlob('crop-canvas', 'crop-stage', 'cso', true, blob => {
     if (!blob) return;
@@ -798,7 +825,8 @@ let _fotoQueue = [];
 window.fecharCropFoto = function() {
   const m = $('modal-crop-foto'); if (m) m.classList.remove('open');
   document.body.style.overflow = '';
-  _cropFotoFile = null; _CRP.img = null;
+  _cropFotoFile = null;
+  crpCleanup();
 };
 
 // Drag no modal de crop
@@ -905,7 +933,8 @@ window.adicionarFotos = function(event) {
 window.fecharCropFoto = function() {
   const m = $('modal-crop-foto'); if (m) m.classList.remove('open');
   document.body.style.overflow = '';
-  _cropFotoFile = null; _CRP.img = null;
+  _cropFotoFile = null;
+  crpCleanup();
 };
 
 // Drag no modal de crop
