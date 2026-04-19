@@ -975,80 +975,39 @@
 </div>
 
 <!-- MODAL CROP DE FOTO DO PRODUTO -->
-<div class="modal-overlay" id="modal-crop-foto" onclick="if(event.target.id==='modal-crop-foto')fecharCropFoto()" style="z-index:5500">
-  <div class="modal-box" style="max-width:420px;padding:0;overflow:hidden">
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">
-      <h3 style="font-size:1rem;font-weight:800;margin:0">Ajustar foto</h3>
-      <button onclick="fecharCropFoto()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#888;line-height:1">✕</button>
-    </div>
-    <!-- Área de preview + drag -->
-    <div id="crop-foto-area" style="position:relative;width:100%;aspect-ratio:1/1;background:#111;cursor:grab;overflow:hidden;touch-action:none">
-      <img id="crop-foto-img" src="" alt=""
-           style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;user-select:none">
-      <!-- Instrução -->
-      <div style="position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:center;pointer-events:none">
-        <div style="background:rgba(0,0,0,0.55);color:#fff;font-size:0.7rem;font-weight:600;padding:5px 14px;border-radius:50px;backdrop-filter:blur(4px)">
-          ✋ Arraste para ajustar o enquadramento
-        </div>
-      </div>
-      <!-- Minimap -->
-      <div style="position:absolute;top:12px;right:12px;width:52px;height:52px;border-radius:8px;background:rgba(0,0,0,0.6);overflow:hidden;border:2px solid rgba(255,255,255,0.4)">
-        <img id="crop-foto-mini" src="" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;opacity:0.7">
-        <div id="crop-foto-pin" style="position:absolute;width:10px;height:10px;background:#fff;border-radius:50%;border:2px solid var(--red);transform:translate(-50%,-50%);left:50%;top:50%;pointer-events:none"></div>
+<div class="modal-overlay" id="modal-crop-foto" style="z-index:5500;align-items:flex-end;justify-content:center;padding:0">
+  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:500px;overflow:hidden;max-height:95vh;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#1a1a1a;flex-shrink:0">
+      <h3 style="color:#fff;font-size:.95rem;font-weight:800;margin:0">Ajustar foto</h3>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:.68rem;color:#666">Arraste · Scroll para zoom</span>
+        <button onclick="fecharCropFoto()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888;line-height:1">&#10005;</button>
       </div>
     </div>
-    <!-- Botões -->
-    <div style="display:flex;gap:10px;padding:16px 20px">
-      <button onclick="fecharCropFoto()" class="btn-cancelar" style="flex:1">Cancelar</button>
-      <button onclick="confirmarCropFoto()" class="btn-primary" style="flex:2">Usar esta foto ✓</button>
+    <div style="position:relative;width:100%;background:#111;flex:1;min-height:320px;touch-action:none" id="crop-foto-stage">
+      <canvas id="crop-foto-canvas" style="display:block;width:100%;touch-action:none"></canvas>
+      <div id="cfso" style="position:absolute;inset:0;pointer-events:none">
+        <div id="cfso-top"    style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.55)"></div>
+        <div id="cfso-bottom" style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55)"></div>
+        <div id="cfso-left"   style="position:absolute;background:rgba(0,0,0,.55)"></div>
+        <div id="cfso-right"  style="position:absolute;background:rgba(0,0,0,.55)"></div>
+        <div id="cfso-border" style="position:absolute;border:2.5px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5)"></div>
+        <div id="cfso-tl" style="position:absolute;width:16px;height:16px;border-top:3px solid #C0392B;border-left:3px solid #C0392B;border-radius:3px 0 0 0"></div>
+        <div id="cfso-tr" style="position:absolute;width:16px;height:16px;border-top:3px solid #C0392B;border-right:3px solid #C0392B;border-radius:0 3px 0 0"></div>
+        <div id="cfso-bl" style="position:absolute;width:16px;height:16px;border-bottom:3px solid #C0392B;border-left:3px solid #C0392B;border-radius:0 0 0 3px"></div>
+        <div id="cfso-br" style="position:absolute;width:16px;height:16px;border-bottom:3px solid #C0392B;border-right:3px solid #C0392B;border-radius:0 0 3px 0"></div>
+      </div>
+      <div style="position:absolute;bottom:10px;left:0;right:0;text-align:center;pointer-events:none">
+        <span style="background:rgba(0,0,0,.6);color:#fff;font-size:.65rem;font-weight:600;padding:4px 12px;border-radius:50px">&#9995; Arraste &#183; Scroll para zoom</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;padding:12px 16px;background:#fff;flex-shrink:0">
+      <button onclick="fecharCropFoto()" class="btn-crop-cancel" style="flex:1">Cancelar</button>
+      <button onclick="confirmarCropFoto()" class="btn-crop-ok" style="flex:2">&#10003; Usar esta foto</button>
     </div>
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-item">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3>Adicionar item</h3>
-      <button class="modal-close" onclick="fecharModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group-light">
-        <label>Fotos do produto (até 5)</label>
-        <div class="fotos-grid" id="fotos-grid">
-          <div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
-            <span style="font-size:1.5rem">📷</span>
-            <span style="font-size:0.75rem;color:#aaa">Adicionar</span>
-          </div>
-        </div>
-        <input type="file" id="foto-input" accept="image/*" multiple style="display:none" onchange="previewFotos(event)">
-      </div>
-      <div class="form-group-light">
-        <label>Qual categoria melhor representa este item?</label>
-        <div class="emoji-grid" id="emoji-grid"></div>
-      </div>
-      <div class="form-group-light"><label>Nome *</label><input type="text" class="input-light" id="item-nome" placeholder="Ex: X-Burguer Especial"></div>
-      <div class="form-group-light"><label>Descrição</label><textarea class="input-light" id="item-desc" placeholder="Descreva o produto..." rows="3"></textarea></div>
-      <div class="form-group-light"><label>Categoria</label><input type="text" class="input-light" id="item-cat" placeholder="Ex: Lanches, Bebidas, Sobremesas"></div>
-      <div class="form-group-light"><label>Preço (R$) *</label><input type="number" class="input-light" id="item-preco" placeholder="0,00" step="0.01" min="0"></div>
-      <div class="promo-toggle">
-        <label class="toggle-label">
-          <input type="checkbox" id="item-promocao" onchange="togglePromo(this)">
-          <span>É uma promoção?</span>
-        </label>
-      </div>
-      <div class="form-group-light" id="preco-orig-group" style="display:none">
-        <label>Preço original</label>
-        <input type="number" class="input-light" id="item-preco-orig" placeholder="0,00" step="0.01" min="0">
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
-        <button class="btn-primary" onclick="salvarItem()">Salvar item</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- MODAL DETALHE PEDIDO -->
 <div class="modal-overlay" id="modal-pedido" >
@@ -1065,19 +1024,41 @@
 <div id="print-area"></div>
 
 <!-- MODAL CROP LOGO -->
+<!-- CROP LOGO — safe area system -->
 <div class="crop-overlay" id="crop-overlay">
-  <div class="crop-box">
-    <h4>Ajustar logo</h4>
-    <div class="crop-preview" id="crop-preview">
-      <img id="crop-img" src="" alt="Preview" draggable="false">
+  <div class="crop-box" style="max-width:360px;width:95%;padding:0;border-radius:20px;overflow:hidden">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#1a1a1a">
+      <h4 style="color:#fff;font-size:.95rem;font-weight:800;margin:0">Ajustar logo</h4>
+      <span style="font-size:.7rem;color:#666">Arraste · Scroll para zoom</span>
     </div>
-    <div class="crop-slider-wrap">
-      <label>Zoom</label>
-      <input type="range" class="crop-slider" id="crop-zoom" min="50" max="250" value="100" oninput="aplicarCrop()">
+    <!-- Área de crop com safe area visível -->
+    <div style="position:relative;width:100%;background:#111;overflow:hidden;touch-action:none" id="crop-stage">
+      <!-- Canvas invisível para exibir a imagem transformada -->
+      <canvas id="crop-canvas" style="display:block;width:100%;touch-action:none"></canvas>
+      <!-- Overlay escuro ao redor da safe area -->
+      <div id="crop-safe-overlay" style="position:absolute;inset:0;pointer-events:none">
+        <!-- 4 faces escuras ao redor do quadrado central -->
+        <div id="cso-top"    style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.55)"></div>
+        <div id="cso-bottom" style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55)"></div>
+        <div id="cso-left"   style="position:absolute;background:rgba(0,0,0,.55)"></div>
+        <div id="cso-right"  style="position:absolute;background:rgba(0,0,0,.55)"></div>
+        <!-- Borda da safe area -->
+        <div id="cso-border" style="position:absolute;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.5);pointer-events:none"></div>
+        <!-- Cantos -->
+        <div id="cso-tl" style="position:absolute;width:16px;height:16px;border-top:3px solid #C0392B;border-left:3px solid #C0392B;border-radius:3px 0 0 0"></div>
+        <div id="cso-tr" style="position:absolute;width:16px;height:16px;border-top:3px solid #C0392B;border-right:3px solid #C0392B;border-radius:0 3px 0 0"></div>
+        <div id="cso-bl" style="position:absolute;width:16px;height:16px;border-bottom:3px solid #C0392B;border-left:3px solid #C0392B;border-radius:0 0 0 3px"></div>
+        <div id="cso-br" style="position:absolute;width:16px;height:16px;border-bottom:3px solid #C0392B;border-right:3px solid #C0392B;border-radius:0 0 3px 0"></div>
+      </div>
+      <div style="position:absolute;bottom:10px;left:0;right:0;text-align:center;pointer-events:none">
+        <span style="background:rgba(0,0,0,.6);color:#fff;font-size:.65rem;font-weight:600;padding:4px 12px;border-radius:50px;backdrop-filter:blur(4px)">✋ Arraste · Scroll para zoom</span>
+      </div>
     </div>
-    <div class="crop-actions">
+    <!-- Ações -->
+    <div class="crop-actions" style="padding:12px 16px;background:#fff;gap:10px">
       <button class="btn-crop-cancel" onclick="fecharCrop()">Cancelar</button>
-      <button class="btn-crop-ok" onclick="confirmarCrop()">Usar esta foto</button>
+      <button class="btn-crop-ok" onclick="confirmarCrop()">✓ Usar esta foto</button>
     </div>
   </div>
 </div>
