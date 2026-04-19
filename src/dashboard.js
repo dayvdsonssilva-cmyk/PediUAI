@@ -79,7 +79,7 @@ function aplicarRestricaoPlano(estab) {
   const plano   = estab?.plano || 'basico';
   const criado  = estab?.created_at ? new Date(estab.created_at) : null;
   const diasTrial = criado ? Math.floor((Date.now() - criado) / 86400000) : 999;
-  const trialAtivo = plano === 'basico' && diasTrial <= 15;
+  const trialAtivo = plano === 'basico' && 15 >= diasTrial; // evita < em HTML
   const diasRestantes = Math.max(0, 15 - diasTrial);
 
   // Tabs disponíveis por plano:
@@ -172,7 +172,7 @@ function atualizarInfoPlano() {
     elvenc.textContent = dias > 0
       ? `Vence em ${dias} dia${dias !== 1 ? 's' : ''} (${venc.toLocaleDateString('pt-BR')})`
       : `Assinatura vencida em ${venc.toLocaleDateString('pt-BR')}`;
-    if (dias <= 5) elvenc.style.color = '#C0392B';
+    if (5 >= dias) elvenc.style.color = '#C0392B';
   }
 }
 
@@ -368,7 +368,7 @@ function crpApplyMinScale() {
   const safe = W * 0.82;
   const ms = Math.max(safe / _CRP.img.naturalWidth, safe / _CRP.img.naturalHeight);
   _CRP.minScale = ms;
-  if (_CRP.scale < ms) _CRP.scale = ms;
+  if (_CRP.minScale !== ms && ms > _CRP.scale) _CRP.scale = ms;
 }
 
 function crpClampOffset() {
@@ -902,8 +902,6 @@ window.adicionarFotos = function(event) {
   _cropFotoFile = files[0];
 };
 
-let _fotoQueue = [];
-
 window.fecharCropFoto = function() {
   const m = $('modal-crop-foto'); if (m) m.classList.remove('open');
   document.body.style.overflow = '';
@@ -945,52 +943,6 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('touchend', end);
 });
 
-function renderFotosGrid() {
-  const grid = $('fotos-grid'); if (!grid) return;
-
-  const fotoHtml = (url, i) => {
-    const px = fotosPosX[i] ?? 50;
-    const py = fotosPosY[i] ?? 50;
-    const eh = fotosFiles[i]?._urlExistente ? '📎 Existente' : '✨ Nova';
-    return `<div class="foto-thumb-wrap" id="foto-wrap-${i}">
-      <div style="position:relative;width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:#f0ebe4;border:2px solid var(--border);margin-bottom:8px;cursor:grab;touch-action:none" id="foto-drag-${i}">
-        <img src="${url}" id="foto-img-${i}" draggable="false"
-          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:${px}% ${py}%;pointer-events:none;user-select:none;transition:object-position .05s">
-        ${i===0 ? '<div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:.62rem;font-weight:800;padding:3px 10px;border-radius:50px;z-index:3;letter-spacing:.04em">PRINCIPAL</div>' : ''}
-        <!-- Instrução -->
-        <div style="position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;pointer-events:none;z-index:2">
-          <div style="background:rgba(0,0,0,.55);color:#fff;font-size:.62rem;font-weight:600;padding:4px 12px;border-radius:50px;backdrop-filter:blur(6px)">
-            ✋ Arraste para reposicionar
-          </div>
-        </div>
-        <!-- Minimap -->
-        <div style="position:absolute;bottom:10px;right:10px;width:44px;height:44px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,.6);border:2px solid rgba(255,255,255,.35);z-index:3">
-          <img src="${url}" style="width:100%;height:100%;object-fit:cover;opacity:.7">
-          <div id="foto-pin-${i}" style="position:absolute;width:8px;height:8px;background:#fff;border-radius:50%;border:1.5px solid var(--red);transform:translate(-50%,-50%);left:${px}%;top:${py}%;box-shadow:0 1px 4px rgba(0,0,0,.5)"></div>
-        </div>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <span style="font-size:.65rem;color:#aaa">${eh}</span>
-        <button onclick="removerFotoItem(${i})" style="background:none;border:1px solid #e0dbd5;color:#aaa;padding:4px 12px;border-radius:8px;font-size:.7rem;font-weight:600;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='#e0dbd5';this.style.color='#aaa'">🗑 Remover</button>
-      </div>
-    </div>`;
-  };
-
-  let html = fotosFiles.map((f, i) => {
-    const url = f._urlExistente ? f._urlExistente : URL.createObjectURL(f);
-    return fotoHtml(url, i);
-  }).join('');
-
-  if (fotosFiles.length < 5) {
-    html += `<div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
-      <span style="font-size:1.5rem">📷</span>
-      <span style="font-size:.72rem;color:#aaa">Adicionar foto</span>
-    </div>`;
-  }
-
-  grid.innerHTML = html;
-  fotosFiles.forEach((_, i) => iniciarDragFoto(null, i, true));
-}
 
 
 let _fotoDrag = { ativo:false, idx:-1, startX:0, startY:0 };
@@ -1212,7 +1164,7 @@ export async function postarFresquinho(event) {
     const durOk = await new Promise(resolve => {
       const v = document.createElement('video');
       v.preload = 'metadata';
-      v.onloadedmetadata = () => resolve(v.duration <= 30);
+      v.onloadedmetadata = () => resolve(30 >= v.duration);
       v.onerror = () => resolve(true); // se não conseguir checar, deixa passar
       v.src = URL.createObjectURL(file);
     });
