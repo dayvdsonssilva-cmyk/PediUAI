@@ -324,73 +324,32 @@ let _cropDragging = false, _cropDragX = 0, _cropDragY = 0, _cropOfsX = 0, _cropO
 window.abrirCropLogo = function(event) {
   const file = event.target.files[0]; if (!file) return;
   logoFile = file;
-  _cropOfsX = 0; _cropOfsY = 0; _cropZoom = 100;
-
-  const img = $('crop-img');
-  if (img) { img.src = URL.createObjectURL(file); }
-  const zEl = $('crop-zoom'); if (zEl) zEl.value = 100;
-  $('crop-overlay')?.classList.add('open');
   event.target.value = '';
-  aplicarCrop();
-
-  // Drag livre (mouse + touch)
-  const preview = $('crop-preview');
-  if (!preview) return;
-  let dragging = false, sx = 0, sy = 0;
-  const onDown = e => {
-    dragging = true;
-    const t = e.touches ? e.touches[0] : e;
-    sx = t.clientX; sy = t.clientY;
-    e.preventDefault();
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    _CRP.img = img; _CRP.offX = 0; _CRP.offY = 0;
+    _CRP.canvasId = 'crop-canvas'; _CRP.stageId = 'crop-stage'; _CRP.safePrefix = 'cso';
+    crpApplyMinScale(); _CRP.scale = _CRP.minScale;
+    crpInitDrag('crop-stage');
+    $('crop-overlay')?.classList.add('open');
+    requestAnimationFrame(crpDraw);
   };
-  const onMove = e => {
-    if (!dragging) return;
-    const t = e.touches ? e.touches[0] : e;
-    _cropOfsX += t.clientX - sx; _cropOfsY += t.clientY - sy;
-    sx = t.clientX; sy = t.clientY;
-    aplicarCrop(); e.preventDefault();
-  };
-  const onUp = () => { dragging = false; };
-
-  preview.removeEventListener('mousedown',  preview._md);
-  preview.removeEventListener('touchstart', preview._ts);
-  preview._md = onDown; preview._ts = onDown;
-  preview.addEventListener('mousedown',  onDown);
-  preview.addEventListener('touchstart', onDown, { passive:false });
-  document.addEventListener('mousemove',  onMove);
-  document.addEventListener('touchmove',  onMove, { passive:false });
-  document.addEventListener('mouseup',    onUp);
-  document.addEventListener('touchend',   onUp);
-
-  // Scroll para zoom
-  preview.addEventListener('wheel', e => {
-    e.preventDefault();
-    _cropZoom = Math.max(50, Math.min(300, _cropZoom - e.deltaY * 0.2));
-    const zEl = $('crop-zoom'); if (zEl) zEl.value = _cropZoom;
-    aplicarCrop();
-  }, { passive: false });
+  img.src = url;
 };
 
 window.aplicarCrop = function() {
-  const zEl = $('crop-zoom');
-  if (zEl) _cropZoom = +zEl.value;
-  const img = $('crop-img');
-  if (img) {
-    // Centraliza a imagem e aplica zoom + deslocamento
-    const preview = $('crop-preview');
-    const pw = preview ? preview.offsetWidth  : 220;
-    const ph = preview ? preview.offsetHeight : 220;
-    img.style.width  = pw + 'px';
-    img.style.height = ph + 'px';
-    img.style.transform = `scale(${_cropZoom/100}) translate(${_cropOfsX/_cropZoom*100}px, ${_cropOfsY/_cropZoom*100}px)`;
-  }
+  // Legacy: chamado pelo slider (mantemos por compatibilidade)
+  crpDraw();
 };
 window.fecharCrop = function() { $('crop-overlay')?.classList.remove('open'); logoFile = null; };
 window.confirmarCrop = function() {
-  const img = $('logo-preview-img');
-  if (img && logoFile) { img.src = URL.createObjectURL(logoFile); img.style.display = 'block'; }
-  $('logo-placeholder-text').style.display = 'none';
-  $('crop-overlay')?.classList.remove('open');
+  crpGetBlob('crop-canvas', 'crop-stage', 'cso', true, blob => {
+    if (!blob) return;
+    logoFile = new File([blob], 'logo.jpg', { type: 'image/jpeg' });
+    mostrarLogoPreview(URL.createObjectURL(blob));
+    $('crop-overlay')?.classList.remove('open');
+  });
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -628,68 +587,32 @@ let _cropFotoDragX = 0, _cropFotoDragY = 0;
 
 window.abrirCropFoto = function(file) {
   _cropFotoFile = file;
-  _cropFotoPosX = 50; _cropFotoPosY = 50;
-  _cropFotoUrl  = URL.createObjectURL(file);
-
-  const modal = $('modal-crop-foto'); if (!modal) return;
-  const img   = $('crop-foto-img');
-  const mini  = $('crop-foto-mini');
-  if (img)  { img.src  = _cropFotoUrl; img.style.objectPosition = '50% 50%'; }
-  if (mini) { mini.src = _cropFotoUrl; }
-  const pin = $('crop-foto-pin');
-  if (pin) { pin.style.left = '50%'; pin.style.top = '50%'; }
-  modal.classList.add('open');
-
-  // Drag livre para reposicionar
-  const area = $('crop-foto-area');
-  if (!area) return;
-  let dragging = false, sx = 0, sy = 0;
-  const onDown = e => {
-    dragging = true;
-    const t = e.touches ? e.touches[0] : e;
-    sx = t.clientX; sy = t.clientY; e.preventDefault();
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    _CRP.img = img; _CRP.offX = 0; _CRP.offY = 0;
+    _CRP.canvasId = 'crop-foto-canvas'; _CRP.stageId = 'crop-foto-stage'; _CRP.safePrefix = 'cfso';
+    crpApplyMinScale(); _CRP.scale = _CRP.minScale;
+    crpInitDrag('crop-foto-stage');
+    const modal = $('modal-crop-foto');
+    if (modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    requestAnimationFrame(crpDraw);
   };
-  const onMove = e => {
-    if (!dragging) return;
-    const t = e.touches ? e.touches[0] : e;
-    const rect = area.getBoundingClientRect();
-    const dx = (t.clientX - sx) / rect.width  * 100;
-    const dy = (t.clientY - sy) / rect.height * 100;
-    _cropFotoPosX = Math.max(0, Math.min(100, _cropFotoPosX - dx));
-    _cropFotoPosY = Math.max(0, Math.min(100, _cropFotoPosY - dy));
-    sx = t.clientX; sy = t.clientY;
-    if (img) img.style.objectPosition = _cropFotoPosX + '% ' + _cropFotoPosY + '%';
-    if (pin) { pin.style.left = _cropFotoPosX + '%'; pin.style.top = _cropFotoPosY + '%'; }
-    e.preventDefault();
-  };
-  const onUp = () => { dragging = false; };
-  // Remove listeners antigos
-  area.removeEventListener('mousedown',  area._md);
-  area.removeEventListener('touchstart', area._ts);
-  area._md = onDown; area._ts = onDown;
-  area.addEventListener('mousedown',  onDown);
-  area.addEventListener('touchstart', onDown, { passive:false });
-  document.addEventListener('mousemove',  onMove);
-  document.addEventListener('touchmove',  onMove, { passive:false });
-  document.addEventListener('mouseup',    onUp);
-  document.addEventListener('touchend',   onUp);
-
-  // Scroll para zoom (via object-size da imagem)
-  let zoomPct = 100;
-  area.addEventListener('wheel', e => {
-    e.preventDefault();
-    zoomPct = Math.max(100, Math.min(300, zoomPct - e.deltaY * 0.15));
-    if (img) { img.style.width = zoomPct + '%'; img.style.height = zoomPct + '%'; }
-  }, { passive:false });
+  img.src = url;
+  _cropFotoUrl = url;
 };
 
 window.confirmarCropFoto = function() {
-  if (!_cropFotoFile) return;
-  fotosFiles.push(_cropFotoFile);
-  fotosPosX.push(_cropFotoPosX);
-  fotosPosY.push(_cropFotoPosY);
-  $('modal-crop-foto').classList.remove('open');
-  renderFotosGrid();
+  crpGetBlob('crop-foto-canvas', 'crop-foto-stage', 'cfso', false, blob => {
+    if (!blob) return;
+    const file = new File([blob], _cropFotoFile?.name || 'foto.jpg', { type: 'image/jpeg' });
+    file._urlExistente = null;
+    _cropFotoPosX = 50; _cropFotoPosY = 50;
+    fotosFiles.push(file); fotosPosX.push(50); fotosPosY.push(50);
+    renderFotosGrid();
+    const modal = $('modal-crop-foto');
+    if (modal) { modal.classList.remove('open'); document.body.style.overflow = ''; }
+  });
 };
 
 window.fecharCropFoto = function() {
