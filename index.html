@@ -1011,88 +1011,50 @@
 
 <!-- Modal de item (criar/editar produto) -->
 <div class="modal-overlay" id="modal-item" onclick="fecharModalFora(event,'modal-item','fecharModal')">
-  <div class="modal-box" style="max-width:540px;max-height:92vh;overflow-y:auto;padding:0">
-
-    <!-- Header fixo -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:2">
+  <div class="modal-box" style="max-width:520px;max-height:90vh;overflow-y:auto">
+    <div class="modal-hdr">
       <span class="modal-title">Novo item</span>
       <button class="modal-x" onclick="fecharModal()">✕</button>
     </div>
-
-    <div style="padding:20px;display:flex;flex-direction:column;gap:18px">
-
-      <!-- Fotos: grid compacto + botão adicionar -->
-      <div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <span style="font-size:.78rem;font-weight:700;color:#555">📷 Fotos do produto</span>
-          <button onclick="document.getElementById('foto-input').click()"
-            style="background:var(--red);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px">
-            + Adicionar foto
-          </button>
-        </div>
+    <div class="modal-body">
+      <!-- Fotos -->
+      <div style="margin-bottom:18px">
+        <div style="font-size:.78rem;font-weight:700;color:#555;margin-bottom:10px">📷 Fotos do produto</div>
+        <div id="fotos-grid" style="display:flex;flex-direction:column;gap:14px"></div>
         <input type="file" id="foto-input" accept="image/*" multiple style="display:none" onchange="adicionarFotos(event)">
-        <!-- Grid de miniaturas das fotos (1:1 compacto) -->
-        <div id="fotos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px"></div>
       </div>
-
-      <!-- Emoji + Nome na mesma linha -->
-      <div style="display:flex;gap:12px;align-items:flex-start">
-        <div style="flex:0 0 auto">
-          <div style="font-size:.72rem;font-weight:700;color:#555;margin-bottom:6px">Emoji</div>
-          <div id="emoji-grid" style="display:flex;flex-wrap:wrap;gap:5px;max-width:200px"></div>
-        </div>
-        <div style="flex:1;min-width:0">
-          <div class="form-group-light" style="margin-bottom:10px">
-            <label>Nome *</label>
-            <input type="text" class="input-light" id="item-nome" placeholder="Ex: X-Burguer Especial">
-          </div>
-          <div class="form-group-light" style="margin-bottom:0">
-            <label>Categoria</label>
-            <input type="text" class="input-light" id="item-cat" placeholder="Ex: LANCHES, BEBIDAS...">
-          </div>
-        </div>
+      <!-- Emoji -->
+      <div class="form-group-light" style="margin-bottom:14px">
+        <label>Emoji do item</label>
+        <div id="emoji-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
       </div>
-
-      <!-- Descrição -->
-      <div class="form-group-light" style="margin-bottom:0">
-        <label>Descrição</label>
-        <input type="text" class="input-light" id="item-desc" placeholder="Ingredientes, detalhes...">
+      <!-- Campos -->
+      <div class="form-group-light"><label>Nome *</label><input type="text" class="input-light" id="item-nome" placeholder="Ex: X-Burguer Especial"></div>
+      <div class="form-group-light"><label>Descrição</label><input type="text" class="input-light" id="item-desc" placeholder="Ingredientes, detalhes..."></div>
+      <div class="form-group-light"><label>Categoria</label><input type="text" class="input-light" id="item-cat" placeholder="Ex: LANCHES, BEBIDAS..."></div>
+      <div class="form-group-light">
+        <label>Preço *</label>
+        <input type="number" step="0.01" min="0" class="input-light" id="item-preco" placeholder="0,00">
       </div>
-
-      <!-- Preço -->
-      <div style="display:flex;gap:12px;align-items:flex-end">
-        <div class="form-group-light" style="flex:1;margin-bottom:0">
-          <label>Preço *</label>
-          <input type="number" step="0.01" min="0" class="input-light" id="item-preco" placeholder="0,00">
-        </div>
-        <div class="form-group-light" id="preco-orig-group" style="flex:1;margin-bottom:0;display:none">
-          <label>Preço original</label>
-          <input type="number" step="0.01" min="0" class="input-light" id="item-preco-orig" placeholder="0,00">
-        </div>
-      </div>
-
-      <!-- Promoção toggle -->
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;font-weight:600;color:#555">
+      <div class="form-group-light" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
         <input type="checkbox" id="item-promocao" onchange="togglePromo(this)" style="width:16px;height:16px;accent-color:var(--red)">
-        Preço promocional (tachado no cardápio)
-      </label>
-
-      <!-- Grupo de adicionais -->
+        <label for="item-promocao" style="font-size:.82rem;font-weight:600;color:#555;cursor:pointer">Preço promocional</label>
+      </div>
+      <div id="preco-orig-group" style="display:none" class="form-group-light">
+        <label>Preço original (antes da promoção)</label>
+        <input type="number" step="0.01" min="0" class="input-light" id="item-preco-orig" placeholder="0,00">
+      </div>
       <div class="form-group-light" style="margin-bottom:0">
         <label>Grupo de adicionais</label>
         <select class="input-light" id="item-grupo-adicional">
           <option value="">Nenhum</option>
         </select>
       </div>
-
     </div>
-
-    <!-- Footer fixo -->
-    <div style="display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--border);position:sticky;bottom:0;background:#fff;z-index:2">
-      <button class="btn-cancelar" onclick="fecharModal()" style="flex:1">Cancelar</button>
-      <button class="btn-primary" onclick="salvarItem()" style="flex:2">Salvar item</button>
+    <div class="modal-footer">
+      <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-primary" onclick="salvarItem()">Salvar item</button>
     </div>
-
   </div>
 </div>
 
