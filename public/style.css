@@ -362,8 +362,8 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   h1{font-size:2.2rem} .hero{padding:130px 5% 60px}
   .hero-actions { max-width: 100%; }
   .hero-btns-sec { flex-direction: row; flex-wrap: wrap; }
-  .hero-btn-sec { flex: 1; min-width: 140px; }
-  .hero-btn-main { font-size:1rem !important; padding:16px 20px !important; }
+  .hero-btn-sec { flex: 1; min-width: 120px; font-size:.82rem !important; padding:13px 10px !important; }
+  .hero-btn-main { font-size:.88rem !important; padding:13px 20px !important; width:100% !important; }
   .stats{gap:28px} .stats-grid{grid-template-columns:repeat(2,1fr)}
 
   /* ── Dashboard geral ── */
