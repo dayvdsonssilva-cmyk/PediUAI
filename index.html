@@ -427,8 +427,10 @@
       <div class="fresquinho-info">Conteúdo visível para seus clientes por <strong>4 horas</strong> e some automaticamente.</div>
       <div class="upload-area" onclick="document.getElementById('fresh-input').click()">
         <span class="upload-icon">📷</span>
-        <p>Clique para adicionar foto ou vídeo</p>
-        <span style="font-size:0.78rem;color:#aaa">JPG, PNG, MP4 - Max. 50MB</span>
+        <div>
+          <p style="font-size:.85rem;font-weight:700;margin-bottom:2px">Adicionar foto ou vídeo</p>
+          <span style="font-size:0.72rem;color:#aaa">JPG, PNG, MP4 · Máx. 50MB</span>
+        </div>
       </div>
       <div id="fresquinho-grid"></div>
     </div>
@@ -973,7 +975,7 @@
 </div>
 
 <!-- MODAL CROP DE FOTO DO PRODUTO -->
-<div class="modal-overlay" id="modal-crop-foto" onclick="if(event.target.id==='modal-crop-foto')fecharCropFoto()" style="z-index:1100">
+<div class="modal-overlay" id="modal-crop-foto" onclick="if(event.target.id==='modal-crop-foto')fecharCropFoto()" style="z-index:5500">
   <div class="modal-box" style="max-width:420px;padding:0;overflow:hidden">
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">
