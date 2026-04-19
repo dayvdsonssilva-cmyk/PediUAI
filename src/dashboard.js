@@ -321,6 +321,122 @@ window.previewLogo = previewLogo;
 // Crop da logo — drag
 let _cropDragging = false, _cropDragX = 0, _cropDragY = 0, _cropOfsX = 0, _cropOfsY = 0, _cropZoom = 100;
 
+// ── Sistema de crop com canvas + safe area ──────────────────────────────────
+let _CRP = { img:null, scale:1, offX:0, offY:0, minScale:0.5, canvasId:'', stageId:'', safePrefix:'' };
+
+function crpDraw() {
+  const cvs = document.getElementById(_CRP.canvasId);
+  if (!cvs || !_CRP.img) return;
+  const stage = document.getElementById(_CRP.stageId);
+  const W = (stage ? stage.offsetWidth : 0) || cvs.offsetWidth || 340;
+  if (W < 10) { setTimeout(crpDraw, 30); return; }
+  const H = W;
+  cvs.width = W; cvs.height = H; cvs.style.height = H + 'px';
+  const ctx = cvs.getContext('2d');
+  ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H);
+  const iw = _CRP.img.naturalWidth, ih = _CRP.img.naturalHeight;
+  const dw = iw * _CRP.scale, dh = ih * _CRP.scale;
+  const dx = W/2 - dw/2 + _CRP.offX, dy = H/2 - dh/2 + _CRP.offY;
+  ctx.drawImage(_CRP.img, dx, dy, dw, dh);
+  const safe = Math.min(W,H) * 0.82;
+  const sx = (W - safe) / 2, sy = (H - safe) / 2;
+  ctx.fillStyle = 'rgba(0,0,0,0.52)';
+  ctx.fillRect(0, 0, W, sy);
+  ctx.fillRect(0, sy + safe, W, H - sy - safe);
+  ctx.fillRect(0, sy, sx, safe);
+  ctx.fillRect(sx + safe, sy, W - sx - safe, safe);
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2;
+  if (_CRP.safePrefix === 'cso') {
+    ctx.beginPath(); ctx.arc(W/2, H/2, safe/2, 0, Math.PI*2); ctx.stroke();
+  } else {
+    ctx.strokeRect(sx, sy, safe, safe);
+  }
+  const cc = '#C0392B', cl = 18;
+  ctx.strokeStyle = cc; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  [[sx,sy],[sx+safe,sy],[sx,sy+safe],[sx+safe,sy+safe]].forEach(([cx,cy],i) => {
+    ctx.beginPath();
+    ctx.moveTo(cx + (i%2===0?cl:0),cy); ctx.lineTo(cx + (i%2===0?0:-cl),cy);
+    ctx.moveTo(cx,cy + (i<2?cl:0)); ctx.lineTo(cx,cy + (i<2?0:-cl));
+    ctx.stroke();
+  });
+}
+
+function crpApplyMinScale() {
+  const stage = document.getElementById(_CRP.stageId);
+  if (!stage || !_CRP.img) return;
+  const W = stage.offsetWidth || 340;
+  const safe = W * 0.82;
+  const ms = Math.max(safe / _CRP.img.naturalWidth, safe / _CRP.img.naturalHeight);
+  _CRP.minScale = ms;
+  if (_CRP.scale < ms) _CRP.scale = ms;
+}
+
+function crpClampOffset() {
+  if (!_CRP.img) return;
+  const stage = document.getElementById(_CRP.stageId);
+  const W = stage ? stage.offsetWidth || 340 : 340;
+  const safe = W * 0.82;
+  const dw = _CRP.img.naturalWidth * _CRP.scale, dh = _CRP.img.naturalHeight * _CRP.scale;
+  const maxX = Math.max(0, (dw - safe) / 2), maxY = Math.max(0, (dh - safe) / 2);
+  _CRP.offX = Math.max(-maxX, Math.min(maxX, _CRP.offX));
+  _CRP.offY = Math.max(-maxY, Math.min(maxY, _CRP.offY));
+}
+
+function crpInitDrag(stageId) {
+  const el = document.getElementById(stageId); if (!el) return;
+  if (el._crpDown) { el.removeEventListener('mousedown', el._crpDown); el.removeEventListener('touchstart', el._crpDown); }
+  if (el._crpWheel) el.removeEventListener('wheel', el._crpWheel);
+  let dragging = false, lx = 0, ly = 0, pinchDist0 = 0, pinchScale0 = 1;
+  const onDown = e => {
+    e.preventDefault();
+    if (e.touches && e.touches.length === 2) {
+      pinchDist0 = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+      pinchScale0 = _CRP.scale; dragging = false; return;
+    }
+    dragging = true;
+    const t = e.touches ? e.touches[0] : e; lx = t.clientX; ly = t.clientY;
+  };
+  const onMove = e => {
+    e.preventDefault();
+    if (e.touches && e.touches.length === 2) {
+      const d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+      _CRP.scale = Math.max(_CRP.minScale, Math.min(8, pinchScale0 * d / pinchDist0));
+      crpClampOffset(); crpDraw(); return;
+    }
+    if (!dragging) return;
+    const t = e.touches ? e.touches[0] : e;
+    _CRP.offX += t.clientX - lx; _CRP.offY += t.clientY - ly;
+    lx = t.clientX; ly = t.clientY;
+    crpClampOffset(); crpDraw();
+  };
+  const onUp = () => { dragging = false; };
+  const onWheel = e => {
+    e.preventDefault();
+    _CRP.scale = Math.max(_CRP.minScale, Math.min(8, _CRP.scale * (1 - e.deltaY * 0.001)));
+    crpClampOffset(); crpDraw();
+  };
+  el._crpDown = onDown; el._crpWheel = onWheel;
+  el.addEventListener('mousedown', onDown, { passive:false });
+  el.addEventListener('touchstart', onDown, { passive:false });
+  el.addEventListener('wheel', onWheel, { passive:false });
+  document.addEventListener('mousemove', onMove, { passive:false });
+  document.addEventListener('touchmove', onMove, { passive:false });
+  document.addEventListener('mouseup', onUp);
+  document.addEventListener('touchend', onUp);
+}
+
+function crpGetBlob(canvasId, stageId, safePrefix, isCircle, callback) {
+  const cvs = document.getElementById(canvasId); if (!cvs || !_CRP.img) { callback(null); return; }
+  const W = cvs.width, safe = Math.floor(W * 0.82), sx = Math.floor((W - safe) / 2);
+  const out = document.createElement('canvas');
+  out.width = safe; out.height = safe;
+  const ctx = out.getContext('2d');
+  if (isCircle) { ctx.beginPath(); ctx.arc(safe/2, safe/2, safe/2, 0, Math.PI*2); ctx.clip(); }
+  ctx.drawImage(cvs, sx, sx, safe, safe, 0, 0, safe, safe);
+  out.toBlob(callback, 'image/jpeg', 0.92);
+}
+// ── Fim sistema crop ─────────────────────────────────────────────────────────
+
 window.abrirCropLogo = function(event) {
   const file = event.target.files[0]; if (!file) return;
   logoFile = file;
@@ -333,7 +449,8 @@ window.abrirCropLogo = function(event) {
     crpApplyMinScale(); _CRP.scale = _CRP.minScale;
     crpInitDrag('crop-stage');
     $('crop-overlay')?.classList.add('open');
-    requestAnimationFrame(crpDraw);
+    // Delay para garantir que o overlay está visível antes de desenhar
+    setTimeout(() => { crpApplyMinScale(); crpDraw(); }, 50);
   };
   img.src = url;
 };
@@ -596,7 +713,7 @@ window.abrirCropFoto = function(file) {
     crpInitDrag('crop-foto-stage');
     const modal = $('modal-crop-foto');
     if (modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
-    requestAnimationFrame(crpDraw);
+    setTimeout(() => { crpApplyMinScale(); crpDraw(); }, 50);
   };
   img.src = url;
   _cropFotoUrl = url;
@@ -616,8 +733,9 @@ window.confirmarCropFoto = function() {
 };
 
 window.fecharCropFoto = function() {
-  $('modal-crop-foto').classList.remove('open');
-  _cropFotoFile = null;
+  const m = $('modal-crop-foto'); if (m) m.classList.remove('open');
+  document.body.style.overflow = '';
+  _cropFotoFile = null; _CRP.img = null;
 };
 
 // Drag no modal de crop
