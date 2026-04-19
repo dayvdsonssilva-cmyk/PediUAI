@@ -1012,8 +1012,8 @@
 <!-- Modal de item (criar/editar produto) -->
 <div class="modal-overlay" id="modal-item">
   <div class="modal-box" style="max-width:520px;max-height:90vh;overflow-y:auto">
-    <div class="modal-hdr" style="justify-content:flex-end">
-      <button class="modal-x" onclick="fecharModal()">✕</button>
+    <div style="position:sticky;top:0;z-index:10;background:#fff;display:flex;justify-content:flex-end;padding:10px 14px;border-bottom:1px solid var(--border)">
+      <button onclick="fecharModal()" style="width:32px;height:32px;border-radius:50%;border:1.5px solid #e0dbd5;background:#faf8f5;cursor:pointer;font-size:.9rem;color:#555;display:flex;align-items:center;justify-content:center;transition:all .15s" onmouseover="this.style.background='var(--red)';this.style.color='#fff';this.style.borderColor='var(--red)'" onmouseout="this.style.background='#faf8f5';this.style.color='#555';this.style.borderColor='#e0dbd5'">✕</button>
     </div>
     <div class="modal-body">
       <!-- Fotos -->
