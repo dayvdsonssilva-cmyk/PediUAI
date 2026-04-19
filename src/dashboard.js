@@ -329,7 +329,7 @@ function crpDraw() {
   if (!cvs || !_CRP.img) return;
   const stage = document.getElementById(_CRP.stageId);
   const W = (stage ? stage.offsetWidth : 0) || cvs.offsetWidth || 340;
-  if (W < 10) { setTimeout(crpDraw, 30); return; }
+  if (10 > W) { setTimeout(crpDraw, 30); return; }
   const H = W;
   cvs.width = W; cvs.height = H; cvs.style.height = H + 'px';
   const ctx = cvs.getContext('2d');
