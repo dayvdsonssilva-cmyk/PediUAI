@@ -1179,6 +1179,34 @@
   </div>
 </div>
 
+<!-- Modal confirmar fechamento de comanda -->
+<div id="modal-fechar-comanda" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:18px;width:100%;max-width:340px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f0ebe4">
+      <span style="font-size:1rem;font-weight:800;color:#1a1a1a">Fechar comanda</span>
+      <button onclick="cancelarFecharComanda()" style="width:30px;height:30px;border-radius:50%;border:1.5px solid #e0dbd5;background:#faf8f5;cursor:pointer;font-size:.85rem;color:#555;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Body -->
+    <div style="padding:20px">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:2rem;margin-bottom:6px">🧾</div>
+        <div id="fechar-comanda-mesa" style="font-size:1.2rem;font-weight:900;color:#1a1a1a"></div>
+        <div id="fechar-comanda-total" style="font-size:1.5rem;font-weight:900;color:#C0392B;margin-top:4px"></div>
+        <div id="fechar-comanda-info" style="font-size:.75rem;color:#aaa;margin-top:4px"></div>
+      </div>
+      <div style="background:#fef9f0;border:1px solid #f5e6c8;border-radius:10px;padding:10px 14px;font-size:.78rem;color:#92400e;margin-bottom:16px">
+        ⚠️ A mesa será liberada e os pedidos encerrados.
+      </div>
+    </div>
+    <!-- Footer -->
+    <div style="display:flex;gap:10px;padding:0 20px 18px">
+      <button onclick="cancelarFecharComanda()" style="flex:1;padding:12px;border-radius:10px;border:1.5px solid #e0dbd5;background:#faf8f5;font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;color:#555;cursor:pointer">Cancelar</button>
+      <button onclick="executarFecharComanda()" style="flex:2;padding:12px;border-radius:10px;border:none;background:#C0392B;color:#fff;font-family:'Poppins',sans-serif;font-weight:800;font-size:.85rem;cursor:pointer">✓ Confirmar fechamento</button>
+    </div>
+  </div>
+</div>
+
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>
