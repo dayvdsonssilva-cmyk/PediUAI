@@ -1311,8 +1311,9 @@ async function renderPedidos() {
           ${pgto ? `<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700;color:#888">${pgto}</span>` : ''}
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}')">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}')">Recusar</button>`:''}
-          <button class="btn-ped-imprimir" onclick="verPedido('${p.id}')">Ver mais</button>
+          ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}')">✓ Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}')">✕ Recusar</button>`:''}
+          ${p.status==='preparo'?`<button class="btn-ped-aceitar" onclick="marcarPronto('${p.id}')">✅ Pronto</button>`:''}
+          <button class="btn-ped-imprimir" onclick="verPedido('${p.id}')">🖨️ Ver</button>
         </div>
       </div>
     </div>`;
@@ -3381,30 +3382,29 @@ async function confirmarFecharComanda() {
   const mesaFechando = _mesaAtual;
 
   if (carr.length > 0) {
-    if (!confirm('Há itens não enviados no carrinho. Deseja fechar mesmo assim?')) return;
+    if (!confirm('Ha itens nao enviados no carrinho. Deseja fechar mesmo assim?')) return;
   }
 
-  // 1º — Abre a notinha para imprimir
-  window.imprimirComanda();
+  // Confirma PRIMEIRO (sem popup de imprimir antes)
+  if (!confirm('Fechar comanda da ' + mesaFechando + '?\n\nTotal: ' + fmt(totalMesa) + '\nPedidos: ' + peds.length + '\n\nA mesa sera liberada.')) return;
 
-  // 2º — Após pequeno delay (janela de impressão abre), pede confirmação
-  setTimeout(async () => {
-    if (!confirm(`Confirmar fechamento da ${mesaFechando}?\n\nTotal: ${fmt(totalMesa)}\nPedidos: ${peds.length}\n\nA mesa será liberada.`)) return;
+  // Fecha e imprime
+  const ids = peds.map(p=>p.id);
+  if (ids.length) await getSupa().from('pedidos').update({ status:'pronto' }).in('id', ids);
 
-    const ids = peds.map(p=>p.id);
-    if (ids.length) await getSupa().from('pedidos').update({ status:'pronto' }).in('id', ids);
+  delete _pedidosMesas[mesaFechando];
+  delete _carrinhoComanda[mesaFechando];
+  _mesasFechadas.add(mesaFechando);
+  setTimeout(()=>{ _mesasFechadas.delete(mesaFechando); renderMesas(); }, 5000);
 
-    delete _pedidosMesas[mesaFechando];
-    delete _carrinhoComanda[mesaFechando];
-    _mesasFechadas.add(mesaFechando);
-    setTimeout(()=>{ _mesasFechadas.delete(mesaFechando); renderMesas(); }, 5000);
-
-    window.fecharComanda();
-    showToast('Comanda da ' + mesaFechando + ' fechada! ' + fmt(totalMesa));
-    renderMesas();
-    window.renderHistoricoMesas();
-  }, 500);
+  window.fecharComanda();
+  showToast('Comanda da ' + mesaFechando + ' fechada! ' + fmt(totalMesa));
+  renderMesas();
+  window.renderHistoricoMesas();
+  // Imprime após fechar (sem bloquear o UI)
+  setTimeout(() => window.imprimirComanda && window.imprimirComanda(), 300);
 }
+
 
 // Exports das comandas — precisam estar em window para o onclick funcionar
 window.abrirComanda           = abrirComanda;
