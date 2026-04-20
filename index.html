@@ -622,6 +622,47 @@
           <input type="text" class="input-light" id="cfg-whats" placeholder="(11) 99999-9999" maxlength="15" oninput="mascaraWhatsInput(this)">
         </div>
 
+        <!-- Telefone de contato -->
+        <div class="form-group-light">
+          <label>Telefone de contato</label>
+          <input type="text" class="input-light" id="cfg-telefone" placeholder="(11) 3333-4444">
+        </div>
+
+        <!-- CNPJ/CPF para nota fiscal -->
+        <div class="form-group-light">
+          <label>CNPJ do estabelecimento <span style="font-size:.65rem;color:#aaa;font-weight:400">(aparece na nota fiscal)</span></label>
+          <input type="text" class="input-light" id="cfg-cnpj" placeholder="00.000.000/0001-00" maxlength="18" oninput="mascaraDoc(this)">
+        </div>
+
+        <!-- Redes sociais -->
+        <div style="border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;background:#faf8f5">
+          <div style="font-size:.78rem;font-weight:800;color:#555;margin-bottom:12px">📱 Redes Sociais</div>
+          <div class="form-group-light">
+            <label>Instagram</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="color:#aaa;font-size:.85rem">@</span>
+              <input type="text" class="input-light" id="cfg-instagram" placeholder="seurestaurante" style="flex:1">
+            </div>
+          </div>
+          <div class="form-group-light">
+            <label>TikTok</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="color:#aaa;font-size:.85rem">@</span>
+              <input type="text" class="input-light" id="cfg-tiktok" placeholder="seurestaurante" style="flex:1">
+            </div>
+          </div>
+          <div class="form-group-light" style="margin-bottom:0">
+            <label>Site / Link externo</label>
+            <input type="url" class="input-light" id="cfg-site" placeholder="https://www.seusite.com.br">
+          </div>
+        </div>
+
+        <!-- Mensagem de agradecimento na nota -->
+        <div class="form-group-light">
+          <label>Mensagem na nota fiscal <span style="font-size:.65rem;color:#aaa;font-weight:400">(rodapé da nota)</span></label>
+          <input type="text" class="input-light" id="cfg-msg-nota" placeholder="Obrigado pela preferência! Volte sempre 😊">
+        </div>
+
         <!-- Entrega / Retirada -->
         <div class="form-group-light">
           <label>Opções de entrega</label>
