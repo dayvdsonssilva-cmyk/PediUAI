@@ -3381,29 +3381,33 @@ async function confirmarFecharComanda() {
   const totalMesa = peds.reduce((s,p)=>s+Number(p.total||0),0);
   const mesaFechando = _mesaAtual;
 
+  // 1. Avisa se há itens no carrinho
   if (carr.length > 0) {
     if (!confirm('Ha itens nao enviados no carrinho. Deseja fechar mesmo assim?')) return;
   }
 
-  // Confirma PRIMEIRO (sem popup de imprimir antes)
-  if (!confirm('Fechar comanda da ' + mesaFechando + '?\n\nTotal: ' + fmt(totalMesa) + '\nPedidos: ' + peds.length + '\n\nA mesa sera liberada.')) return;
+  // 2. Imprime PRIMEIRO — antes de qualquer confirmação
+  window.imprimirComanda();
 
-  // Fecha e imprime
-  const ids = peds.map(p=>p.id);
-  if (ids.length) await getSupa().from('pedidos').update({ status:'pronto' }).in('id', ids);
+  // 3. Depois que o usuário vê a notinha, confirma o fechamento
+  setTimeout(async () => {
+    if (!confirm('Fechar comanda da ' + mesaFechando + '?\n\nTotal: ' + fmt(totalMesa) + '\nPedidos: ' + peds.length + '\n\nA mesa sera liberada.')) return;
 
-  delete _pedidosMesas[mesaFechando];
-  delete _carrinhoComanda[mesaFechando];
-  _mesasFechadas.add(mesaFechando);
-  setTimeout(()=>{ _mesasFechadas.delete(mesaFechando); renderMesas(); }, 5000);
+    const ids = peds.map(p=>p.id);
+    if (ids.length) await getSupa().from('pedidos').update({ status:'pronto' }).in('id', ids);
 
-  window.fecharComanda();
-  showToast('Comanda da ' + mesaFechando + ' fechada! ' + fmt(totalMesa));
-  renderMesas();
-  window.renderHistoricoMesas();
-  // Imprime após fechar (sem bloquear o UI)
-  setTimeout(() => window.imprimirComanda && window.imprimirComanda(), 300);
+    delete _pedidosMesas[mesaFechando];
+    delete _carrinhoComanda[mesaFechando];
+    _mesasFechadas.add(mesaFechando);
+    setTimeout(()=>{ _mesasFechadas.delete(mesaFechando); renderMesas(); }, 5000);
+
+    window.fecharComanda();
+    showToast('Comanda da ' + mesaFechando + ' fechada! ' + fmt(totalMesa));
+    renderMesas();
+    window.renderHistoricoMesas();
+  }, 400);
 }
+
 
 
 // Exports das comandas — precisam estar em window para o onclick funcionar
