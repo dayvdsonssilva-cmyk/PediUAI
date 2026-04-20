@@ -336,7 +336,7 @@
 
 <!-- MODAL PRODUTO -->
 <div class="modal-bg" id="modal-prod" onclick="if(event.target.id==='modal-prod')fecharModal()">
-  <div class="modal-sheet" style="position:relative">
+  <div class="modal-sheet" style="position:relative" onclick="event.stopPropagation()">
     <button class="modal-close" onclick="fecharModal()">✕</button>
     <div id="modal-prod-media"></div>
     <div class="modal-body">
@@ -906,10 +906,15 @@ window.mudaQtd = function(d) {
 window.adicionarAoCarrinho = function() {
   if (!prodAtual) return;
   // Se tem grupo vinculado, abre modal de adicionais
-  if (prodAtual.grupo_adicionais) {
-    fecharModal();
-    abrirModalAdicionaisCli(prodAtual, prodAtual.grupo_adicionais);
-    return;
+  if (prodAtual.grupo_adicional_id || prodAtual.grupo_adicionais) {
+    const g = prodAtual.grupo_adicionais || null;
+    if (g) {
+      const _p = prodAtual; // salva antes de fecharModal zerá-lo
+      fecharModal();
+      abrirModalAdicionaisCli(_p, g);
+      return;
+    }
+    // grupo ainda não carregado — adiciona sem adicionais
   }
   const grupos = Array.isArray(prodAtual.adicionais) ? prodAtual.adicionais : [];
   if (grupos.length > 0) {
@@ -1411,10 +1416,9 @@ window.confirmarAdicCli = function() {
   }
   const selecionados = Object.keys(_adicCliSel).map(oi => g.opcoes[parseInt(oi)]);
   const extra = selecionados.reduce((s,o)=>s+Number(o.preco||0),0);
-  const descAdic = selecionados.map(o=>o.nome).filter(Boolean);
-  const nomeFinal = descAdic.length ? _adicCliProd.nome + ' (' + descAdic.join(', ') + ')' : _adicCliProd.nome;
-  adicionarItem({ ..._adicCliProd, nome: nomeFinal, preco: _adicCliProd.preco + extra }, qtdAtual || 1);
-  mostrarToast(nomeFinal + ' adicionado! 🛒', '#1a1a1a');
+  const adicFlat = selecionados.filter(o=>o.nome).map(o=>({ nome: o.nome, preco: Number(o.preco||0) }));
+  adicionarItem({ ..._adicCliProd, preco: _adicCliProd.preco + extra, adicionais: adicFlat }, qtdAtual || 1);
+  mostrarToast(_adicCliProd.nome + ' adicionado! 🛒', '#1a1a1a');
   fecharModalAdicCli();
 };
 
