@@ -3379,34 +3379,57 @@ async function confirmarFecharComanda() {
   const fmt   = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
   const carr  = _carrinhoComanda[_mesaAtual] || [];
   const totalMesa = peds.reduce((s,p)=>s+Number(p.total||0),0);
-  const mesaFechando = _mesaAtual;
 
-  // 1. Avisa se há itens no carrinho
+  // 1. Avisa carrinho pendente
   if (carr.length > 0) {
     if (!confirm('Ha itens nao enviados no carrinho. Deseja fechar mesmo assim?')) return;
   }
 
-  // 2. Imprime PRIMEIRO — antes de qualquer confirmação
+  // 2. Imprime PRIMEIRO
   window.imprimirComanda();
 
-  // 3. Depois que o usuário vê a notinha, confirma o fechamento
-  setTimeout(async () => {
-    if (!confirm('Fechar comanda da ' + mesaFechando + '?\n\nTotal: ' + fmt(totalMesa) + '\nPedidos: ' + peds.length + '\n\nA mesa sera liberada.')) return;
-
-    const ids = peds.map(p=>p.id);
-    if (ids.length) await getSupa().from('pedidos').update({ status:'pronto' }).in('id', ids);
-
-    delete _pedidosMesas[mesaFechando];
-    delete _carrinhoComanda[mesaFechando];
-    _mesasFechadas.add(mesaFechando);
-    setTimeout(()=>{ _mesasFechadas.delete(mesaFechando); renderMesas(); }, 5000);
-
-    window.fecharComanda();
-    showToast('Comanda da ' + mesaFechando + ' fechada! ' + fmt(totalMesa));
-    renderMesas();
-    window.renderHistoricoMesas();
+  // 3. Após pequeno delay (janela de impressão abre), exibe modal de confirmação
+  setTimeout(() => {
+    const mesaEl = document.getElementById('fechar-comanda-mesa');
+    const totEl  = document.getElementById('fechar-comanda-total');
+    const infEl  = document.getElementById('fechar-comanda-info');
+    if (mesaEl) mesaEl.textContent = _mesaAtual;
+    if (totEl)  totEl.textContent  = fmt(totalMesa);
+    if (infEl)  infEl.textContent  = peds.length + ' pedido(s)';
+    const modal = document.getElementById('modal-fechar-comanda');
+    if (modal) modal.style.display = 'flex';
   }, 400);
 }
+
+window.cancelarFecharComanda = function() {
+  const modal = document.getElementById('modal-fechar-comanda');
+  if (modal) modal.style.display = 'none';
+};
+
+window.executarFecharComanda = async function() {
+  const modal = document.getElementById('modal-fechar-comanda');
+  if (modal) modal.style.display = 'none';
+
+  if (!_mesaAtual) return;
+  const peds = _pedidosMesas[_mesaAtual] || [];
+  const mesaFechando = _mesaAtual;
+  const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const totalMesa = peds.reduce((s,p)=>s+Number(p.total||0),0);
+
+  const ids = peds.map(p=>p.id);
+  if (ids.length) await getSupa().from('pedidos').update({ status:'pronto' }).in('id', ids);
+
+  delete _pedidosMesas[mesaFechando];
+  delete _carrinhoComanda[mesaFechando];
+  _mesasFechadas.add(mesaFechando);
+  setTimeout(()=>{ _mesasFechadas.delete(mesaFechando); renderMesas(); }, 5000);
+
+  window.fecharComanda();
+  showToast('Comanda da ' + mesaFechando + ' fechada! ' + fmt(totalMesa));
+  renderMesas();
+  window.renderHistoricoMesas();
+};
+
 
 
 
