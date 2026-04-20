@@ -1434,22 +1434,113 @@ window.imprimirPedido = async function(id) {
   if (!p) return;
   const estab = getEstab();
   const itens = Array.isArray(p.itens) ? p.itens : [];
-  const area  = $('print-area'); if (!area) return;
-  area.innerHTML = `<div class="notinha">
-    <div class="notinha-header"><div class="notinha-logo">PEDIWAY</div><div class="notinha-sub">${estab?.nome||''}</div></div>
-    <div class="notinha-linha"><span>Pedido</span><strong>#${p.id.slice(-4).toUpperCase()}</strong></div>
-    <div class="notinha-linha"><span>Cliente</span><span>${p.cliente_nome||'-'}</span></div>
-    <div class="notinha-linha"><span>WhatsApp</span><span>${p.cliente_whats||'-'}</span></div>
-    <div class="notinha-linha"><span>Entrega</span><span>${p.endereco||'Retirada'}</span></div>
-    ${p.observacao?`<div class="notinha-linha"><span>Obs</span><span>${p.observacao}</span></div>`:''}
-    <hr class="notinha-divider">
-    ${itens.map(i=>`<div class="notinha-linha"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco*i.qtd).toFixed(2).replace('.',',')}</span></div>`).join('')}
-    <hr class="notinha-divider">
-    <div class="notinha-total"><span>TOTAL</span><span>R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</span></div>
-    <div style="text-align:center;margin-top:12px;font-size:0.65rem;color:#aaa">Feito com PEDIWAY</div>
-  </div>`;
-  area.style.display = 'block'; window.print();
-  setTimeout(() => { area.style.display = 'none'; area.innerHTML = ''; }, 1000);
+  const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const subtotal  = itens.reduce((s,i) => s + (i.preco||0)*(i.qtd||1), 0);
+  const taxa      = Number(p.taxa_entrega||0);
+  const total     = Number(p.total||0);
+  const agora     = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const isEntrega = p.endereco && p.endereco !== 'Retirada no local' && !p.endereco.startsWith('No local');
+
+  const cnpjRaw = estab?.cnpj || '';
+  const cnpjFmt = cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+  const insta   = estab?.instagram ? '@' + estab.instagram : '';
+  const ttok    = estab?.tiktok   ? '@' + estab.tiktok : '';
+  const msgFim  = estab?.msg_nota || 'Obrigado pela preferencia! Volte sempre.';
+  const pgto    = (p.pagamento || 'Nao informado').toUpperCase();
+  const numPed  = '#' + p.id.slice(-6).toUpperCase();
+
+  const css = `
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Courier New',monospace;font-size:12px;background:#fff;color:#111;max-width:320px;margin:0 auto;padding:20px 14px}
+    .center{text-align:center}
+    .logo{font-family:Arial,sans-serif;font-size:22px;font-weight:900;letter-spacing:.06em}
+    .logo b{color:#C0392B}
+    .empresa{font-family:Arial,sans-serif;font-size:14px;font-weight:800;margin-top:3px}
+    .info-loja{font-size:10px;color:#555;line-height:1.7;margin-top:4px}
+    .dash{border:none;border-top:1px dashed #bbb;margin:10px 0}
+    .solid{border:none;border-top:2px solid #111;margin:10px 0}
+    .num-pedido{font-size:22px;font-weight:900;letter-spacing:.1em;margin:6px 0}
+    .tipo-badge{display:inline-block;background:#111;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:.05em}
+    .hora{font-size:10px;color:#888;margin-top:4px}
+    .sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;margin:8px 0 4px}
+    .row{display:flex;justify-content:space-between;font-size:12px;padding:2px 0;gap:8px}
+    .row-bold{display:flex;justify-content:space-between;font-size:12px;font-weight:700;padding:3px 0;gap:8px}
+    .item-nome{flex:1}
+    .obs{background:#f8f8f8;border-left:3px solid #C0392B;padding:5px 9px;font-size:11px;font-style:italic;margin:6px 0}
+    .total-row{display:flex;justify-content:space-between;font-size:16px;font-weight:900;padding:7px 0;border-top:2px solid #111;margin-top:5px}
+    .total-val{color:#C0392B}
+    .pgto{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-top:5px;padding-top:4px;border-top:1px dashed #bbb}
+    .social{font-size:10px;color:#555;text-align:center;line-height:1.8;margin-top:4px}
+    .msg{font-size:11px;color:#333;text-align:center;font-style:italic;margin:8px 0 4px}
+    .rodape{font-size:9px;color:#bbb;text-align:center;letter-spacing:.04em}
+    @media print{body{padding:6px}}
+  `;
+
+  const itensCols = itens.map(i => {
+    const sub = ((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');
+    const add = Array.isArray(i.adicionais) && i.adicionais.length
+      ? i.adicionais.map(a => `<div class="row" style="color:#888;font-size:11px;padding-left:12px"><span>+ ${a.nome}</span><span>R$ ${Number(a.preco||0).toFixed(2).replace('.',',')}</span></div>`).join('')
+      : '';
+    return `<div class="row"><span class="item-nome">${i.qtd||1}x ${i.nome}</span><span>R$ ${sub}</span></div>${add}`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Nota ${numPed}</title><style>${css}</style></head><body>
+
+<div class="center">
+  <div class="logo">PEDI<b>WAY</b></div>
+  <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
+  <div class="info-loja">
+    ${estab?.endereco ? estab.endereco + '<br>' : ''}
+    ${estab?.telefone_contato ? 'Tel: ' + estab.telefone_contato + '<br>' : ''}
+    ${estab?.whatsapp ? 'WhatsApp: ' + estab.whatsapp + '<br>' : ''}
+    ${cnpjFmt ? 'CNPJ: ' + cnpjFmt : ''}
+  </div>
+</div>
+
+<hr class="solid">
+
+<div class="center">
+  <div class="num-pedido">${numPed}</div>
+  <div class="tipo-badge">${isEntrega ? 'ENTREGA' : 'RETIRADA'}</div>
+  <div class="hora">${agora}</div>
+</div>
+
+<hr class="dash">
+
+<div class="sec-title">Dados do cliente</div>
+<div class="row-bold"><span>Nome</span><span>${p.cliente_nome || '-'}</span></div>
+${p.cliente_whats ? `<div class="row"><span>WhatsApp</span><span>${p.cliente_whats}</span></div>` : ''}
+${isEntrega ? `<div class="row-bold"><span>Entrega</span><span style="text-align:right;max-width:190px">${p.endereco}</span></div>` : ''}
+
+${p.observacao ? `<div class="obs"><b>Obs:</b> ${p.observacao}</div>` : ''}
+
+<hr class="dash">
+
+<div class="sec-title">Itens do pedido</div>
+${itensCols}
+
+<hr class="dash">
+
+${subtotal !== total - taxa ? `<div class="row"><span>Subtotal</span><span>${fmtR(subtotal)}</span></div>` : ''}
+${taxa > 0 ? `<div class="row"><span>Taxa de entrega</span><span>${fmtR(taxa)}</span></div>` : ''}
+<div class="total-row"><span>TOTAL</span><span class="total-val">${fmtR(total)}</span></div>
+<div class="pgto"><span>Pagamento</span><span>${pgto}</span></div>
+
+${(insta || ttok || estab?.site) ? `<hr class="dash"><div class="social">${insta ? 'Instagram: <b>' + insta + '</b><br>' : ''}${ttok ? 'TikTok: <b>' + ttok + '</b><br>' : ''}${estab?.site || ''}</div>` : ''}
+
+<hr class="dash">
+<div class="msg">${msgFim}</div>
+<div class="rodape">Emitido via PEDIWAY</div>
+
+</body></html>`;
+
+  const w = window.open('', '_blank', 'width=360,height=720');
+  if (!w) { alert('Permita pop-ups para imprimir.'); return; }
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 400);
 };
 
 window.buscarPedidos = function(termo) {
