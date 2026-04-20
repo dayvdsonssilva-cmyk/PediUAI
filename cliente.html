@@ -335,7 +335,7 @@
 </div>
 
 <!-- MODAL PRODUTO -->
-<div class="modal-bg" id="modal-prod" >
+<div class="modal-bg" id="modal-prod" onclick="if(event.target.id==='modal-prod')fecharModal()">
   <div class="modal-sheet" style="position:relative">
     <button class="modal-close" onclick="fecharModal()">✕</button>
     <div id="modal-prod-media"></div>
@@ -932,9 +932,14 @@ window.adicionarAoCarrinho = function() {
     // Calcula extra
     let extra = 0;
     Object.values(adicSel).forEach(sels => sels.forEach(s => extra += s.preco));
-    const descAdic = Object.values(adicSel).flat().map(s=>s.nome).filter(Boolean);
-    const nomeFinal = descAdic.length ? prodAtual.nome + ' (' + descAdic.join(', ') + ')' : prodAtual.nome;
-    adicionarItem({ ...prodAtual, nome: nomeFinal, preco: prodAtual.preco + extra }, qtdAtual);
+    const adicFlat = Object.values(adicSel).flat().filter(s=>s.nome);
+    // Salva adicionais separados para exibição correta na nota
+    const itemFinal = {
+      ...prodAtual,
+      preco: prodAtual.preco + extra,
+      adicionais: adicFlat   // array [{nome, preco}] — formatado em lista na nota
+    };
+    adicionarItem(itemFinal, qtdAtual);
   } else {
     adicionarItem(prodAtual, qtdAtual);
   }
@@ -954,9 +959,14 @@ window.adicionarDireto = function(p) {
 
 // ── CARRINHO ──────────────────────────────────────────────────────────────────
 function adicionarItem(p, qtd) {
-  const idx = carrinho.findIndex(c => c.id === p.id);
-  if (idx >= 0) carrinho[idx].qtd += qtd;
-  else carrinho.push({ ...p, qtd });
+  // Itens com adicionais sempre são entradas novas (não agrupa)
+  if (p.adicionais && p.adicionais.length) {
+    carrinho.push({ ...p, qtd });
+  } else {
+    const idx = carrinho.findIndex(c => c.id === p.id && (!c.adicionais || !c.adicionais.length));
+    if (idx >= 0) carrinho[idx].qtd += qtd;
+    else carrinho.push({ ...p, qtd });
+  }
   atualizarFab();
 }
 
@@ -987,11 +997,17 @@ function renderCarrinho() {
   const el = $('carr-itens'); if (!el) return;
   if (!carrinho.length) { el.innerHTML = '<div class="empty-msg" style="padding:30px 20px"><span>🛒</span>Sacola vazia.</div>'; }
   else {
-    el.innerHTML = carrinho.map((c, i) => `
-      <div class="carr-item">
+    el.innerHTML = carrinho.map((c, i) => {
+      const adics = Array.isArray(c.adicionais) && c.adicionais.length
+        ? '<div style="font-size:.72rem;color:#888;margin-top:3px;line-height:1.6">'
+          + c.adicionais.map(a => '+ ' + a.nome).join('<br>')
+          + '</div>'
+        : '';
+      return `<div class="carr-item">
         <div class="carr-item-emoji">${c.emoji || '🍔'}</div>
-        <div class="carr-item-info">
+        <div class="carr-item-info" style="flex:1;min-width:0">
           <div class="carr-item-nome">${c.nome}</div>
+          ${adics}
           <div class="carr-item-preco">${fmt(c.preco)} cada</div>
         </div>
         <div class="carr-item-qtd">
@@ -999,7 +1015,8 @@ function renderCarrinho() {
           <div class="carr-qtd-num">${c.qtd}</div>
           <button class="carr-qtd-btn" onclick="mudarQtdCarr(${i},1)">+</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
   const sub  = carrinho.reduce((s, c) => s + c.preco * c.qtd, 0);
   const taxa = (opcaoEntrega === 'entrega' && estab?.taxa_entrega) ? Number(estab.taxa_entrega) : 0;
@@ -1075,7 +1092,7 @@ window.finalizarPedido = async function() {
   if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
 
   try {
-    const itens = carrinho.map(c => ({ id: c.id, nome: c.nome, preco: c.preco, qtd: c.qtd, emoji: c.emoji }));
+    const itens = carrinho.map(c => ({ id: c.id, nome: c.nome, preco: c.preco, qtd: c.qtd, emoji: c.emoji, adicionais: c.adicionais || [] }));
     const subtotal    = carrinho.reduce((s, c) => s + c.preco * c.qtd, 0);
     const taxaEntrega = (opcaoEntrega === 'entrega' && estab?.taxa_entrega) ? Number(estab.taxa_entrega) : 0;
     const total       = subtotal + taxaEntrega;
@@ -1126,7 +1143,12 @@ window.finalizarPedido = async function() {
 // ── MEUS PEDIDOS (cliente) ────────────────────────────────────────────────────
 function gerarLinkWpp(p, pedId4) {
   if (!estab?.whatsapp) return '#';
-  const itensStr = Array.isArray(p.itens) ? p.itens.map(i => i.qtd + 'x ' + i.nome).join(', ') : '';
+  const itensStr = Array.isArray(p.itens) ? p.itens.map(i => {
+    const adds = Array.isArray(i.adicionais) && i.adicionais.length
+      ? '\n      Adicionais:\n' + i.adicionais.map(a => '      • ' + a.nome).join('\n')
+      : '';
+    return i.qtd + 'x ' + i.nome + adds;
+  }).join('\n') : '';
   const pag = p.pagamento ? ('Pagamento: ' + p.pagamento.toUpperCase()) : '';
   const nomeCliente = p.cliente_nome || document.getElementById('cli-nome')?.value?.trim() || '';
   const msg = [
@@ -1156,7 +1178,12 @@ function renderPedidosCliente() {
       recusado: { cls:'s-recusado', lbl:'❌ Não confirmado',        desc:'A loja não pôde atender este pedido.' },
     };
     const st = statusMap[p.status] || statusMap.novo;
-    const itensStr = Array.isArray(p.itens) ? p.itens.map(i=>`${i.qtd}x ${i.nome}`).join(', ') : '';
+    const itensStr = Array.isArray(p.itens) ? p.itens.map(i => {
+      const adds = Array.isArray(i.adicionais) && i.adicionais.length
+        ? ' [' + i.adicionais.map(a => a.nome).join(', ') + ']'
+        : '';
+      return i.qtd + 'x ' + i.nome + adds;
+    }).join(', ') : '';
     const pedId4 = p.id && !p.id.startsWith('local_') ? p.id.slice(-4).toUpperCase() : '----';
     return `<div class="ped-card">
       <div class="ped-top">
@@ -1196,11 +1223,18 @@ window.verDetalhesPedido = function(p) {
       <span class="ped-status-badge ${st.cls}" style="display:inline-block">${st.lbl}</span>
     </div>
     <hr class="notinha-divider">
-    ${itens.map(i => `
-      <div class="notinha-item-row">
+    ${itens.map(i => {
+      const adds = Array.isArray(i.adicionais) && i.adicionais.length
+        ? '<div style="padding-left:16px;font-size:0.75rem;color:#888;line-height:1.7">'
+          + '<span style="font-weight:600">Adicionais:</span><br>'
+          + i.adicionais.map(a => '• ' + a.nome).join('<br>')
+          + '</div>'
+        : '';
+      return `<div class="notinha-item-row">
         <span><span class="notinha-item-qtd">${i.qtd}x</span> ${i.nome}</span>
         <span>${fmt(i.preco * i.qtd)}</span>
-      </div>`).join('')}
+      </div>${adds}`;
+    }).join('')}
     <hr class="notinha-divider">
     <div class="notinha-total-row"><span>Total</span><span>${fmt(p.total)}</span></div>`;
 
