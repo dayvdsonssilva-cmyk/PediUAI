@@ -248,12 +248,18 @@ export async function initDashboard() {
 // ─────────────────────────────────────────────────────────────────────────────
 function preencherConfig(estab) {
   const set = (id, val) => { const el = $(id); if (el && val != null) el.value = val; };
-  set('cfg-nome',     estab.nome);
-  set('cfg-slug',     estab.slug);
-  set('cfg-whats',    estab.whatsapp || '');
-  set('cfg-desc',     estab.descricao || '');
-  set('cfg-endereco', estab.endereco || '');
-  set('cfg-tempo',    estab.tempo_entrega || '30-45 min');
+  set('cfg-nome',      estab.nome);
+  set('cfg-slug',      estab.slug);
+  set('cfg-whats',     estab.whatsapp || '');
+  set('cfg-desc',      estab.descricao || '');
+  set('cfg-endereco',  estab.endereco || '');
+  set('cfg-tempo',     estab.tempo_entrega || '30-45 min');
+  set('cfg-telefone',  estab.telefone_contato || '');
+  set('cfg-cnpj',      estab.cnpj || '');
+  set('cfg-instagram', estab.instagram || '');
+  set('cfg-tiktok',    estab.tiktok || '');
+  set('cfg-site',      estab.site || '');
+  set('cfg-msg-nota',  estab.msg_nota || '');
   const cfgLink = $('cfg-link-preview');
   if (cfgLink) cfgLink.textContent = `${BASE_URL}/${estab.slug}`;
   const cfgLinkGarcom = $('cfg-link-garcom');
@@ -520,6 +526,13 @@ export async function salvarConfig() {
   const aberto   = $('cfg-aberto')?.checked;
   const entrega  = $('cfg-entrega')?.checked;
   const retirada = $('cfg-retirada')?.checked;
+  // Novos campos
+  const telefone_contato = $('cfg-telefone')?.value.trim() || null;
+  const cnpj             = ($('cfg-cnpj')?.value || '').replace(/\D/g,'') || null;
+  const instagram        = ($('cfg-instagram')?.value || '').trim().replace('@','') || null;
+  const tiktok           = ($('cfg-tiktok')?.value || '').trim().replace('@','') || null;
+  const site             = $('cfg-site')?.value.trim() || null;
+  const msg_nota         = $('cfg-msg-nota')?.value.trim() || null;
 
   if (!nome || !slug) return showToast('Preencha nome e link.', 'error');
 
@@ -554,6 +567,7 @@ export async function salvarConfig() {
       cor_primaria, logo_url,
       capa_url: null, capa_tipo: 'cor',
       taxa_entrega, aceita_pix, aceita_cartao, aceita_dinheiro,
+      telefone_contato, cnpj, instagram, tiktok, site, msg_nota,
     };
 
     const { error } = await getSupa().from('estabelecimentos').update(updates).eq('id', estab.id);
@@ -1348,8 +1362,13 @@ window.aceitarPedido = async function(id) {
   pararNotif();
   const { error } = await getSupa().from('pedidos').update({ status:'preparo' }).eq('id', id);
   if (error) return showToast('Erro ao aceitar.','error');
-  removerCardNovo(id); showToast('Pedido aceito! 👍');
+  removerCardNovo(id);
+  showToast('✅ Aceito! Imprimindo para cozinha...');
+  // Envia direto para cozinha sem clique extra
+  marcarEnviadoCozinha(id);
+  window.imprimirCozinha(id);
   await carregarPedidosMesas(); renderMesas();
+  window.renderHistoricoMesas();
   await renderPedidos();
 };
 
@@ -1930,54 +1949,79 @@ window.imprimirComanda = function() {
   if (!_mesaAtual) return;
   const estab = getEstab();
   const peds  = _pedidosMesas[_mesaAtual] || [];
-  const nome  = _nomeComanda[_mesaAtual] || _mesaAtual;
   const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  const total = peds.reduce((s,p)=>s+Number(p.total||0),0);
-  const agora = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const total = peds.reduce((s,p) => s + Number(p.total||0), 0);
+  const nomeCliente = _nomeComanda[_mesaAtual] || _mesaAtual;
+  const agora = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
-  const pedRows = peds.map((p,idx)=>{
-    const itens = Array.isArray(p.itens)?p.itens:[];
-    const dt    = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    return '<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed #ddd">'
-      + '<div style="font-size:10px;color:#888;margin-bottom:4px">Pedido '+(idx+1)+' · '+dt+'</div>'
-      + itens.map(i=>'<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0"><span>'+i.qtd+'x '+i.nome+'</span><span>'+fmtR((i.preco||0)*(i.qtd||1))+'</span></div>').join('')
-      + '<div style="text-align:right;font-size:11px;color:#C0392B;font-weight:700;margin-top:2px">'+fmtR(p.total)+'</div>'
+  // Agrupa por nome
+  const grupos = {};
+  peds.forEach(p => {
+    const nm = p.cliente_nome || nomeCliente;
+    if (!grupos[nm]) grupos[nm] = [];
+    grupos[nm].push(p);
+  });
+
+  const rows = Object.entries(grupos).map(([nm, gpeds]) => {
+    const sub = gpeds.reduce((s,p) => s + Number(p.total||0), 0);
+    return '<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1.5px dashed #ddd">'
+      + '<div style="font-size:13px;font-weight:800;margin-bottom:5px">'+nm+'</div>'
+      + gpeds.map(p => {
+          const itens = Array.isArray(p.itens) ? p.itens : [];
+          const dt = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+          return '<div style="font-size:10px;color:#888;margin-bottom:2px">'+dt+'</div>'
+            + itens.map(i => '<div style="display:flex;justify-content:space-between;font-size:12px;padding:1px 0">'
+              +'<span>'+( i.qtd||1)+'x '+i.nome+'</span>'
+              +'<span>R$ '+((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')+'</span>'
+              +'</div>').join('');
+        }).join('<div style="height:4px"></div>')
+      + '<div style="text-align:right;font-size:11px;color:#C0392B;font-weight:700;margin-top:4px">'+fmtR(sub)+'</div>'
       + '</div>';
   }).join('');
 
-  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-    <title>Comanda — ${_mesaAtual}</title>
-    <style>
-      *{margin:0;padding:0;box-sizing:border-box}
-      body{font-family:Arial,sans-serif;font-size:12px;padding:16px;max-width:300px;margin:0 auto}
-      .logo{font-size:16px;font-weight:900;text-align:center;margin-bottom:4px}
-      .logo span{color:#C0392B}
-      .loja{font-size:11px;text-align:center;color:#888;margin-bottom:8px}
-      .divider{border:none;border-top:2px dashed #ddd;margin:8px 0}
-      .mesa{font-size:14px;font-weight:800;text-align:center;margin:6px 0}
-      .cliente{font-size:11px;text-align:center;color:#888;margin-bottom:8px}
-      .total-row{display:flex;justify-content:space-between;font-size:14px;font-weight:800;margin-top:8px;border-top:2px solid #1a1a1a;padding-top:8px}
-      .rodape{text-align:center;font-size:9px;color:#aaa;margin-top:12px}
-      @media print{body{padding:0}}
-    </style></head><body>
-    <div class="logo">PEDI<span>WAY</span></div>
-    <div class="loja">${estab?.nome||'Estabelecimento'}</div>
-    <hr class="divider">
-    <div class="mesa">${_mesaAtual}</div>
-    <div class="cliente">${nome !== _mesaAtual ? 'Cliente: '+nome : ''}</div>
-    <div style="font-size:9px;text-align:center;color:#aaa;margin-bottom:8px">${agora}</div>
-    <hr class="divider">
-    ${pedRows}
-    <div class="total-row"><span>TOTAL</span><span style="color:#C0392B">${fmtR(total)}</span></div>
-    <div class="rodape">Obrigado pela preferência!<br>Feito com PEDIWAY</div>
-  </body></html>`;
+  // CNPJ formatado
+  const cnpj = estab?.cnpj ? estab.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : '';
+  const insta = estab?.instagram ? '@'+estab.instagram : '';
+  const tiktok = estab?.tiktok ? '@'+estab.tiktok : '';
+  const msgNota = estab?.msg_nota || 'Obrigado pela preferência! Volte sempre 😊';
 
-  const w = window.open('','_blank','width=320,height=600');
+  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comanda — '+_mesaAtual+'</title>'
+    + '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;padding:16px;max-width:300px;margin:0 auto}'
+    + '.logo{font-size:17px;font-weight:900;text-align:center;letter-spacing:.05em}.logo span{color:#C0392B}'
+    + '.empresa{font-size:12px;font-weight:700;text-align:center;color:#333;margin-bottom:2px}'
+    + '.info{font-size:10px;text-align:center;color:#888;line-height:1.5}'
+    + 'hr{border:none;border-top:1px dashed #ccc;margin:8px 0}'
+    + 'hr.bold{border-top:2px solid #000}'
+    + '.mesa-num{font-size:20px;font-weight:900;text-align:center;margin:6px 0}'
+    + '.total-row{display:flex;justify-content:space-between;font-size:14px;font-weight:800;border-top:2px solid #000;padding-top:8px;margin-top:8px}'
+    + '.redes{text-align:center;font-size:10px;color:#888;margin-top:4px}'
+    + '.msg{text-align:center;font-size:11px;color:#555;font-style:italic;margin-top:6px}'
+    + '@media print{body{padding:0}}</style></head><body>'
+    // Cabeçalho
+    + '<div class="logo">PEDI<span>WAY</span></div>'
+    + '<div class="empresa">'+(estab?.nome||'Estabelecimento')+'</div>'
+    + '<div class="info">'
+    + (estab?.endereco ? estab.endereco+'<br>' : '')
+    + (estab?.telefone_contato ? 'Tel: '+estab.telefone_contato+'<br>' : '')
+    + (estab?.whatsapp ? 'WhatsApp: '+estab.whatsapp+'<br>' : '')
+    + (cnpj ? 'CNPJ: '+cnpj : '')
+    + '</div>'
+    + '<hr><div class="mesa-num">'+_mesaAtual+'</div>'
+    + '<div style="text-align:center;font-size:10px;color:#aaa;margin-bottom:6px">'+agora+'</div>'
+    + '<hr class="bold">'
+    + rows
+    + '<div class="total-row"><span>TOTAL</span><span style="color:#C0392B">'+fmtR(total)+'</span></div>'
+    // Redes sociais
+    + (insta||tiktok ? '<hr><div class="redes">'+(insta?'Instagram: '+insta+'  ':'')+( tiktok?'TikTok: '+tiktok:'')+'</div>' : '')
+    + (estab?.site ? '<div style="text-align:center;font-size:9px;color:#aaa">'+estab.site+'</div>' : '')
+    + '<hr><div class="msg">'+msgNota+'</div>'
+    + '<div style="text-align:center;font-size:9px;color:#ccc;margin-top:8px">PEDIWAY</div>'
+    + '</body></html>';
+
+  const w = window.open('','_blank','width=320,height=700');
   if (!w) { alert('Permita pop-ups para imprimir.'); return; }
-  w.document.write(html);
-  w.document.close();
-  w.focus();
-  setTimeout(()=>w.print(), 400);
+  w.document.write(html); w.document.close(); w.focus();
+  setTimeout(() => w.print(), 400);
 };
 
 
