@@ -1360,16 +1360,28 @@ function removerCardNovo(id) {
 
 window.aceitarPedido = async function(id) {
   pararNotif();
+  // Busca o pedido para saber o tipo antes de aceitar
+  const { data: ped } = await getSupa().from('pedidos').select('endereco').eq('id', id).maybeSingle();
+  const isMesa = ped && (ped.endereco||'').startsWith('No local');
+
   const { error } = await getSupa().from('pedidos').update({ status:'preparo' }).eq('id', id);
   if (error) return showToast('Erro ao aceitar.','error');
   removerCardNovo(id);
-  showToast('✅ Aceito! Imprimindo para cozinha...');
-  // Envia direto para cozinha sem clique extra
-  marcarEnviadoCozinha(id);
-  window.imprimirCozinha(id);
-  await carregarPedidosMesas(); renderMesas();
-  window.renderHistoricoMesas();
+
+  if (isMesa) {
+    // Pedido de mesa → imprime ticket de cozinha direto
+    showToast('✅ Aceito! Enviando para cozinha...');
+    marcarEnviadoCozinha(id);
+    window.imprimirCozinha(id);
+    await carregarPedidosMesas(); renderMesas();
+    window.renderHistoricoMesas();
+  } else {
+    // Pedido de delivery/retirada → imprime nota do cliente
+    showToast('✅ Pedido aceito! Imprimindo nota do cliente...');
+    window.imprimirPedido(id);
+  }
   await renderPedidos();
+
 };
 
 window.recusarPedido = async function(id) {
