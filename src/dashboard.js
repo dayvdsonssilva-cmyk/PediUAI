@@ -1440,107 +1440,274 @@ window.imprimirPedido = async function(id) {
   const total     = Number(p.total||0);
   const agora     = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const isEntrega = p.endereco && p.endereco !== 'Retirada no local' && !p.endereco.startsWith('No local');
+  const cnpjRaw   = (estab?.cnpj || '').replace(/\D/g,'');
+  const cnpjFmt   = cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+  const insta     = estab?.instagram ? '@' + estab.instagram : '';
+  const ttok      = estab?.tiktok   ? '@' + estab.tiktok   : '';
+  const msgFim    = estab?.msg_nota || 'Obrigado pela preferencia!';
+  const pgto      = (p.pagamento || 'Nao informado').toUpperCase();
+  const numPed    = '#' + p.id.slice(-6).toUpperCase();
 
-  const cnpjRaw = estab?.cnpj || '';
-  const cnpjFmt = cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
-  const insta   = estab?.instagram ? '@' + estab.instagram : '';
-  const ttok    = estab?.tiktok   ? '@' + estab.tiktok : '';
-  const msgFim  = estab?.msg_nota || 'Obrigado pela preferencia! Volte sempre.';
-  const pgto    = (p.pagamento || 'Nao informado').toUpperCase();
-  const numPed  = '#' + p.id.slice(-6).toUpperCase();
+  const html = `<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<title>Nota ${numPed}</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: #000;
+    background: #fff;
+    width: 300px;
+    max-width: 300px;
+    margin: 0 auto;
+    padding: 12px 10px;
+  }
+  /* Garantia que tudo fica dentro da largura do papel */
+  * { max-width: 100%; word-break: break-word; }
 
-  const css = `
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Courier New',monospace;font-size:12px;background:#fff;color:#111;max-width:320px;margin:0 auto;padding:20px 14px}
-    .center{text-align:center}
-    .logo{font-family:Arial,sans-serif;font-size:22px;font-weight:900;letter-spacing:.06em}
-    .logo b{color:#C0392B}
-    .empresa{font-family:Arial,sans-serif;font-size:14px;font-weight:800;margin-top:3px}
-    .info-loja{font-size:10px;color:#555;line-height:1.7;margin-top:4px}
-    .dash{border:none;border-top:1px dashed #bbb;margin:10px 0}
-    .solid{border:none;border-top:2px solid #111;margin:10px 0}
-    .num-pedido{font-size:22px;font-weight:900;letter-spacing:.1em;margin:6px 0}
-    .tipo-badge{display:inline-block;background:#111;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:.05em}
-    .hora{font-size:10px;color:#888;margin-top:4px}
-    .sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;margin:8px 0 4px}
-    .row{display:flex;justify-content:space-between;font-size:12px;padding:2px 0;gap:8px}
-    .row-bold{display:flex;justify-content:space-between;font-size:12px;font-weight:700;padding:3px 0;gap:8px}
-    .item-nome{flex:1}
-    .obs{background:#f8f8f8;border-left:3px solid #C0392B;padding:5px 9px;font-size:11px;font-style:italic;margin:6px 0}
-    .total-row{display:flex;justify-content:space-between;font-size:16px;font-weight:900;padding:7px 0;border-top:2px solid #111;margin-top:5px}
-    .total-val{color:#C0392B}
-    .pgto{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-top:5px;padding-top:4px;border-top:1px dashed #bbb}
-    .social{font-size:10px;color:#555;text-align:center;line-height:1.8;margin-top:4px}
-    .msg{font-size:11px;color:#333;text-align:center;font-style:italic;margin:8px 0 4px}
-    .rodape{font-size:9px;color:#bbb;text-align:center;letter-spacing:.04em}
-    @media print{body{padding:6px}}
-  `;
+  /* Títulos — Poppins Bold */
+  .bold  { font-weight: 700; }
+  .black { font-weight: 900; }
 
-  const itensCols = itens.map(i => {
-    const sub = ((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');
-    const add = Array.isArray(i.adicionais) && i.adicionais.length
-      ? i.adicionais.map(a => `<div class="row" style="color:#888;font-size:11px;padding-left:12px"><span>+ ${a.nome}</span><span>R$ ${Number(a.preco||0).toFixed(2).replace('.',',')}</span></div>`).join('')
-      : '';
-    return `<div class="row"><span class="item-nome">${i.qtd||1}x ${i.nome}</span><span>R$ ${sub}</span></div>${add}`;
-  }).join('');
+  /* Alinhamentos */
+  .center { text-align: center; }
+  .right  { text-align: right; }
 
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>Nota ${numPed}</title><style>${css}</style></head><body>
+  /* Logo */
+  .logo { font-size: 20px; font-weight: 900; letter-spacing: .06em; line-height: 1.2; }
+  .logo-red { color: #C0392B; }
 
+  /* Nome da empresa */
+  .empresa { font-size: 14px; font-weight: 700; margin-top: 2px; }
+
+  /* Informações menores */
+  .info-sm { font-size: 11px; font-weight: 400; color: #333; line-height: 1.7; margin-top: 3px; }
+
+  /* Separadores */
+  .sep-dash  { border: none; border-top: 1px dashed #888; margin: 8px 0; }
+  .sep-solid { border: none; border-top: 2px solid #000; margin: 8px 0; }
+  .sep-thick { border: none; border-top: 3px solid #000; margin: 8px 0; }
+
+  /* Número do pedido destaque */
+  .num-ped { font-size: 22px; font-weight: 900; letter-spacing: .1em; line-height: 1.1; }
+  .badge {
+    display: inline-block;
+    background: #000;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 3px;
+    letter-spacing: .06em;
+    margin-top: 3px;
+  }
+
+  /* Seção título */
+  .sec {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #555;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 3px;
+    margin: 8px 0 5px;
+  }
+
+  /* Linhas de dados */
+  .linha {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 1px 0;
+    gap: 6px;
+  }
+  .linha .label { font-weight: 700; flex-shrink: 0; }
+  .linha .val   { text-align: right; }
+
+  /* Itens do pedido */
+  .item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 400;
+    padding: 3px 0;
+    gap: 6px;
+    border-bottom: 1px dotted #ddd;
+  }
+  .item:last-child { border-bottom: none; }
+  .item-nome { flex: 1; font-weight: 700; }
+  .item-qtd  { font-weight: 900; color: #C0392B; flex-shrink: 0; }
+  .item-val  { flex-shrink: 0; }
+
+  .adicional {
+    font-size: 11px;
+    font-weight: 400;
+    color: #555;
+    padding: 1px 0 1px 12px;
+  }
+
+  /* Observação */
+  .obs {
+    border: 1.5px solid #000;
+    border-radius: 3px;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-weight: 400;
+    margin: 6px 0;
+  }
+  .obs-titulo { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+
+  /* Subtotais */
+  .subtotal-linha {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 2px 0;
+  }
+
+  /* Total final */
+  .total-bloco {
+    border-top: 2px solid #000;
+    border-bottom: 2px solid #000;
+    padding: 5px 0;
+    margin: 4px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .total-label { font-size: 15px; font-weight: 900; }
+  .total-val   { font-size: 17px; font-weight: 900; color: #C0392B; }
+
+  /* Pagamento */
+  .pgto-linha {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 0;
+    border-bottom: 1px dashed #bbb;
+  }
+
+  /* Redes sociais */
+  .social { font-size: 11px; font-weight: 400; text-align: center; line-height: 1.8; color: #333; }
+  .social b { font-weight: 700; }
+
+  /* Mensagem final */
+  .msg-final { font-size: 12px; font-weight: 700; text-align: center; margin: 6px 0 2px; }
+
+  /* Rodapé */
+  .rodape { font-size: 10px; font-weight: 400; text-align: center; color: #888; letter-spacing: .04em; }
+
+  @media print {
+    body { padding: 4px 6px; }
+    @page { margin: 0; size: 80mm auto; }
+  }
+</style></head><body>
+
+<!-- ====== CABEÇALHO ====== -->
 <div class="center">
-  <div class="logo">PEDI<b>WAY</b></div>
+  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
   <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
-  <div class="info-loja">
-    ${estab?.endereco ? estab.endereco + '<br>' : ''}
-    ${estab?.telefone_contato ? 'Tel: ' + estab.telefone_contato + '<br>' : ''}
-    ${estab?.whatsapp ? 'WhatsApp: ' + estab.whatsapp + '<br>' : ''}
-    ${cnpjFmt ? 'CNPJ: ' + cnpjFmt : ''}
+  <div class="info-sm">
+    ${estab?.endereco ? `${estab.endereco}<br>` : ''}
+    ${estab?.telefone_contato ? `Tel: ${estab.telefone_contato}<br>` : ''}
+    ${estab?.whatsapp ? `WhatsApp: ${estab.whatsapp}<br>` : ''}
+    ${cnpjFmt ? `CNPJ: ${cnpjFmt}` : ''}
   </div>
 </div>
 
-<hr class="solid">
+<hr class="sep-thick">
 
+<!-- ====== NÚMERO DO PEDIDO ====== -->
 <div class="center">
-  <div class="num-pedido">${numPed}</div>
-  <div class="tipo-badge">${isEntrega ? 'ENTREGA' : 'RETIRADA'}</div>
-  <div class="hora">${agora}</div>
+  <div class="num-ped">${numPed}</div>
+  <div class="badge">${isEntrega ? 'ENTREGA' : 'RETIRADA'}</div>
+  <div class="info-sm" style="margin-top:4px">${agora}</div>
 </div>
 
-<hr class="dash">
+<hr class="sep-dash">
 
-<div class="sec-title">Dados do cliente</div>
-<div class="row-bold"><span>Nome</span><span>${p.cliente_nome || '-'}</span></div>
-${p.cliente_whats ? `<div class="row"><span>WhatsApp</span><span>${p.cliente_whats}</span></div>` : ''}
-${isEntrega ? `<div class="row-bold"><span>Entrega</span><span style="text-align:right;max-width:190px">${p.endereco}</span></div>` : ''}
+<!-- ====== DADOS DO CLIENTE ====== -->
+<div class="sec">Dados do Cliente</div>
 
-${p.observacao ? `<div class="obs"><b>Obs:</b> ${p.observacao}</div>` : ''}
+<div class="linha">
+  <span class="label">Nome</span>
+  <span class="val">${p.cliente_nome || '-'}</span>
+</div>
+${p.cliente_whats ? `<div class="linha"><span class="label">WhatsApp</span><span class="val">${p.cliente_whats}</span></div>` : ''}
+${isEntrega ? `
+<div class="linha" style="margin-top:3px">
+  <span class="label">Entrega&nbsp;</span>
+  <span class="val" style="text-align:right">${p.endereco}</span>
+</div>` : ''}
 
-<hr class="dash">
+<!-- OBSERVAÇÃO -->
+${p.observacao ? `
+<div class="obs">
+  <div class="obs-titulo">Observacao</div>
+  ${p.observacao}
+</div>` : ''}
 
-<div class="sec-title">Itens do pedido</div>
-${itensCols}
+<hr class="sep-dash">
 
-<hr class="dash">
+<!-- ====== ITENS ====== -->
+<div class="sec">Itens do Pedido</div>
 
-${subtotal !== total - taxa ? `<div class="row"><span>Subtotal</span><span>${fmtR(subtotal)}</span></div>` : ''}
-${taxa > 0 ? `<div class="row"><span>Taxa de entrega</span><span>${fmtR(taxa)}</span></div>` : ''}
-<div class="total-row"><span>TOTAL</span><span class="total-val">${fmtR(total)}</span></div>
-<div class="pgto"><span>Pagamento</span><span>${pgto}</span></div>
+${itens.map(i => {
+  const sub = ((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');
+  const adds = Array.isArray(i.adicionais) && i.adicionais.length
+    ? i.adicionais.map(a => `<div class="adicional">+ ${a.nome} (R$ ${Number(a.preco||0).toFixed(2).replace('.',',')})</div>`).join('')
+    : '';
+  return `<div class="item">
+    <span class="item-qtd">${i.qtd||1}x</span>
+    <span class="item-nome">${i.nome}</span>
+    <span class="item-val">R$ ${sub}</span>
+  </div>${adds}`;
+}).join('')}
 
-${(insta || ttok || estab?.site) ? `<hr class="dash"><div class="social">${insta ? 'Instagram: <b>' + insta + '</b><br>' : ''}${ttok ? 'TikTok: <b>' + ttok + '</b><br>' : ''}${estab?.site || ''}</div>` : ''}
+<hr class="sep-dash">
 
-<hr class="dash">
-<div class="msg">${msgFim}</div>
-<div class="rodape">Emitido via PEDIWAY</div>
+<!-- ====== TOTAIS ====== -->
+${subtotal !== total - taxa ? `<div class="subtotal-linha"><span>Subtotal</span><span>${fmtR(subtotal)}</span></div>` : ''}
+${taxa > 0 ? `<div class="subtotal-linha"><span>Entrega</span><span>${fmtR(taxa)}</span></div>` : ''}
+
+<div class="total-bloco">
+  <span class="total-label">TOTAL</span>
+  <span class="total-val">${fmtR(total)}</span>
+</div>
+
+<div class="pgto-linha">
+  <span>Pagamento</span>
+  <span>${pgto}</span>
+</div>
+
+${(insta || ttok || estab?.site) ? `
+<hr class="sep-dash">
+<div class="social">
+  ${insta ? `Instagram: <b>${insta}</b><br>` : ''}
+  ${ttok  ? `TikTok: <b>${ttok}</b><br>`    : ''}
+  ${estab?.site ? `<span>${estab.site}</span>` : ''}
+</div>` : ''}
+
+<hr class="sep-dash">
+<div class="msg-final">${msgFim}</div>
+<div class="rodape">PEDIWAY</div>
 
 </body></html>`;
 
-  const w = window.open('', '_blank', 'width=360,height=720');
+  const w = window.open('', '_blank', 'width=340,height=750');
   if (!w) { alert('Permita pop-ups para imprimir.'); return; }
   w.document.write(html);
   w.document.close();
   w.focus();
-  setTimeout(() => w.print(), 400);
+  setTimeout(() => w.print(), 600);
 };
 
 window.buscarPedidos = function(termo) {
