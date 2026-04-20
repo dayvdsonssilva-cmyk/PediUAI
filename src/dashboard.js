@@ -1312,7 +1312,6 @@ async function renderPedidos() {
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}')">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}')">Recusar</button>`:''}
-          ${p.status==='preparo'?`<button class="btn-ped-aceitar" onclick="marcarPronto('${p.id}')">✅ Marcar pronto</button>`:''}
           <button class="btn-ped-imprimir" onclick="verPedido('${p.id}')">Ver mais</button>
         </div>
       </div>
@@ -1421,7 +1420,6 @@ window.verPedido = async function(id) {
       <div style="display:flex;justify-content:space-between;font-weight:800"><span>Total</span><span>R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</span></div>
       <div style="display:flex;gap:8px;margin-top:8px">
         ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}');fecharModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}');fecharModalPedido()">Recusar</button>`:''}
-        ${p.status==='preparo'?`<button class="btn-ped-aceitar" onclick="marcarPronto('${p.id}')">Marcar pronto</button>`:''}
         <button class="btn-ped-imprimir" onclick="imprimirPedido('${p.id}')">🖨️ Imprimir</button>
       </div>
     </div>`;
@@ -2221,77 +2219,161 @@ window.imprimirComanda = function() {
   const peds  = _pedidosMesas[_mesaAtual] || [];
   const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
   const total = peds.reduce((s,p) => s + Number(p.total||0), 0);
-  const nomeCliente = _nomeComanda[_mesaAtual] || _mesaAtual;
   const agora = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const cnpjRaw = (estab?.cnpj || '').replace(/\D/g,'');
+  const cnpjFmt = cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+  const insta   = estab?.instagram ? '@' + estab.instagram : '';
+  const msgFim  = estab?.msg_nota || 'Obrigado pela preferencia!';
 
   // Agrupa por nome
   const grupos = {};
   peds.forEach(p => {
-    const nm = p.cliente_nome || nomeCliente;
+    const nm = p.cliente_nome || _mesaAtual;
     if (!grupos[nm]) grupos[nm] = [];
     grupos[nm].push(p);
   });
 
-  const rows = Object.entries(grupos).map(([nm, gpeds]) => {
-    const sub = gpeds.reduce((s,p) => s + Number(p.total||0), 0);
-    return '<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1.5px dashed #ddd">'
-      + '<div style="font-size:13px;font-weight:800;margin-bottom:5px">'+nm+'</div>'
-      + gpeds.map(p => {
-          const itens = Array.isArray(p.itens) ? p.itens : [];
-          const dt = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-          return '<div style="font-size:10px;color:#888;margin-bottom:2px">'+dt+'</div>'
-            + itens.map(i => '<div style="display:flex;justify-content:space-between;font-size:12px;padding:1px 0">'
-              +'<span>'+( i.qtd||1)+'x '+i.nome+'</span>'
-              +'<span>R$ '+((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')+'</span>'
-              +'</div>').join('');
-        }).join('<div style="height:4px"></div>')
-      + '<div style="text-align:right;font-size:11px;color:#C0392B;font-weight:700;margin-top:4px">'+fmtR(sub)+'</div>'
-      + '</div>';
+  const html = `<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<title>Comanda ${_mesaAtual}</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: #000;
+    background: #fff;
+    width: 300px;
+    max-width: 300px;
+    margin: 0 auto;
+    padding: 14px 10px;
+  }
+  * { max-width: 100%; word-break: break-word; }
+  .center  { text-align: center; }
+  .logo    { font-size: 18px; font-weight: 900; letter-spacing: .06em; }
+  .logo-red { color: #C0392B; }
+  .empresa { font-size: 13px; font-weight: 700; margin-top: 2px; }
+  .info-sm { font-size: 10px; font-weight: 400; color: #444; line-height: 1.6; margin-top: 3px; }
+  .sep-dash  { border: none; border-top: 1px dashed #888; margin: 8px 0; }
+  .sep-thick { border: none; border-top: 3px solid #000; margin: 8px 0; }
+  .mesa-bloco {
+    background: #000; color: #fff;
+    border-radius: 6px; padding: 10px 8px 8px;
+    text-align: center; margin: 6px 0;
+  }
+  .mesa-lbl { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #aaa; }
+  .mesa-num { font-size: 38px; font-weight: 900; line-height: 1.1; }
+  .hora     { font-size: 11px; font-weight: 400; color: #888; text-align: center; }
+  .pessoa-bloco { margin-bottom: 10px; }
+  .pessoa-nome {
+    display: flex; align-items: center; gap: 8px;
+    background: #f5f5f5; border-radius: 4px;
+    padding: 5px 8px; margin-bottom: 4px;
+  }
+  .pessoa-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #C0392B; color: #fff;
+    font-size: 12px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .pessoa-label { font-size: 13px; font-weight: 700; }
+  .item {
+    display: flex; justify-content: space-between;
+    align-items: flex-start; gap: 6px;
+    font-size: 12px; font-weight: 400;
+    padding: 2px 4px;
+  }
+  .item-nome { flex: 1; }
+  .item-val  { flex-shrink: 0; font-weight: 700; }
+  .pessoa-sub {
+    display: flex; justify-content: flex-end;
+    font-size: 12px; font-weight: 700;
+    color: #C0392B; border-top: 1px dashed #ccc;
+    padding-top: 3px; margin-top: 2px;
+  }
+  .total-row {
+    display: flex; justify-content: space-between;
+    font-size: 16px; font-weight: 900;
+    border-top: 3px solid #000; border-bottom: 2px solid #000;
+    padding: 6px 0; margin: 4px 0;
+  }
+  .total-val { color: #C0392B; }
+  .social { font-size: 10px; font-weight: 400; text-align: center; line-height: 1.8; color: #444; }
+  .msg-final { font-size: 12px; font-weight: 700; text-align: center; margin: 5px 0 2px; }
+  .rodape { font-size: 9px; font-weight: 400; color: #bbb; text-align: center; letter-spacing: .04em; }
+  @media print {
+    body { padding: 4px 6px; }
+    @page { margin: 0; size: 80mm auto; }
+  }
+</style></head><body>
+
+<!-- CABEÇALHO -->
+<div class="center">
+  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
+  <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
+  <div class="info-sm">
+    ${estab?.endereco ? estab.endereco + '<br>' : ''}
+    ${estab?.telefone_contato ? 'Tel: ' + estab.telefone_contato + '<br>' : ''}
+    ${cnpjFmt ? 'CNPJ: ' + cnpjFmt : ''}
+  </div>
+</div>
+
+<hr class="sep-thick">
+
+<div class="mesa-bloco">
+  <div class="mesa-lbl">Mesa</div>
+  <div class="mesa-num">${_mesaAtual.replace('Mesa ','')}</div>
+</div>
+<div class="hora">${agora}</div>
+
+<hr class="sep-dash">
+
+<!-- PEDIDOS POR PESSOA -->
+${Object.entries(grupos).map(([nm, gpeds]) => {
+  const sub = gpeds.reduce((s,p) => s + Number(p.total||0), 0);
+  const inicial = nm.charAt(0).toUpperCase();
+  const itensRows = gpeds.map(p => {
+    const itens = Array.isArray(p.itens) ? p.itens : [];
+    return itens.map(i =>
+      `<div class="item">
+        <span class="item-nome">${i.qtd||1}x ${i.nome}</span>
+        <span class="item-val">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span>
+      </div>`
+    ).join('');
   }).join('');
+  return `<div class="pessoa-bloco">
+    <div class="pessoa-nome">
+      <div class="pessoa-avatar">${inicial}</div>
+      <span class="pessoa-label">${nm}</span>
+    </div>
+    ${itensRows}
+    <div class="pessoa-sub">${fmtR(sub)}</div>
+  </div>`;
+}).join('')}
 
-  // CNPJ formatado
-  const cnpj = estab?.cnpj ? estab.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : '';
-  const insta = estab?.instagram ? '@'+estab.instagram : '';
-  const tiktok = estab?.tiktok ? '@'+estab.tiktok : '';
-  const msgNota = estab?.msg_nota || 'Obrigado pela preferência! Volte sempre 😊';
+<div class="total-row">
+  <span>TOTAL</span>
+  <span class="total-val">${fmtR(total)}</span>
+</div>
 
-  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comanda — '+_mesaAtual+'</title>'
-    + '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;padding:16px;max-width:300px;margin:0 auto}'
-    + '.logo{font-size:17px;font-weight:900;text-align:center;letter-spacing:.05em}.logo span{color:#C0392B}'
-    + '.empresa{font-size:12px;font-weight:700;text-align:center;color:#333;margin-bottom:2px}'
-    + '.info{font-size:10px;text-align:center;color:#888;line-height:1.5}'
-    + 'hr{border:none;border-top:1px dashed #ccc;margin:8px 0}'
-    + 'hr.bold{border-top:2px solid #000}'
-    + '.mesa-num{font-size:20px;font-weight:900;text-align:center;margin:6px 0}'
-    + '.total-row{display:flex;justify-content:space-between;font-size:14px;font-weight:800;border-top:2px solid #000;padding-top:8px;margin-top:8px}'
-    + '.redes{text-align:center;font-size:10px;color:#888;margin-top:4px}'
-    + '.msg{text-align:center;font-size:11px;color:#555;font-style:italic;margin-top:6px}'
-    + '@media print{body{padding:0}}</style></head><body>'
-    // Cabeçalho
-    + '<div class="logo">PEDI<span>WAY</span></div>'
-    + '<div class="empresa">'+(estab?.nome||'Estabelecimento')+'</div>'
-    + '<div class="info">'
-    + (estab?.endereco ? estab.endereco+'<br>' : '')
-    + (estab?.telefone_contato ? 'Tel: '+estab.telefone_contato+'<br>' : '')
-    + (estab?.whatsapp ? 'WhatsApp: '+estab.whatsapp+'<br>' : '')
-    + (cnpj ? 'CNPJ: '+cnpj : '')
-    + '</div>'
-    + '<hr><div class="mesa-num">'+_mesaAtual+'</div>'
-    + '<div style="text-align:center;font-size:10px;color:#aaa;margin-bottom:6px">'+agora+'</div>'
-    + '<hr class="bold">'
-    + rows
-    + '<div class="total-row"><span>TOTAL</span><span style="color:#C0392B">'+fmtR(total)+'</span></div>'
-    // Redes sociais
-    + (insta||tiktok ? '<hr><div class="redes">'+(insta?'Instagram: '+insta+'  ':'')+( tiktok?'TikTok: '+tiktok:'')+'</div>' : '')
-    + (estab?.site ? '<div style="text-align:center;font-size:9px;color:#aaa">'+estab.site+'</div>' : '')
-    + '<hr><div class="msg">'+msgNota+'</div>'
-    + '<div style="text-align:center;font-size:9px;color:#ccc;margin-top:8px">PEDIWAY</div>'
-    + '</body></html>';
+${insta ? `<hr class="sep-dash"><div class="social">Instagram: <b>${insta}</b></div>` : ''}
+${estab?.site ? `<div class="social">${estab.site}</div>` : ''}
 
-  const w = window.open('','_blank','width=320,height=700');
+<hr class="sep-dash">
+<div class="msg-final">${msgFim}</div>
+<div class="rodape">PEDIWAY</div>
+
+</body></html>`;
+
+  const w = window.open('','_blank','width=340,height=750');
   if (!w) { alert('Permita pop-ups para imprimir.'); return; }
-  w.document.write(html); w.document.close(); w.focus();
-  setTimeout(() => w.print(), 400);
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 600);
 };
 
 
@@ -2576,7 +2658,7 @@ window.renderHistoricoMesas = async function() {
 
   const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
   const stCor = { novo:'#f59e0b', preparo:'#3b82f6', pronto:'#22c55e' };
-  const stLbl = { novo:'⏳ Aguardando', preparo:'🍳 Preparando', pronto:'✅ Pronto' };
+  const stLbl = { novo:'⏳ Aguardando', preparo:'✅ Na cozinha', pronto:'✅ Pronto' };
 
   // Agrupa por mesa
   const porMesa = {};
@@ -2657,7 +2739,7 @@ function _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl) {
   // Badge de status — destaque visual forte
   const stBadge = {
     novo:    { bg:'#fef3c7', cor:'#92400e', icon:'🔔', txt:'Aguardando' },
-    preparo: { bg:'#dbeafe', cor:'#1d4ed8', icon:'🍳', txt:'Preparando' },
+    preparo: { bg:'#f0fdf4', cor:'#16a34a', icon:'✅', txt:'Na cozinha' },
     pronto:  { bg:'#dcfce7', cor:'#15803d', icon:'✅', txt:'Pronto'     },
   }[p.status] || { bg:'#f3f4f6', cor:'#555', icon:'', txt: p.status };
 
@@ -2743,51 +2825,143 @@ window.imprimirCozinha = function(pedidoId) {
     const itens   = Array.isArray(p.itens) ? p.itens : [];
     const parts   = (p.endereco||'').split('—');
     const mesa    = parts.length >= 2 ? parts[1].trim() : p.endereco || '—';
+    const isMesa  = (p.endereco||'').startsWith('No local');
     const nome    = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';
     const dt      = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const loja    = getEstab()?.nome || 'Estabelecimento';
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>🍳 Cozinha</title>
-      <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: 'Arial Black', Arial, sans-serif; font-size:16px; padding:20px 16px; max-width:360px; margin:0 auto; background:#fff; }
-        .logo { font-size:22px; font-weight:900; text-align:center; letter-spacing:.05em; margin-bottom:3px; }
-        .logo span { color:#C0392B; }
-        .empresa { font-size:14px; font-weight:700; text-align:center; color:#333; margin-bottom:3px; }
-        .tag { font-size:11px; text-align:center; color:#999; text-transform:uppercase; letter-spacing:.1em; margin-bottom:12px; }
-        hr { border:none; border-top:2px dashed #ccc; margin:12px 0; }
-        hr.bold { border-top:3px solid #000; }
-        .mesa-box { text-align:center; background:#000; color:#fff; border-radius:12px; padding:14px 0 10px; margin:12px 0; }
-        .mesa-lbl { font-size:12px; font-weight:700; letter-spacing:.15em; text-transform:uppercase; color:#aaa; margin-bottom:4px; }
-        .mesa-num { font-size:52px; font-weight:900; line-height:1; }
-        .mesa-nome { font-size:14px; color:#ddd; margin-top:4px; font-weight:600; }
-        .hora { font-size:12px; text-align:center; color:#888; margin-bottom:12px; }
-        .item { display:flex; align-items:baseline; gap:10px; font-size:18px; font-weight:900; padding:8px 0; border-bottom:1px solid #eee; }
-        .item-qtd { font-size:22px; color:#C0392B; min-width:32px; flex-shrink:0; }
-        .item-nome { flex:1; line-height:1.3; }
-        .footer { text-align:center; font-size:11px; color:#bbb; margin-top:14px; letter-spacing:.05em; }
-        @media print { body { padding:10px 8px; } }
-      </style></head><body>
-      <div class="logo">PEDI<span>WAY</span></div>
-      <div class="empresa">${loja}</div>
-      <div class="tag">🍳 Ticket de Cozinha</div>
-      <hr>
-      <div class="mesa-box">
-        <div class="mesa-lbl">Mesa</div>
-        <div class="mesa-num">${mesa.replace('Mesa ','')}</div>
-        ${nome ? `<div class="mesa-nome">${nome}</div>` : ''}
-      </div>
-      <div class="hora">#${p.id.slice(-4).toUpperCase()} · ${dt}</div>
-      <hr class="bold">
-      ${itens.map(i=>`<div class="item"><span class="item-qtd">${i.qtd||1}x</span><span class="item-nome">${i.nome}</span></div>`).join('')}
-      <hr>
-      <div class="footer">PEDIWAY — Sistema de Gestão</div>
-    </body></html>`;
-    const w = window.open('','_blank','width=380,height=640');
-    if (!w) { alert('Permita pop-ups.'); return; }
-    w.document.write(html); w.document.close(); w.focus();
-    setTimeout(()=>w.print(), 350);
+    const numPed  = '#' + p.id.slice(-6).toUpperCase();
 
-    // Marca como enviado para cozinha e atualiza UI imediatamente
+    const html = `<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<title>Cozinha ${numPed}</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: #000;
+    background: #fff;
+    width: 300px;
+    max-width: 300px;
+    margin: 0 auto;
+    padding: 14px 10px;
+  }
+  * { max-width: 100%; word-break: break-word; }
+  .center  { text-align: center; }
+  .logo    { font-size: 18px; font-weight: 900; letter-spacing: .06em; }
+  .logo-red { color: #C0392B; }
+  .empresa { font-size: 13px; font-weight: 700; margin-top: 2px; }
+  .tag     { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #888; margin-top: 2px; }
+  .sep-dash  { border: none; border-top: 1px dashed #888; margin: 8px 0; }
+  .sep-thick { border: none; border-top: 3px solid #000; margin: 8px 0; }
+  .mesa-bloco {
+    background: #000;
+    color: #fff;
+    border-radius: 6px;
+    padding: 10px 8px 8px;
+    text-align: center;
+    margin: 6px 0;
+  }
+  .mesa-lbl { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #aaa; }
+  .mesa-num { font-size: 42px; font-weight: 900; line-height: 1.1; }
+  .mesa-nome { font-size: 13px; font-weight: 700; color: #ddd; margin-top: 2px; }
+  .delivery-bloco {
+    border: 2px solid #000;
+    border-radius: 6px;
+    padding: 8px;
+    text-align: center;
+    margin: 6px 0;
+  }
+  .delivery-badge { font-size: 14px; font-weight: 900; letter-spacing: .06em; }
+  .delivery-cliente { font-size: 14px; font-weight: 700; margin-top: 3px; }
+  .delivery-end { font-size: 11px; font-weight: 400; color: #444; margin-top: 2px; }
+  .hora { font-size: 11px; font-weight: 400; color: #888; text-align: center; margin-bottom: 4px; }
+  .sec { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #555; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin: 6px 0 5px; }
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px dotted #ddd;
+  }
+  .item:last-child { border-bottom: none; }
+  .item-qtd  { font-size: 16px; font-weight: 900; color: #C0392B; flex-shrink: 0; min-width: 24px; }
+  .item-nome { font-size: 14px; font-weight: 700; flex: 1; line-height: 1.3; }
+  .adicional { font-size: 11px; font-weight: 400; color: #555; padding: 1px 0 1px 32px; }
+  .obs {
+    border: 2px solid #C0392B;
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin: 6px 0;
+  }
+  .obs-titulo { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; color: #C0392B; }
+  .obs-texto  { font-size: 12px; font-weight: 700; }
+  .rodape { font-size: 9px; font-weight: 400; color: #bbb; text-align: center; margin-top: 8px; letter-spacing: .04em; }
+  @media print {
+    body { padding: 4px 6px; }
+    @page { margin: 0; size: 80mm auto; }
+  }
+</style></head><body>
+
+<!-- CABEÇALHO -->
+<div class="center">
+  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
+  <div class="empresa">${loja}</div>
+  <div class="tag">Ticket de Cozinha</div>
+</div>
+
+<hr class="sep-thick">
+
+<!-- IDENTIFICAÇÃO: MESA ou DELIVERY -->
+${isMesa ? `
+<div class="mesa-bloco">
+  <div class="mesa-lbl">Mesa</div>
+  <div class="mesa-num">${mesa.replace('Mesa ','')}</div>
+  ${nome ? `<div class="mesa-nome">${nome}</div>` : ''}
+</div>` : `
+<div class="delivery-bloco">
+  <div class="delivery-badge">DELIVERY / RETIRADA</div>
+  ${p.cliente_nome ? `<div class="delivery-cliente">${p.cliente_nome}</div>` : ''}
+  ${p.endereco ? `<div class="delivery-end">${p.endereco}</div>` : ''}
+</div>`}
+
+<div class="hora">${numPed} &nbsp;·&nbsp; ${dt}</div>
+
+<hr class="sep-dash">
+
+<!-- ITENS -->
+<div class="sec">Itens</div>
+${itens.map(i => {
+  const adds = Array.isArray(i.adicionais) && i.adicionais.length
+    ? i.adicionais.map(a => `<div class="adicional">+ ${a.nome}</div>`).join('')
+    : '';
+  return `<div class="item">
+    <span class="item-qtd">${i.qtd||1}x</span>
+    <span class="item-nome">${i.nome}</span>
+  </div>${adds}`;
+}).join('')}
+
+${p.observacao ? `
+<hr class="sep-dash">
+<div class="obs">
+  <div class="obs-titulo">Observacao</div>
+  <div class="obs-texto">${p.observacao}</div>
+</div>` : ''}
+
+<hr class="sep-dash">
+<div class="rodape">PEDIWAY &mdash; Sistema de Gestao</div>
+
+</body></html>`;
+
+    const w = window.open('','_blank','width=340,height=680');
+    if (!w) { alert('Permita pop-ups.'); return; }
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 600);
+
     marcarEnviadoCozinha(pedidoId);
     window.renderHistoricoMesas();
   });
@@ -3148,7 +3322,7 @@ function renderPedidosComanda(mesaKey) {
   const el   = document.getElementById('comanda-historico');
   const peds = _pedidosMesas[mesaKey] || [];
   const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  const stLbl = {novo:'⏳ Aguardando',preparo:'🍳 Preparando',pronto:'✅ Pronto'};
+  const stLbl = {novo:'⏳ Aguardando',preparo:'✅ Na cozinha',pronto:'✅ Pronto'};
   const stClr = {novo:'#f59e0b',preparo:'#3b82f6',pronto:'#22c55e'};
 
   const totalMesa = peds.reduce((s,p)=>s+Number(p.total||0),0);
