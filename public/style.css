@@ -477,11 +477,6 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   border-radius: 0 0 42px 42px;
   flex-shrink: 0;
 }
-  justify-content: space-between;
-  align-items: center;
-  font-size: .58rem;
-  font-weight: 700;
-}
 .phone-shadow {
   width: 160px;
   height: 20px;
@@ -519,7 +514,12 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   .phone-frame { width: 210px; height: 430px; border-radius: 40px; }
   .phone-screen { border-radius: 0 0 38px 38px; }
   .phone-cart-bar { border-radius: 0 0 38px 38px; }
-  .badge { white-space: normal; }
+  /* Badge não cortado */
+  .badge { white-space: normal; letter-spacing: 0; font-size: 0.7rem; padding: 4px 10px; }
+  /* Botões do header compactos */
+  .header-dark { padding: 12px 4%; }
+  .btn-ghost-dark { padding: 8px 14px; font-size: 0.82rem; white-space: nowrap; }
+  .btn-primary:not(.full):not(.big) { padding: 8px 14px; font-size: 0.82rem; white-space: nowrap; }
   .h1-line { white-space: normal; }
   h1 { font-size: 2.4rem; }
   .hero-actions { max-width: 100%; }
