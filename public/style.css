@@ -47,18 +47,17 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
   width: 100%;
 }
 .hero-inner {
-  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
   width: 100%;
-  min-height: 680px;
-  padding: 140px 6% 100px;
+  padding: 140px 6% 80px;
   box-sizing: border-box;
-  display: block;
+  gap: 40px;
 }
 .hero-text {
-  position: relative;
+  grid-column: 1;
   z-index: 2;
-  max-width: 460px;
-  width: 46%;
 }
 /* Cada linha do h1 é um bloco — nunca quebra sozinha */
 .h1-line {
@@ -384,17 +383,13 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
    MOCKUP CELULAR NA HERO
 ═══════════════════════════════ */
 .hero-mockup {
-  position: absolute;
-  right: 1000%;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44%;
-  height: 620px;
+  grid-column: 2;
+  position: relative;
+  height: 600px;
   display: flex;
   align-items: center;
   justify-content: center;
   perspective: 1200px;
-  z-index: 1;
 }
 
 /* Glow vermelho atrás do celular */
@@ -420,8 +415,8 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 }
 
 .phone-frame {
-  width: 252px;
-  height: 514px;
+  width: 248px;
+  height: 504px;
   background: linear-gradient(160deg, #252525 0%, #111 60%, #1a1a1a 100%);
   border-radius: 44px;
   border: 2px solid #3a3a3a;
@@ -435,7 +430,6 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   overflow: visible;
 }
 
-/* Reflexo de luz */
 .phone-frame::before {
   content: '';
   position: absolute;
@@ -446,7 +440,6 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   z-index: 10;
 }
 
-/* Botões laterais */
 .phone-frame::after {
   content: '';
   position: absolute;
@@ -556,9 +549,9 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 
 @media(max-width:600px) {
   /* ── Landing ── */
-  .hero-inner { min-height: auto; padding: 100px 5% 50px; }
-  .hero-text { width: 100%; max-width: 100%; }
-  .hero-mockup { position: relative; right: auto; top: auto; transform: none; width: 100%; height: 420px; margin: 36px auto 0; }
+  .hero-inner { grid-template-columns: 1fr; padding: 100px 5% 50px; gap: 32px; }
+  .hero-text { grid-column: 1; }
+  .hero-mockup { grid-column: 1; height: 420px; }
   .phone-frame { width: 185px; height: 378px; }
   .h1-line { white-space: normal; }
   h1 { font-size: 2.4rem; }
