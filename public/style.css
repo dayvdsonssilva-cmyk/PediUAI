@@ -47,6 +47,7 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
   max-width: 100%;
   display: flex;
   align-items: stretch;
+  overflow: hidden;
 }
 .hero-inner {
   display: flex;
@@ -56,12 +57,13 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
   max-width: 100%;
   margin: 0;
   padding: 140px 6% 80px 6%;
+  gap: 40px;
 }
 .hero-text {
-  flex: 0 0 auto;
+  flex: 1 1 0;
+  min-width: 0;
   max-width: 480px;
-  width: 100%;
-  z-index: 1;
+  z-index: 2;
 }
 /* Cada linha do h1 é um bloco — nunca quebra sozinha */
 .h1-line {
@@ -387,24 +389,24 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
    MOCKUP CELULAR NA HERO
 ═══════════════════════════════ */
 .hero-mockup {
-  flex: 0 0 auto;
+  flex: 0 0 320px;
+  width: 320px;
+  height: 600px;
   position: relative;
-  width: 360px;
-  height: 620px;
   display: flex;
   align-items: center;
   justify-content: center;
   perspective: 1200px;
-  margin-left: auto;
+  z-index: 1;
 }
 
 /* Glow vermelho atrás do celular */
 .hero-mockup::before {
   content: '';
   position: absolute;
-  width: 340px;
-  height: 340px;
-  background: radial-gradient(circle, rgba(192,57,43,0.28) 0%, transparent 70%);
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(192,57,43,0.30) 0%, transparent 70%);
   border-radius: 50%;
   top: 50%;
   left: 50%;
@@ -422,20 +424,16 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 }
 
 .phone-frame {
-  width: 248px;
-  height: 504px;
+  width: 240px;
+  height: 490px;
   background: linear-gradient(160deg, #252525 0%, #111 60%, #1a1a1a 100%);
-  border-radius: 44px;
+  border-radius: 42px;
   border: 2px solid #3a3a3a;
   box-shadow:
-    /* Borda lateral direita — ilusão de espessura 3D */
     8px 0 0 0 #1a1a1a,
     9px 0 0 1px #111,
-    /* Sombra principal */
     -16px 32px 80px rgba(0,0,0,0.75),
-    /* Brilho topo interno */
     inset 0 1px 0 rgba(255,255,255,0.10),
-    /* Brilho lateral esquerdo */
     inset 2px 0 0 rgba(255,255,255,0.05);
   position: relative;
   overflow: visible;
@@ -446,92 +444,79 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 43px;
+  border-radius: 41px;
   background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 45%);
   pointer-events: none;
   z-index: 10;
 }
 
-/* Botões laterais (volume / power) */
+/* Botões laterais */
 .phone-frame::after {
   content: '';
   position: absolute;
   right: -4px;
   top: 100px;
   width: 4px;
-  height: 48px;
+  height: 44px;
   background: #222;
   border-radius: 0 3px 3px 0;
-  box-shadow: 0 60px 0 #222, 0 72px 0 #1a1a1a;
+  box-shadow: 0 58px 0 #222;
 }
 
 .phone-notch {
-  width: 76px; height: 22px;
+  width: 72px; height: 20px;
   background: #0a0a0a;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 14px 14px;
   margin: 0 auto;
   position: relative;
   z-index: 10;
 }
 
-/* Câmera no notch */
-.phone-notch::after {
-  content: '';
-  position: absolute;
-  width: 8px; height: 8px;
-  background: #1a1a1a;
-  border-radius: 50%;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: inset 0 0 0 2px #0a0a0a;
-}
-
 .phone-screen {
-  height: calc(100% - 22px);
+  height: calc(100% - 20px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   background: #fff;
-  border-radius: 0 0 40px 40px;
+  border-radius: 0 0 39px 39px;
   margin: 0 2px 2px;
 }
 
 .phone-header {
   background: var(--red, #C0392B);
-  padding: 11px 14px 9px;
+  padding: 10px 12px 8px;
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
 }
 .phone-logo { font-size: 1.1rem; display: none; }
-.phone-store-name { color: #fff; font-size: .72rem; font-weight: 800; flex: 1; }
-.phone-open-badge { font-size: .54rem; background: rgba(255,255,255,.22); color: #fff; padding: 2px 7px; border-radius: 20px; font-weight: 700; white-space: nowrap; }
+.phone-store-name { color: #fff; font-size: .68rem; font-weight: 800; flex: 1; }
+.phone-open-badge { font-size: .5rem; background: rgba(255,255,255,.22); color: #fff; padding: 2px 6px; border-radius: 20px; font-weight: 700; white-space: nowrap; }
 
-.phone-content { flex: 1; padding: 8px 10px; overflow: hidden; display: flex; flex-direction: column; gap: 7px; }
+.phone-content { flex: 1; padding: 7px 9px; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
 
 .phone-item-card {
   background: #fff;
-  border-radius: 12px;
-  padding: 9px 11px;
+  border-radius: 11px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   border: 1px solid #f0ebe4;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 5px rgba(0,0,0,0.05);
 }
-.phone-item-emoji { font-size: 1.5rem; flex-shrink: 0; }
+.phone-item-emoji { font-size: 1.4rem; flex-shrink: 0; }
 .phone-item-info { flex: 1; min-width: 0; }
-.phone-item-name { font-size: .62rem; font-weight: 700; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.phone-item-price { font-size: .66rem; font-weight: 800; color: var(--red, #C0392B); margin-top: 2px; }
+.phone-item-name { font-size: .6rem; font-weight: 700; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.phone-item-price { font-size: .62rem; font-weight: 800; color: var(--red, #C0392B); margin-top: 2px; }
 .phone-item-btn {
-  width: 24px; height: 24px;
+  width: 22px; height: 22px;
   background: var(--red, #C0392B);
   color: #fff;
   border: none;
-  border-radius: 7px;
-  font-size: .9rem;
+  border-radius: 6px;
+  font-size: .85rem;
   font-weight: 800;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
@@ -542,53 +527,51 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .phone-cart-bar {
   background: #111;
   color: #fff;
-  padding: 9px 14px;
+  padding: 8px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: .62rem;
+  font-size: .58rem;
   font-weight: 700;
   flex-shrink: 0;
-  border-radius: 0 0 38px 38px;
+  border-radius: 0 0 37px 37px;
 }
 
-/* Sombra flutuante sob o celular */
 .phone-shadow {
-  width: 180px;
-  height: 24px;
-  background: rgba(0,0,0,0.45);
+  width: 170px;
+  height: 22px;
+  background: rgba(0,0,0,0.40);
   border-radius: 50%;
-  filter: blur(22px);
-  margin: 18px auto 0;
-  transform: rotateX(60deg);
+  filter: blur(20px);
+  margin: 16px auto 0;
 }
 
-/* ── Itens de comida flutuantes ── */
+/* Itens de comida flutuantes */
 .food-item {
   position: absolute;
   pointer-events: none;
   animation: float-food 4s ease-in-out infinite;
-  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.45));
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4));
   z-index: 2;
 }
-.fi-1 { top: 30px;   left: -10px;  animation-delay: 0s;    animation-duration: 3.8s; font-size: 2.4rem; }
-.fi-2 { top: 40px;   right: -15px; animation-delay: 0.6s;  animation-duration: 4.2s; font-size: 2rem;   }
-.fi-3 { bottom: 90px;left: -20px;  animation-delay: 1.2s;  animation-duration: 3.5s; font-size: 1.8rem; }
-.fi-4 { bottom: 50px;right: -10px; animation-delay: 0.3s;  animation-duration: 4.5s; font-size: 2.2rem; }
-.fi-5 { top: 48%;   left: -36px;  animation-delay: 1.8s;  animation-duration: 3.2s; font-size: 1.6rem; }
-.fi-6 { top: 32%;   right: -30px; animation-delay: 0.9s;  animation-duration: 4.8s; font-size: 1.9rem; }
+.fi-1 { top: 24px;   left: -8px;  animation-delay: 0s;   animation-duration: 3.8s; font-size: 2.2rem; }
+.fi-2 { top: 36px;   right: -12px;animation-delay: 0.6s; animation-duration: 4.2s; font-size: 1.9rem; }
+.fi-3 { bottom: 85px;left: -18px; animation-delay: 1.2s; animation-duration: 3.5s; font-size: 1.7rem; }
+.fi-4 { bottom: 44px;right: -8px; animation-delay: 0.3s; animation-duration: 4.5s; font-size: 2rem;   }
+.fi-5 { top: 46%;   left: -32px; animation-delay: 1.8s; animation-duration: 3.2s; font-size: 1.5rem; }
+.fi-6 { top: 30%;   right: -28px;animation-delay: 0.9s; animation-duration: 4.8s; font-size: 1.8rem; }
 
 @keyframes float-food {
-  0%, 100% { transform: translateY(0px) rotate(-6deg) scale(1); }
-  50%       { transform: translateY(-18px) rotate(6deg) scale(1.05); }
+  0%, 100% { transform: translateY(0px) rotate(-5deg); }
+  50%       { transform: translateY(-16px) rotate(5deg); }
 }
 
 @media(max-width:600px) {
   /* ── Landing ── */
   .hero-inner { flex-direction: column; padding: 100px 5% 50px; gap: 40px; }
   .hero-text { max-width: 100%; padding-right: 0; margin-right: 0; }
-  .hero-mockup { width: 240px; height: 460px; margin-right: 0; }
-  .phone-frame { width: 190px; height: 390px; border-radius: 36px; }
+  .hero-mockup { flex: 0 0 auto; width: 220px; height: 440px; margin: 0 auto; }
+  .phone-frame { width: 185px; height: 378px; }
   .h1-line { white-space: normal; }
   h1 { font-size: 2.4rem; }
   .hero-actions { max-width: 100%; }
