@@ -135,7 +135,6 @@
 <div data-screen="s-register" class="screen">
   <header class="header-dark">
     <div class="logo-dark" onclick="goTo('s-landing')" style="cursor:pointer" translate="no">PEDI<span>WAY</span></div>
-    <button onclick="goTo('s-landing')" style="background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.2);color:#fff;width:36px;height:36px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-family:inherit;">✕</button>
   </header>
   <div class="auth-container">
     <div class="auth-card">
@@ -559,6 +558,20 @@
           </div>
         </div>
         <div id="fin-pags-est" style="padding:0 4px">
+          <div style="color:#aaa;font-size:0.82rem;text-align:center;padding:20px">Carregando...</div>
+        </div>
+      </div>
+
+      <!-- Origem: Mesa vs Delivery -->
+      <div class="fin-section-card" style="margin-bottom:16px">
+        <div class="fin-section-header">
+          <div class="fin-section-icon">📍</div>
+          <div>
+            <div class="fin-section-title">Origem dos Pedidos</div>
+            <div class="fin-section-sub">Mesas (No local) vs Delivery</div>
+          </div>
+        </div>
+        <div id="fin-origem-est" style="padding:0 4px">
           <div style="color:#aaa;font-size:0.82rem;text-align:center;padding:20px">Carregando...</div>
         </div>
       </div>
@@ -1248,7 +1261,7 @@
 
 <!-- Modal confirmar fechamento de comanda -->
 <div id="modal-fechar-comanda" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000;align-items:center;justify-content:center;padding:20px">
-  <div style="background:#fff;border-radius:18px;width:100%;max-width:340px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+  <div style="background:#fff;border-radius:18px;width:100%;max-width:360px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f0ebe4">
       <span style="font-size:1rem;font-weight:800;color:#1a1a1a">Fechar comanda</span>
@@ -1262,7 +1275,30 @@
         <div id="fechar-comanda-total" style="font-size:1.5rem;font-weight:900;color:#C0392B;margin-top:4px"></div>
         <div id="fechar-comanda-info" style="font-size:.75rem;color:#aaa;margin-top:4px"></div>
       </div>
-      <div style="background:#fef9f0;border:1px solid #f5e6c8;border-radius:10px;padding:10px 14px;font-size:.78rem;color:#92400e;margin-bottom:16px">
+
+      <!-- Forma de pagamento -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:.75rem;font-weight:700;color:#555;margin-bottom:10px">💳 Forma de pagamento</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <button onclick="selecionarPagamentoComanda('PIX')" id="pgto-btn-PIX"
+            style="padding:10px 6px;border-radius:10px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s">
+            <span style="font-size:1.3rem">📱</span>PIX
+          </button>
+          <button onclick="selecionarPagamentoComanda('CARTÃO')" id="pgto-btn-CARTÃO"
+            style="padding:10px 6px;border-radius:10px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s">
+            <span style="font-size:1.3rem">💳</span>Cartão
+          </button>
+          <button onclick="selecionarPagamentoComanda('DINHEIRO')" id="pgto-btn-DINHEIRO"
+            style="padding:10px 6px;border-radius:10px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s">
+            <span style="font-size:1.3rem">💵</span>Dinheiro
+          </button>
+        </div>
+        <div id="pgto-aviso" style="display:none;font-size:.72rem;color:#C0392B;margin-top:8px;text-align:center;font-weight:600">
+          ⚠️ Selecione uma forma de pagamento
+        </div>
+      </div>
+
+      <div style="background:#fef9f0;border:1px solid #f5e6c8;border-radius:10px;padding:10px 14px;font-size:.78rem;color:#92400e">
         ⚠️ A mesa será liberada e os pedidos encerrados.
       </div>
     </div>
