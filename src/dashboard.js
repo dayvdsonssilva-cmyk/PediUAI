@@ -514,7 +514,6 @@ function mostrarCapaPreview(cor) {
 // SALVAR CONFIG
 // ─────────────────────────────────────────────────────────────────────────────
 export async function salvarConfig() {
-  if (window._isDemo) return showToast('No demo não é possível salvar.', 'error');
   const estab = getEstab(); if (!estab) return;
 
   const nome     = $('cfg-nome')?.value.trim();
@@ -704,7 +703,6 @@ function renderEmojiGrid() {
 
 // ─── Modal de item ───────────────────────────────────────────────────────────
 export function abrirModalItem() {
-  if (window._isDemo) return showToast('No demo não é possível salvar.');
   $('modal-item').classList.add('open');
   ['item-nome','item-desc','item-cat','item-preco','item-preco-orig'].forEach(id => { const el=$(id); if(el) el.value=''; });
   const pr = $('item-promocao'); if (pr) pr.checked = false;
@@ -844,39 +842,7 @@ window.fecharCropFoto = function() {
 };
 
 // Drag no modal de crop
-document.addEventListener('DOMContentLoaded', function() {
-  const area = $('crop-foto-area'); if (!area) return;
 
-  const start = function(e) {
-    _cropFotoDragAtivo = true;
-    const t = e.touches ? e.touches[0] : e;
-    _cropFotoDragX = t.clientX; _cropFotoDragY = t.clientY;
-    area.style.cursor = 'grabbing';
-    e.preventDefault();
-  };
-  const move = function(e) {
-    if (!_cropFotoDragAtivo) return;
-    const t = e.touches ? e.touches[0] : e;
-    const dx = (t.clientX - _cropFotoDragX) / area.offsetWidth  * 100;
-    const dy = (t.clientY - _cropFotoDragY) / area.offsetHeight * 100;
-    _cropFotoDragX = t.clientX; _cropFotoDragY = t.clientY;
-    _cropFotoPosX = Math.max(0, Math.min(100, _cropFotoPosX - dx * 0.6));
-    _cropFotoPosY = Math.max(0, Math.min(100, _cropFotoPosY - dy * 0.6));
-    const img = $('crop-foto-img');
-    if (img) img.style.objectPosition = _cropFotoPosX + '% ' + _cropFotoPosY + '%';
-    const pin = $('crop-foto-pin');
-    if (pin) { pin.style.left = _cropFotoPosX + '%'; pin.style.top = _cropFotoPosY + '%'; }
-    e.preventDefault();
-  };
-  const end = function() { _cropFotoDragAtivo = false; area.style.cursor = 'grab'; };
-
-  area.addEventListener('mousedown',  start, {passive:false});
-  area.addEventListener('touchstart', start, {passive:false});
-  document.addEventListener('mousemove',  move, {passive:false});
-  document.addEventListener('touchmove',  move, {passive:false});
-  document.addEventListener('mouseup',  end);
-  document.addEventListener('touchend', end);
-});
 
 function renderFotosGrid() {
   const grid = $('fotos-grid'); if (!grid) return;
@@ -952,39 +918,7 @@ window.fecharCropFoto = function() {
 };
 
 // Drag no modal de crop
-document.addEventListener('DOMContentLoaded', function() {
-  const area = $('crop-foto-area'); if (!area) return;
 
-  const start = function(e) {
-    _cropFotoDragAtivo = true;
-    const t = e.touches ? e.touches[0] : e;
-    _cropFotoDragX = t.clientX; _cropFotoDragY = t.clientY;
-    area.style.cursor = 'grabbing';
-    e.preventDefault();
-  };
-  const move = function(e) {
-    if (!_cropFotoDragAtivo) return;
-    const t = e.touches ? e.touches[0] : e;
-    const dx = (t.clientX - _cropFotoDragX) / area.offsetWidth  * 100;
-    const dy = (t.clientY - _cropFotoDragY) / area.offsetHeight * 100;
-    _cropFotoDragX = t.clientX; _cropFotoDragY = t.clientY;
-    _cropFotoPosX = Math.max(0, Math.min(100, _cropFotoPosX - dx * 0.6));
-    _cropFotoPosY = Math.max(0, Math.min(100, _cropFotoPosY - dy * 0.6));
-    const img = $('crop-foto-img');
-    if (img) img.style.objectPosition = _cropFotoPosX + '% ' + _cropFotoPosY + '%';
-    const pin = $('crop-foto-pin');
-    if (pin) { pin.style.left = _cropFotoPosX + '%'; pin.style.top = _cropFotoPosY + '%'; }
-    e.preventDefault();
-  };
-  const end = function() { _cropFotoDragAtivo = false; area.style.cursor = 'grab'; };
-
-  area.addEventListener('mousedown',  start, {passive:false});
-  area.addEventListener('touchstart', start, {passive:false});
-  document.addEventListener('mousemove',  move, {passive:false});
-  document.addEventListener('touchmove',  move, {passive:false});
-  document.addEventListener('mouseup',  end);
-  document.addEventListener('touchend', end);
-});
 
 
 
@@ -1009,9 +943,11 @@ function _startDragFoto(e, i) {
   e.preventDefault();
 }
 
-document.addEventListener('mousemove', _moveDragFoto);
-document.addEventListener('touchmove', _moveDragFoto, { passive:false });
-document.addEventListener('mouseup',   () => _fotoDrag.ativo = false);
+// Listeners do drag de foto — passivos para não bloquear scroll
+document.addEventListener('mousemove', _moveDragFoto, { passive: true });
+document.addEventListener('touchmove', _moveDragFoto, { passive: true });
+document.addEventListener('mouseup',   () => { _fotoDrag.ativo = false; });
+document.addEventListener('touchend',  () => { _fotoDrag.ativo = false; });
 document.addEventListener('touchend',  () => _fotoDrag.ativo = false);
 
 function _moveDragFoto(e) {
@@ -1028,7 +964,6 @@ function _moveDragFoto(e) {
   if (img) img.style.objectPosition = `${fotosPosX[i]}% ${fotosPosY[i]}%`;
   const pin = $(`foto-pin-${i}`);
   if (pin) { pin.style.left = fotosPosX[i] + '%'; pin.style.top = fotosPosY[i] + '%'; }
-  e.preventDefault();
 }
 window.removerFotoExistente = function(btn) {
   btn.closest('.foto-thumb-item').remove();
