@@ -385,7 +385,7 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 ═══════════════════════════════ */
 .hero-mockup {
   position: absolute;
-  right: 90%;
+  right: 1000%;
   top: 50%;
   transform: translateY(-50%);
   width: 44%;
