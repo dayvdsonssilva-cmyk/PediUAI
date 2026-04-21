@@ -19,20 +19,86 @@
     </div>
   </header>
   <section class="hero">
-    <span class="badge">Plataforma delivery independente</span>
-    <h1>Seu cardápio.<br>Sua marca.<br><span class="highlight">Seu lucro.</span></h1>
-    <p>Crie sua loja em minutos, compartilhe o link e receba pedidos direto no celular. Sem comissao por venda.</p>
-    <div class="hero-actions">
-      <button class="btn-primary big hero-btn-main" onclick="goTo('s-register')">Criar minha loja</button>
-      <div class="hero-btns-sec">
-        <button class="btn-ghost-dark big hero-btn-sec" onclick="openDemo()">Ver demo do painel</button>
-        <button class="btn-ghost-dark big hero-btn-sec" onclick="openDemoCliente()">Ver demo do cardápio</button>
+    <div class="hero-inner">
+      <!-- Coluna texto -->
+      <div class="hero-text">
+        <span class="badge">Plataforma delivery independente</span>
+        <h1><span class="h1-line">Seu cardápio.</span><span class="h1-line">Sua marca.</span><span class="h1-line highlight">Seu lucro.</span></h1>
+        <p>Crie sua loja em minutos, compartilhe o link e receba pedidos direto no celular. Sem comissão por venda.</p>
+        <div class="hero-actions">
+          <button class="btn-primary big hero-btn-main" onclick="goTo('s-register')">Criar minha loja</button>
+          <div class="hero-btns-sec">
+            <button class="btn-ghost-dark big hero-btn-sec" onclick="openDemo()">Ver demo do painel</button>
+            <button class="btn-ghost-dark big hero-btn-sec" onclick="openDemoCliente()">Ver demo do cardápio</button>
+          </div>
+        </div>
+        <div class="stats">
+          <div><strong>R$0</strong><span>comissão por pedido</span></div>
+          <div><strong>5min</strong><span>para montar seu cardápio</span></div>
+          <div><strong>100%</strong><span>do lucro é seu</span></div>
+        </div>
       </div>
-    </div>
-    <div class="stats">
-      <div><strong>R$0</strong><span>comissão por pedido</span></div>
-      <div><strong>5min</strong><span>para montar seu cardápio</span></div>
-      <div><strong>100%</strong><span>do lucro é seu</span></div>
+
+      <!-- Coluna mockup -->
+      <div class="hero-mockup" id="hero-mockup">
+        <!-- Itens flutuantes ao redor do celular -->
+        <div class="food-item fi-1">🍔</div>
+        <div class="food-item fi-2">🍕</div>
+        <div class="food-item fi-3">🥤</div>
+        <div class="food-item fi-4">🍟</div>
+        <div class="food-item fi-5">🌮</div>
+        <div class="food-item fi-6">🍣</div>
+
+        <!-- Celular -->
+        <div class="phone-wrap">
+          <div class="phone-frame">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <!-- Capa do cardápio dentro do celular -->
+              <div class="phone-header">
+                <div class="phone-logo">🏪</div>
+                <div class="phone-store-name">Burguer do Zé</div>
+                <div class="phone-status">
+                  <span class="phone-open-badge">● Aberto</span>
+                </div>
+              </div>
+              <div class="phone-content">
+                <div class="phone-item-card">
+                  <span class="phone-item-emoji">🍔</span>
+                  <div class="phone-item-info">
+                    <div class="phone-item-name">X-Burguer Especial</div>
+                    <div class="phone-item-price">R$ 28,90</div>
+                  </div>
+                  <button class="phone-item-btn">+</button>
+                </div>
+                <div class="phone-item-card">
+                  <span class="phone-item-emoji">🍟</span>
+                  <div class="phone-item-info">
+                    <div class="phone-item-name">Batata Frita Grande</div>
+                    <div class="phone-item-price">R$ 14,90</div>
+                  </div>
+                  <button class="phone-item-btn">+</button>
+                </div>
+                <div class="phone-item-card">
+                  <span class="phone-item-emoji">🥤</span>
+                  <div class="phone-item-info">
+                    <div class="phone-item-name">Refrigerante 350ml</div>
+                    <div class="phone-item-price">R$ 7,90</div>
+                  </div>
+                  <button class="phone-item-btn">+</button>
+                </div>
+              </div>
+              <!-- Barra do carrinho -->
+              <div class="phone-cart-bar">
+                <span>🛒 3 itens</span>
+                <span>R$ 51,70</span>
+              </div>
+            </div>
+          </div>
+          <!-- Reflexo/sombra sob o celular -->
+          <div class="phone-shadow"></div>
+        </div>
+      </div>
     </div>
   </section>
 </div>
@@ -1207,6 +1273,58 @@
   </div>
 </div>
 
+<script>
+// Efeito de parallax no mockup do celular
+(function() {
+  const mockup = document.getElementById('hero-mockup');
+  if (!mockup) return;
+  const wrap = mockup.querySelector('.phone-wrap');
+  const items = mockup.querySelectorAll('.food-item');
+  if (!wrap) return;
+
+  let targetX = 0, targetY = 0, curX = 0, curY = 0;
+  let rafId = null;
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  function animate() {
+    curX = lerp(curX, targetX, 0.08);
+    curY = lerp(curY, targetY, 0.08);
+    wrap.style.transform = `rotateY(${curX}deg) rotateX(${-curY}deg) translateZ(10px)`;
+    items.forEach((el, i) => {
+      const factor = 0.4 + (i % 3) * 0.2;
+      el.style.transform = `translate(${curX * factor * 1.5}px, ${curY * factor * 1.5}px)`;
+    });
+    rafId = requestAnimationFrame(animate);
+  }
+
+  // Mouse hover no desktop
+  mockup.addEventListener('mousemove', e => {
+    const r = mockup.getBoundingClientRect();
+    const x = (e.clientX - r.left - r.width  / 2) / (r.width  / 2);
+    const y = (e.clientY - r.top  - r.height / 2) / (r.height / 2);
+    targetX = x * 15;
+    targetY = y * 12;
+  });
+  mockup.addEventListener('mouseleave', () => {
+    targetX = 0; targetY = 0;
+  });
+
+  // Touch no mobile
+  mockup.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    const r = mockup.getBoundingClientRect();
+    const x = (t.clientX - r.left - r.width  / 2) / (r.width  / 2);
+    const y = (t.clientY - r.top  - r.height / 2) / (r.height / 2);
+    targetX = x * 10; targetY = y * 8;
+  }, { passive: true });
+  mockup.addEventListener('touchend', () => {
+    targetX = 0; targetY = 0;
+  });
+
+  animate();
+})();
+</script>
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>
