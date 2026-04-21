@@ -643,44 +643,62 @@ async function renderCardapio() {
 }
 
 function renderPedidosDemo() {
-  // Visão geral com dados fictícios mas realistas
-  const sp = $('stat-pedidos');     if (sp) sp.textContent = '12';
-  const sf = $('stat-faturamento'); if (sf) sf.textContent = 'R$ 487,60';
-  const si = $('stat-itens');       // itens no cardápio — já setado abaixo
+  const sp = $('stat-pedidos');     if (sp) sp.textContent = '24';
+  const sf = $('stat-faturamento'); if (sf) sf.textContent = 'R$ 1.248,50';
+  const si = $('stat-itens');       if (si) si.textContent = '8';
+
+  const pedidos = [
+    { id:'A1F2', nome:'João Silva',    tipo:'🛵', itens:'2x X-Burguer · 1x Batata', total:71.70, status:'novo'   },
+    { id:'B3C4', nome:'Ana Paula',     tipo:'🏃', itens:'1x Combo Família',          total:89.90, status:'novo'   },
+    { id:'C5D6', nome:'Carlos Mendes', tipo:'🛵', itens:'3x Refrigerante · 2x Pizza', total:67.80, status:'preparo'},
+    { id:'D7E8', nome:'Mesa 4',        tipo:'🍽️', itens:'4x X-Tudo · 2x Batata',    total:132.40, status:'preparo'},
+  ];
 
   const lista = $('pedidos-novos-lista');
   if (lista) {
-    lista.innerHTML = [
-      { mesa:'Mesa 3', nome:'João Silva',  itens:'2x X-Burguer · 1x Batata Frita', total:71.70, status:'novo'   },
-      { mesa:null,     nome:'Ana Paula',   itens:'1x Açaí 500ml · 2x Refrigerante', total:44.70, status:'preparo'},
-    ].map(p => `<div class="pedido-card ped-status-${p.status}" style="margin-bottom:10px;opacity:.9">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-weight:800;font-size:.9rem">${p.nome}</div>
-        <span class="status-${p.status}" style="font-size:.72rem">${p.status === 'novo' ? '🔔 Novo' : '🍳 Preparando'}</span>
-      </div>
-      <div style="font-size:.78rem;color:#888;margin-bottom:6px">${p.itens}</div>
-      <div style="font-weight:800;color:var(--red)">R$ ${p.total.toFixed(2).replace('.',',')}</div>
-    </div>`).join('');
+    lista.innerHTML = pedidos.map(p => `
+      <div class="pedido-card ped-status-${p.status}" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:.85rem">${p.tipo}</span>
+            <div>
+              <div style="font-weight:800;font-size:.88rem">${p.nome}</div>
+              <div style="font-size:.68rem;color:#aaa">#${p.id}</div>
+            </div>
+          </div>
+          <span class="pedido-status ${p.status === 'novo' ? 'status-novo' : 'status-preparo'}" style="font-size:.65rem">
+            ${p.status === 'novo' ? '🔔 Novo' : '👨‍🍳 Preparo'}
+          </span>
+        </div>
+        <div style="font-size:.78rem;color:#888;margin-bottom:8px">${p.itens}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong style="color:var(--red)">R$ ${p.total.toFixed(2).replace('.',',')}</strong>
+            ${p.status === 'novo' ? `<button class="btn-ped-aceitar" style="font-size:.72rem;padding:5px 10px" onclick="showToast('Demo: faca login!','info')">&#10003; Aceitar</button>` : ''}
+            <button class="btn-ped-imprimir" style="font-size:.72rem;padding:5px 10px" onclick="showToast('Demo: faca login!','info')">Ver</button>
+            <button class="btn-ped-imprimir" style="font-size:.72rem;padding:5px 10px" onclick="showToast('Demo — faça login para ver pedidos reais!','info')">Ver</button>
+          </div>
+        </div>
+      </div>`).join('');
   }
-  // Badge pedidos
-  const badge = $('badge-pedidos-count'); if (badge) badge.textContent = '2';
-  const badgeW = $('badge-pedidos-wrap'); if (badgeW) badgeW.style.display = 'flex';
 
-  // Stats visão geral
-  if ($('ultimos-pedidos')) {
-    $('ultimos-pedidos').innerHTML = '<div style="color:#aaa;font-size:.82rem;padding:12px">Este é um demo — faça login para ver seus pedidos reais.</div>';
-  }
+  const badge = $('badge-pedidos-count'); if (badge) badge.textContent = '4';
+  const badgeW = $('badge-pedidos-wrap'); if (badgeW) badgeW.style.display = 'flex';
 }
 
 function renderCardapioDemo() {
   const grid = $('cardapio-grid'); const stat = $('stat-itens');
-  if (stat) stat.textContent = '3';
-  if (!grid) return;
   const demo = [
-    { nome:'X-Burguer Especial', categoria:'LANCHES', preco:28.90, emoji:'🍔', promocao:false },
-    { nome:'Batata Frita Grande', categoria:'ACOMPANHAMENTOS', preco:14.90, emoji:'🍟', promocao:false },
-    { nome:'Refrigerante 350ml', categoria:'BEBIDAS', preco:7.90, emoji:'🥤', promocao:true, preco_original:9.90 },
+    { nome:'X-Burguer Especial', categoria:'LANCHES', preco:28.90, emoji:'🍔' },
+    { nome:'X-Tudo',             categoria:'LANCHES', preco:34.90, emoji:'🍔' },
+    { nome:'Batata Frita Grande', categoria:'ACOMPANHAMENTOS', preco:14.90, emoji:'🍟' },
+    { nome:'Onion Rings',        categoria:'ACOMPANHAMENTOS', preco:12.90, emoji:'🧅' },
+    { nome:'Refrigerante 350ml', categoria:'BEBIDAS', preco:7.90, emoji:'🥤' },
+    { nome:'Suco Natural 400ml', categoria:'BEBIDAS', preco:11.90, emoji:'🥤' },
+    { nome:'Sorvete Caseiro',    categoria:'SOBREMESAS', preco:9.90, emoji:'🍦' },
+    { nome:'Combo Família',      categoria:'COMBOS', preco:89.90, emoji:'🎁' },
   ];
+  if (stat) stat.textContent = String(demo.length);
+  if (!grid) return;
   grid.innerHTML = demo.map(p => `
     <div class="item-card">
       <div class="item-card-img"><div class="item-emoji-bg">${p.emoji}</div></div>
