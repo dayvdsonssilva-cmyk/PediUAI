@@ -1290,7 +1290,7 @@
   function animate() {
     curX = lerp(curX, targetX, 0.08);
     curY = lerp(curY, targetY, 0.08);
-    wrap.style.transform = `rotateY(${-14 + curX}deg) rotateX(${5 + (-curY)}deg) translateZ(10px)`;
+    wrap.style.transform = `rotateY(${-10 + curX}deg) rotateX(${4 + (-curY)}deg) translateZ(10px)`;
     items.forEach((el, i) => {
       const factor = 0.4 + (i % 3) * 0.2;
       el.style.transform = `translate(${curX * factor * 1.5}px, ${curY * factor * 1.5}px)`;
