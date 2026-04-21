@@ -52,7 +52,7 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 0;
+  gap: 80px;
   width: 100%;
   max-width: 100%;
   margin: 0;
@@ -60,10 +60,8 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
 }
 .hero-text {
   flex: 0 0 auto;
-  max-width: 520px;
+  max-width: 480px;
   width: 100%;
-  margin-right: auto;
-  padding-right: 40px;
 }
 /* Cada linha do h1 é um bloco — nunca quebra sozinha */
 .h1-line {
@@ -389,8 +387,9 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
    MOCKUP CELULAR NA HERO
 ═══════════════════════════════ */
 .hero-mockup {
-  flex: 0 0 340px;
+  flex: 1 1 auto;
   position: relative;
+  max-width: 380px;
   height: 580px;
   display: flex;
   align-items: center;
