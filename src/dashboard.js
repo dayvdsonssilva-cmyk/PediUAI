@@ -643,47 +643,24 @@ async function renderCardapio() {
 }
 
 function renderPedidosDemo() {
-  const sp = $('stat-pedidos');     if (sp) sp.textContent = '24';
-  const sf = $('stat-faturamento'); if (sf) sf.textContent = 'R$ 1.248,50';
-  const si = $('stat-itens');       if (si) si.textContent = '8';
+  // Visão geral zerada — demo mostruário
+  const sp = $('stat-pedidos');     if (sp) sp.textContent = '0';
+  const sf = $('stat-faturamento'); if (sf) sf.textContent = 'R$ 0,00';
 
-  const pedidos = [
-    { id:'A1F2', nome:'João Silva',    tipo:'🛵', itens:'2x X-Burguer · 1x Batata', total:71.70, status:'novo'   },
-    { id:'B3C4', nome:'Ana Paula',     tipo:'🏃', itens:'1x Combo Família',          total:89.90, status:'novo'   },
-    { id:'C5D6', nome:'Carlos Mendes', tipo:'🛵', itens:'3x Refrigerante · 2x Pizza', total:67.80, status:'preparo'},
-    { id:'D7E8', nome:'Mesa 4',        tipo:'🍽️', itens:'4x X-Tudo · 2x Batata',    total:132.40, status:'preparo'},
-  ];
-
+  // Sem pedidos na lista
   const lista = $('pedidos-novos-lista');
   if (lista) {
-    lista.innerHTML = pedidos.map(p => `
-      <div class="pedido-card ped-status-${p.status}" style="margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:.85rem">${p.tipo}</span>
-            <div>
-              <div style="font-weight:800;font-size:.88rem">${p.nome}</div>
-              <div style="font-size:.68rem;color:#aaa">#${p.id}</div>
-            </div>
-          </div>
-          <span class="pedido-status ${p.status === 'novo' ? 'status-novo' : 'status-preparo'}" style="font-size:.65rem">
-            ${p.status === 'novo' ? '🔔 Novo' : '👨‍🍳 Preparo'}
-          </span>
-        </div>
-        <div style="font-size:.78rem;color:#888;margin-bottom:8px">${p.itens}</div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <strong style="color:var(--red)">R$ ${p.total.toFixed(2).replace('.',',')}</strong>
-            ${p.status === 'novo' ? `<button class="btn-ped-aceitar" style="font-size:.72rem;padding:5px 10px" onclick="showToast('Demo: faca login!','info')">&#10003; Aceitar</button>` : ''}
-            <button class="btn-ped-imprimir" style="font-size:.72rem;padding:5px 10px" onclick="showToast('Demo: faca login!','info')">Ver</button>
-            <button class="btn-ped-imprimir" style="font-size:.72rem;padding:5px 10px" onclick="showToast('Demo — faça login para ver pedidos reais!','info')">Ver</button>
-          </div>
-        </div>
-      </div>`).join('');
+    lista.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#aaa">
+      <div style="font-size:2.5rem;margin-bottom:10px">🎉</div>
+      <div style="font-size:.88rem;font-weight:700;color:#555;margin-bottom:6px">Nenhum pedido ainda</div>
+      <div style="font-size:.76rem">Crie sua conta e receba pedidos reais!</div>
+    </div>`;
   }
 
-  const badge = $('badge-pedidos-count'); if (badge) badge.textContent = '4';
-  const badgeW = $('badge-pedidos-wrap'); if (badgeW) badgeW.style.display = 'flex';
+  // Badge sem notificação
+  const badgeW = $('badge-pedidos-wrap'); if (badgeW) badgeW.style.display = 'none';
 }
+
 
 function renderCardapioDemo() {
   const grid = $('cardapio-grid'); const stat = $('stat-itens');
