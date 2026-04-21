@@ -389,130 +389,206 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .hero-mockup {
   flex: 0 0 auto;
   position: relative;
-  width: 300px;
-  height: 580px;
+  width: 360px;
+  height: 620px;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Centralizado no espaço vazio direito */
+  perspective: 1200px;
   margin-left: auto;
-  margin-right: auto;
 }
+
+/* Glow vermelho atrás do celular */
+.hero-mockup::before {
+  content: '';
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  background: radial-gradient(circle, rgba(192,57,43,0.28) 0%, transparent 70%);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
 .phone-wrap {
   position: relative;
-  transition: transform 0.15s ease-out;
+  transition: transform 0.12s ease-out;
   transform-style: preserve-3d;
-  transform: rotateY(-8deg) rotateX(4deg) translateZ(0);
+  transform: rotateY(-14deg) rotateX(5deg);
+  z-index: 1;
 }
+
 .phone-frame {
-  width: 230px;
-  height: 470px;
-  background: linear-gradient(145deg, #1a1a2e, #16213e);
-  border-radius: 36px;
-  border: 8px solid #2d2d44;
+  width: 248px;
+  height: 504px;
+  background: linear-gradient(160deg, #252525 0%, #111 60%, #1a1a1a 100%);
+  border-radius: 44px;
+  border: 2px solid #3a3a3a;
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.06),
-    0 30px 80px rgba(0,0,0,0.6),
-    inset 0 1px 0 rgba(255,255,255,0.1);
+    /* Borda lateral direita — ilusão de espessura 3D */
+    8px 0 0 0 #1a1a1a,
+    9px 0 0 1px #111,
+    /* Sombra principal */
+    -16px 32px 80px rgba(0,0,0,0.75),
+    /* Brilho topo interno */
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    /* Brilho lateral esquerdo */
+    inset 2px 0 0 rgba(255,255,255,0.05);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
+
+/* Reflexo de luz no frame */
+.phone-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 43px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 45%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Botões laterais (volume / power) */
+.phone-frame::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: 100px;
+  width: 4px;
+  height: 48px;
+  background: #222;
+  border-radius: 0 3px 3px 0;
+  box-shadow: 0 60px 0 #222, 0 72px 0 #1a1a1a;
+}
+
 .phone-notch {
-  width: 70px; height: 20px;
-  background: #0a0a1a;
-  border-radius: 0 0 14px 14px;
+  width: 76px; height: 22px;
+  background: #0a0a0a;
+  border-radius: 0 0 16px 16px;
   margin: 0 auto;
   position: relative;
   z-index: 10;
 }
+
+/* Câmera no notch */
+.phone-notch::after {
+  content: '';
+  position: absolute;
+  width: 8px; height: 8px;
+  background: #1a1a1a;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: inset 0 0 0 2px #0a0a0a;
+}
+
 .phone-screen {
-  height: calc(100% - 20px);
+  height: calc(100% - 22px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   background: #fff;
+  border-radius: 0 0 40px 40px;
+  margin: 0 2px 2px;
 }
+
 .phone-header {
   background: var(--red, #C0392B);
-  padding: 10px 12px 8px;
+  padding: 11px 14px 9px;
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
-.phone-logo { font-size: 1.1rem; }
-.phone-store-name { color: #fff; font-size: .65rem; font-weight: 800; flex: 1; }
-.phone-open-badge { font-size: .5rem; background: rgba(255,255,255,.2); color: #fff; padding: 2px 6px; border-radius: 20px; font-weight: 700; }
-.phone-content { flex: 1; padding: 6px 8px; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
+.phone-logo { font-size: 1.1rem; display: none; }
+.phone-store-name { color: #fff; font-size: .72rem; font-weight: 800; flex: 1; }
+.phone-open-badge { font-size: .54rem; background: rgba(255,255,255,.22); color: #fff; padding: 2px 7px; border-radius: 20px; font-weight: 700; white-space: nowrap; }
+
+.phone-content { flex: 1; padding: 8px 10px; overflow: hidden; display: flex; flex-direction: column; gap: 7px; }
+
 .phone-item-card {
-  background: #faf8f5;
-  border-radius: 10px;
-  padding: 8px 10px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 9px 11px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   border: 1px solid #f0ebe4;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
 }
-.phone-item-emoji { font-size: 1.3rem; flex-shrink: 0; }
+.phone-item-emoji { font-size: 1.5rem; flex-shrink: 0; }
 .phone-item-info { flex: 1; min-width: 0; }
-.phone-item-name { font-size: .58rem; font-weight: 700; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.phone-item-price { font-size: .6rem; font-weight: 800; color: var(--red, #C0392B); margin-top: 2px; }
+.phone-item-name { font-size: .62rem; font-weight: 700; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.phone-item-price { font-size: .66rem; font-weight: 800; color: var(--red, #C0392B); margin-top: 2px; }
 .phone-item-btn {
-  width: 22px; height: 22px;
+  width: 24px; height: 24px;
   background: var(--red, #C0392B);
   color: #fff;
   border: none;
-  border-radius: 6px;
-  font-size: .8rem;
+  border-radius: 7px;
+  font-size: .9rem;
   font-weight: 800;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   cursor: default;
+  line-height: 1;
 }
+
 .phone-cart-bar {
-  background: #1a1a1a;
+  background: #111;
   color: #fff;
-  padding: 8px 12px;
+  padding: 9px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: .58rem;
+  font-size: .62rem;
   font-weight: 700;
-}
-.phone-shadow {
-  width: 160px;
-  height: 20px;
-  background: rgba(0,0,0,0.35);
-  border-radius: 50%;
-  filter: blur(18px);
-  margin: 12px auto 0;
+  flex-shrink: 0;
+  border-radius: 0 0 38px 38px;
 }
 
-/* Itens de comida flutuantes */
+/* Sombra flutuante sob o celular */
+.phone-shadow {
+  width: 180px;
+  height: 24px;
+  background: rgba(0,0,0,0.45);
+  border-radius: 50%;
+  filter: blur(22px);
+  margin: 18px auto 0;
+  transform: rotateX(60deg);
+}
+
+/* ── Itens de comida flutuantes ── */
 .food-item {
   position: absolute;
-  font-size: 2rem;
   pointer-events: none;
   animation: float-food 4s ease-in-out infinite;
-  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4));
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.45));
+  z-index: 2;
 }
-.fi-1 { top: 20px;  left: -20px; animation-delay: 0s;    animation-duration: 3.8s; font-size: 2.2rem; }
-.fi-2 { top: 60px;  right: -30px; animation-delay: 0.6s; animation-duration: 4.2s; font-size: 1.8rem; }
-.fi-3 { bottom: 80px; left: -25px; animation-delay: 1.2s; animation-duration: 3.5s; font-size: 1.6rem; }
-.fi-4 { bottom: 40px; right: -20px; animation-delay: 0.3s; animation-duration: 4.5s; font-size: 2rem; }
-.fi-5 { top: 50%;  left: -40px; animation-delay: 1.8s; animation-duration: 3.2s; font-size: 1.5rem; }
-.fi-6 { top: 30%;  right: -35px; animation-delay: 0.9s; animation-duration: 4.8s; font-size: 1.7rem; }
+.fi-1 { top: 30px;   left: -10px;  animation-delay: 0s;    animation-duration: 3.8s; font-size: 2.4rem; }
+.fi-2 { top: 40px;   right: -15px; animation-delay: 0.6s;  animation-duration: 4.2s; font-size: 2rem;   }
+.fi-3 { bottom: 90px;left: -20px;  animation-delay: 1.2s;  animation-duration: 3.5s; font-size: 1.8rem; }
+.fi-4 { bottom: 50px;right: -10px; animation-delay: 0.3s;  animation-duration: 4.5s; font-size: 2.2rem; }
+.fi-5 { top: 48%;   left: -36px;  animation-delay: 1.8s;  animation-duration: 3.2s; font-size: 1.6rem; }
+.fi-6 { top: 32%;   right: -30px; animation-delay: 0.9s;  animation-duration: 4.8s; font-size: 1.9rem; }
 
 @keyframes float-food {
-  0%, 100% { transform: translateY(0px) rotate(-5deg); }
-  50%       { transform: translateY(-16px) rotate(5deg); }
+  0%, 100% { transform: translateY(0px) rotate(-6deg) scale(1); }
+  50%       { transform: translateY(-18px) rotate(6deg) scale(1.05); }
 }
 
 @media(max-width:600px) {
   /* ── Landing ── */
   .hero-inner { flex-direction: column; padding: 100px 5% 50px; gap: 40px; }
   .hero-text { max-width: 100%; padding-right: 0; margin-right: 0; }
-  .hero-mockup { width: 220px; height: 440px; margin-right: 0; }
-  .phone-frame { width: 180px; height: 370px; }
+  .hero-mockup { width: 240px; height: 460px; margin-right: 0; }
+  .phone-frame { width: 190px; height: 390px; border-radius: 36px; }
   .h1-line { white-space: normal; }
   h1 { font-size: 2.4rem; }
   .hero-actions { max-width: 100%; }
