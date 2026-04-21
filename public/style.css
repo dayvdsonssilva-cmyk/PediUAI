@@ -51,17 +51,19 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
 .hero-inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 40px;
+  justify-content: flex-start;
+  gap: 0;
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 140px 6% 80px;
+  max-width: 100%;
+  margin: 0;
+  padding: 140px 0 80px 6%;
 }
 .hero-text {
   flex: 0 0 auto;
   max-width: 520px;
   width: 100%;
+  margin-right: auto;
+  padding-right: 40px;
 }
 /* Cada linha do h1 é um bloco — nunca quebra sozinha */
 .h1-line {
@@ -387,13 +389,13 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
    MOCKUP CELULAR NA HERO
 ═══════════════════════════════ */
 .hero-mockup {
-  flex: 0 0 auto;
+  flex: 0 0 340px;
   position: relative;
-  width: 280px;
-  height: 560px;
+  height: 580px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-right: 0;
 }
 .phone-wrap {
   position: relative;
@@ -506,8 +508,8 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 @media(max-width:600px) {
   /* ── Landing ── */
   .hero-inner { flex-direction: column; padding: 100px 5% 50px; gap: 40px; }
-  .hero-text { max-width: 100%; }
-  .hero-mockup { width: 220px; height: 440px; }
+  .hero-text { max-width: 100%; padding-right: 0; margin-right: 0; }
+  .hero-mockup { width: 220px; height: 440px; margin-right: 0; }
   .phone-frame { width: 180px; height: 370px; }
   .h1-line { white-space: normal; }
   h1 { font-size: 2.4rem; }
