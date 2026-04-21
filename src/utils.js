@@ -35,9 +35,31 @@ export function copiarLink() {
 
 export function openDemo() {
   const demoEstab = {
-    id: 'demo', nome: 'Nome da sua loja', slug: 'demo',
-    whatsapp: '', descricao: 'Cardapio digital', logo_url: null,
+    id: 'demo',
+    nome: 'Burguer do Zé',
+    slug: 'demo',
+    whatsapp: '11999999999',
+    descricao: 'Os melhores burguers da cidade!',
+    logo_url: null,
     cor_primaria: '#C0392B',
+    endereco: 'Rua das Flores, 123 — Centro',
+    tempo_entrega: '30-45 min',
+    taxa_entrega: 5,
+    faz_entrega: true,
+    faz_retirada: true,
+    aceita_pix: true,
+    aceita_cartao: true,
+    aceita_dinheiro: true,
+    aberto: true,
+    plano: 'premium',           // acesso total sem restrição
+    assinatura_vencimento: null, // sem vencimento
+    created_at: new Date(Date.now() - 5 * 86400000).toISOString(), // 5 dias atrás
+    num_mesas: 10,
+    telefone_contato: '(11) 3333-4444',
+    cnpj: '00000000000100',
+    instagram: 'burguerdoze',
+    tiktok: 'burguerdoze',
+    msg_nota: 'Obrigado pela preferencia! Volte sempre 😊',
   };
   window._estab = demoEstab;
   window._isDemo = true;
