@@ -45,22 +45,20 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
 .hero {
   padding: 0;
   width: 100%;
-  display: block;
 }
 .hero-inner {
-  display: flex;
-  align-items: center;
+  position: relative;
   width: 100%;
-  padding: 140px 6% 80px;
+  min-height: 680px;
+  padding: 140px 6% 100px;
   box-sizing: border-box;
+  display: block;
 }
 .hero-text {
-  width: 50%;
-  flex-shrink: 0;
-  flex-grow: 0;
+  position: relative;
   z-index: 2;
-  padding-right: 40px;
-  box-sizing: border-box;
+  max-width: 460px;
+  width: 46%;
 }
 /* Cada linha do h1 é um bloco — nunca quebra sozinha */
 .h1-line {
@@ -386,24 +384,26 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
    MOCKUP CELULAR NA HERO
 ═══════════════════════════════ */
 .hero-mockup {
-  width: 50%;
-  flex-shrink: 0;
-  flex-grow: 0;
-  height: 600px;
-  position: relative;
+  position: absolute;
+  right: 7%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44%;
+  height: 620px;
   display: flex;
   align-items: center;
   justify-content: center;
   perspective: 1200px;
+  z-index: 1;
 }
 
 /* Glow vermelho atrás do celular */
 .hero-mockup::before {
   content: '';
   position: absolute;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(192,57,43,0.28) 0%, transparent 70%);
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(192,57,43,0.25) 0%, transparent 70%);
   border-radius: 50%;
   top: 50%;
   left: 50%;
@@ -415,26 +415,27 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   position: relative;
   transition: transform 0.12s ease-out;
   transform-style: preserve-3d;
-  transform: rotateY(-14deg) rotateX(5deg);
+  transform: rotateY(-10deg) rotateX(4deg);
   z-index: 1;
 }
 
 .phone-frame {
-  width: 248px;
-  height: 504px;
+  width: 252px;
+  height: 514px;
   background: linear-gradient(160deg, #252525 0%, #111 60%, #1a1a1a 100%);
   border-radius: 44px;
   border: 2px solid #3a3a3a;
   box-shadow:
     8px 0 0 0 #1a1a1a,
     9px 0 0 1px #111,
-    -16px 32px 80px rgba(0,0,0,0.75),
+    -20px 40px 90px rgba(0,0,0,0.80),
     inset 0 1px 0 rgba(255,255,255,0.10),
     inset 2px 0 0 rgba(255,255,255,0.05);
   position: relative;
   overflow: visible;
 }
 
+/* Reflexo de luz */
 .phone-frame::before {
   content: '';
   position: absolute;
@@ -445,6 +446,7 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   z-index: 10;
 }
 
+/* Botões laterais */
 .phone-frame::after {
   content: '';
   position: absolute;
@@ -472,7 +474,7 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   display: flex;
   flex-direction: column;
   background: #fff;
-  border-radius: 0 0 40px 40px;
+  border-radius: 0 0 41px 41px;
   margin: 0 2px 2px;
 }
 
@@ -488,15 +490,17 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .phone-store-name { color: #fff; font-size: .72rem; font-weight: 800; flex: 1; }
 .phone-open-badge { font-size: .54rem; background: rgba(255,255,255,.22); color: #fff; padding: 2px 7px; border-radius: 20px; font-weight: 700; white-space: nowrap; }
 
-.phone-content { flex: 1; padding: 8px 10px; overflow: hidden; display: flex; flex-direction: column; gap: 7px; }
+.phone-content {
+  flex: 1; padding: 8px 10px;
+  overflow: hidden; display: flex;
+  flex-direction: column; gap: 7px;
+}
 
 .phone-item-card {
   background: #fff;
   border-radius: 12px;
   padding: 9px 11px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
+  display: flex; align-items: center; gap: 9px;
   border: 1px solid #f0ebe4;
   box-shadow: 0 1px 6px rgba(0,0,0,0.05);
 }
@@ -519,7 +523,7 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   display: flex; justify-content: space-between; align-items: center;
   font-size: .62rem; font-weight: 700;
   flex-shrink: 0;
-  border-radius: 0 0 38px 38px;
+  border-radius: 0 0 39px 39px;
 }
 
 .phone-shadow {
@@ -552,9 +556,9 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 
 @media(max-width:600px) {
   /* ── Landing ── */
-  .hero-inner { flex-direction: column; padding: 100px 5% 50px; gap: 40px; }
-  .hero-text { width: 100%; padding-right: 0; }
-  .hero-mockup { width: 100%; height: 420px; }
+  .hero-inner { min-height: auto; padding: 100px 5% 50px; }
+  .hero-text { width: 100%; max-width: 100%; }
+  .hero-mockup { position: relative; right: auto; top: auto; transform: none; width: 100%; height: 420px; margin: 36px auto 0; }
   .phone-frame { width: 185px; height: 378px; }
   .h1-line { white-space: normal; }
   h1 { font-size: 2.4rem; }
