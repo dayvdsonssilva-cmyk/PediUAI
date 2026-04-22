@@ -562,7 +562,7 @@
         </div>
       </div>
 
-      <!-- Origem: Mesa vs Delivery -->
+      <!-- Origem dos Pedidos -->
       <div class="fin-section-card" style="margin-bottom:16px">
         <div class="fin-section-header">
           <div class="fin-section-icon">📍</div>
@@ -1262,17 +1262,15 @@
 <!-- Modal confirmar fechamento de comanda -->
 <div id="modal-fechar-comanda" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000;align-items:center;justify-content:center;padding:20px">
   <div style="background:#fff;border-radius:18px;width:100%;max-width:360px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f0ebe4">
       <span style="font-size:1rem;font-weight:800;color:#1a1a1a">Fechar comanda</span>
       <button onclick="cancelarFecharComanda()" style="width:30px;height:30px;border-radius:50%;border:1.5px solid #e0dbd5;background:#faf8f5;cursor:pointer;font-size:.85rem;color:#555;display:flex;align-items:center;justify-content:center">✕</button>
     </div>
-    <!-- Body -->
     <div style="padding:20px">
-      <div style="text-align:center;margin-bottom:16px">
+      <div style="text-align:center;margin-bottom:18px">
         <div style="font-size:2rem;margin-bottom:6px">🧾</div>
         <div id="fechar-comanda-mesa" style="font-size:1.2rem;font-weight:900;color:#1a1a1a"></div>
-        <div id="fechar-comanda-total" style="font-size:1.5rem;font-weight:900;color:#C0392B;margin-top:4px"></div>
+        <div id="fechar-comanda-total" style="font-size:1.6rem;font-weight:900;color:#C0392B;margin-top:4px"></div>
         <div id="fechar-comanda-info" style="font-size:.75rem;color:#aaa;margin-top:4px"></div>
       </div>
 
@@ -1280,21 +1278,21 @@
       <div style="margin-bottom:16px">
         <div style="font-size:.75rem;font-weight:700;color:#555;margin-bottom:10px">💳 Forma de pagamento</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-          <button onclick="selecionarPagamentoComanda('PIX')" id="pgto-btn-PIX"
-            style="padding:10px 6px;border-radius:10px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s">
-            <span style="font-size:1.3rem">📱</span>PIX
+          <button id="pgto-btn-PIX" onclick="selecionarPagamentoComanda('PIX')"
+            style="padding:12px 6px;border-radius:12px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .15s">
+            <span style="font-size:1.4rem">📱</span>PIX
           </button>
-          <button onclick="selecionarPagamentoComanda('CARTÃO')" id="pgto-btn-CARTÃO"
-            style="padding:10px 6px;border-radius:10px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s">
-            <span style="font-size:1.3rem">💳</span>Cartão
+          <button id="pgto-btn-CARTÃO" onclick="selecionarPagamentoComanda('CARTÃO')"
+            style="padding:12px 6px;border-radius:12px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .15s">
+            <span style="font-size:1.4rem">💳</span>Cartão
           </button>
-          <button onclick="selecionarPagamentoComanda('DINHEIRO')" id="pgto-btn-DINHEIRO"
-            style="padding:10px 6px;border-radius:10px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s">
-            <span style="font-size:1.3rem">💵</span>Dinheiro
+          <button id="pgto-btn-DINHEIRO" onclick="selecionarPagamentoComanda('DINHEIRO')"
+            style="padding:12px 6px;border-radius:12px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .15s">
+            <span style="font-size:1.4rem">💵</span>Dinheiro
           </button>
         </div>
         <div id="pgto-aviso" style="display:none;font-size:.72rem;color:#C0392B;margin-top:8px;text-align:center;font-weight:600">
-          ⚠️ Selecione uma forma de pagamento
+          ⚠️ Selecione uma forma de pagamento para continuar
         </div>
       </div>
 
@@ -1302,7 +1300,6 @@
         ⚠️ A mesa será liberada e os pedidos encerrados.
       </div>
     </div>
-    <!-- Footer -->
     <div style="display:flex;gap:10px;padding:0 20px 18px">
       <button onclick="cancelarFecharComanda()" style="flex:1;padding:12px;border-radius:10px;border:1.5px solid #e0dbd5;background:#faf8f5;font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;color:#555;cursor:pointer">Cancelar</button>
       <button onclick="executarFecharComanda()" style="flex:2;padding:12px;border-radius:10px;border:none;background:#C0392B;color:#fff;font-family:'Poppins',sans-serif;font-weight:800;font-size:.85rem;cursor:pointer">✓ Confirmar fechamento</button>
