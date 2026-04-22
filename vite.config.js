@@ -11,6 +11,7 @@ export default defineConfig({
         admin:    resolve(__dirname, 'admin.html'),
         checkout: resolve(__dirname, 'checkout.html'),
         garcom:   resolve(__dirname, 'garcom.html'),
+        lojas:    resolve(__dirname, 'lojas.html'),
       },
     },
   },
