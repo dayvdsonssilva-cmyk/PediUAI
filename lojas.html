@@ -8,433 +8,182 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    :root {
-      --red: #C0392B;
-      --red-dark: #a93226;
-      --bg: #0f0f0f;
-      --card: #1a1a1a;
-      --border: rgba(255,255,255,0.08);
-      --text: #fff;
-      --muted: rgba(255,255,255,0.45);
-    }
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+    :root { --red:#C0392B; --red-dark:#a93226; --bg:#0f0f0f; --card:#1a1a1a; --border:rgba(255,255,255,0.08); }
+    body { font-family:'Poppins',sans-serif; background:var(--bg); color:#fff; min-height:100vh; }
 
-    /* ── HEADER ── */
+    /* HEADER */
     header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(15,15,15,0.95);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: 0 6%;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      position:sticky; top:0; z-index:100;
+      background:rgba(15,15,15,0.95); backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--border);
+      padding:0 6%; height:64px; display:flex; align-items:center; justify-content:space-between;
     }
-    .logo { font-size: 1.3rem; font-weight: 800; color: #fff; text-decoration: none; }
-    .logo span { color: var(--red); }
-    .header-right { display: flex; align-items: center; gap: 10px; }
-    .btn-header {
-      padding: 8px 20px;
-      border-radius: 8px;
-      font-family: 'Poppins', sans-serif;
-      font-size: .85rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-    }
-    .btn-outline { background: rgba(255,255,255,0.08); color: #fff; border: 1.5px solid rgba(255,255,255,0.2) !important; }
-    .btn-red { background: var(--red); color: #fff; }
-    .btn-red:hover { background: var(--red-dark); }
+    .logo { font-size:1.3rem; font-weight:800; color:#fff; text-decoration:none; }
+    .logo span { color:var(--red); }
+    .btn-h { padding:8px 18px; border-radius:8px; font-family:'Poppins',sans-serif; font-size:.82rem; font-weight:600; cursor:pointer; border:none; }
+    .btn-outline { background:rgba(255,255,255,0.07); color:#fff; border:1.5px solid rgba(255,255,255,0.18) !important; }
+    .btn-red { background:var(--red); color:#fff; }
 
-    /* ── HERO BUSCA ── */
+    /* HERO */
     .search-hero {
-      background: linear-gradient(135deg, #1a0808 0%, #0f0f0f 60%);
-      padding: 60px 6% 50px;
-      text-align: center;
-      border-bottom: 1px solid var(--border);
-      position: relative;
-      overflow: hidden;
+      background:linear-gradient(135deg,#1a0808 0%,#0f0f0f 60%);
+      padding:48px 6% 36px; text-align:center; border-bottom:1px solid var(--border); position:relative; overflow:hidden;
     }
-    .search-hero::before {
-      content: '';
-      position: absolute;
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, rgba(192,57,43,0.15) 0%, transparent 70%);
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-    .search-hero h1 {
-      font-size: clamp(1.6rem, 4vw, 2.8rem);
-      font-weight: 800;
-      margin-bottom: 8px;
-      position: relative;
-    }
-    .search-hero p {
-      color: var(--muted);
-      font-size: .95rem;
-      margin-bottom: 28px;
-      position: relative;
-    }
+    .search-hero::before { content:''; position:absolute; width:500px; height:500px; background:radial-gradient(circle,rgba(192,57,43,0.15) 0%,transparent 70%); top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
+    .search-hero h1 { font-size:clamp(1.4rem,3.5vw,2.4rem); font-weight:800; margin-bottom:6px; position:relative; }
+    .search-hero p  { color:rgba(255,255,255,0.5); font-size:.88rem; margin-bottom:22px; position:relative; }
+    .search-bar { display:flex; gap:10px; max-width:580px; margin:0 auto; }
+    .search-wrap { flex:1; position:relative; }
+    .search-wrap svg { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.4); pointer-events:none; }
+    .search-input { width:100%; padding:12px 14px 12px 44px; border-radius:12px; border:1.5px solid var(--border); background:rgba(255,255,255,0.06); color:#fff; font-family:'Poppins',sans-serif; font-size:.9rem; outline:none; transition:border-color .2s; }
+    .search-input::placeholder { color:rgba(255,255,255,0.35); }
+    .search-input:focus { border-color:var(--red); }
+    .city-sel { padding:12px 34px 12px 14px; border-radius:12px; border:1.5px solid var(--border); color:#fff; font-family:'Poppins',sans-serif; font-size:.82rem; font-weight:600; outline:none; cursor:pointer; min-width:145px; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; background-color:rgba(255,255,255,0.06); transition:border-color .2s; }
+    .city-sel option { background:#1a1a1a; }
+    .city-sel:focus { border-color:var(--red); }
 
-    /* ── BARRA DE BUSCA ── */
-    .search-bar {
-      display: flex;
-      gap: 10px;
-      max-width: 640px;
-      margin: 0 auto;
-      position: relative;
-    }
-    .search-input-wrap {
-      flex: 1;
-      position: relative;
-    }
-    .search-input-wrap svg {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--muted);
-      pointer-events: none;
-    }
-    .search-input {
-      width: 100%;
-      padding: 14px 14px 14px 44px;
-      border-radius: 12px;
-      border: 1.5px solid var(--border);
-      background: rgba(255,255,255,0.06);
-      color: #fff;
-      font-family: 'Poppins', sans-serif;
-      font-size: .95rem;
-      outline: none;
-      transition: border-color .2s;
-    }
-    .search-input::placeholder { color: var(--muted); }
-    .search-input:focus { border-color: var(--red); }
+    /* FILTROS */
+    .filters-bar { padding:14px 6%; display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--border); }
+    .filters-bar::-webkit-scrollbar { display:none; }
+    .pill { padding:6px 16px; border-radius:50px; border:1.5px solid var(--border); background:transparent; color:rgba(255,255,255,0.45); font-family:'Poppins',sans-serif; font-size:.76rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .15s; }
+    .pill:hover { border-color:rgba(255,255,255,0.25); color:#fff; }
+    .pill.ativo { background:var(--red); border-color:var(--red); color:#fff; }
 
-    /* Select de cidade */
-    .city-select {
-      padding: 14px 16px;
-      border-radius: 12px;
-      border: 1.5px solid var(--border);
-      background: rgba(255,255,255,0.06);
-      color: #fff;
-      font-family: 'Poppins', sans-serif;
-      font-size: .88rem;
-      font-weight: 600;
-      outline: none;
-      cursor: pointer;
-      min-width: 160px;
-      transition: border-color .2s;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
-      background-color: rgba(255,255,255,0.06);
-      padding-right: 36px;
-    }
-    .city-select:focus { border-color: var(--red); }
-    .city-select option { background: #1a1a1a; color: #fff; }
+    /* MAIN */
+    .main { max-width:1100px; margin:0 auto; padding:24px 6% 60px; }
+    .results-info { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:8px; }
+    .results-count { font-size:.8rem; color:rgba(255,255,255,0.45); font-weight:500; }
+    .results-count span { color:#fff; font-weight:700; }
+    .city-badge { background:rgba(192,57,43,0.15); color:var(--red); padding:4px 14px; border-radius:50px; font-size:.73rem; font-weight:700; }
 
-    /* ── FILTROS ── */
-    .filters-bar {
-      padding: 18px 6%;
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      border-bottom: 1px solid var(--border);
-    }
-    .filters-bar::-webkit-scrollbar { display: none; }
-    .filter-pill {
-      padding: 7px 18px;
-      border-radius: 50px;
-      border: 1.5px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      font-family: 'Poppins', sans-serif;
-      font-size: .8rem;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all .15s;
-    }
-    .filter-pill:hover { border-color: rgba(255,255,255,0.25); color: #fff; }
-    .filter-pill.ativo { background: var(--red); border-color: var(--red); color: #fff; }
+    /* GRID */
+    .lojas-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:14px; }
 
-    /* ── CONTEÚDO PRINCIPAL ── */
-    .main {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 32px 6% 60px;
-    }
+    /* CARD — só logo + nome */
+    .loja-card { background:var(--card); border-radius:16px; border:1px solid var(--border); cursor:pointer; text-decoration:none; color:inherit; display:flex; flex-direction:column; align-items:center; padding:22px 10px 16px; gap:10px; text-align:center; transition:transform .18s,border-color .18s,box-shadow .18s; }
+    .loja-card:hover { transform:translateY(-4px); border-color:rgba(192,57,43,0.4); box-shadow:0 12px 40px rgba(0,0,0,0.5); }
+    .loja-logo { width:68px; height:68px; border-radius:50%; background:#2a2a2a; border:3px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; font-size:1.7rem; overflow:hidden; flex-shrink:0; }
+    .loja-logo img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .loja-nome { font-size:.8rem; font-weight:700; color:#fff; line-height:1.3; }
+    .loja-status { font-size:.6rem; font-weight:700; padding:2px 8px; border-radius:50px; }
+    .s-aberta { background:rgba(22,163,74,0.2); color:#22c55e; }
+    .s-fechada { background:rgba(239,68,68,0.15); color:#ef4444; }
 
-    /* ── CONTAGEM ── */
-    .results-info {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .results-count {
-      font-size: .85rem;
-      color: var(--muted);
-      font-weight: 500;
-    }
-    .results-count span { color: #fff; font-weight: 700; }
-    .city-badge {
-      background: rgba(192,57,43,0.15);
-      color: var(--red);
-      padding: 4px 14px;
-      border-radius: 50px;
-      font-size: .78rem;
-      font-weight: 700;
-    }
-
-    /* ── GRID DE LOJAS ── */
-    .lojas-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
-    }
-
-    /* ── CARD DA LOJA ── */
-    .loja-card {
-      background: var(--card);
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      overflow: hidden;
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-      display: block;
-      transition: transform .18s, border-color .18s, box-shadow .18s;
-    }
-    .loja-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(192,57,43,0.4);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-    }
-
-    /* Capa */
-    .loja-capa {
-      height: 100px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .loja-capa-gradient {
-      position: absolute;
-      inset: 0;
-      opacity: .85;
-    }
-    .loja-nome-capa {
-      position: relative;
-      z-index: 1;
-      font-size: 1rem;
-      font-weight: 800;
-      color: rgba(255,255,255,0.2);
-      letter-spacing: .06em;
-    }
-
-    /* Logo flutuante */
-    .loja-logo-wrap {
-      padding: 0 20px;
-      margin-top: -28px;
-      position: relative;
-      z-index: 2;
-    }
-    .loja-logo {
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
-      border: 3px solid var(--card);
-      object-fit: cover;
-      background: #2a2a2a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.6rem;
-      overflow: hidden;
-    }
-    .loja-logo img { width: 100%; height: 100%; object-fit: cover; }
-
-    /* Info */
-    .loja-info { padding: 10px 20px 20px; }
-    .loja-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
-    .loja-nome { font-size: 1rem; font-weight: 800; color: #fff; line-height: 1.2; }
-    .loja-status {
-      font-size: .65rem;
-      font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 50px;
-      flex-shrink: 0;
-      margin-left: 8px;
-    }
-    .status-aberta { background: rgba(22,163,74,0.2); color: #22c55e; }
-    .status-fechada { background: rgba(239,68,68,0.15); color: #ef4444; }
-    .loja-desc {
-      font-size: .78rem;
-      color: var(--muted);
-      line-height: 1.5;
-      margin-bottom: 12px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .loja-meta {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-    .loja-meta-item {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: .72rem;
-      color: var(--muted);
-      font-weight: 500;
-    }
-    .loja-cidade-tag {
-      font-size: .68rem;
-      font-weight: 700;
-      color: rgba(255,255,255,0.3);
-      background: rgba(255,255,255,0.06);
-      padding: 2px 10px;
-      border-radius: 50px;
-    }
-
-    /* ── ESTADOS ── */
-    .empty-state {
-      text-align: center;
-      padding: 80px 20px;
-      grid-column: 1/-1;
-    }
-    .empty-state .icon { font-size: 3.5rem; margin-bottom: 16px; }
-    .empty-state h3 { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 8px; }
-    .empty-state p { font-size: .88rem; color: var(--muted); line-height: 1.7; }
-
-    .skeleton {
-      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: 18px;
-      height: 240px;
-    }
+    /* SKELETON */
+    .skeleton { background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:16px; height:150px; }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* ── TOAST ── */
-    #lj-toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%) translateY(60px);
-      background: #1a1a1a;
-      color: #fff;
-      padding: 12px 24px;
-      border-radius: 50px;
-      font-size: .85rem;
-      font-weight: 600;
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-      transition: transform .3s;
-      z-index: 9999;
-      white-space: nowrap;
-    }
-    #lj-toast.show { transform: translateX(-50%) translateY(0); }
+    /* EMPTY */
+    .empty { text-align:center; padding:60px 20px; grid-column:1/-1; }
+    .empty .ic { font-size:3rem; margin-bottom:10px; }
+    .empty h3 { font-size:.95rem; font-weight:700; margin-bottom:6px; }
+    .empty p  { font-size:.82rem; color:rgba(255,255,255,0.4); line-height:1.7; }
 
-    /* ── MOBILE ── */
-    @media(max-width:600px) {
-      header { padding: 0 5%; }
-      .search-hero { padding: 48px 5% 36px; }
-      .search-bar { flex-direction: column; }
-      .city-select { min-width: auto; }
-      .filters-bar { padding: 14px 5%; }
-      .main { padding: 24px 5% 40px; }
-      .lojas-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
-      .loja-capa { height: 70px; }
-      .loja-logo { width: 46px; height: 46px; border-radius: 10px; font-size: 1.3rem; }
-      .loja-logo-wrap { margin-top: -22px; padding: 0 14px; }
-      .loja-info { padding: 8px 14px 16px; }
-      .loja-nome { font-size: .88rem; }
-      .loja-desc { display: none; }
-    }
+    /* TOAST */
+    #lj-toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(60px); background:#1a1a1a; color:#fff; padding:11px 22px; border-radius:50px; font-size:.83rem; font-weight:600; border:1px solid rgba(255,255,255,0.1); box-shadow:0 8px 32px rgba(0,0,0,0.4); transition:transform .3s; z-index:9999; white-space:nowrap; }
+    #lj-toast.show { transform:translateX(-50%) translateY(0); }
 
-    @media(max-width:380px) {
-      .lojas-grid { grid-template-columns: 1fr; }
+    /* MODAL CADASTRO */
+    #modal-cad { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:9000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(8px); }
+    #modal-cad.open { display:flex; }
+    .mbox { background:#1a1a1a; border-radius:24px; width:100%; max-width:370px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 24px 80px rgba(0,0,0,0.6); overflow:hidden; animation:mIn .3s ease; }
+    @keyframes mIn { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+    .mhead { background:var(--red); padding:28px 28px 22px; text-align:center; }
+    .mhead .mico { font-size:2.2rem; margin-bottom:10px; }
+    .mhead h2 { font-size:1.15rem; font-weight:800; color:#fff; margin-bottom:5px; }
+    .mhead p  { font-size:.8rem; color:rgba(255,255,255,0.8); line-height:1.5; }
+    .mbody { padding:22px; display:flex; flex-direction:column; gap:13px; }
+    .mfield { display:flex; flex-direction:column; gap:5px; }
+    .mfield label { font-size:.72rem; font-weight:700; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:.04em; }
+    .mfield input, .mfield select { padding:11px 13px; border-radius:10px; border:1.5px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.06); color:#fff; font-family:'Poppins',sans-serif; font-size:.86rem; outline:none; transition:border-color .2s; }
+    .mfield input::placeholder { color:rgba(255,255,255,0.3); }
+    .mfield input:focus, .mfield select:focus { border-color:var(--red); }
+    .mfield select option { background:#1a1a1a; }
+    .mbtn { padding:13px; border-radius:11px; background:var(--red); color:#fff; border:none; font-family:'Poppins',sans-serif; font-size:.92rem; font-weight:800; cursor:pointer; width:100%; margin-top:2px; transition:background .15s; }
+    .mbtn:hover { background:var(--red-dark); }
+    .mskip { text-align:center; font-size:.73rem; color:rgba(255,255,255,0.28); cursor:pointer; padding:2px; }
+    .mskip:hover { color:rgba(255,255,255,0.55); }
+
+    /* MOBILE */
+    @media(max-width:600px){
+      header { padding:0 5%; }
+      .search-hero { padding:36px 5% 24px; }
+      .search-bar { flex-direction:column; }
+      .city-sel { min-width:auto; }
+      .filters-bar { padding:10px 5%; }
+      .main { padding:18px 5% 40px; }
+      .lojas-grid { grid-template-columns:repeat(3,1fr); gap:10px; }
+      .loja-logo { width:54px; height:54px; font-size:1.3rem; }
+      .loja-card { padding:16px 8px 12px; gap:8px; }
+      .loja-nome { font-size:.72rem; }
     }
+    @media(max-width:360px){ .lojas-grid { grid-template-columns:repeat(2,1fr); } }
   </style>
 </head>
 <body>
 
 <header>
   <a class="logo" href="/">PEDI<span>WAY</span></a>
-  <div class="header-right">
-    <a href="/" style="text-decoration:none;">
-      <button class="btn-header btn-outline">Entrar</button>
-    </a>
-    <a href="/" style="text-decoration:none;">
-      <button class="btn-header btn-red">Abra sua loja</button>
-    </a>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="btn-h btn-outline" onclick="abrirCadastro()">👤 Meu perfil</button>
+    <a href="/" style="text-decoration:none;"><button class="btn-h btn-red">Abra sua loja</button></a>
   </div>
 </header>
 
-<!-- Hero de busca -->
 <div class="search-hero">
-  <h1>Encontre restaurantes <span style="color:var(--red);">perto de você</span></h1>
-  <p>Peça direto, sem intermediários. Sem taxa extra.</p>
+  <h1>Restaurantes <span style="color:var(--red);">perto de você</span></h1>
+  <p>Peça direto, sem intermediários e sem taxa extra.</p>
   <div class="search-bar">
-    <div class="search-input-wrap">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input class="search-input" id="busca-input" type="text" placeholder="Buscar restaurante ou prato..." oninput="filtrar()">
+    <div class="search-wrap">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" id="busca-input" type="text" placeholder="Buscar restaurante...">
     </div>
-    <select class="city-select" id="cidade-select" onchange="filtrar()">
+    <select class="city-sel" id="cidade-select" onchange="filtrar()">
       <option value="">📍 Todas as cidades</option>
     </select>
   </div>
 </div>
 
-<!-- Filtros por categoria -->
 <div class="filters-bar">
-  <button class="filter-pill ativo" data-cat="" onclick="selecionarCat(this)">Todos</button>
-  <button class="filter-pill" data-cat="burger" onclick="selecionarCat(this)">🍔 Hamburgueria</button>
-  <button class="filter-pill" data-cat="pizza" onclick="selecionarCat(this)">🍕 Pizza</button>
-  <button class="filter-pill" data-cat="acai" onclick="selecionarCat(this)">🍧 Açaí</button>
-  <button class="filter-pill" data-cat="restaurante" onclick="selecionarCat(this)">🍽️ Restaurante</button>
-  <button class="filter-pill" data-cat="lanche" onclick="selecionarCat(this)">🥪 Lanches</button>
-  <button class="filter-pill" data-cat="bebida" onclick="selecionarCat(this)">🥤 Bebidas</button>
-  <button class="filter-pill" data-cat="doce" onclick="selecionarCat(this)">🍰 Doces</button>
-  <button class="filter-pill" data-cat="aberta" onclick="selecionarCat(this)">🟢 Aberto agora</button>
+  <button class="pill ativo" data-cat="" onclick="selCat(this)">Todos</button>
+  <button class="pill" data-cat="burger" onclick="selCat(this)">🍔 Hamburgueria</button>
+  <button class="pill" data-cat="pizza" onclick="selCat(this)">🍕 Pizza</button>
+  <button class="pill" data-cat="acai" onclick="selCat(this)">🍧 Açaí</button>
+  <button class="pill" data-cat="restaurante" onclick="selCat(this)">🍽️ Restaurante</button>
+  <button class="pill" data-cat="lanche" onclick="selCat(this)">🥪 Lanches</button>
+  <button class="pill" data-cat="aberta" onclick="selCat(this)">🟢 Aberto agora</button>
 </div>
 
-<!-- Conteúdo principal -->
 <div class="main">
   <div class="results-info" id="results-info" style="display:none;">
     <p class="results-count">Mostrando <span id="results-num">0</span> restaurantes</p>
     <span class="city-badge" id="city-badge" style="display:none;"></span>
   </div>
   <div class="lojas-grid" id="lojas-grid">
-    <!-- Skeletons de loading -->
-    <div class="skeleton"></div>
-    <div class="skeleton"></div>
-    <div class="skeleton"></div>
-    <div class="skeleton"></div>
-    <div class="skeleton"></div>
-    <div class="skeleton"></div>
+    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+  </div>
+</div>
+
+<!-- Modal cadastro -->
+<div id="modal-cad">
+  <div class="mbox">
+    <div class="mhead">
+      <div class="mico">👋</div>
+      <h2>Bem-vindo ao PEDIWAY!</h2>
+      <p>Cadastro rápido para mostrar os restaurantes mais perto de você.</p>
+    </div>
+    <div class="mbody">
+      <div class="mfield"><label>Seu nome</label><input id="cad-nome" type="text" placeholder="João Silva"></div>
+      <div class="mfield"><label>WhatsApp</label><input id="cad-tel" type="tel" placeholder="(11) 99999-9999" oninput="mskTel(this)"></div>
+      <div class="mfield"><label>E-mail</label><input id="cad-email" type="email" placeholder="seu@email.com"></div>
+      <div class="mfield">
+        <label>Sua cidade</label>
+        <select id="cad-cidade"><option value="">Selecione sua cidade...</option></select>
+      </div>
+      <button class="mbtn" onclick="salvarCad()">Entrar →</button>
+      <p class="mskip" onclick="fecharCad()">Continuar sem cadastro</p>
+    </div>
   </div>
 </div>
 
@@ -443,193 +192,160 @@
 <script>
 const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
-
 const { createClient } = supabase;
 const db = createClient(SUPA_URL, SUPA_KEY);
 
-let _lojas = [];
-let _catAtiva = '';
+let _lojas = [], _cat = '', _user = null;
 
-// ── INIT ──────────────────────────────────────────────────────
 async function init() {
+  // Carrega usuário salvo
+  try { const s = localStorage.getItem('pw_cliente'); if(s) _user = JSON.parse(s); } catch(e){}
+
+  // Carrega lojas
   const { data, error } = await db
     .from('estabelecimentos')
-    .select('id, nome, slug, descricao, logo_url, cor_primaria, cidade, aberto, tempo_entrega, faz_entrega, faz_retirada')
+    .select('id,nome,slug,logo_url,cidade,aberto')
     .order('nome', { ascending: true });
 
   if (error) {
-    toast('Erro ao carregar lojas');
-    document.getElementById('lojas-grid').innerHTML = `
-      <div class="empty-state">
-        <div class="icon">😕</div>
-        <h3>Não foi possível carregar</h3>
-        <p>Tente recarregar a página.</p>
-      </div>`;
+    document.getElementById('lojas-grid').innerHTML =
+      '<div class="empty"><div class="ic">😕</div><h3>Erro ao carregar</h3><p>Tente recarregar a página.</p></div>';
     return;
   }
 
   _lojas = data || [];
   preencherCidades();
-  renderLojas(_lojas);
-}
 
-// ── CIDADES ───────────────────────────────────────────────────
-function preencherCidades() {
-  const cidades = [...new Set(
-    _lojas.map(l => l.cidade).filter(Boolean).map(c => c.trim())
-  )].sort();
-
-  const sel = document.getElementById('cidade-select');
-  cidades.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = '📍 ' + c;
-    sel.appendChild(opt);
-  });
-
-  // Detecta cidade pelo localStorage (se usuário já escolheu antes)
-  const salva = localStorage.getItem('lj_cidade');
-  if (salva && cidades.includes(salva)) {
-    sel.value = salva;
+  // Se usuário já cadastrado, filtra pela cidade dele direto
+  if (_user?.cidade) {
+    const cidades = [...new Set(_lojas.map(l=>l.cidade).filter(Boolean).map(c=>c.trim()))];
+    if (cidades.includes(_user.cidade)) {
+      document.getElementById('cidade-select').value = _user.cidade;
+    }
     filtrar();
+  } else {
+    renderLojas(_lojas);
+    setTimeout(abrirCad, 700);
   }
 }
 
-// ── FILTRAR ───────────────────────────────────────────────────
-function filtrar() {
-  const termo   = document.getElementById('busca-input').value.toLowerCase().trim();
-  const cidade  = document.getElementById('cidade-select').value;
+function preencherCidades() {
+  const cidades = [...new Set(_lojas.map(l=>l.cidade).filter(Boolean).map(c=>c.trim()))].sort();
 
-  if (cidade) localStorage.setItem('lj_cidade', cidade);
-  else        localStorage.removeItem('lj_cidade');
+  const sel = document.getElementById('cidade-select');
+  sel.innerHTML = '<option value="">📍 Todas as cidades</option>';
+  cidades.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent='📍 '+c; sel.appendChild(o); });
 
-  let resultado = _lojas.filter(l => {
-    const matchCidade = !cidade || (l.cidade && l.cidade.trim() === cidade);
-    const matchBusca  = !termo ||
-      l.nome?.toLowerCase().includes(termo) ||
-      l.descricao?.toLowerCase().includes(termo);
-    const matchCat    = matchCategoria(l);
-    return matchCidade && matchBusca && matchCat;
-  });
+  const csel = document.getElementById('cad-cidade');
+  csel.innerHTML = '<option value="">Selecione sua cidade...</option>';
+  cidades.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; csel.appendChild(o); });
 
-  renderLojas(resultado);
-
-  // Badge de cidade
-  const badge = document.getElementById('city-badge');
-  if (cidade) { badge.textContent = '📍 ' + cidade; badge.style.display = ''; }
-  else        badge.style.display = 'none';
+  if (_user?.cidade) csel.value = _user.cidade;
 }
 
-function matchCategoria(loja) {
-  if (!_catAtiva) return true;
-  if (_catAtiva === 'aberta') return loja.aberto === true;
-  const nome = (loja.nome + ' ' + (loja.descricao || '')).toLowerCase();
-  const mapa = {
-    burger:      ['burger','hamburguer','smash','burguer'],
-    pizza:       ['pizza','pizzaria'],
-    acai:        ['açaí','acai'],
-    restaurante: ['restaurante','refeição','marmita','self'],
-    lanche:      ['lanche','sanduíche','wrap','tapioca'],
-    bebida:      ['bebida','suco','smoothie','drink'],
-    doce:        ['doce','bolo','confeitaria','sobremesa','gelato','sorvete'],
-  };
-  return (mapa[_catAtiva] || []).some(k => nome.includes(k));
+// Modal
+function abrirCad() {
+  document.getElementById('modal-cad').classList.add('open');
+  if (_user) {
+    document.getElementById('cad-nome').value  = _user.nome  || '';
+    document.getElementById('cad-tel').value   = _user.tel   || '';
+    document.getElementById('cad-email').value = _user.email || '';
+    if (_user.cidade) document.getElementById('cad-cidade').value = _user.cidade;
+  }
 }
+function abrirCadastro() { abrirCad(); }
+function fecharCad() { document.getElementById('modal-cad').classList.remove('open'); }
 
-function selecionarCat(btn) {
-  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('ativo'));
-  btn.classList.add('ativo');
-  _catAtiva = btn.dataset.cat;
+function salvarCad() {
+  const nome   = document.getElementById('cad-nome').value.trim();
+  const tel    = document.getElementById('cad-tel').value.trim();
+  const email  = document.getElementById('cad-email').value.trim();
+  const cidade = document.getElementById('cad-cidade').value;
+
+  if (!nome)   return toast('Digite seu nome');
+  if (!tel)    return toast('Digite seu WhatsApp');
+  if (!email || !email.includes('@')) return toast('Digite um e-mail válido');
+  if (!cidade) return toast('Selecione sua cidade');
+
+  _user = { nome, tel, email, cidade };
+  localStorage.setItem('pw_cliente', JSON.stringify(_user));
+  fecharCad();
+  toast('✅ Bem-vindo, ' + nome.split(' ')[0] + '!');
+
+  document.getElementById('cidade-select').value = cidade;
   filtrar();
 }
 
-// ── RENDER ────────────────────────────────────────────────────
+// Filtros
+function filtrar() {
+  const termo  = document.getElementById('busca-input').value.toLowerCase().trim();
+  const cidade = document.getElementById('cidade-select').value;
+
+  const res = _lojas.filter(l => {
+    const mc = !cidade || (l.cidade && l.cidade.trim() === cidade);
+    const mb = !termo  || l.nome?.toLowerCase().includes(termo);
+    const mk = matchCat(l);
+    return mc && mb && mk;
+  });
+
+  renderLojas(res);
+
+  const badge = document.getElementById('city-badge');
+  if (cidade) { badge.textContent='📍 '+cidade; badge.style.display=''; }
+  else badge.style.display='none';
+}
+
+function matchCat(l) {
+  if (!_cat) return true;
+  if (_cat === 'aberta') return l.aberto === true;
+  const n = l.nome.toLowerCase();
+  const m = { burger:['burger','hamburguer','smash','burguer'], pizza:['pizza','pizzaria'], acai:['açaí','acai'], restaurante:['restaurante','marmita'], lanche:['lanche','sanduíche','tapioca'] };
+  return (m[_cat]||[]).some(k => n.includes(k));
+}
+
+function selCat(btn) {
+  document.querySelectorAll('.pill').forEach(b=>b.classList.remove('ativo'));
+  btn.classList.add('ativo'); _cat = btn.dataset.cat; filtrar();
+}
+
+// Render
 function renderLojas(lista) {
   const grid = document.getElementById('lojas-grid');
-  const info = document.getElementById('results-info');
   document.getElementById('results-num').textContent = lista.length;
-  info.style.display = 'flex';
+  document.getElementById('results-info').style.display = 'flex';
 
   if (!lista.length) {
-    grid.innerHTML = `
-      <div class="empty-state">
-        <div class="icon">🔍</div>
-        <h3>Nenhuma loja encontrada</h3>
-        <p>Tente mudar os filtros ou buscar outra cidade.</p>
-      </div>`;
+    grid.innerHTML = '<div class="empty"><div class="ic">🔍</div><h3>Nenhum restaurante encontrado</h3><p>Tente mudar a cidade ou os filtros.</p></div>';
     return;
   }
-
-  grid.innerHTML = lista.map(l => cardHTML(l)).join('');
+  grid.innerHTML = lista.map(l => {
+    const ab = l.aberto !== false;
+    const lg = l.logo_url
+      ? `<div class="loja-logo"><img src="${l.logo_url}" alt="${l.nome}" onerror="this.parentElement.innerHTML='🏪'"></div>`
+      : `<div class="loja-logo">🏪</div>`;
+    return `<a class="loja-card" href="/${l.slug}">${lg}<span class="loja-nome">${l.nome}</span><span class="loja-status ${ab?'s-aberta':'s-fechada'}">${ab?'● Aberto':'● Fechado'}</span></a>`;
+  }).join('');
 }
 
-function cardHTML(l) {
-  const cor     = isGrad(l.cor_primaria) ? l.cor_primaria : (l.cor_primaria || '#C0392B');
-  const bg      = isGrad(l.cor_primaria) ? cor : `linear-gradient(135deg, ${cor}, ${escurecer(cor)})`;
-  const aberta  = l.aberto !== false;
-  const entrega = l.faz_entrega !== false;
-  const retirada= l.faz_retirada !== false;
-  const tempo   = l.tempo_entrega || '30-45 min';
-  const cidade  = l.cidade ? `<span class="loja-cidade-tag">${l.cidade}</span>` : '';
-
-  const logoHTML = l.logo_url
-    ? `<div class="loja-logo"><img src="${l.logo_url}" alt="${l.nome}" onerror="this.parentElement.innerHTML='🏪'"></div>`
-    : `<div class="loja-logo">🏪</div>`;
-
-  return `
-    <a class="loja-card" href="/${l.slug}" target="_blank">
-      <div class="loja-capa">
-        <div class="loja-capa-gradient" style="background:${bg};"></div>
-        <span class="loja-nome-capa">${l.nome}</span>
-      </div>
-      <div class="loja-logo-wrap">${logoHTML}</div>
-      <div class="loja-info">
-        <div class="loja-header">
-          <div class="loja-nome">${l.nome}</div>
-          <span class="loja-status ${aberta ? 'status-aberta' : 'status-fechada'}">
-            ${aberta ? '● Aberto' : '● Fechado'}
-          </span>
-        </div>
-        ${l.descricao ? `<p class="loja-desc">${l.descricao}</p>` : ''}
-        <div class="loja-meta">
-          ${entrega ? `<span class="loja-meta-item">🛵 Entrega · ${tempo}</span>` : ''}
-          ${retirada && !entrega ? `<span class="loja-meta-item">🏃 Retirada</span>` : ''}
-          ${cidade}
-        </div>
-      </div>
-    </a>`;
+// Helpers
+function mskTel(inp) {
+  let v = inp.value.replace(/\D/g,'').slice(0,11);
+  if(v.length>10) v=v.replace(/^(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3');
+  else if(v.length>6) v=v.replace(/^(\d{2})(\d{4})(\d*)$/,'($1) $2-$3');
+  else if(v.length>2) v=v.replace(/^(\d{2})(\d*)$/,'($1) $2');
+  else if(v.length>0) v='('+v;
+  inp.value=v;
 }
-
-// ── HELPERS ───────────────────────────────────────────────────
-function isGrad(cor) { return cor && (cor.startsWith('grad:') || cor.startsWith('linear-gradient')); }
-
-function escurecer(hex) {
-  try {
-    let h = hex.replace('#','');
-    if (h.length === 3) h = h.split('').map(c=>c+c).join('');
-    const r = Math.max(0, parseInt(h.slice(0,2),16) - 40);
-    const g = Math.max(0, parseInt(h.slice(2,4),16) - 40);
-    const b = Math.max(0, parseInt(h.slice(4,6),16) - 40);
-    return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
-  } catch(e) { return '#111'; }
-}
-
 function toast(msg) {
-  const el = document.getElementById('lj-toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 3000);
+  const el=document.getElementById('lj-toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3000);
 }
 
-// ── START ─────────────────────────────────────────────────────
-init();
+let _deb;
+document.getElementById('busca-input').addEventListener('input',()=>{ clearTimeout(_deb); _deb=setTimeout(filtrar,250); });
 
-// Busca com debounce
-let _debounce;
-document.getElementById('busca-input').addEventListener('input', () => {
-  clearTimeout(_debounce);
-  _debounce = setTimeout(filtrar, 250);
-});
+init();
 </script>
 </body>
 </html>
