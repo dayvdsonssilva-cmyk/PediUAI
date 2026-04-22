@@ -50,11 +50,10 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
 }
 .hero-inner {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 45% 55%;
   align-items: center;
   width: 100%;
   padding: 140px 6% 80px 6%;
-  gap: 60px;
 }
 .hero-text {
   grid-column: 1;
@@ -483,7 +482,7 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   width: 180px; height: 24px;
   background: rgba(0,0,0,0.45);
   border-radius: 50%;
-  filter: blur(18px);
+  filter: blur(22px);
   margin: 12px auto 0;
 }
 
@@ -938,9 +937,8 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 .fin-table tr:hover td { background: #faf8f5; }
 .fin-table tr:last-child td { }
 
-/* Barras de pagamento e canal de vendas */
-#fin-pags-est .pag-row,
-#fin-origem-est .pag-row {
+/* Barras de pagamento redesenhadas */
+#fin-pags-est .pag-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -948,32 +946,27 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
   border-bottom: 1px solid var(--border);
   gap: 12px;
 }
-#fin-pags-est .pag-row:last-child,
-#fin-origem-est .pag-row:last-child { border-bottom: none; }
-#fin-pags-est .pag-label,
-#fin-origem-est .pag-label {
+#fin-pags-est .pag-row:last-child { border-bottom: none; }
+#fin-pags-est .pag-label {
   font-size: .82rem;
   font-weight: 700;
   min-width: 80px;
   flex-shrink: 0;
 }
-#fin-pags-est .pag-bar-wrap,
-#fin-origem-est .pag-bar-wrap {
+#fin-pags-est .pag-bar-wrap {
   flex: 1;
   background: #f0e9e0;
   border-radius: 50px;
   height: 8px;
   overflow: hidden;
 }
-#fin-pags-est .pag-bar-fill,
-#fin-origem-est .pag-bar-fill {
+#fin-pags-est .pag-bar-fill {
   height: 100%;
   border-radius: 50px;
   background: var(--red);
   transition: width .4s;
 }
-#fin-pags-est .pag-val,
-#fin-origem-est .pag-val {
+#fin-pags-est .pag-val {
   font-size: .82rem;
   font-weight: 700;
   color: var(--red);
@@ -981,8 +974,7 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
   text-align: right;
   flex-shrink: 0;
 }
-#fin-pags-est .pag-pct,
-#fin-origem-est .pag-pct {
+#fin-pags-est .pag-pct {
   font-size: .7rem;
   color: #aaa;
   min-width: 32px;
