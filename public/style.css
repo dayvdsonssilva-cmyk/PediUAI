@@ -49,19 +49,16 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
   align-items: stretch;
 }
 .hero-inner {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
-  justify-content: space-between;
   width: 100%;
-  max-width: 100%;
-  margin: 0;
   padding: 140px 6% 80px 6%;
 }
 .hero-text {
-  flex: 0 0 auto;
+  grid-column: 1;
   max-width: 480px;
-  width: 100%;
-  z-index: 1;
+  z-index: 2;
 }
 /* Cada linha do h1 é um bloco — nunca quebra sozinha */
 .h1-line {
@@ -387,16 +384,23 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
    MOCKUP CELULAR NA HERO
 ═══════════════════════════════ */
 .hero-mockup {
-  flex: 0 0 auto;
+  grid-column: 2;
   position: relative;
-  width: 300px;
-  height: 580px;
+  height: 600px;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Centralizado no espaço vazio direito */
-  margin-left: auto;
-  margin-right: auto;
+  perspective: 1200px;
+}
+.hero-mockup::before {
+  content: '';
+  position: absolute;
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, rgba(192,57,43,0.22) 0%, transparent 70%);
+  border-radius: 50%;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 .phone-wrap {
   position: relative;
@@ -405,32 +409,34 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   transform: rotateY(-8deg) rotateX(4deg) translateZ(0);
 }
 .phone-frame {
-  width: 230px;
-  height: 470px;
-  background: linear-gradient(145deg, #1a1a2e, #16213e);
-  border-radius: 36px;
-  border: 8px solid #2d2d44;
+  width: 248px;
+  height: 504px;
+  background: linear-gradient(160deg, #252525 0%, #111 60%, #1a1a1a 100%);
+  border-radius: 44px;
+  border: 2px solid #3a3a3a;
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.06),
-    0 30px 80px rgba(0,0,0,0.6),
-    inset 0 1px 0 rgba(255,255,255,0.1);
+    8px 0 0 0 #1a1a1a,
+    9px 0 0 1px #111,
+    -20px 40px 90px rgba(0,0,0,0.80),
+    inset 0 1px 0 rgba(255,255,255,0.10);
   position: relative;
   overflow: hidden;
 }
 .phone-notch {
-  width: 70px; height: 20px;
-  background: #0a0a1a;
-  border-radius: 0 0 14px 14px;
+  width: 76px; height: 22px;
+  background: #0a0a0a;
+  border-radius: 0 0 16px 16px;
   margin: 0 auto;
   position: relative;
   z-index: 10;
 }
 .phone-screen {
-  height: calc(100% - 20px);
+  height: calc(100% - 22px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   background: #fff;
+  border-radius: 0 0 42px 42px;
 }
 .phone-header {
   background: var(--red, #C0392B);
@@ -438,53 +444,46 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   display: flex;
   align-items: center;
   gap: 8px;
-}
-.phone-logo { font-size: 1.1rem; }
-.phone-store-name { color: #fff; font-size: .65rem; font-weight: 800; flex: 1; }
-.phone-open-badge { font-size: .5rem; background: rgba(255,255,255,.2); color: #fff; padding: 2px 6px; border-radius: 20px; font-weight: 700; }
-.phone-content { flex: 1; padding: 6px 8px; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
-.phone-item-card {
-  background: #faf8f5;
-  border-radius: 10px;
-  padding: 8px 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid #f0ebe4;
-}
-.phone-item-emoji { font-size: 1.3rem; flex-shrink: 0; }
-.phone-item-info { flex: 1; min-width: 0; }
-.phone-item-name { font-size: .58rem; font-weight: 700; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.phone-item-price { font-size: .6rem; font-weight: 800; color: var(--red, #C0392B); margin-top: 2px; }
-.phone-item-btn {
-  width: 22px; height: 22px;
-  background: var(--red, #C0392B);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: .8rem;
-  font-weight: 800;
-  display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  cursor: default;
+}
+.phone-logo { display: none; }
+.phone-store-name { color: #fff; font-size: .72rem; font-weight: 800; flex: 1; }
+.phone-open-badge { font-size: .54rem; background: rgba(255,255,255,.22); color: #fff; padding: 2px 7px; border-radius: 20px; font-weight: 700; white-space: nowrap; }
+.phone-content { flex: 1; padding: 8px 10px; overflow: hidden; display: flex; flex-direction: column; gap: 7px; }
+.phone-item-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 9px 11px;
+  display: flex; align-items: center; gap: 9px;
+  border: 1px solid #f0ebe4;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+}
+.phone-item-emoji { font-size: 1.4rem; flex-shrink: 0; }
+.phone-item-info { flex: 1; min-width: 0; }
+.phone-item-name { font-size: .62rem; font-weight: 700; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.phone-item-price { font-size: .66rem; font-weight: 800; color: var(--red, #C0392B); margin-top: 2px; }
+.phone-item-btn {
+  width: 24px; height: 24px;
+  background: var(--red, #C0392B);
+  color: #fff; border: none; border-radius: 7px;
+  font-size: .9rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; cursor: default; line-height: 1;
 }
 .phone-cart-bar {
-  background: #1a1a1a;
-  color: #fff;
-  padding: 8px 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: .58rem;
-  font-weight: 700;
+  background: #111; color: #fff;
+  padding: 9px 14px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: .62rem; font-weight: 700;
+  flex-shrink: 0;
+  border-radius: 0 0 42px 42px;
 }
 .phone-shadow {
-  width: 160px;
-  height: 20px;
-  background: rgba(0,0,0,0.35);
+  width: 180px; height: 24px;
+  background: rgba(0,0,0,0.45);
   border-radius: 50%;
-  filter: blur(18px);
-  margin: 12px auto 0;
+  filter: blur(22px);
+  margin: 18px auto 0;
 }
 
 /* Itens de comida flutuantes */
@@ -509,10 +508,16 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 
 @media(max-width:600px) {
   /* ── Landing ── */
-  .hero-inner { flex-direction: column; padding: 100px 5% 50px; gap: 40px; }
-  .hero-text { max-width: 100%; padding-right: 0; margin-right: 0; }
-  .hero-mockup { width: 220px; height: 440px; margin-right: 0; }
-  .phone-frame { width: 180px; height: 370px; }
+  .hero-inner { grid-template-columns: 1fr; padding: 100px 5% 50px; gap: 32px; }
+  .hero-text { grid-column: 1; }
+  .hero-mockup { grid-column: 1; height: 520px; }
+  .phone-frame { width: 210px; height: 430px; border-radius: 40px; }
+  .phone-screen { border-radius: 0 0 38px 38px; }
+  .phone-cart-bar { border-radius: 0 0 38px 38px; }
+  .badge { white-space: normal; letter-spacing: 0; font-size: 0.7rem; padding: 4px 10px; }
+  .header-dark { padding: 12px 4%; }
+  .btn-ghost-dark { padding: 8px 14px; font-size: 0.82rem; }
+  .btn-primary:not(.full):not(.big):not(.hero-btn-main) { padding: 8px 14px; font-size: 0.82rem; }
   .h1-line { white-space: normal; }
   h1 { font-size: 2.4rem; }
   .hero-actions { max-width: 100%; }
