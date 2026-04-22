@@ -3348,23 +3348,27 @@ async function confirmarFecharComanda() {
     if (!confirm('Ha itens nao enviados no carrinho. Deseja fechar mesmo assim?')) return;
   }
 
-  // Reseta seleção de pagamento e abre modal
-  _pagamentoComanda = null;
-  ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
-    const btn = document.getElementById('pgto-btn-' + m);
-    if (btn) { btn.style.borderColor='#e0dbd5'; btn.style.background='#fff'; btn.style.color='#555'; }
-  });
-  const aviso = document.getElementById('pgto-aviso');
-  if (aviso) aviso.style.display = 'none';
+  // 1. Imprime a comanda PRIMEIRO
+  window.imprimirComanda();
 
-  const mesaEl = document.getElementById('fechar-comanda-mesa');
-  const totEl  = document.getElementById('fechar-comanda-total');
-  const infEl  = document.getElementById('fechar-comanda-info');
-  if (mesaEl) mesaEl.textContent = _mesaAtual;
-  if (totEl)  totEl.textContent  = fmt(totalMesa);
-  if (infEl)  infEl.textContent  = peds.length + ' pedido(s)';
-  const modal = document.getElementById('modal-fechar-comanda');
-  if (modal) modal.style.display = 'flex';
+  // 2. Abre popup de pagamento após delay (deixa janela de impressão abrir)
+  setTimeout(() => {
+    _pagamentoComanda = null;
+    ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
+      const btn = document.getElementById('pgto-btn-' + m);
+      if (btn) { btn.style.borderColor='#e0dbd5'; btn.style.background='#fff'; btn.style.color='#555'; }
+    });
+    const aviso = document.getElementById('pgto-aviso');
+    if (aviso) aviso.style.display = 'none';
+    const mesaEl = document.getElementById('fechar-comanda-mesa');
+    const totEl  = document.getElementById('fechar-comanda-total');
+    const infEl  = document.getElementById('fechar-comanda-info');
+    if (mesaEl) mesaEl.textContent = _mesaAtual;
+    if (totEl)  totEl.textContent  = fmt(totalMesa);
+    if (infEl)  infEl.textContent  = peds.length + ' pedido(s)';
+    const modal = document.getElementById('modal-fechar-comanda');
+    if (modal) modal.style.display = 'flex';
+  }, 500);
 }
 
 window.cancelarFecharComanda = function() {
