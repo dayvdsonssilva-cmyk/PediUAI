@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PEDIWAY — Encontre restaurantes perto de você</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --red: #C0392B;
+      --red-dark: #a93226;
+      --bg: #0f0f0f;
+      --card: #1a1a1a;
+      --border: rgba(255,255,255,0.08);
+      --text: #fff;
+      --muted: rgba(255,255,255,0.45);
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15,15,15,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 6%;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { font-size: 1.3rem; font-weight: 800; color: #fff; text-decoration: none; }
+    .logo span { color: var(--red); }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .btn-header {
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-outline { background: rgba(255,255,255,0.08); color: #fff; border: 1.5px solid rgba(255,255,255,0.2) !important; }
+    .btn-red { background: var(--red); color: #fff; }
+    .btn-red:hover { background: var(--red-dark); }
+
+    /* ── HERO BUSCA ── */
+    .search-hero {
+      background: linear-gradient(135deg, #1a0808 0%, #0f0f0f 60%);
+      padding: 60px 6% 50px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .search-hero::before {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(192,57,43,0.15) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .search-hero h1 {
+      font-size: clamp(1.6rem, 4vw, 2.8rem);
+      font-weight: 800;
+      margin-bottom: 8px;
+      position: relative;
+    }
+    .search-hero p {
+      color: var(--muted);
+      font-size: .95rem;
+      margin-bottom: 28px;
+      position: relative;
+    }
+
+    /* ── BARRA DE BUSCA ── */
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      max-width: 640px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .search-input-wrap {
+      flex: 1;
+      position: relative;
+    }
+    .search-input-wrap svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      padding: 14px 14px 14px 44px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--red); }
+
+    /* Select de cidade */
+    .city-select {
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      font-size: .88rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      min-width: 160px;
+      transition: border-color .2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-color: rgba(255,255,255,0.06);
+      padding-right: 36px;
+    }
+    .city-select:focus { border-color: var(--red); }
+    .city-select option { background: #1a1a1a; color: #fff; }
+
+    /* ── FILTROS ── */
+    .filters-bar {
+      padding: 18px 6%;
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .filters-bar::-webkit-scrollbar { display: none; }
+    .filter-pill {
+      padding: 7px 18px;
+      border-radius: 50px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Poppins', sans-serif;
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .15s;
+    }
+    .filter-pill:hover { border-color: rgba(255,255,255,0.25); color: #fff; }
+    .filter-pill.ativo { background: var(--red); border-color: var(--red); color: #fff; }
+
+    /* ── CONTEÚDO PRINCIPAL ── */
+    .main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 6% 60px;
+    }
+
+    /* ── CONTAGEM ── */
+    .results-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .results-count {
+      font-size: .85rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .results-count span { color: #fff; font-weight: 700; }
+    .city-badge {
+      background: rgba(192,57,43,0.15);
+      color: var(--red);
+      padding: 4px 14px;
+      border-radius: 50px;
+      font-size: .78rem;
+      font-weight: 700;
+    }
+
+    /* ── GRID DE LOJAS ── */
+    .lojas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    /* ── CARD DA LOJA ── */
+    .loja-card {
+      background: var(--card);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: transform .18s, border-color .18s, box-shadow .18s;
+    }
+    .loja-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(192,57,43,0.4);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+
+    /* Capa */
+    .loja-capa {
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .loja-capa-gradient {
+      position: absolute;
+      inset: 0;
+      opacity: .85;
+    }
+    .loja-nome-capa {
+      position: relative;
+      z-index: 1;
+      font-size: 1rem;
+      font-weight: 800;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: .06em;
+    }
+
+    /* Logo flutuante */
+    .loja-logo-wrap {
+      padding: 0 20px;
+      margin-top: -28px;
+      position: relative;
+      z-index: 2;
+    }
+    .loja-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      border: 3px solid var(--card);
+      object-fit: cover;
+      background: #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      overflow: hidden;
+    }
+    .loja-logo img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Info */
+    .loja-info { padding: 10px 20px 20px; }
+    .loja-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+    .loja-nome { font-size: 1rem; font-weight: 800; color: #fff; line-height: 1.2; }
+    .loja-status {
+      font-size: .65rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 50px;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+    .status-aberta { background: rgba(22,163,74,0.2); color: #22c55e; }
+    .status-fechada { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .loja-desc {
+      font-size: .78rem;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .loja-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .loja-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: .72rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .loja-cidade-tag {
+      font-size: .68rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.06);
+      padding: 2px 10px;
+      border-radius: 50px;
+    }
+
+    /* ── ESTADOS ── */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      grid-column: 1/-1;
+    }
+    .empty-state .icon { font-size: 3.5rem; margin-bottom: 16px; }
+    .empty-state h3 { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .empty-state p { font-size: .88rem; color: var(--muted); line-height: 1.7; }
+
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 18px;
+      height: 240px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ── TOAST ── */
+    #lj-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: #1a1a1a;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-size: .85rem;
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transition: transform .3s;
+      z-index: 9999;
+      white-space: nowrap;
+    }
+    #lj-toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── MOBILE ── */
+    @media(max-width:600px) {
+      header { padding: 0 5%; }
+      .search-hero { padding: 48px 5% 36px; }
+      .search-bar { flex-direction: column; }
+      .city-select { min-width: auto; }
+      .filters-bar { padding: 14px 5%; }
+      .main { padding: 24px 5% 40px; }
+      .lojas-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .loja-capa { height: 70px; }
+      .loja-logo { width: 46px; height: 46px; border-radius: 10px; font-size: 1.3rem; }
+      .loja-logo-wrap { margin-top: -22px; padding: 0 14px; }
+      .loja-info { padding: 8px 14px 16px; }
+      .loja-nome { font-size: .88rem; }
+      .loja-desc { display: none; }
+    }
+
+    @media(max-width:380px) {
+      .lojas-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="/">PEDI<span>WAY</span></a>
+  <div class="header-right">
+    <a href="/" style="text-decoration:none;">
+      <button class="btn-header btn-outline">Entrar</button>
+    </a>
+    <a href="/" style="text-decoration:none;">
+      <button class="btn-header btn-red">Abra sua loja</button>
+    </a>
+  </div>
+</header>
+
+<!-- Hero de busca -->
+<div class="search-hero">
+  <h1>Encontre restaurantes <span style="color:var(--red);">perto de você</span></h1>
+  <p>Peça direto, sem intermediários. Sem taxa extra.</p>
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" id="busca-input" type="text" placeholder="Buscar restaurante ou prato..." oninput="filtrar()">
+    </div>
+    <select class="city-select" id="cidade-select" onchange="filtrar()">
+      <option value="">📍 Todas as cidades</option>
+    </select>
+  </div>
+</div>
+
+<!-- Filtros por categoria -->
+<div class="filters-bar">
+  <button class="filter-pill ativo" data-cat="" onclick="selecionarCat(this)">Todos</button>
+  <button class="filter-pill" data-cat="burger" onclick="selecionarCat(this)">🍔 Hamburgueria</button>
+  <button class="filter-pill" data-cat="pizza" onclick="selecionarCat(this)">🍕 Pizza</button>
+  <button class="filter-pill" data-cat="acai" onclick="selecionarCat(this)">🍧 Açaí</button>
+  <button class="filter-pill" data-cat="restaurante" onclick="selecionarCat(this)">🍽️ Restaurante</button>
+  <button class="filter-pill" data-cat="lanche" onclick="selecionarCat(this)">🥪 Lanches</button>
+  <button class="filter-pill" data-cat="bebida" onclick="selecionarCat(this)">🥤 Bebidas</button>
+  <button class="filter-pill" data-cat="doce" onclick="selecionarCat(this)">🍰 Doces</button>
+  <button class="filter-pill" data-cat="aberta" onclick="selecionarCat(this)">🟢 Aberto agora</button>
+</div>
+
+<!-- Conteúdo principal -->
+<div class="main">
+  <div class="results-info" id="results-info" style="display:none;">
+    <p class="results-count">Mostrando <span id="results-num">0</span> restaurantes</p>
+    <span class="city-badge" id="city-badge" style="display:none;"></span>
+  </div>
+  <div class="lojas-grid" id="lojas-grid">
+    <!-- Skeletons de loading -->
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  </div>
+</div>
+
+<div id="lj-toast"></div>
+
+<script>
+const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
+
+const { createClient } = supabase;
+const db = createClient(SUPA_URL, SUPA_KEY);
+
+let _lojas = [];
+let _catAtiva = '';
+
+// ── INIT ──────────────────────────────────────────────────────
+async function init() {
+  const { data, error } = await db
+    .from('estabelecimentos')
+    .select('id, nome, slug, descricao, logo_url, cor_primaria, cidade, aberto, tempo_entrega, faz_entrega, faz_retirada')
+    .order('nome', { ascending: true });
+
+  if (error) {
+    toast('Erro ao carregar lojas');
+    document.getElementById('lojas-grid').innerHTML = `
+      <div class="empty-state">
+        <div class="icon">😕</div>
+        <h3>Não foi possível carregar</h3>
+        <p>Tente recarregar a página.</p>
+      </div>`;
+    return;
+  }
+
+  _lojas = data || [];
+  preencherCidades();
+  renderLojas(_lojas);
+}
+
+// ── CIDADES ───────────────────────────────────────────────────
+function preencherCidades() {
+  const cidades = [...new Set(
+    _lojas.map(l => l.cidade).filter(Boolean).map(c => c.trim())
+  )].sort();
+
+  const sel = document.getElementById('cidade-select');
+  cidades.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = '📍 ' + c;
+    sel.appendChild(opt);
+  });
+
+  // Detecta cidade pelo localStorage (se usuário já escolheu antes)
+  const salva = localStorage.getItem('lj_cidade');
+  if (salva && cidades.includes(salva)) {
+    sel.value = salva;
+    filtrar();
+  }
+}
+
+// ── FILTRAR ───────────────────────────────────────────────────
+function filtrar() {
+  const termo   = document.getElementById('busca-input').value.toLowerCase().trim();
+  const cidade  = document.getElementById('cidade-select').value;
+
+  if (cidade) localStorage.setItem('lj_cidade', cidade);
+  else        localStorage.removeItem('lj_cidade');
+
+  let resultado = _lojas.filter(l => {
+    const matchCidade = !cidade || (l.cidade && l.cidade.trim() === cidade);
+    const matchBusca  = !termo ||
+      l.nome?.toLowerCase().includes(termo) ||
+      l.descricao?.toLowerCase().includes(termo);
+    const matchCat    = matchCategoria(l);
+    return matchCidade && matchBusca && matchCat;
+  });
+
+  renderLojas(resultado);
+
+  // Badge de cidade
+  const badge = document.getElementById('city-badge');
+  if (cidade) { badge.textContent = '📍 ' + cidade; badge.style.display = ''; }
+  else        badge.style.display = 'none';
+}
+
+function matchCategoria(loja) {
+  if (!_catAtiva) return true;
+  if (_catAtiva === 'aberta') return loja.aberto === true;
+  const nome = (loja.nome + ' ' + (loja.descricao || '')).toLowerCase();
+  const mapa = {
+    burger:      ['burger','hamburguer','smash','burguer'],
+    pizza:       ['pizza','pizzaria'],
+    acai:        ['açaí','acai'],
+    restaurante: ['restaurante','refeição','marmita','self'],
+    lanche:      ['lanche','sanduíche','wrap','tapioca'],
+    bebida:      ['bebida','suco','smoothie','drink'],
+    doce:        ['doce','bolo','confeitaria','sobremesa','gelato','sorvete'],
+  };
+  return (mapa[_catAtiva] || []).some(k => nome.includes(k));
+}
+
+function selecionarCat(btn) {
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  _catAtiva = btn.dataset.cat;
+  filtrar();
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function renderLojas(lista) {
+  const grid = document.getElementById('lojas-grid');
+  const info = document.getElementById('results-info');
+  document.getElementById('results-num').textContent = lista.length;
+  info.style.display = 'flex';
+
+  if (!lista.length) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">🔍</div>
+        <h3>Nenhuma loja encontrada</h3>
+        <p>Tente mudar os filtros ou buscar outra cidade.</p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = lista.map(l => cardHTML(l)).join('');
+}
+
+function cardHTML(l) {
+  const cor     = isGrad(l.cor_primaria) ? l.cor_primaria : (l.cor_primaria || '#C0392B');
+  const bg      = isGrad(l.cor_primaria) ? cor : `linear-gradient(135deg, ${cor}, ${escurecer(cor)})`;
+  const aberta  = l.aberto !== false;
+  const entrega = l.faz_entrega !== false;
+  const retirada= l.faz_retirada !== false;
+  const tempo   = l.tempo_entrega || '30-45 min';
+  const cidade  = l.cidade ? `<span class="loja-cidade-tag">${l.cidade}</span>` : '';
+
+  const logoHTML = l.logo_url
+    ? `<div class="loja-logo"><img src="${l.logo_url}" alt="${l.nome}" onerror="this.parentElement.innerHTML='🏪'"></div>`
+    : `<div class="loja-logo">🏪</div>`;
+
+  return `
+    <a class="loja-card" href="/${l.slug}" target="_blank">
+      <div class="loja-capa">
+        <div class="loja-capa-gradient" style="background:${bg};"></div>
+        <span class="loja-nome-capa">${l.nome}</span>
+      </div>
+      <div class="loja-logo-wrap">${logoHTML}</div>
+      <div class="loja-info">
+        <div class="loja-header">
+          <div class="loja-nome">${l.nome}</div>
+          <span class="loja-status ${aberta ? 'status-aberta' : 'status-fechada'}">
+            ${aberta ? '● Aberto' : '● Fechado'}
+          </span>
+        </div>
+        ${l.descricao ? `<p class="loja-desc">${l.descricao}</p>` : ''}
+        <div class="loja-meta">
+          ${entrega ? `<span class="loja-meta-item">🛵 Entrega · ${tempo}</span>` : ''}
+          ${retirada && !entrega ? `<span class="loja-meta-item">🏃 Retirada</span>` : ''}
+          ${cidade}
+        </div>
+      </div>
+    </a>`;
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function isGrad(cor) { return cor && (cor.startsWith('grad:') || cor.startsWith('linear-gradient')); }
+
+function escurecer(hex) {
+  try {
+    let h = hex.replace('#','');
+    if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+    const r = Math.max(0, parseInt(h.slice(0,2),16) - 40);
+    const g = Math.max(0, parseInt(h.slice(2,4),16) - 40);
+    const b = Math.max(0, parseInt(h.slice(4,6),16) - 40);
+    return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+  } catch(e) { return '#111'; }
+}
+
+function toast(msg) {
+  const el = document.getElementById('lj-toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── START ─────────────────────────────────────────────────────
+init();
+
+// Busca com debounce
+let _debounce;
+document.getElementById('busca-input').addEventListener('input', () => {
+  clearTimeout(_debounce);
+  _debounce = setTimeout(filtrar, 250);
+});
+</script>
+</body>
+</html>
