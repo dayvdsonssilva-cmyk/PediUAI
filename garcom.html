@@ -152,6 +152,51 @@
   </div>
 </div>
 <div id="gc-toast"></div>
+
+<!-- Modal de pagamento ao fechar comanda -->
+<div id="gc-modal-pgto" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:18px;width:100%;max-width:340px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f0ebe4">
+      <span style="font-size:1rem;font-weight:800;color:#1a1a1a">Fechar comanda</span>
+      <button onclick="gcCancelarPgto()" style="width:30px;height:30px;border-radius:50%;border:1.5px solid #e0dbd5;background:#faf8f5;cursor:pointer;font-size:.85rem;color:#555;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div style="padding:20px">
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:2rem;margin-bottom:6px">🧾</div>
+        <div id="gc-pgto-mesa" style="font-size:1.2rem;font-weight:900;color:#1a1a1a"></div>
+        <div id="gc-pgto-total" style="font-size:1.6rem;font-weight:900;color:#C0392B;margin-top:4px"></div>
+        <div id="gc-pgto-info" style="font-size:.75rem;color:#aaa;margin-top:4px"></div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:.75rem;font-weight:700;color:#555;margin-bottom:10px">💳 Forma de pagamento</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <button id="gc-pgto-PIX" onclick="gcSelecionarPgto('PIX')"
+            style="padding:12px 6px;border-radius:12px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+            <span style="font-size:1.4rem">📱</span>PIX
+          </button>
+          <button id="gc-pgto-CARTÃO" onclick="gcSelecionarPgto('CARTÃO')"
+            style="padding:12px 6px;border-radius:12px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+            <span style="font-size:1.4rem">💳</span>Cartão
+          </button>
+          <button id="gc-pgto-DINHEIRO" onclick="gcSelecionarPgto('DINHEIRO')"
+            style="padding:12px 6px;border-radius:12px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+            <span style="font-size:1.4rem">💵</span>Dinheiro
+          </button>
+        </div>
+        <div id="gc-pgto-aviso" style="display:none;font-size:.72rem;color:#C0392B;margin-top:8px;text-align:center;font-weight:600">
+          ⚠️ Selecione uma forma de pagamento para continuar
+        </div>
+      </div>
+      <div style="background:#fef9f0;border:1px solid #f5e6c8;border-radius:10px;padding:10px 14px;font-size:.78rem;color:#92400e">
+        ⚠️ A mesa será liberada e os pedidos encerrados.
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;padding:0 20px 18px">
+      <button onclick="gcCancelarPgto()" style="flex:1;padding:12px;border-radius:10px;border:1.5px solid #e0dbd5;background:#faf8f5;font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;color:#555;cursor:pointer">Cancelar</button>
+      <button onclick="gcConfirmarFechamento()" style="flex:2;padding:12px;border-radius:10px;border:none;background:#C0392B;color:#fff;font-family:'Poppins',sans-serif;font-weight:800;font-size:.85rem;cursor:pointer">✓ Confirmar fechamento</button>
+    </div>
+  </div>
+</div>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
@@ -366,16 +411,60 @@ window.gcEnviar=async function(){
   finally{if(btn){btn.disabled=false;btn.textContent='Enviar para cozinha 🍳';}}
 };
 
+let _gcPagamento = null;
+
 window.gcFecharComanda=async function(){
   if(!mesaAtual)return;
   const peds=pedMesas[mesaAtual]||[];const carr=carrinhos[mesaAtual]||[];
   const total=peds.reduce((s,p)=>s+Number(p.total||0),0);
   if(carr.length&&!confirm('Ha itens nao enviados. Fechar mesmo assim?'))return;
-  if(!confirm('Fechar comanda da '+mesaAtual+'?\n\nTotal: '+fmtR(total)+'\nPedidos: '+peds.length+'\n\nA mesa sera liberada.'))return;
-  if(peds.length)await db.from('pedidos').update({status:'pronto'}).in('id',peds.map(p=>p.id));
+
+  // Abre popup de pagamento
+  _gcPagamento = null;
+  ['PIX','CARTÃO','DINHEIRO'].forEach(m=>{
+    const btn=document.getElementById('gc-pgto-'+m);
+    if(btn){btn.style.borderColor='#e0dbd5';btn.style.background='#fff';btn.style.color='#555';}
+  });
+  const aviso=document.getElementById('gc-pgto-aviso');
+  if(aviso)aviso.style.display='none';
+  document.getElementById('gc-pgto-mesa').textContent=mesaAtual;
+  document.getElementById('gc-pgto-total').textContent=fmtR(total);
+  document.getElementById('gc-pgto-info').textContent=peds.length+' pedido(s)';
+  document.getElementById('gc-modal-pgto').style.display='flex';
+};
+
+window.gcSelecionarPgto=function(metodo){
+  _gcPagamento=metodo;
+  ['PIX','CARTÃO','DINHEIRO'].forEach(m=>{
+    const btn=document.getElementById('gc-pgto-'+m);
+    if(!btn)return;
+    if(m===metodo){btn.style.borderColor='#C0392B';btn.style.background='#fff5f5';btn.style.color='#C0392B';}
+    else{btn.style.borderColor='#e0dbd5';btn.style.background='#fff';btn.style.color='#555';}
+  });
+  const aviso=document.getElementById('gc-pgto-aviso');
+  if(aviso)aviso.style.display='none';
+};
+
+window.gcCancelarPgto=function(){
+  document.getElementById('gc-modal-pgto').style.display='none';
+  _gcPagamento=null;
+};
+
+window.gcConfirmarFechamento=async function(){
+  if(!_gcPagamento){
+    const aviso=document.getElementById('gc-pgto-aviso');
+    if(aviso)aviso.style.display='block';
+    return;
+  }
+  document.getElementById('gc-modal-pgto').style.display='none';
+  if(!mesaAtual)return;
+  const peds=pedMesas[mesaAtual]||[];
+  const total=peds.reduce((s,p)=>s+Number(p.total||0),0);
+  if(peds.length)await db.from('pedidos').update({status:'pronto',pagamento:_gcPagamento}).in('id',peds.map(p=>p.id));
   delete pedMesas[mesaAtual];delete carrinhos[mesaAtual];fechadas.add(mesaAtual);
   const mf=mesaAtual;setTimeout(()=>{fechadas.delete(mf);renderMesas();},5000);
-  toast('Comanda da '+mesaAtual+' fechada! '+fmtR(total));gcFechar();renderMesas();
+  _gcPagamento=null;
+  toast('Comanda da '+mf+' fechada! '+fmtR(total));gcFechar();renderMesas();
 };
 
 function renderHistorico(){
