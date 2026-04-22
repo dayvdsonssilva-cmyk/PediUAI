@@ -40,6 +40,8 @@
   .lp-split   { grid-template-columns:1fr;gap:40px; }
   .lp-numgrid { grid-template-columns:1fr 1fr; }
   .lp-sec     { padding:60px 5%; }
+  .scroll-arrow { position:relative;bottom:auto;left:auto;transform:none;margin-top:32px;align-self:center; }
+  @keyframes arrowBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(10px)} }
 }
 </style>
 
@@ -75,17 +77,16 @@
         <div><strong>R$0</strong><span>comissão por pedido</span></div>
         <div><strong>5min</strong><span>para montar seu cardápio</span></div>
         <div><strong>100%</strong><span>do lucro é seu</span></div>
+      <!-- Seta animada - dentro do content para mobile funcionar -->
+      <div class="scroll-arrow" onclick="document.getElementById('lp-como').scrollIntoView({behavior:'smooth'})">
+        <span>saiba mais</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.3;margin-top:-10px;">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
       </div>
-    </div>
-    <!-- Seta animada -->
-    <div class="scroll-arrow" onclick="document.getElementById('lp-como').scrollIntoView({behavior:'smooth'})">
-      <span>saiba mais</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="6 9 12 15 18 9"/>
-      </svg>
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.3;margin-top:-10px;">
-        <polyline points="6 9 12 15 18 9"/>
-      </svg>
     </div>
   </section>
 
