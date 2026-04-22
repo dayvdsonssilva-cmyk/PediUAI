@@ -1844,11 +1844,10 @@ function renderFinanceiro() {
   if (se('fin-tick-est')) se('fin-tick-est').textContent = fmtR(tick);
   if (se('fin-taxa-est')) se('fin-taxa-est').textContent = fmtR(taxa);
 
-  // ── Formas de Pagamento (exclui "No local" antigo — usa PIX/CARTÃO/DINHEIRO) ──
+  // ── Formas de Pagamento (normaliza "No local" legado) ──
   const pm = {};
   peds.forEach(p => {
-    let k = (p.pagamento || 'Não informado').toUpperCase();
-    // Normaliza valor legado "NO LOCAL" para não aparecer como forma de pagamento
+    let k = (p.pagamento||'Não informado').toUpperCase();
     if (k === 'NO LOCAL') k = 'NÃO INFORMADO';
     pm[k] = (pm[k]||0) + Number(p.total||0);
   });
@@ -1864,39 +1863,41 @@ function renderFinanceiro() {
     </div>`;
   }).join('') || '<div style="color:#aaa;font-size:.82rem;text-align:center;padding:20px">Sem pedidos no período</div>';
 
-  // ── Origem: Mesa (No local) vs Delivery ──
+  // ── Origem: Mesas vs Delivery — mesmo padrão visual das barras ──
   const pedsMesa     = peds.filter(p=>(p.endereco||'').startsWith('No local'));
   const pedsDelivery = peds.filter(p=>!(p.endereco||'').startsWith('No local'));
-  const fatMesa     = pedsMesa.reduce((s,p)=>s+Number(p.total||0),0);
-  const fatDelivery = pedsDelivery.reduce((s,p)=>s+Number(p.total||0),0);
-  const totOrigem   = (fatMesa + fatDelivery) || 1;
-  const origemEl    = se('fin-origem-est');
+  const fatMesa      = pedsMesa.reduce((s,p)=>s+Number(p.total||0),0);
+  const fatDelivery  = pedsDelivery.reduce((s,p)=>s+Number(p.total||0),0);
+  const totOrigem    = (fatMesa + fatDelivery) || 1;
+  const pctMesa      = Math.round(fatMesa / totOrigem * 100);
+  const pctDelivery  = Math.round(fatDelivery / totOrigem * 100);
+  const origemEl     = se('fin-origem-est');
   if (origemEl) origemEl.innerHTML = `
     <div class="pag-row">
       <span class="pag-label">🍽️ Mesas</span>
-      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${Math.round(fatMesa/totOrigem*100)}%;background:#8E44AD"></div></div>
+      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pctMesa}%;background:#8E44AD"></div></div>
       <span class="pag-val" style="color:#8E44AD">${fmtR(fatMesa)}</span>
-      <span class="pag-pct">${Math.round(fatMesa/totOrigem*100)}%</span>
+      <span class="pag-pct">${pctMesa}%</span>
     </div>
     <div class="pag-row">
       <span class="pag-label">🛵 Delivery</span>
-      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${Math.round(fatDelivery/totOrigem*100)}%;background:#2980B9"></div></div>
+      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pctDelivery}%;background:#2980B9"></div></div>
       <span class="pag-val" style="color:#2980B9">${fmtR(fatDelivery)}</span>
-      <span class="pag-pct">${Math.round(fatDelivery/totOrigem*100)}%</span>
+      <span class="pag-pct">${pctDelivery}%</span>
     </div>`;
 
   // ── Histórico ──
   const histEl = se('fin-hist-est');
   if (histEl) histEl.innerHTML = !peds.length
-    ? '<tr><td colspan="5" style="text-align:center;padding:24px;color:#aaa;font-size:0.82rem">Nenhum pedido no período</td></tr>'
+    ? '<tr><td colspan="6" style="text-align:center;padding:24px;color:#aaa;font-size:0.82rem">Nenhum pedido no período</td></tr>'
     : peds.slice(0,100).map(p => {
         const dt = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
         const fmtV = v => 'R$ '+Number(v||0).toFixed(2).replace('.',',');
-        const isMesa = (p.endereco||'').startsWith('No local');
-        const origem = isMesa ? '🍽️ Mesa' : '🛵 Delivery';
+        const isMesa   = (p.endereco||'').startsWith('No local');
+        const origem   = isMesa ? '🍽️ Mesa' : '🛵 Delivery';
         const endCurto = isMesa
           ? (p.endereco||'').replace('No local — ','')
-          : (p.endereco||'Retirada').length > 22 ? (p.endereco||'').slice(0,22)+'…' : (p.endereco||'Retirada');
+          : (p.endereco||'Retirada').length > 18 ? (p.endereco||'').slice(0,18)+'…' : (p.endereco||'Retirada');
         let pgto = (p.pagamento||'—').toUpperCase();
         if (pgto === 'NO LOCAL') pgto = '—';
         return `<tr>
@@ -2960,27 +2961,7 @@ let _mesasFechadas    = new Set();
 let _cardapioCache    = null;   // cache dos produtos para seleção rápida
 let _carrinhoComanda  = {};     // { "Mesa 3": [{nome, preco, qtd, emoji}] }
 let _nomeComanda      = {};     // { "Mesa 3": "João" }
-let _pagamentoComanda = null;   // forma de pagamento selecionada ao fechar
-
-// Seleciona forma de pagamento no modal de fechar comanda
-window.selecionarPagamentoComanda = function(metodo) {
-  _pagamentoComanda = metodo;
-  ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
-    const btn = document.getElementById('pgto-btn-' + m);
-    if (!btn) return;
-    if (m === metodo) {
-      btn.style.borderColor = '#C0392B';
-      btn.style.background  = '#fff5f5';
-      btn.style.color       = '#C0392B';
-    } else {
-      btn.style.borderColor = '#e0dbd5';
-      btn.style.background  = '#fff';
-      btn.style.color       = '#555';
-    }
-  });
-  const aviso = document.getElementById('pgto-aviso');
-  if (aviso) aviso.style.display = 'none';
-};
+let _pagamentoComanda = null;   // pagamento selecionado ao fechar comanda
 
 function getNumMesas() {
   const estab = getEstab();
@@ -3362,43 +3343,57 @@ async function confirmarFecharComanda() {
   const carr  = _carrinhoComanda[_mesaAtual] || [];
   const totalMesa = peds.reduce((s,p)=>s+Number(p.total||0),0);
 
-  // 1. Avisa carrinho pendente
+  // Avisa carrinho pendente
   if (carr.length > 0) {
     if (!confirm('Ha itens nao enviados no carrinho. Deseja fechar mesmo assim?')) return;
   }
 
-  // 2. Imprime PRIMEIRO
-  window.imprimirComanda();
+  // Reseta seleção de pagamento e abre modal
+  _pagamentoComanda = null;
+  ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
+    const btn = document.getElementById('pgto-btn-' + m);
+    if (btn) { btn.style.borderColor='#e0dbd5'; btn.style.background='#fff'; btn.style.color='#555'; }
+  });
+  const aviso = document.getElementById('pgto-aviso');
+  if (aviso) aviso.style.display = 'none';
 
-  // 3. Após pequeno delay, exibe modal com seleção de pagamento
-  setTimeout(() => {
-    // Reset seleção de pagamento
-    _pagamentoComanda = null;
-    ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
-      const btn = document.getElementById('pgto-btn-' + m);
-      if (btn) { btn.style.borderColor='#e0dbd5'; btn.style.background='#fff'; btn.style.color='#555'; }
-    });
-    const aviso = document.getElementById('pgto-aviso');
-    if (aviso) aviso.style.display = 'none';
-
-    const mesaEl = document.getElementById('fechar-comanda-mesa');
-    const totEl  = document.getElementById('fechar-comanda-total');
-    const infEl  = document.getElementById('fechar-comanda-info');
-    if (mesaEl) mesaEl.textContent = _mesaAtual;
-    if (totEl)  totEl.textContent  = fmt(totalMesa);
-    if (infEl)  infEl.textContent  = peds.length + ' pedido(s)';
-    const modal = document.getElementById('modal-fechar-comanda');
-    if (modal) modal.style.display = 'flex';
-  }, 400);
+  const mesaEl = document.getElementById('fechar-comanda-mesa');
+  const totEl  = document.getElementById('fechar-comanda-total');
+  const infEl  = document.getElementById('fechar-comanda-info');
+  if (mesaEl) mesaEl.textContent = _mesaAtual;
+  if (totEl)  totEl.textContent  = fmt(totalMesa);
+  if (infEl)  infEl.textContent  = peds.length + ' pedido(s)';
+  const modal = document.getElementById('modal-fechar-comanda');
+  if (modal) modal.style.display = 'flex';
 }
 
 window.cancelarFecharComanda = function() {
   const modal = document.getElementById('modal-fechar-comanda');
   if (modal) modal.style.display = 'none';
+  _pagamentoComanda = null;
+};
+
+window.selecionarPagamentoComanda = function(metodo) {
+  _pagamentoComanda = metodo;
+  ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
+    const btn = document.getElementById('pgto-btn-' + m);
+    if (!btn) return;
+    if (m === metodo) {
+      btn.style.borderColor = '#C0392B';
+      btn.style.background  = '#fff5f5';
+      btn.style.color       = '#C0392B';
+    } else {
+      btn.style.borderColor = '#e0dbd5';
+      btn.style.background  = '#fff';
+      btn.style.color       = '#555';
+    }
+  });
+  const aviso = document.getElementById('pgto-aviso');
+  if (aviso) aviso.style.display = 'none';
 };
 
 window.executarFecharComanda = async function() {
-  // Exige forma de pagamento
+  // Exige pagamento selecionado
   if (!_pagamentoComanda) {
     const aviso = document.getElementById('pgto-aviso');
     if (aviso) aviso.style.display = 'block';
@@ -3414,9 +3409,9 @@ window.executarFecharComanda = async function() {
   const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
   const totalMesa = peds.reduce((s,p)=>s+Number(p.total||0),0);
 
+  // Salva pagamento + status nos pedidos da mesa
   const ids = peds.map(p=>p.id);
   if (ids.length) {
-    // Salva pagamento e status nos pedidos da mesa
     await getSupa().from('pedidos').update({
       status: 'pronto',
       pagamento: _pagamentoComanda,
