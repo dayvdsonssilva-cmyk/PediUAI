@@ -942,7 +942,8 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 .fin-table tr:last-child td { }
 
 /* Barras de pagamento redesenhadas */
-#fin-pags-est .pag-row {
+#fin-pags-est .pag-row,
+#fin-origem-est .pag-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -950,27 +951,32 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
   border-bottom: 1px solid var(--border);
   gap: 12px;
 }
-#fin-pags-est .pag-row:last-child { border-bottom: none; }
-#fin-pags-est .pag-label {
+#fin-pags-est .pag-row:last-child,
+#fin-origem-est .pag-row:last-child { border-bottom: none; }
+#fin-pags-est .pag-label,
+#fin-origem-est .pag-label {
   font-size: .82rem;
   font-weight: 700;
   min-width: 80px;
   flex-shrink: 0;
 }
-#fin-pags-est .pag-bar-wrap {
+#fin-pags-est .pag-bar-wrap,
+#fin-origem-est .pag-bar-wrap {
   flex: 1;
   background: #f0e9e0;
   border-radius: 50px;
   height: 8px;
   overflow: hidden;
 }
-#fin-pags-est .pag-bar-fill {
+#fin-pags-est .pag-bar-fill,
+#fin-origem-est .pag-bar-fill {
   height: 100%;
   border-radius: 50px;
   background: var(--red);
   transition: width .4s;
 }
-#fin-pags-est .pag-val {
+#fin-pags-est .pag-val,
+#fin-origem-est .pag-val {
   font-size: .82rem;
   font-weight: 700;
   color: var(--red);
@@ -978,7 +984,8 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
   text-align: right;
   flex-shrink: 0;
 }
-#fin-pags-est .pag-pct {
+#fin-pags-est .pag-pct,
+#fin-origem-est .pag-pct {
   font-size: .7rem;
   color: #aaa;
   min-width: 32px;
