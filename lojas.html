@@ -12,97 +12,96 @@
     body { font-family:'Poppins',sans-serif; background:var(--bg); color:#fff; min-height:100vh; }
 
     /* HEADER */
-    header {
-      position:sticky; top:0; z-index:100;
-      background:rgba(15,15,15,0.95); backdrop-filter:blur(12px);
-      border-bottom:1px solid var(--border);
-      padding:0 6%; height:64px; display:flex; align-items:center; justify-content:space-between;
-    }
-    .logo { font-size:1.3rem; font-weight:800; color:#fff; text-decoration:none; }
+    header { position:sticky;top:0;z-index:100;background:rgba(15,15,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 6%;height:64px;display:flex;align-items:center;justify-content:space-between; }
+    .logo { font-size:1.3rem;font-weight:800;color:#fff;text-decoration:none; }
     .logo span { color:var(--red); }
-    .btn-h { padding:8px 18px; border-radius:8px; font-family:'Poppins',sans-serif; font-size:.82rem; font-weight:600; cursor:pointer; border:none; }
-    .btn-outline { background:rgba(255,255,255,0.07); color:#fff; border:1.5px solid rgba(255,255,255,0.18) !important; }
-    .btn-red { background:var(--red); color:#fff; }
+    .btn-h { padding:8px 18px;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;border:none; }
+    .btn-outline { background:rgba(255,255,255,0.07);color:#fff;border:1.5px solid rgba(255,255,255,0.18) !important; }
+    .btn-red { background:var(--red);color:#fff; }
 
     /* HERO */
-    .search-hero {
-      background:linear-gradient(135deg,#1a0808 0%,#0f0f0f 60%);
-      padding:48px 6% 36px; text-align:center; border-bottom:1px solid var(--border); position:relative; overflow:hidden;
-    }
-    .search-hero::before { content:''; position:absolute; width:500px; height:500px; background:radial-gradient(circle,rgba(192,57,43,0.15) 0%,transparent 70%); top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
-    .search-hero h1 { font-size:clamp(1.4rem,3.5vw,2.4rem); font-weight:800; margin-bottom:6px; position:relative; }
-    .search-hero p  { color:rgba(255,255,255,0.5); font-size:.88rem; margin-bottom:22px; position:relative; }
-    .search-bar { display:flex; gap:10px; max-width:580px; margin:0 auto; }
-    .search-wrap { flex:1; position:relative; }
-    .search-wrap svg { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.4); pointer-events:none; }
-    .search-input { width:100%; padding:12px 14px 12px 44px; border-radius:12px; border:1.5px solid var(--border); background:rgba(255,255,255,0.06); color:#fff; font-family:'Poppins',sans-serif; font-size:.9rem; outline:none; transition:border-color .2s; }
+    .search-hero { background:linear-gradient(135deg,#1a0808 0%,#0f0f0f 60%);padding:48px 6% 36px;text-align:center;border-bottom:1px solid var(--border);position:relative;overflow:hidden; }
+    .search-hero::before { content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(192,57,43,0.15) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none; }
+    .search-hero h1 { font-size:clamp(1.4rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px;position:relative; }
+    .search-hero p { color:rgba(255,255,255,0.5);font-size:.88rem;margin-bottom:22px;position:relative; }
+    .search-bar { display:flex;gap:10px;max-width:580px;margin:0 auto; }
+    .search-wrap { flex:1;position:relative; }
+    .search-wrap svg { position:absolute;left:14px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.4);pointer-events:none; }
+    .search-input { width:100%;padding:12px 14px 12px 44px;border-radius:12px;border:1.5px solid var(--border);background:rgba(255,255,255,0.06);color:#fff;font-family:'Poppins',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s; }
     .search-input::placeholder { color:rgba(255,255,255,0.35); }
     .search-input:focus { border-color:var(--red); }
-    .city-sel { padding:12px 34px 12px 14px; border-radius:12px; border:1.5px solid var(--border); color:#fff; font-family:'Poppins',sans-serif; font-size:.82rem; font-weight:600; outline:none; cursor:pointer; min-width:145px; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; background-color:rgba(255,255,255,0.06); transition:border-color .2s; }
+    .city-sel { padding:12px 34px 12px 14px;border-radius:12px;border:1.5px solid var(--border);color:#fff;font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:600;outline:none;cursor:pointer;min-width:145px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-color:rgba(255,255,255,0.06);transition:border-color .2s; }
     .city-sel option { background:#1a1a1a; }
     .city-sel:focus { border-color:var(--red); }
 
     /* FILTROS */
-    .filters-bar { padding:14px 6%; display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--border); }
+    .filters-bar { padding:14px 6%;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border); }
     .filters-bar::-webkit-scrollbar { display:none; }
-    .pill { padding:6px 16px; border-radius:50px; border:1.5px solid var(--border); background:transparent; color:rgba(255,255,255,0.45); font-family:'Poppins',sans-serif; font-size:.76rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .15s; }
-    .pill:hover { border-color:rgba(255,255,255,0.25); color:#fff; }
-    .pill.ativo { background:var(--red); border-color:var(--red); color:#fff; }
+    .pill { padding:6px 16px;border-radius:50px;border:1.5px solid var(--border);background:transparent;color:rgba(255,255,255,0.45);font-family:'Poppins',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s; }
+    .pill:hover { border-color:rgba(255,255,255,0.25);color:#fff; }
+    .pill.ativo { background:var(--red);border-color:var(--red);color:#fff; }
 
     /* MAIN */
-    .main { max-width:1100px; margin:0 auto; padding:24px 6% 60px; }
-    .results-info { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:8px; }
-    .results-count { font-size:.8rem; color:rgba(255,255,255,0.45); font-weight:500; }
-    .results-count span { color:#fff; font-weight:700; }
-    .city-badge { background:rgba(192,57,43,0.15); color:var(--red); padding:4px 14px; border-radius:50px; font-size:.73rem; font-weight:700; }
+    .main { max-width:1100px;margin:0 auto;padding:24px 6% 60px; }
+    .results-info { display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px; }
+    .results-count { font-size:.8rem;color:rgba(255,255,255,0.45);font-weight:500; }
+    .results-count span { color:#fff;font-weight:700; }
+    .city-badge { background:rgba(192,57,43,0.15);color:var(--red);padding:4px 14px;border-radius:50px;font-size:.73rem;font-weight:700; }
 
     /* GRID */
-    .lojas-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:14px; }
+    .lojas-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px; }
 
-    /* CARD — só logo + nome */
-    .loja-card { background:var(--card); border-radius:16px; border:1px solid var(--border); cursor:pointer; text-decoration:none; color:inherit; display:flex; flex-direction:column; align-items:center; padding:22px 10px 16px; gap:10px; text-align:center; transition:transform .18s,border-color .18s,box-shadow .18s; }
-    .loja-card:hover { transform:translateY(-4px); border-color:rgba(192,57,43,0.4); box-shadow:0 12px 40px rgba(0,0,0,0.5); }
-    .loja-logo { width:68px; height:68px; border-radius:50%; background:#2a2a2a; border:3px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; font-size:1.7rem; overflow:hidden; flex-shrink:0; }
-    .loja-logo img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
-    .loja-nome { font-size:.8rem; font-weight:700; color:#fff; line-height:1.3; }
-    .loja-status { font-size:.6rem; font-weight:700; padding:2px 8px; border-radius:50px; }
-    .s-aberta { background:rgba(22,163,74,0.2); color:#22c55e; }
-    .s-fechada { background:rgba(239,68,68,0.15); color:#ef4444; }
+    /* CARD */
+    .loja-card { background:var(--card);border-radius:16px;border:1px solid var(--border);cursor:pointer;text-decoration:none;color:inherit;display:flex;flex-direction:column;align-items:center;padding:22px 10px 16px;gap:10px;text-align:center;transition:transform .18s,border-color .18s,box-shadow .18s; }
+    .loja-card:hover { transform:translateY(-4px);border-color:rgba(192,57,43,0.4);box-shadow:0 12px 40px rgba(0,0,0,0.5); }
+    .loja-logo { width:68px;height:68px;border-radius:50%;background:#2a2a2a;border:3px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:1.7rem;overflow:hidden;flex-shrink:0; }
+    .loja-logo img { width:100%;height:100%;object-fit:cover;border-radius:50%; }
+    .loja-nome { font-size:.8rem;font-weight:700;color:#fff;line-height:1.3; }
+    .loja-status { font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:50px; }
+    .s-aberta { background:rgba(22,163,74,0.2);color:#22c55e; }
+    .s-fechada { background:rgba(239,68,68,0.15);color:#ef4444; }
 
     /* SKELETON */
-    .skeleton { background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:16px; height:150px; }
+    .skeleton { background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:16px;height:150px; }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
     /* EMPTY */
-    .empty { text-align:center; padding:60px 20px; grid-column:1/-1; }
-    .empty .ic { font-size:3rem; margin-bottom:10px; }
-    .empty h3 { font-size:.95rem; font-weight:700; margin-bottom:6px; }
-    .empty p  { font-size:.82rem; color:rgba(255,255,255,0.4); line-height:1.7; }
+    .empty { text-align:center;padding:60px 20px;grid-column:1/-1; }
+    .empty .ic { font-size:3rem;margin-bottom:10px; }
+    .empty h3 { font-size:.95rem;font-weight:700;margin-bottom:6px; }
+    .empty p { font-size:.82rem;color:rgba(255,255,255,0.4);line-height:1.7; }
 
     /* TOAST */
-    #lj-toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(60px); background:#1a1a1a; color:#fff; padding:11px 22px; border-radius:50px; font-size:.83rem; font-weight:600; border:1px solid rgba(255,255,255,0.1); box-shadow:0 8px 32px rgba(0,0,0,0.4); transition:transform .3s; z-index:9999; white-space:nowrap; }
+    #lj-toast { position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:#1a1a1a;color:#fff;padding:11px 22px;border-radius:50px;font-size:.83rem;font-weight:600;border:1px solid rgba(255,255,255,0.1);box-shadow:0 8px 32px rgba(0,0,0,0.4);transition:transform .3s;z-index:9999;white-space:nowrap; }
     #lj-toast.show { transform:translateX(-50%) translateY(0); }
 
     /* MODAL CADASTRO */
-    #modal-cad { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:9000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(8px); }
+    #modal-cad { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px); }
     #modal-cad.open { display:flex; }
-    .mbox { background:#1a1a1a; border-radius:24px; width:100%; max-width:370px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 24px 80px rgba(0,0,0,0.6); overflow:hidden; animation:mIn .3s ease; }
+    .mbox { background:#1a1a1a;border-radius:24px;width:100%;max-width:380px;border:1px solid rgba(255,255,255,0.1);box-shadow:0 24px 80px rgba(0,0,0,0.6);overflow:hidden;animation:mIn .3s ease;max-height:92vh;overflow-y:auto; }
     @keyframes mIn { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
-    .mhead { background:var(--red); padding:28px 28px 22px; text-align:center; }
-    .mhead .mico { font-size:2.2rem; margin-bottom:10px; }
-    .mhead h2 { font-size:1.15rem; font-weight:800; color:#fff; margin-bottom:5px; }
-    .mhead p  { font-size:.8rem; color:rgba(255,255,255,0.8); line-height:1.5; }
-    .mbody { padding:22px; display:flex; flex-direction:column; gap:13px; }
-    .mfield { display:flex; flex-direction:column; gap:5px; }
-    .mfield label { font-size:.72rem; font-weight:700; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:.04em; }
-    .mfield input, .mfield select { padding:11px 13px; border-radius:10px; border:1.5px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.06); color:#fff; font-family:'Poppins',sans-serif; font-size:.86rem; outline:none; transition:border-color .2s; }
-    .mfield input::placeholder { color:rgba(255,255,255,0.3); }
-    .mfield input:focus, .mfield select:focus { border-color:var(--red); }
-    .mfield select option { background:#1a1a1a; }
-    .mbtn { padding:13px; border-radius:11px; background:var(--red); color:#fff; border:none; font-family:'Poppins',sans-serif; font-size:.92rem; font-weight:800; cursor:pointer; width:100%; margin-top:2px; transition:background .15s; }
+    .mhead { background:var(--red);padding:26px 26px 20px;text-align:center;position:sticky;top:0;z-index:1; }
+    .mhead .mico { font-size:2rem;margin-bottom:8px; }
+    .mhead h2 { font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:4px; }
+    .mhead p { font-size:.78rem;color:rgba(255,255,255,0.8);line-height:1.5; }
+    .mbody { padding:20px;display:flex;flex-direction:column;gap:13px; }
+    .mfield { display:flex;flex-direction:column;gap:5px; }
+    .mfield label { font-size:.7rem;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:.04em; }
+    .minput { padding:11px 13px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#fff;font-family:'Poppins',sans-serif;font-size:.86rem;outline:none;transition:border-color .2s;width:100%; }
+    .minput::placeholder { color:rgba(255,255,255,0.3); }
+    .minput:focus { border-color:var(--red); }
+    .minput option { background:#1a1a1a;color:#fff; }
+    .minput:disabled { opacity:.5;cursor:not-allowed; }
+    .mbtn { padding:13px;border-radius:11px;background:var(--red);color:#fff;border:none;font-family:'Poppins',sans-serif;font-size:.92rem;font-weight:800;cursor:pointer;width:100%;margin-top:2px;transition:background .15s; }
     .mbtn:hover { background:var(--red-dark); }
-    .mskip { text-align:center; font-size:.73rem; color:rgba(255,255,255,0.28); cursor:pointer; padding:2px; }
+    .mbtn:disabled { opacity:.6;cursor:not-allowed; }
+    .mskip { text-align:center;font-size:.72rem;color:rgba(255,255,255,0.28);cursor:pointer;padding:4px; }
     .mskip:hover { color:rgba(255,255,255,0.55); }
+    .mloading { text-align:center;font-size:.78rem;color:rgba(255,255,255,0.4);padding:8px 0; }
+
+    /* MODAL PERFIL (editar) */
+    #modal-perfil { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px); }
+    #modal-perfil.open { display:flex; }
 
     /* MOBILE */
     @media(max-width:600px){
@@ -112,9 +111,9 @@
       .city-sel { min-width:auto; }
       .filters-bar { padding:10px 5%; }
       .main { padding:18px 5% 40px; }
-      .lojas-grid { grid-template-columns:repeat(3,1fr); gap:10px; }
-      .loja-logo { width:54px; height:54px; font-size:1.3rem; }
-      .loja-card { padding:16px 8px 12px; gap:8px; }
+      .lojas-grid { grid-template-columns:repeat(3,1fr);gap:10px; }
+      .loja-logo { width:54px;height:54px;font-size:1.3rem; }
+      .loja-card { padding:16px 8px 12px;gap:8px; }
       .loja-nome { font-size:.72rem; }
     }
     @media(max-width:360px){ .lojas-grid { grid-template-columns:repeat(2,1fr); } }
@@ -124,10 +123,7 @@
 
 <header>
   <a class="logo" href="/">PEDI<span>WAY</span></a>
-  <div style="display:flex;align-items:center;gap:8px;">
-    <button class="btn-h btn-outline" onclick="abrirCadastro()">👤 Meu perfil</button>
-    <a href="/" style="text-decoration:none;"><button class="btn-h btn-red">Abra sua loja</button></a>
-  </div>
+  <button class="btn-h btn-outline" id="btn-perfil" onclick="abrirPerfil()">👤 Meu perfil</button>
 </header>
 
 <div class="search-hero">
@@ -165,7 +161,7 @@
   </div>
 </div>
 
-<!-- Modal cadastro -->
+<!-- Modal cadastro (primeira visita) -->
 <div id="modal-cad">
   <div class="mbox">
     <div class="mhead">
@@ -174,15 +170,75 @@
       <p>Cadastro rápido para mostrar os restaurantes mais perto de você.</p>
     </div>
     <div class="mbody">
-      <div class="mfield"><label>Seu nome</label><input id="cad-nome" type="text" placeholder="João Silva"></div>
-      <div class="mfield"><label>WhatsApp</label><input id="cad-tel" type="tel" placeholder="(11) 99999-9999" oninput="mskTel(this)"></div>
-      <div class="mfield"><label>E-mail</label><input id="cad-email" type="email" placeholder="seu@email.com"></div>
       <div class="mfield">
-        <label>Sua cidade</label>
-        <select id="cad-cidade"><option value="">Selecione sua cidade...</option></select>
+        <label>Seu nome</label>
+        <input class="minput" id="cad-nome" type="text" placeholder="João Silva">
       </div>
-      <button class="mbtn" onclick="salvarCad()">Entrar →</button>
+      <div class="mfield">
+        <label>WhatsApp</label>
+        <input class="minput" id="cad-tel" type="tel" placeholder="(11) 99999-9999" oninput="mskTel(this)">
+      </div>
+      <div class="mfield">
+        <label>E-mail</label>
+        <input class="minput" id="cad-email" type="email" placeholder="seu@email.com">
+      </div>
+      <div class="mfield">
+        <label>Estado</label>
+        <select class="minput" id="cad-estado" onchange="carregarCidades('cad-estado','cad-cidade')">
+          <option value="">Selecione o estado...</option>
+        </select>
+      </div>
+      <div class="mfield">
+        <label>Cidade</label>
+        <select class="minput" id="cad-cidade" disabled>
+          <option value="">Selecione o estado primeiro</option>
+        </select>
+      </div>
+      <button class="mbtn" id="cad-btn" onclick="salvarCad()">Entrar →</button>
       <p class="mskip" onclick="fecharCad()">Continuar sem cadastro</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal perfil (editar) -->
+<div id="modal-perfil">
+  <div class="mbox">
+    <div class="mhead" style="background:#1a1a1a;border-bottom:1px solid rgba(255,255,255,0.08);">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div class="mico" style="font-size:1.6rem;margin-bottom:4px;">👤</div>
+          <h2>Meu perfil</h2>
+        </div>
+        <button onclick="fecharPerfil()" style="background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>
+    </div>
+    <div class="mbody">
+      <div class="mfield">
+        <label>Seu nome</label>
+        <input class="minput" id="perf-nome" type="text" placeholder="João Silva">
+      </div>
+      <div class="mfield">
+        <label>WhatsApp</label>
+        <input class="minput" id="perf-tel" type="tel" placeholder="(11) 99999-9999" oninput="mskTel(this)">
+      </div>
+      <div class="mfield">
+        <label>E-mail</label>
+        <input class="minput" id="perf-email" type="email" placeholder="seu@email.com">
+      </div>
+      <div class="mfield">
+        <label>Estado</label>
+        <select class="minput" id="perf-estado" onchange="carregarCidades('perf-estado','perf-cidade')">
+          <option value="">Selecione o estado...</option>
+        </select>
+      </div>
+      <div class="mfield">
+        <label>Cidade</label>
+        <select class="minput" id="perf-cidade" disabled>
+          <option value="">Selecione o estado primeiro</option>
+        </select>
+      </div>
+      <button class="mbtn" onclick="salvarPerfil()">💾 Salvar alterações</button>
+      <button onclick="fecharPerfil()" style="padding:11px;border-radius:11px;background:transparent;color:rgba(255,255,255,0.4);border:1.5px solid rgba(255,255,255,0.1);font-family:'Poppins',sans-serif;font-size:.85rem;cursor:pointer;width:100%;">Cancelar</button>
     </div>
   </div>
 </div>
@@ -195,11 +251,16 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const { createClient } = supabase;
 const db = createClient(SUPA_URL, SUPA_KEY);
 
+const IBGE = 'https://servicodados.ibge.gov.br/api/v1/localidades';
+
 let _lojas = [], _cat = '', _user = null;
 
+// ── INIT ──────────────────────────────────────────────────────
 async function init() {
-  // Carrega usuário salvo
   try { const s = localStorage.getItem('pw_cliente'); if(s) _user = JSON.parse(s); } catch(e){}
+
+  // Carrega estados no IBGE
+  carregarEstados();
 
   // Carrega lojas
   const { data, error } = await db
@@ -214,82 +275,207 @@ async function init() {
   }
 
   _lojas = data || [];
-  preencherCidades();
+  preencherCidadesFiltro();
 
-  // Se usuário já cadastrado, filtra pela cidade dele direto
   if (_user?.cidade) {
     const cidades = [...new Set(_lojas.map(l=>l.cidade).filter(Boolean).map(c=>c.trim()))];
     if (cidades.includes(_user.cidade)) {
       document.getElementById('cidade-select').value = _user.cidade;
     }
     filtrar();
+    atualizarBtnPerfil();
   } else {
     renderLojas(_lojas);
-    setTimeout(abrirCad, 700);
+    setTimeout(() => document.getElementById('modal-cad').classList.add('open'), 700);
   }
 }
 
-function preencherCidades() {
-  const cidades = [...new Set(_lojas.map(l=>l.cidade).filter(Boolean).map(c=>c.trim()))].sort();
+// ── IBGE ESTADOS ─────────────────────────────────────────────
+async function carregarEstados() {
+  try {
+    const res = await fetch(IBGE + '/estados?orderBy=nome');
+    const estados = await res.json();
+    ['cad-estado','perf-estado'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      sel.innerHTML = '<option value="">Selecione o estado...</option>';
+      estados.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.sigla;
+        opt.textContent = e.nome;
+        opt.dataset.nome = e.nome;
+        sel.appendChild(opt);
+      });
+    });
+  } catch(e) { console.warn('Erro ao carregar estados:', e); }
+}
 
+async function carregarCidades(estadoId, cidadeId) {
+  const estadoSel = document.getElementById(estadoId);
+  const cidadeSel = document.getElementById(cidadeId);
+  const uf = estadoSel.value;
+
+  if (!uf) {
+    cidadeSel.innerHTML = '<option value="">Selecione o estado primeiro</option>';
+    cidadeSel.disabled = true;
+    return;
+  }
+
+  cidadeSel.disabled = true;
+  cidadeSel.innerHTML = '<option value="">Carregando cidades...</option>';
+
+  try {
+    const res = await fetch(`${IBGE}/estados/${uf}/municipios?orderBy=nome`);
+    const cidades = await res.json();
+    cidadeSel.innerHTML = '<option value="">Selecione a cidade...</option>';
+    cidades.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.nome;
+      opt.textContent = c.nome;
+      cidadeSel.appendChild(opt);
+    });
+    cidadeSel.disabled = false;
+  } catch(e) {
+    cidadeSel.innerHTML = '<option value="">Erro ao carregar cidades</option>';
+    cidadeSel.disabled = false;
+  }
+}
+
+// ── FILTRO DE CIDADES DAS LOJAS ───────────────────────────────
+function preencherCidadesFiltro() {
+  const cidades = [...new Set(_lojas.map(l=>l.cidade).filter(Boolean).map(c=>c.trim()))].sort();
   const sel = document.getElementById('cidade-select');
   sel.innerHTML = '<option value="">📍 Todas as cidades</option>';
-  cidades.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent='📍 '+c; sel.appendChild(o); });
-
-  const csel = document.getElementById('cad-cidade');
-  csel.innerHTML = '<option value="">Selecione sua cidade...</option>';
-  cidades.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; csel.appendChild(o); });
-
-  if (_user?.cidade) csel.value = _user.cidade;
+  cidades.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = '📍 ' + c;
+    sel.appendChild(o);
+  });
 }
 
-// Modal
-function abrirCad() {
-  document.getElementById('modal-cad').classList.add('open');
-  if (_user) {
-    document.getElementById('cad-nome').value  = _user.nome  || '';
-    document.getElementById('cad-tel').value   = _user.tel   || '';
-    document.getElementById('cad-email').value = _user.email || '';
-    if (_user.cidade) document.getElementById('cad-cidade').value = _user.cidade;
-  }
-}
-function abrirCadastro() { abrirCad(); }
+// ── MODAL CADASTRO ────────────────────────────────────────────
 function fecharCad() { document.getElementById('modal-cad').classList.remove('open'); }
 
-function salvarCad() {
+async function salvarCad() {
   const nome   = document.getElementById('cad-nome').value.trim();
   const tel    = document.getElementById('cad-tel').value.trim();
   const email  = document.getElementById('cad-email').value.trim();
+  const estado = document.getElementById('cad-estado');
+  const estadoSigla = estado.value;
+  const estadoNome  = estado.options[estado.selectedIndex]?.dataset.nome || estadoSigla;
   const cidade = document.getElementById('cad-cidade').value;
 
-  if (!nome)   return toast('Digite seu nome');
-  if (!tel)    return toast('Digite seu WhatsApp');
+  if (!nome)                        return toast('Digite seu nome');
+  if (!tel || tel.replace(/\D/g,'').length < 10) return toast('Digite um WhatsApp válido');
   if (!email || !email.includes('@')) return toast('Digite um e-mail válido');
-  if (!cidade) return toast('Selecione sua cidade');
+  if (!estadoSigla)                 return toast('Selecione o estado');
+  if (!cidade)                      return toast('Selecione a cidade');
 
-  _user = { nome, tel, email, cidade };
+  const btn = document.getElementById('cad-btn');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+
+  try {
+    // Salva no Supabase
+    const { error } = await db.from('clientes').upsert({
+      nome, telefone: tel.replace(/\D/g,''), email, estado: estadoNome, cidade
+    }, { onConflict: 'email' });
+
+    if (error && !error.message.includes('does not exist')) {
+      console.warn('Supabase clientes:', error.message);
+    }
+
+    // Salva no localStorage
+    _user = { nome, tel, email, estado: estadoNome, estadoSigla, cidade };
+    localStorage.setItem('pw_cliente', JSON.stringify(_user));
+
+    fecharCad();
+    atualizarBtnPerfil();
+    toast('✅ Bem-vindo, ' + nome.split(' ')[0] + '!');
+
+    // Aplica filtro da cidade
+    const cidades = [...new Set(_lojas.map(l=>l.cidade).filter(Boolean).map(c=>c.trim()))];
+    if (cidades.includes(cidade)) {
+      document.getElementById('cidade-select').value = cidade;
+    }
+    filtrar();
+
+  } catch(e) {
+    toast('Erro ao salvar. Tente novamente.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar →';
+  }
+}
+
+// ── MODAL PERFIL ──────────────────────────────────────────────
+async function abrirPerfil() {
+  if (!_user) {
+    document.getElementById('modal-cad').classList.add('open');
+    return;
+  }
+  document.getElementById('modal-perfil').classList.add('open');
+  document.getElementById('perf-nome').value  = _user.nome  || '';
+  document.getElementById('perf-tel').value   = _user.tel   || '';
+  document.getElementById('perf-email').value = _user.email || '';
+
+  // Aguarda estados carregarem
+  await new Promise(r => setTimeout(r, 300));
+  if (_user.estadoSigla) {
+    const sel = document.getElementById('perf-estado');
+    sel.value = _user.estadoSigla;
+    await carregarCidades('perf-estado','perf-cidade');
+    if (_user.cidade) document.getElementById('perf-cidade').value = _user.cidade;
+  }
+}
+
+function fecharPerfil() { document.getElementById('modal-perfil').classList.remove('open'); }
+
+async function salvarPerfil() {
+  const nome   = document.getElementById('perf-nome').value.trim();
+  const tel    = document.getElementById('perf-tel').value.trim();
+  const email  = document.getElementById('perf-email').value.trim();
+  const estado = document.getElementById('perf-estado');
+  const estadoSigla = estado.value;
+  const estadoNome  = estado.options[estado.selectedIndex]?.dataset.nome || estadoSigla;
+  const cidade = document.getElementById('perf-cidade').value;
+
+  if (!nome)   return toast('Digite seu nome');
+  if (!tel || tel.replace(/\D/g,'').length < 10) return toast('WhatsApp inválido');
+  if (!email || !email.includes('@')) return toast('E-mail inválido');
+  if (!estadoSigla) return toast('Selecione o estado');
+  if (!cidade)      return toast('Selecione a cidade');
+
+  try {
+    await db.from('clientes').upsert({
+      nome, telefone: tel.replace(/\D/g,''), email, estado: estadoNome, cidade
+    }, { onConflict: 'email' });
+  } catch(e) { console.warn('Supabase:', e); }
+
+  _user = { nome, tel, email, estado: estadoNome, estadoSigla, cidade };
   localStorage.setItem('pw_cliente', JSON.stringify(_user));
-  fecharCad();
-  toast('✅ Bem-vindo, ' + nome.split(' ')[0] + '!');
+  fecharPerfil();
+  atualizarBtnPerfil();
+  toast('✅ Perfil atualizado!');
 
-  document.getElementById('cidade-select').value = cidade;
+  const cidades = [...new Set(_lojas.map(l=>l.cidade).filter(Boolean).map(c=>c.trim()))];
+  if (cidades.includes(cidade)) document.getElementById('cidade-select').value = cidade;
   filtrar();
 }
 
-// Filtros
+function atualizarBtnPerfil() {
+  const btn = document.getElementById('btn-perfil');
+  if (_user?.nome) btn.textContent = '👤 ' + _user.nome.split(' ')[0];
+}
+
+// ── FILTRAR ───────────────────────────────────────────────────
 function filtrar() {
   const termo  = document.getElementById('busca-input').value.toLowerCase().trim();
   const cidade = document.getElementById('cidade-select').value;
-
   const res = _lojas.filter(l => {
     const mc = !cidade || (l.cidade && l.cidade.trim() === cidade);
     const mb = !termo  || l.nome?.toLowerCase().includes(termo);
-    const mk = matchCat(l);
-    return mc && mb && mk;
+    return mc && mb && matchCat(l);
   });
-
   renderLojas(res);
-
   const badge = document.getElementById('city-badge');
   if (cidade) { badge.textContent='📍 '+cidade; badge.style.display=''; }
   else badge.style.display='none';
@@ -308,12 +494,11 @@ function selCat(btn) {
   btn.classList.add('ativo'); _cat = btn.dataset.cat; filtrar();
 }
 
-// Render
+// ── RENDER ────────────────────────────────────────────────────
 function renderLojas(lista) {
   const grid = document.getElementById('lojas-grid');
   document.getElementById('results-num').textContent = lista.length;
   document.getElementById('results-info').style.display = 'flex';
-
   if (!lista.length) {
     grid.innerHTML = '<div class="empty"><div class="ic">🔍</div><h3>Nenhum restaurante encontrado</h3><p>Tente mudar a cidade ou os filtros.</p></div>';
     return;
@@ -327,7 +512,7 @@ function renderLojas(lista) {
   }).join('');
 }
 
-// Helpers
+// ── HELPERS ───────────────────────────────────────────────────
 function mskTel(inp) {
   let v = inp.value.replace(/\D/g,'').slice(0,11);
   if(v.length>10) v=v.replace(/^(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3');
@@ -336,6 +521,7 @@ function mskTel(inp) {
   else if(v.length>0) v='('+v;
   inp.value=v;
 }
+
 function toast(msg) {
   const el=document.getElementById('lj-toast');
   el.textContent=msg; el.classList.add('show');
