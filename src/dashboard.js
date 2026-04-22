@@ -1872,18 +1872,23 @@ function renderFinanceiro() {
   const pctMesa      = Math.round(fatMesa / totOrigem * 100);
   const pctDelivery  = Math.round(fatDelivery / totOrigem * 100);
   const origemEl     = se('fin-origem-est');
+  const rowStyle  = 'display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e8e0d8;gap:12px;';
+  const lblStyle  = 'font-size:.82rem;font-weight:700;min-width:80px;flex-shrink:0;';
+  const barWStyle = 'flex:1;background:#f0e9e0;border-radius:50px;height:8px;overflow:hidden;';
+  const valStyle  = 'font-size:.82rem;font-weight:700;min-width:80px;text-align:right;flex-shrink:0;';
+  const pctStyle  = 'font-size:.7rem;color:#aaa;min-width:32px;text-align:right;flex-shrink:0;';
   if (origemEl) origemEl.innerHTML = `
-    <div class="pag-row">
-      <span class="pag-label">🍽️ Mesas</span>
-      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pctMesa}%;background:#8E44AD"></div></div>
-      <span class="pag-val" style="color:#8E44AD">${fmtR(fatMesa)}</span>
-      <span class="pag-pct">${pctMesa}%</span>
+    <div style="${rowStyle}border-bottom:1px solid #e8e0d8;">
+      <span style="${lblStyle}">🍽️ Mesas</span>
+      <div style="${barWStyle}"><div style="height:100%;border-radius:50px;background:#8E44AD;transition:width .4s;width:${pctMesa}%"></div></div>
+      <span style="${valStyle}color:#8E44AD;">${fmtR(fatMesa)}</span>
+      <span style="${pctStyle}">${pctMesa}%</span>
     </div>
-    <div class="pag-row">
-      <span class="pag-label">🛵 Delivery</span>
-      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pctDelivery}%;background:#2980B9"></div></div>
-      <span class="pag-val" style="color:#2980B9">${fmtR(fatDelivery)}</span>
-      <span class="pag-pct">${pctDelivery}%</span>
+    <div style="${rowStyle}border-bottom:none;">
+      <span style="${lblStyle}">🛵 Delivery</span>
+      <div style="${barWStyle}"><div style="height:100%;border-radius:50px;background:#2980B9;transition:width .4s;width:${pctDelivery}%"></div></div>
+      <span style="${valStyle}color:#2980B9;">${fmtR(fatDelivery)}</span>
+      <span style="${pctStyle}">${pctDelivery}%</span>
     </div>`;
 
   // ── Histórico ──
@@ -3348,27 +3353,23 @@ async function confirmarFecharComanda() {
     if (!confirm('Ha itens nao enviados no carrinho. Deseja fechar mesmo assim?')) return;
   }
 
-  // 1. Imprime a comanda PRIMEIRO
-  window.imprimirComanda();
+  // Reseta seleção de pagamento e abre modal
+  _pagamentoComanda = null;
+  ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
+    const btn = document.getElementById('pgto-btn-' + m);
+    if (btn) { btn.style.borderColor='#e0dbd5'; btn.style.background='#fff'; btn.style.color='#555'; }
+  });
+  const aviso = document.getElementById('pgto-aviso');
+  if (aviso) aviso.style.display = 'none';
 
-  // 2. Abre popup de pagamento após delay (deixa janela de impressão abrir)
-  setTimeout(() => {
-    _pagamentoComanda = null;
-    ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
-      const btn = document.getElementById('pgto-btn-' + m);
-      if (btn) { btn.style.borderColor='#e0dbd5'; btn.style.background='#fff'; btn.style.color='#555'; }
-    });
-    const aviso = document.getElementById('pgto-aviso');
-    if (aviso) aviso.style.display = 'none';
-    const mesaEl = document.getElementById('fechar-comanda-mesa');
-    const totEl  = document.getElementById('fechar-comanda-total');
-    const infEl  = document.getElementById('fechar-comanda-info');
-    if (mesaEl) mesaEl.textContent = _mesaAtual;
-    if (totEl)  totEl.textContent  = fmt(totalMesa);
-    if (infEl)  infEl.textContent  = peds.length + ' pedido(s)';
-    const modal = document.getElementById('modal-fechar-comanda');
-    if (modal) modal.style.display = 'flex';
-  }, 500);
+  const mesaEl = document.getElementById('fechar-comanda-mesa');
+  const totEl  = document.getElementById('fechar-comanda-total');
+  const infEl  = document.getElementById('fechar-comanda-info');
+  if (mesaEl) mesaEl.textContent = _mesaAtual;
+  if (totEl)  totEl.textContent  = fmt(totalMesa);
+  if (infEl)  infEl.textContent  = peds.length + ' pedido(s)';
+  const modal = document.getElementById('modal-fechar-comanda');
+  if (modal) modal.style.display = 'flex';
 }
 
 window.cancelarFecharComanda = function() {
