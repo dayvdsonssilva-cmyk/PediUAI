@@ -62,16 +62,18 @@ async function slugLivre(slug) {
 
 // ── CADASTRO ───────────────────────────────────────────────
 export async function doRegister() {
-  const nomeP = document.getElementById('rnome')?.value.trim();
-  const tel   = document.getElementById('rtel')?.value.trim();
-  const nome  = document.getElementById('rn')?.value.trim();
-  const doc   = document.getElementById('rdoc')?.value.trim();
-  const email = document.getElementById('re')?.value.trim();
-  const pass  = document.getElementById('rp')?.value;
+  const nomeP  = document.getElementById('rnome')?.value.trim();
+  const tel    = document.getElementById('rtel')?.value.trim();
+  const nome   = document.getElementById('rn')?.value.trim();
+  const cidade = document.getElementById('rcidade')?.value.trim() || null;
+  const doc    = document.getElementById('rdoc')?.value.trim();
+  const email  = document.getElementById('re')?.value.trim();
+  const pass   = document.getElementById('rp')?.value;
 
   if (!nomeP)          return showToast('Digite seu nome completo.', 'error');
   if (!tel || tel.replace(/\D/g,'').length < 10) return showToast('Digite um WhatsApp válido com DDD.', 'error');
   if (!nome)           return showToast('Digite o nome do estabelecimento.', 'error');
+  if (!cidade)         return showToast('Digite a cidade do estabelecimento.', 'error');
   if (!doc)            return showToast('Digite o CPF ou CNPJ.', 'error');
   if (!docValido(doc)) return showToast('CPF ou CNPJ inválido.', 'error');
   if (!email)          return showToast('Digite o e-mail.', 'error');
@@ -104,6 +106,7 @@ export async function doRegister() {
       user_id:          userId,
       nome,
       slug,
+      cidade,
       cpf_cnpj:         doc.replace(/\D/g,''),
       nome_responsavel: nomeP,
       telefone:         telSoNumeros,
