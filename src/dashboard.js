@@ -252,6 +252,7 @@ function preencherConfig(estab) {
   set('cfg-slug',      estab.slug);
   set('cfg-whats',     estab.whatsapp || '');
   set('cfg-desc',      estab.descricao || '');
+  set('cfg-cidade',    estab.cidade || '');
   set('cfg-endereco',  estab.endereco || '');
   set('cfg-tempo',     estab.tempo_entrega || '30-45 min');
   set('cfg-telefone',  estab.telefone_contato || '');
@@ -520,6 +521,7 @@ export async function salvarConfig() {
   const slug     = $('cfg-slug')?.value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');
   const whats    = $('cfg-whats')?.value.trim();
   const desc     = $('cfg-desc')?.value.trim();
+  const cidade   = $('cfg-cidade')?.value.trim() || null;
   const endereco = $('cfg-endereco')?.value.trim();
   const tempo    = $('cfg-tempo')?.value;
   const aberto   = $('cfg-aberto')?.checked;
@@ -561,7 +563,7 @@ export async function salvarConfig() {
     const aceita_dinheiro= $('cfg-dinheiro')?.checked !== false;
 
     const updates = {
-      nome, slug, whatsapp: whats, descricao: desc, endereco,
+      nome, slug, whatsapp: whats, descricao: desc, cidade, endereco,
       tempo_entrega: tempo, aberto, faz_entrega: entrega, faz_retirada: retirada,
       cor_primaria, logo_url,
       capa_url: null, capa_tipo: 'cor',
@@ -1872,23 +1874,18 @@ function renderFinanceiro() {
   const pctMesa      = Math.round(fatMesa / totOrigem * 100);
   const pctDelivery  = Math.round(fatDelivery / totOrigem * 100);
   const origemEl     = se('fin-origem-est');
-  const rowStyle  = 'display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e8e0d8;gap:12px;';
-  const lblStyle  = 'font-size:.82rem;font-weight:700;min-width:80px;flex-shrink:0;';
-  const barWStyle = 'flex:1;background:#f0e9e0;border-radius:50px;height:8px;overflow:hidden;';
-  const valStyle  = 'font-size:.82rem;font-weight:700;min-width:80px;text-align:right;flex-shrink:0;';
-  const pctStyle  = 'font-size:.7rem;color:#aaa;min-width:32px;text-align:right;flex-shrink:0;';
   if (origemEl) origemEl.innerHTML = `
-    <div style="${rowStyle}border-bottom:1px solid #e8e0d8;">
-      <span style="${lblStyle}">🍽️ Mesas</span>
-      <div style="${barWStyle}"><div style="height:100%;border-radius:50px;background:#8E44AD;transition:width .4s;width:${pctMesa}%"></div></div>
-      <span style="${valStyle}color:#8E44AD;">${fmtR(fatMesa)}</span>
-      <span style="${pctStyle}">${pctMesa}%</span>
+    <div class="pag-row">
+      <span class="pag-label">🍽️ Mesas</span>
+      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pctMesa}%;background:#8E44AD"></div></div>
+      <span class="pag-val" style="color:#8E44AD">${fmtR(fatMesa)}</span>
+      <span class="pag-pct">${pctMesa}%</span>
     </div>
-    <div style="${rowStyle}border-bottom:none;">
-      <span style="${lblStyle}">🛵 Delivery</span>
-      <div style="${barWStyle}"><div style="height:100%;border-radius:50px;background:#2980B9;transition:width .4s;width:${pctDelivery}%"></div></div>
-      <span style="${valStyle}color:#2980B9;">${fmtR(fatDelivery)}</span>
-      <span style="${pctStyle}">${pctDelivery}%</span>
+    <div class="pag-row">
+      <span class="pag-label">🛵 Delivery</span>
+      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pctDelivery}%;background:#2980B9"></div></div>
+      <span class="pag-val" style="color:#2980B9">${fmtR(fatDelivery)}</span>
+      <span class="pag-pct">${pctDelivery}%</span>
     </div>`;
 
   // ── Histórico ──
