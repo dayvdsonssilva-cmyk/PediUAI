@@ -11,38 +11,6 @@
 
 <!-- LANDING -->
 <div data-screen="s-landing" class="screen active">
-
-<style>
-/* Landing mobile responsivo */
-.lp-hero       { min-height:100vh;display:flex;align-items:center;padding:100px 6% 60px;background:#0f0f0f;position:relative;overflow:hidden; }
-.lp-grid3      { display:grid;grid-template-columns:repeat(3,1fr);gap:24px; }
-.lp-grid2      { display:grid;grid-template-columns:repeat(2,1fr);gap:16px; }
-.lp-grid4      { display:grid;grid-template-columns:repeat(4,1fr);gap:16px; }
-.lp-split      { display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center; }
-.lp-numgrid    { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
-.lp-sec        { padding:80px 6%; }
-.lp-inner      { max-width:1100px;margin:0 auto; }
-
-/* Seta scroll */
-.scroll-arrow  { position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;animation:arrowBounce 2s ease-in-out infinite; }
-.scroll-arrow svg { width:28px;height:28px;opacity:.6; }
-.scroll-arrow span { font-size:.65rem;color:rgba(255,255,255,.4);letter-spacing:.1em;text-transform:uppercase;font-weight:600; }
-@keyframes arrowBounce {
-  0%,100% { transform:translateX(-50%) translateY(0); }
-  50%      { transform:translateX(-50%) translateY(10px); }
-}
-
-@media(max-width:700px){
-  .lp-hero    { padding:100px 5% 80px;min-height:auto; }
-  .lp-grid3   { grid-template-columns:1fr; }
-  .lp-grid2   { grid-template-columns:1fr; }
-  .lp-grid4   { grid-template-columns:1fr 1fr; }
-  .lp-split   { grid-template-columns:1fr;gap:40px; }
-  .lp-numgrid { grid-template-columns:1fr 1fr; }
-  .lp-sec     { padding:60px 5%; }
-}
-</style>
-
   <header class="header-dark">
     <div class="logo-dark" translate="no">PEDI<span>WAY</span></div>
     <div class="header-buttons">
@@ -50,190 +18,90 @@
       <button class="btn-primary" onclick="goTo('s-register')">Começar grátis</button>
     </div>
   </header>
-
-  <!-- ═══ HERO ═══ -->
-  <section class="lp-hero">
-    <div style="position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(192,57,43,0.18) 0%,transparent 70%);top:50%;left:50%;transform:translate(-20%,-50%);pointer-events:none;"></div>
-    <div style="max-width:680px;position:relative;z-index:1;">
-      <span class="badge">Plataforma delivery independente</span>
-      <h1 style="font-size:clamp(2.4rem,5vw,5.2rem);font-weight:800;line-height:1.05;margin-bottom:24px;color:#fff;">
-        <span style="display:block;">Seu cardápio.</span>
-        <span style="display:block;">Sua marca.</span>
-        <span style="display:block;color:var(--red);">Seu lucro.</span>
-      </h1>
-      <p style="font-size:1rem;color:rgba(255,255,255,0.6);line-height:1.75;max-width:520px;margin-bottom:36px;">
-        Crie sua loja online em minutos, receba pedidos e gerencie tudo pela plataforma PEDIWAY. Sem comissão por venda, 100% do lucro é seu.
-      </p>
-      <div class="hero-actions">
-        <button class="btn-primary big hero-btn-main" onclick="goTo('s-register')">Criar minha loja grátis</button>
-        <div class="hero-btns-sec">
-          <button class="btn-ghost-dark big hero-btn-sec" onclick="openDemo()">Ver demo do painel</button>
-          <button class="btn-ghost-dark big hero-btn-sec" onclick="openDemoCliente()">Ver demo do cardápio</button>
-        </div>
-      </div>
-      <div class="stats" style="margin-top:48px;">
-        <div><strong>R$0</strong><span>comissão por pedido</span></div>
-        <div><strong>5min</strong><span>para montar seu cardápio</span></div>
-        <div><strong>100%</strong><span>do lucro é seu</span></div>
-      </div>
-    </div>
-    <!-- Seta animada -->
-    <div class="scroll-arrow" onclick="document.getElementById('lp-como').scrollIntoView({behavior:'smooth'})">
-      <span>saiba mais</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="6 9 12 15 18 9"/>
-      </svg>
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.3;margin-top:-10px;">
-        <polyline points="6 9 12 15 18 9"/>
-      </svg>
-    </div>
-  </section>
-
-  <!-- ═══ COMO FUNCIONA ═══ -->
-  <section class="lp-sec" id="lp-como" style="background:#0f0f0f;border-top:1px solid rgba(255,255,255,0.06);">
-    <div class="lp-inner">
-      <div style="text-align:center;margin-bottom:56px;">
-        <span style="background:rgba(192,57,43,0.15);color:var(--red);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 16px;border-radius:50px;">Como funciona</span>
-        <h2 style="font-size:clamp(1.6rem,3vw,2.6rem);font-weight:800;color:#fff;margin-top:16px;margin-bottom:12px;">Do zero ao pedido em 3 passos</h2>
-        <p style="color:rgba(255,255,255,0.5);font-size:.95rem;max-width:440px;margin:0 auto;">Sem complicação, sem contrato, sem taxa de setup.</p>
-      </div>
-      <div class="lp-grid3">
-        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:32px 24px;position:relative;overflow:hidden;">
-          <div style="font-size:2.4rem;margin-bottom:16px;">🏪</div>
-          <div style="position:absolute;top:20px;right:20px;font-size:2.8rem;font-weight:900;color:rgba(255,255,255,0.04);line-height:1;">01</div>
-          <h3 style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:8px;">Crie sua loja</h3>
-          <p style="color:rgba(255,255,255,0.5);font-size:.88rem;line-height:1.7;">Cadastre seu estabelecimento, logo, cores e monte seu cardápio completo com fotos e preços.</p>
-        </div>
-        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(192,57,43,0.3);border-radius:20px;padding:32px 24px;position:relative;overflow:hidden;">
-          <div style="font-size:2.4rem;margin-bottom:16px;">🔗</div>
-          <div style="position:absolute;top:20px;right:20px;font-size:2.8rem;font-weight:900;color:rgba(255,255,255,0.04);line-height:1;">02</div>
-          <h3 style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:8px;">Compartilhe o link</h3>
-          <p style="color:rgba(255,255,255,0.5);font-size:.88rem;line-height:1.7;">Você recebe um link único do seu cardápio. Mande no WhatsApp, Instagram, TikTok ou onde quiser.</p>
-        </div>
-        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:32px 24px;position:relative;overflow:hidden;">
-          <div style="font-size:2.4rem;margin-bottom:16px;">💰</div>
-          <div style="position:absolute;top:20px;right:20px;font-size:2.8rem;font-weight:900;color:rgba(255,255,255,0.04);line-height:1;">03</div>
-          <h3 style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:8px;">Receba pedidos</h3>
-          <p style="color:rgba(255,255,255,0.5);font-size:.88rem;line-height:1.7;">Pedidos chegam em tempo real com notificação sonora. Aceite, prepare e entregue.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ FUNCIONALIDADES ═══ -->
-  <section class="lp-sec" style="background:#111;">
-    <div class="lp-inner">
-      <div style="text-align:center;margin-bottom:56px;">
-        <span style="background:rgba(192,57,43,0.15);color:var(--red);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 16px;border-radius:50px;">Tudo que você precisa</span>
-        <h2 style="font-size:clamp(1.6rem,3vw,2.6rem);font-weight:800;color:#fff;margin-top:16px;">Uma plataforma completa</h2>
-      </div>
-      <div class="lp-grid2">
-        <div style="background:#1a1a1a;border-radius:16px;padding:24px;display:flex;gap:18px;align-items:flex-start;border:1px solid rgba(255,255,255,0.06);">
-          <div style="width:44px;height:44px;background:rgba(192,57,43,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">📋</div>
-          <div><h3 style="font-size:.95rem;font-weight:800;color:#fff;margin-bottom:5px;">Cardápio digital completo</h3><p style="font-size:.82rem;color:rgba(255,255,255,0.5);line-height:1.6;">Fotos, categorias, promoções, adicionais e variações. Atualize em tempo real.</p></div>
-        </div>
-        <div style="background:#1a1a1a;border-radius:16px;padding:24px;display:flex;gap:18px;align-items:flex-start;border:1px solid rgba(255,255,255,0.06);">
-          <div style="width:44px;height:44px;background:rgba(192,57,43,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">🔔</div>
-          <div><h3 style="font-size:.95rem;font-weight:800;color:#fff;margin-bottom:5px;">Pedidos em tempo real</h3><p style="font-size:.82rem;color:rgba(255,255,255,0.5);line-height:1.6;">Notificação sonora a cada novo pedido. Aceite ou recuse com um toque.</p></div>
-        </div>
-        <div style="background:#1a1a1a;border-radius:16px;padding:24px;display:flex;gap:18px;align-items:flex-start;border:1px solid rgba(255,255,255,0.06);">
-          <div style="width:44px;height:44px;background:rgba(192,57,43,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">🍽️</div>
-          <div><h3 style="font-size:.95rem;font-weight:800;color:#fff;margin-bottom:5px;">Comandas digitais</h3><p style="font-size:.82rem;color:rgba(255,255,255,0.5);line-height:1.6;">Garçons fazem pedidos por mesa via celular. Controle em tempo real, sem papel.</p></div>
-        </div>
-        <div style="background:#1a1a1a;border-radius:16px;padding:24px;display:flex;gap:18px;align-items:flex-start;border:1px solid rgba(255,255,255,0.06);">
-          <div style="width:44px;height:44px;background:rgba(192,57,43,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">💰</div>
-          <div><h3 style="font-size:.95rem;font-weight:800;color:#fff;margin-bottom:5px;">Financeiro completo</h3><p style="font-size:.82rem;color:rgba(255,255,255,0.5);line-height:1.6;">Faturamento, formas de pagamento, ticket médio. Exporte em PDF e CSV.</p></div>
-        </div>
-        <div style="background:#1a1a1a;border-radius:16px;padding:24px;display:flex;gap:18px;align-items:flex-start;border:1px solid rgba(255,255,255,0.06);">
-          <div style="width:44px;height:44px;background:rgba(192,57,43,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">✨</div>
-          <div><h3 style="font-size:.95rem;font-weight:800;color:#fff;margin-bottom:5px;">Fresquinho — Stories</h3><p style="font-size:.82rem;color:rgba(255,255,255,0.5);line-height:1.6;">Poste fotos e vídeos do dia que somem em 4h. Clientes veem o que tem hoje.</p></div>
-        </div>
-        <div style="background:#1a1a1a;border-radius:16px;padding:24px;display:flex;gap:18px;align-items:flex-start;border:1px solid rgba(255,255,255,0.06);">
-          <div style="width:44px;height:44px;background:rgba(192,57,43,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">🖨️</div>
-          <div><h3 style="font-size:.95rem;font-weight:800;color:#fff;margin-bottom:5px;">Impressão de notas</h3><p style="font-size:.82rem;color:rgba(255,255,255,0.5);line-height:1.6;">Nota do cliente e ticket de cozinha com um clique. Compatível com 80mm.</p></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ ZERO COMISSÃO ═══ -->
-  <section class="lp-sec" style="background:#0f0f0f;border-top:1px solid rgba(255,255,255,0.06);">
-    <div class="lp-inner">
-      <div class="lp-split">
-        <div>
-          <span style="background:rgba(192,57,43,0.15);color:var(--red);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 16px;border-radius:50px;">Sem taxas surpresa</span>
-          <h2 style="font-size:clamp(1.6rem,3vw,2.6rem);font-weight:800;color:#fff;margin-top:16px;margin-bottom:16px;">R$0 de comissão.<br>Para sempre.</h2>
-          <p style="color:rgba(255,255,255,0.5);font-size:.95rem;line-height:1.75;margin-bottom:28px;">Diferente do iFood, o PEDIWAY não cobra comissão por pedido. Você paga apenas a mensalidade e fica com 100% do que vende.</p>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <div style="display:flex;align-items:center;gap:12px;"><div style="width:22px;height:22px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#fff;flex-shrink:0;">✓</div><span style="color:rgba(255,255,255,0.8);font-size:.9rem;">Sem comissão por pedido</span></div>
-            <div style="display:flex;align-items:center;gap:12px;"><div style="width:22px;height:22px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#fff;flex-shrink:0;">✓</div><span style="color:rgba(255,255,255,0.8);font-size:.9rem;">Sem taxa de setup ou configuração</span></div>
-            <div style="display:flex;align-items:center;gap:12px;"><div style="width:22px;height:22px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#fff;flex-shrink:0;">✓</div><span style="color:rgba(255,255,255,0.8);font-size:.9rem;">Sem contrato de fidelidade</span></div>
-            <div style="display:flex;align-items:center;gap:12px;"><div style="width:22px;height:22px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#fff;flex-shrink:0;">✓</div><span style="color:rgba(255,255,255,0.8);font-size:.9rem;">14 dias grátis, sem cartão</span></div>
+  <section class="hero">
+    <div class="hero-inner">
+      <!-- Coluna texto -->
+      <div class="hero-text">
+        <span class="badge">Plataforma delivery independente</span>
+        <h1><span class="h1-line">Seu cardápio.</span><span class="h1-line">Sua marca.</span><span class="h1-line highlight">Seu lucro.</span></h1>
+        <p>Crie sua loja em minutos, compartilhe o link e receba pedidos direto no celular. Sem comissão por venda.</p>
+        <div class="hero-actions">
+          <button class="btn-primary big hero-btn-main" onclick="goTo('s-register')">Criar minha loja</button>
+          <div class="hero-btns-sec">
+            <button class="btn-ghost-dark big hero-btn-sec" onclick="openDemo()">Ver demo do painel</button>
+            <button class="btn-ghost-dark big hero-btn-sec" onclick="openDemoCliente()">Ver demo do cardápio</button>
           </div>
         </div>
-        <div class="lp-numgrid">
-          <div style="background:#1a1a1a;border-radius:20px;padding:28px 20px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
-            <div style="font-size:2.2rem;font-weight:900;color:var(--red);line-height:1;">R$0</div>
-            <div style="font-size:.75rem;color:rgba(255,255,255,0.4);margin-top:8px;">comissão por pedido</div>
+        <div class="stats">
+          <div><strong>R$0</strong><span>comissão por pedido</span></div>
+          <div><strong>5min</strong><span>para montar seu cardápio</span></div>
+          <div><strong>100%</strong><span>do lucro é seu</span></div>
+        </div>
+      </div>
+
+      <!-- Coluna mockup -->
+      <div class="hero-mockup" id="hero-mockup">
+        <!-- Itens flutuantes ao redor do celular -->
+        <div class="food-item fi-1">🍔</div>
+        <div class="food-item fi-2">🍕</div>
+        <div class="food-item fi-3">🥤</div>
+        <div class="food-item fi-4">🍟</div>
+        <div class="food-item fi-5">🌮</div>
+        <div class="food-item fi-6">🍣</div>
+
+        <!-- Celular -->
+        <div class="phone-wrap">
+          <div class="phone-frame">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <!-- Capa do cardápio dentro do celular -->
+              <div class="phone-header">
+                <div class="phone-logo">🏪</div>
+                <div class="phone-store-name">Burguer do Zé</div>
+                <div class="phone-status">
+                  <span class="phone-open-badge">● Aberto</span>
+                </div>
+              </div>
+              <div class="phone-content">
+                <div class="phone-item-card">
+                  <span class="phone-item-emoji">🍔</span>
+                  <div class="phone-item-info">
+                    <div class="phone-item-name">X-Burguer Especial</div>
+                    <div class="phone-item-price">R$ 28,90</div>
+                  </div>
+                  <button class="phone-item-btn">+</button>
+                </div>
+                <div class="phone-item-card">
+                  <span class="phone-item-emoji">🍟</span>
+                  <div class="phone-item-info">
+                    <div class="phone-item-name">Batata Frita Grande</div>
+                    <div class="phone-item-price">R$ 14,90</div>
+                  </div>
+                  <button class="phone-item-btn">+</button>
+                </div>
+                <div class="phone-item-card">
+                  <span class="phone-item-emoji">🥤</span>
+                  <div class="phone-item-info">
+                    <div class="phone-item-name">Refrigerante 350ml</div>
+                    <div class="phone-item-price">R$ 7,90</div>
+                  </div>
+                  <button class="phone-item-btn">+</button>
+                </div>
+              </div>
+              <!-- Barra do carrinho -->
+              <div class="phone-cart-bar">
+                <span>🛒 3 itens</span>
+                <span>R$ 51,70</span>
+              </div>
+            </div>
           </div>
-          <div style="background:#1a1a1a;border-radius:20px;padding:28px 20px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
-            <div style="font-size:2.2rem;font-weight:900;color:#fff;line-height:1;">5min</div>
-            <div style="font-size:.75rem;color:rgba(255,255,255,0.4);margin-top:8px;">para montar o cardápio</div>
-          </div>
-          <div style="background:var(--red);border-radius:20px;padding:28px 20px;text-align:center;grid-column:1/-1;">
-            <div style="font-size:2.6rem;font-weight:900;color:#fff;line-height:1;">100%</div>
-            <div style="font-size:.85rem;color:rgba(255,255,255,0.85);margin-top:8px;font-weight:600;">do lucro é seu</div>
-          </div>
+          <!-- Reflexo/sombra sob o celular -->
+          <div class="phone-shadow"></div>
         </div>
       </div>
     </div>
   </section>
-
-  <!-- ═══ PARA QUEM É ═══ -->
-  <section class="lp-sec" style="background:#111;">
-    <div class="lp-inner" style="text-align:center;">
-      <span style="background:rgba(192,57,43,0.15);color:var(--red);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 16px;border-radius:50px;">Para quem é o PEDIWAY</span>
-      <h2 style="font-size:clamp(1.6rem,3vw,2.6rem);font-weight:800;color:#fff;margin-top:16px;margin-bottom:40px;">Feito para o seu negócio</h2>
-      <div class="lp-grid4">
-        <div style="background:#1a1a1a;border-radius:16px;padding:24px 18px;border:1px solid rgba(255,255,255,0.06);">
-          <div style="font-size:2.2rem;margin-bottom:12px;">🍔</div>
-          <h3 style="font-size:.92rem;font-weight:800;color:#fff;margin-bottom:6px;">Hamburguerias</h3>
-          <p style="font-size:.78rem;color:rgba(255,255,255,0.4);line-height:1.6;">Delivery, retirada e mesas num só lugar.</p>
-        </div>
-        <div style="background:#1a1a1a;border-radius:16px;padding:24px 18px;border:1px solid rgba(255,255,255,0.06);">
-          <div style="font-size:2.2rem;margin-bottom:12px;">🍕</div>
-          <h3 style="font-size:.92rem;font-weight:800;color:#fff;margin-bottom:6px;">Pizzarias</h3>
-          <p style="font-size:.78rem;color:rgba(255,255,255,0.4);line-height:1.6;">Sabores, bordas e adicionais com facilidade.</p>
-        </div>
-        <div style="background:#1a1a1a;border-radius:16px;padding:24px 18px;border:1px solid rgba(255,255,255,0.06);">
-          <div style="font-size:2.2rem;margin-bottom:12px;">🥗</div>
-          <h3 style="font-size:.92rem;font-weight:800;color:#fff;margin-bottom:6px;">Restaurantes</h3>
-          <p style="font-size:.78rem;color:rgba(255,255,255,0.4);line-height:1.6;">Comandas digitais por mesa para salão completo.</p>
-        </div>
-        <div style="background:#1a1a1a;border-radius:16px;padding:24px 18px;border:1px solid rgba(255,255,255,0.06);">
-          <div style="font-size:2.2rem;margin-bottom:12px;">🧃</div>
-          <h3 style="font-size:.92rem;font-weight:800;color:#fff;margin-bottom:6px;">Açaí & Lanches</h3>
-          <p style="font-size:.78rem;color:rgba(255,255,255,0.4);line-height:1.6;">Grupos de adicionais para combos personalizados.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ CTA FINAL ═══ -->
-  <section class="lp-sec" style="background:linear-gradient(135deg,#1a0808 0%,#0f0f0f 50%,#1a0808 100%);text-align:center;border-top:1px solid rgba(192,57,43,0.2);">
-    <div style="max-width:600px;margin:0 auto;">
-      <div style="font-size:3rem;margin-bottom:16px;">🚀</div>
-      <h2 style="font-size:clamp(1.8rem,4vw,3rem);font-weight:900;color:#fff;margin-bottom:14px;">Pronto para começar?</h2>
-      <p style="color:rgba(255,255,255,0.5);font-size:.95rem;line-height:1.75;margin-bottom:36px;">Crie sua conta agora e teste gratuitamente por 14 dias. Sem cartão de crédito, sem surpresas.</p>
-      <button class="btn-primary" onclick="goTo('s-register')" style="padding:18px 48px;font-size:1.05rem;font-weight:800;border-radius:12px;width:100%;max-width:360px;display:block;margin:0 auto 14px;">Criar minha loja grátis →</button>
-      <p style="color:rgba(255,255,255,0.3);font-size:.8rem;">14 dias grátis · Sem cartão · Cancele quando quiser</p>
-    </div>
-  </section>
-
 </div>
-
-
-
 
 
 
@@ -267,7 +135,6 @@
 <div data-screen="s-register" class="screen">
   <header class="header-dark">
     <div class="logo-dark" onclick="goTo('s-landing')" style="cursor:pointer" translate="no">PEDI<span>WAY</span></div>
-    <button onclick="goTo('s-landing')" style="background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.2);color:#fff;width:36px;height:36px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
   </header>
   <div class="auth-container">
     <div class="auth-card">
@@ -276,6 +143,7 @@
       <div class="form-group"><label>Seu nome completo</label><input type="text" id="rnome" placeholder="João Silva"></div>
       <div class="form-group"><label>WhatsApp (com DDD)</label><input type="tel" id="rtel" placeholder="(99) 99999-9999" maxlength="15" oninput="mascaraTel(this)"></div>
       <div class="form-group"><label>Nome do estabelecimento</label><input type="text" id="rn" placeholder="Ex: Burguer do Ze"></div>
+      <div class="form-group"><label>Cidade</label><input type="text" id="rcidade" placeholder="Ex: São Paulo, Rio de Janeiro..."></div>
       <div class="form-group"><label>CPF ou CNPJ</label><input type="text" id="rdoc" placeholder="000.000.000-00" maxlength="18" oninput="mascaraDoc(this)"></div>
       <div class="form-group"><label>E-mail</label><input type="email" id="re" placeholder="seu@email.com"></div>
       <div class="form-group">
@@ -793,6 +661,10 @@
         <div class="form-group-light">
           <label>Descrição</label>
           <input type="text" class="input-light" id="cfg-desc" placeholder="Os melhores burguers da cidade!">
+        </div>
+        <div class="form-group-light">
+          <label>Cidade</label>
+          <input type="text" class="input-light" id="cfg-cidade" placeholder="Ex: São Paulo, Campinas...">
         </div>
         <div class="form-group-light">
           <label>Endereço (aparece no cardápio)</label>
