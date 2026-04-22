@@ -44,24 +44,21 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
 /* HERO */
 .hero {
   padding: 0;
-  max-width: 100%;
-  display: flex;
-  align-items: stretch;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
 }
 .hero-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: block;
+  position: relative;
   width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 140px 6% 80px 6%;
+  padding: 140px 50% 80px 6%;
+  box-sizing: border-box;
 }
 .hero-text {
-  flex: 0 0 auto;
-  max-width: 480px;
-  width: 100%;
-  z-index: 1;
+  position: relative;
+  z-index: 2;
+  max-width: 620px;
 }
 /* Cada linha do h1 é um bloco — nunca quebra sozinha */
 .h1-line {
@@ -387,16 +384,27 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
    MOCKUP CELULAR NA HERO
 ═══════════════════════════════ */
 .hero-mockup {
-  flex: 0 0 auto;
-  position: relative;
-  width: 300px;
-  height: 580px;
+  position: absolute;
+  right: 3%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44%;
+  height: 620px;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Centralizado no espaço vazio direito */
-  margin-left: auto;
-  margin-right: auto;
+  perspective: 1200px;
+  z-index: 1;
+}
+.hero-mockup::before {
+  content: '';
+  position: absolute;
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, rgba(192,57,43,0.22) 0%, transparent 70%);
+  border-radius: 50%;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 .phone-wrap {
   position: relative;
@@ -504,9 +512,9 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 
 @media(max-width:600px) {
   /* ── Landing ── */
-  .hero-inner { flex-direction: column; padding: 100px 5% 50px; gap: 40px; }
-  .hero-text { max-width: 100% !important; width: 100% !important; padding-right: 0; margin-right: 0; }
-  .hero-mockup { flex: 0 0 auto !important; width: 100% !important; height: 460px; }
+  .hero-inner { padding: 100px 5% 480px; }
+  .hero-text { max-width: 100%; }
+  .hero-mockup { position: absolute; right: auto; left: 50%; transform: translate(-50%, 0); top: auto; bottom: 40px; width: 90%; height: 440px; }
   .phone-frame { width: 200px; height: 408px; border-radius: 38px; }
   .phone-screen { border-radius: 0 0 36px 36px; }
   .phone-cart-bar { border-radius: 0 0 36px 36px; }
@@ -933,9 +941,8 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 .fin-table tr:hover td { background: #faf8f5; }
 .fin-table tr:last-child td { }
 
-/* Barras de pagamento e canal de vendas */
-#fin-pags-est .pag-row,
-#fin-origem-est .pag-row {
+/* Barras de pagamento redesenhadas */
+#fin-pags-est .pag-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -943,32 +950,27 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
   border-bottom: 1px solid var(--border);
   gap: 12px;
 }
-#fin-pags-est .pag-row:last-child,
-#fin-origem-est .pag-row:last-child { border-bottom: none; }
-#fin-pags-est .pag-label,
-#fin-origem-est .pag-label {
+#fin-pags-est .pag-row:last-child { border-bottom: none; }
+#fin-pags-est .pag-label {
   font-size: .82rem;
   font-weight: 700;
   min-width: 80px;
   flex-shrink: 0;
 }
-#fin-pags-est .pag-bar-wrap,
-#fin-origem-est .pag-bar-wrap {
+#fin-pags-est .pag-bar-wrap {
   flex: 1;
   background: #f0e9e0;
   border-radius: 50px;
   height: 8px;
   overflow: hidden;
 }
-#fin-pags-est .pag-bar-fill,
-#fin-origem-est .pag-bar-fill {
+#fin-pags-est .pag-bar-fill {
   height: 100%;
   border-radius: 50px;
   background: var(--red);
   transition: width .4s;
 }
-#fin-pags-est .pag-val,
-#fin-origem-est .pag-val {
+#fin-pags-est .pag-val {
   font-size: .82rem;
   font-weight: 700;
   color: var(--red);
@@ -976,8 +978,7 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
   text-align: right;
   flex-shrink: 0;
 }
-#fin-pags-est .pag-pct,
-#fin-origem-est .pag-pct {
+#fin-pags-est .pag-pct {
   font-size: .7rem;
   color: #aaa;
   min-width: 32px;
