@@ -49,17 +49,19 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
   align-items: stretch;
 }
 .hero-inner {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
-  padding: 140px 6% 80px;
-  box-sizing: border-box;
-  gap: 40px;
+  max-width: 100%;
+  margin: 0;
+  padding: 140px 6% 80px 6%;
 }
 .hero-text {
-  grid-column: 1;
-  z-index: 2;
+  flex: 0 0 auto;
+  max-width: 480px;
+  width: 100%;
+  z-index: 1;
 }
 /* Cada linha do h1 é um bloco — nunca quebra sozinha */
 .h1-line {
@@ -385,13 +387,16 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
    MOCKUP CELULAR NA HERO
 ═══════════════════════════════ */
 .hero-mockup {
-  grid-column: 2;
+  flex: 0 0 auto;
   position: relative;
-  height: 600px;
+  width: 300px;
+  height: 580px;
   display: flex;
   align-items: center;
   justify-content: center;
-  perspective: 1200px;
+  /* Centralizado no espaço vazio direito */
+  margin-left: auto;
+  margin-right: auto;
 }
 .phone-wrap {
   position: relative;
@@ -400,34 +405,32 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   transform: rotateY(-8deg) rotateX(4deg) translateZ(0);
 }
 .phone-frame {
-  width: 248px;
-  height: 504px;
-  background: linear-gradient(160deg, #252525 0%, #111 60%, #1a1a1a 100%);
-  border-radius: 44px;
-  border: 2px solid #3a3a3a;
+  width: 230px;
+  height: 470px;
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border-radius: 36px;
+  border: 8px solid #2d2d44;
   box-shadow:
-    8px 0 0 0 #1a1a1a,
-    9px 0 0 1px #111,
-    -20px 40px 90px rgba(0,0,0,0.80),
-    inset 0 1px 0 rgba(255,255,255,0.10);
+    0 0 0 1px rgba(255,255,255,0.06),
+    0 30px 80px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.1);
   position: relative;
   overflow: hidden;
 }
 .phone-notch {
-  width: 76px; height: 22px;
-  background: #0a0a0a;
-  border-radius: 0 0 16px 16px;
+  width: 70px; height: 20px;
+  background: #0a0a1a;
+  border-radius: 0 0 14px 14px;
   margin: 0 auto;
   position: relative;
   z-index: 10;
 }
 .phone-screen {
-  height: calc(100% - 22px);
+  height: calc(100% - 20px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   background: #fff;
-  border-radius: 0 0 42px 42px;
 }
 .phone-header {
   background: var(--red, #C0392B);
@@ -474,8 +477,6 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   align-items: center;
   font-size: .58rem;
   font-weight: 700;
-  border-radius: 0 0 42px 42px;
-  flex-shrink: 0;
 }
 .phone-shadow {
   width: 160px;
@@ -508,18 +509,10 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 
 @media(max-width:600px) {
   /* ── Landing ── */
-  .hero-inner { grid-template-columns: 1fr; padding: 100px 5% 50px; gap: 32px; }
-  .hero-text { grid-column: 1; }
-  .hero-mockup { grid-column: 1; height: 520px; }
-  .phone-frame { width: 210px; height: 430px; border-radius: 40px; }
-  .phone-screen { border-radius: 0 0 38px 38px; }
-  .phone-cart-bar { border-radius: 0 0 38px 38px; }
-  /* Badge não cortado */
-  .badge { white-space: normal; letter-spacing: 0; font-size: 0.7rem; padding: 4px 10px; }
-  /* Botões do header compactos */
-  .header-dark { padding: 12px 4%; }
-  .btn-ghost-dark { padding: 8px 14px; font-size: 0.82rem; white-space: nowrap; }
-  .btn-primary:not(.full):not(.big) { padding: 8px 14px; font-size: 0.82rem; white-space: nowrap; }
+  .hero-inner { flex-direction: column; padding: 100px 5% 50px; gap: 40px; }
+  .hero-text { max-width: 100%; padding-right: 0; margin-right: 0; }
+  .hero-mockup { width: 220px; height: 440px; margin-right: 0; }
+  .phone-frame { width: 180px; height: 370px; }
   .h1-line { white-space: normal; }
   h1 { font-size: 2.4rem; }
   .hero-actions { max-width: 100%; }
@@ -939,8 +932,9 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 .fin-table tr:hover td { background: #faf8f5; }
 .fin-table tr:last-child td { }
 
-/* Barras de pagamento redesenhadas */
-#fin-pags-est .pag-row {
+/* Barras de pagamento e origem redesenhadas */
+#fin-pags-est .pag-row,
+#fin-origem-est .pag-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -948,27 +942,32 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
   border-bottom: 1px solid var(--border);
   gap: 12px;
 }
-#fin-pags-est .pag-row:last-child { border-bottom: none; }
-#fin-pags-est .pag-label {
+#fin-pags-est .pag-row:last-child,
+#fin-origem-est .pag-row:last-child { border-bottom: none; }
+#fin-pags-est .pag-label,
+#fin-origem-est .pag-label {
   font-size: .82rem;
   font-weight: 700;
   min-width: 80px;
   flex-shrink: 0;
 }
-#fin-pags-est .pag-bar-wrap {
+#fin-pags-est .pag-bar-wrap,
+#fin-origem-est .pag-bar-wrap {
   flex: 1;
   background: #f0e9e0;
   border-radius: 50px;
   height: 8px;
   overflow: hidden;
 }
-#fin-pags-est .pag-bar-fill {
+#fin-pags-est .pag-bar-fill,
+#fin-origem-est .pag-bar-fill {
   height: 100%;
   border-radius: 50px;
   background: var(--red);
   transition: width .4s;
 }
-#fin-pags-est .pag-val {
+#fin-pags-est .pag-val,
+#fin-origem-est .pag-val {
   font-size: .82rem;
   font-weight: 700;
   color: var(--red);
@@ -976,7 +975,8 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
   text-align: right;
   flex-shrink: 0;
 }
-#fin-pags-est .pag-pct {
+#fin-pags-est .pag-pct,
+#fin-origem-est .pag-pct {
   font-size: .7rem;
   color: #aaa;
   min-width: 32px;
