@@ -54,6 +54,7 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
   align-items: center;
   width: 100%;
   padding: 140px 6% 80px 6%;
+  gap: 60px;
 }
 .hero-text {
   grid-column: 1;
@@ -482,8 +483,8 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
   width: 180px; height: 24px;
   background: rgba(0,0,0,0.45);
   border-radius: 50%;
-  filter: blur(22px);
-  margin: 18px auto 0;
+  filter: blur(18px);
+  margin: 12px auto 0;
 }
 
 /* Itens de comida flutuantes */
@@ -937,7 +938,7 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 .fin-table tr:hover td { background: #faf8f5; }
 .fin-table tr:last-child td { }
 
-/* Barras de pagamento e origem redesenhadas */
+/* Barras de pagamento e canal de vendas */
 #fin-pags-est .pag-row,
 #fin-origem-est .pag-row {
   display: flex;
