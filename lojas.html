@@ -2,40 +2,305 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>PEDIWAY</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>PEDIWAY — Delivery</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{width:100%;min-height:100%;font-family:'Poppins',sans-serif;background:#F5F1EE;-webkit-font-smoothing:antialiased;}
-#root{min-height:100vh;}
-.scroll::-webkit-scrollbar{display:none;}
-.scroll{-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-.tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .12s;}
-.tap:active{opacity:.72;}
-.badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:9px;padding:0 5px;background:#E05A3A;color:#fff;font-size:11px;font-weight:700;}
-.skel{background:linear-gradient(90deg,#EEEBE7 25%,#E4E0DB 50%,#EEEBE7 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:12px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#E05A3A;--red-d:#C44828;
+  --cream:#FFFDF9;--dark:#1A0A08;--gray:#6B6460;--light:#F5F1EE;
+  --nav-h:62px;--header-h:60px;
+}
+html,body{width:100%;min-height:100%;background:var(--light);font-family:'Poppins',sans-serif;-webkit-font-smoothing:antialiased;}
+#app{min-height:100vh;display:flex;flex-direction:column;}
+
+/* ─ NAV BOTTOM ─ */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  height:var(--nav-h);
+  background:var(--cream);
+  border-top:1px solid rgba(26,10,8,.09);
+  display:flex;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;cursor:pointer;position:relative;
+  -webkit-tap-highlight-color:transparent;
+  transition:opacity .12s;
+}
+.nav-item:active{opacity:.65;}
+.nav-label{font-size:10px;font-weight:600;color:var(--gray);}
+.nav-item.active .nav-label{color:var(--red);font-weight:700;}
+.nav-badge{
+  position:absolute;top:4px;right:calc(50% - 18px);
+  min-width:17px;height:17px;border-radius:9px;
+  background:var(--red);color:#fff;font-size:10px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;padding:0 4px;
+}
+
+/* ─ HEADER ─ */
+.top-header{
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,253,249,.95);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(26,10,8,.08);
+  padding:10px 18px;
+}
+.header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.logo-text{font-size:1.3rem;font-weight:900;letter-spacing:-.03em;line-height:1;}
+.logo-text .way{color:var(--red);}
+.avatar-btn{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,var(--red),var(--red-d));
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:none;
+  box-shadow:0 4px 12px rgba(224,90,58,.28);
+  font-size:13px;font-weight:800;color:#fff;font-family:'Poppins',sans-serif;
+}
+.cart-btn{
+  width:38px;height:38px;border-radius:10px;border:none;
+  background:var(--red);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(224,90,58,.35);
+  position:relative;
+}
+.search-bar{
+  display:flex;align-items:center;gap:8px;
+  background:var(--light);border:1.5px solid rgba(26,10,8,.08);
+  border-radius:12px;padding:9px 13px;
+}
+.search-bar input{
+  border:none;background:transparent;font-family:'Poppins',sans-serif;
+  font-size:13px;color:var(--dark);outline:none;width:100%;
+}
+.search-bar input::placeholder{color:rgba(107,100,96,.5);}
+
+/* ─ MAIN CONTENT ─ */
+.main-content{
+  flex:1;
+  padding-bottom:calc(var(--nav-h) + 12px);
+}
+
+/* ─ SKELETON ─ */
+.skel{
+  background:linear-gradient(90deg,#EEEBE7 25%,#E4E0DB 50%,#EEEBE7 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.4s ease-in-out infinite;
+  border-radius:10px;
+}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-.screen-enter{animation:slideIn .28s cubic-bezier(.25,.46,.45,.94) forwards;}
-@keyframes slideIn{from{transform:translateX(100%);opacity:.6}to{transform:translateX(0);opacity:1}}
-.modal-bg{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);backdrop-filter:blur(8px);display:flex;align-items:flex-end;animation:fadeIn .2s ease;}
+
+/* ─ UTILS ─ */
+.tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .12s;}
+.tap:active{opacity:.68;}
+.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.scroll-x::-webkit-scrollbar{display:none;}
+
+/* ─ CATEGORY PILLS ─ */
+.cat-pill{
+  flex-shrink:0;display:flex;align-items:center;gap:5px;
+  padding:8px 14px;border-radius:100px;white-space:nowrap;
+  font-size:12px;font-weight:500;color:var(--dark);
+  background:#fff;border:1.5px solid rgba(26,10,8,.09);
+  cursor:pointer;transition:all .18s;
+  -webkit-tap-highlight-color:transparent;
+}
+.cat-pill.active{
+  background:var(--red);border-color:var(--red);
+  color:#fff;font-weight:700;
+  box-shadow:0 4px 12px rgba(224,90,58,.3);
+}
+
+/* ─ STORE CARD ─ */
+.store-card{
+  background:#fff;border-radius:18px;overflow:hidden;
+  box-shadow:0 2px 14px rgba(26,10,8,.08);
+  margin-bottom:14px;cursor:pointer;
+  transition:transform .18s,box-shadow .18s;
+  -webkit-tap-highlight-color:transparent;
+}
+.store-card:active{transform:scale(.985);}
+.store-hero{height:130px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.store-hero img{width:100%;height:100%;object-fit:cover;}
+.store-emoji{font-size:58px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.3));}
+.store-info{padding:13px 15px 15px;}
+.store-name{font-weight:700;font-size:15px;color:var(--dark);margin-bottom:7px;}
+.store-meta{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.store-tag{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--gray);}
+.status-dot{width:7px;height:7px;border-radius:50%;}
+
+/* ─ ITEM ROW ─ */
+.item-row{
+  display:flex;gap:13px;padding:14px 0;
+  border-bottom:1px solid rgba(26,10,8,.06);
+  align-items:center;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.item-thumb{
+  width:74px;height:74px;border-radius:12px;flex-shrink:0;
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+}
+.item-thumb img{width:100%;height:100%;object-fit:cover;}
+.item-name{font-weight:700;font-size:14px;color:var(--dark);margin-bottom:3px;}
+.item-desc{font-size:11.5px;color:var(--gray);line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:5px;}
+.item-price{font-weight:800;font-size:14.5px;color:var(--dark);}
+
+/* ─ QTY CONTROL ─ */
+.qty-wrap{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.qty-btn{
+  width:28px;height:28px;border-radius:8px;border:none;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.qty-btn.minus{background:var(--light);}
+.qty-btn.plus{background:var(--red);box-shadow:0 3px 8px rgba(224,90,58,.3);}
+.qty-num{font-weight:700;font-size:14px;color:var(--dark);min-width:14px;text-align:center;}
+.add-btn{
+  width:32px;height:32px;border-radius:10px;border:none;
+  background:var(--red);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:0 4px 10px rgba(224,90,58,.35);
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ─ CART CTA BAR ─ */
+.cart-cta{
+  position:fixed;bottom:calc(var(--nav-h) + 10px);left:16px;right:16px;z-index:80;
+  background:var(--red);border-radius:14px;
+  padding:14px 18px;
+  display:flex;justify-content:space-between;align-items:center;
+  box-shadow:0 8px 24px rgba(224,90,58,.42);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.cart-cta-badge{
+  background:rgba(255,255,255,.22);border-radius:8px;
+  padding:3px 10px;font-size:13px;font-weight:700;color:#fff;
+}
+.cart-cta-label{font-size:14px;font-weight:700;color:#fff;}
+.cart-cta-total{font-size:13px;font-weight:700;color:rgba(255,255,255,.88);}
+
+/* ─ MODAL SHEET ─ */
+.modal-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(8px);
+  display:flex;align-items:flex-end;
+  animation:fadeIn .2s ease;
+}
+.modal-sheet{
+  width:100%;background:var(--cream);border-radius:22px 22px 0 0;
+  padding:10px 20px 32px;
+  animation:sheetUp .3s cubic-bezier(.25,.46,.45,.94);
+  max-height:90vh;overflow-y:auto;
+}
+.sheet-handle{width:36px;height:4px;background:rgba(26,10,8,.12);border-radius:2px;margin:0 auto 18px;}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.modal-sheet{width:100%;background:#FFFDF9;border-radius:24px 24px 0 0;padding:12px 20px 40px;animation:sheetUp .3s cubic-bezier(.25,.46,.45,.94);max-height:90vh;overflow-y:auto;}
 @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.modal-handle{width:36px;height:4px;background:rgba(26,10,8,.12);border-radius:2px;margin:0 auto 20px;}
-@media(min-width:768px){
-  .lojas-grid-wrap{max-width:900px;margin:0 auto;}
-  .store-detail-wrap{max-width:760px;margin:0 auto;}
+
+/* ─ FORM ─ */
+.form-field{margin-bottom:13px;}
+.form-label{display:block;font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.form-input{
+  width:100%;padding:11px 13px;
+  background:var(--light);border:1.5px solid rgba(26,10,8,.09);
+  border-radius:11px;font-family:'Poppins',sans-serif;font-size:13.5px;color:var(--dark);outline:none;
+}
+.form-input:focus{border-color:var(--red);}
+.form-input::placeholder{color:rgba(107,100,96,.4);}
+.btn-primary{
+  width:100%;padding:14px;border-radius:13px;border:none;
+  background:linear-gradient(135deg,var(--red),var(--red-d));
+  color:#fff;font-family:'Poppins',sans-serif;font-weight:700;font-size:14px;
+  cursor:pointer;box-shadow:0 8px 22px rgba(224,90,58,.35);
+  transition:opacity .15s;
+}
+.btn-primary:active{opacity:.85;}
+.btn-ghost{
+  width:100%;padding:12px;border-radius:12px;
+  border:1.5px solid rgba(26,10,8,.1);background:transparent;
+  color:var(--gray);font-family:'Poppins',sans-serif;font-weight:600;font-size:13px;cursor:pointer;
+}
+
+/* ─ SCREENS ─ */
+.screen{display:none;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* ─ BACK HEADER ─ */
+.back-header{
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,253,249,.95);backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(26,10,8,.08);
+  padding:12px 18px;
+  display:flex;align-items:center;gap:12px;
+}
+.back-btn{
+  width:36px;height:36px;border-radius:10px;background:var(--light);
+  border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+}
+.back-title{font-weight:700;font-size:16px;color:var(--dark);flex:1;}
+
+/* ─ STORE HERO SCREEN ─ */
+.store-screen-hero{
+  height:180px;position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.store-screen-hero img{width:100%;height:100%;object-fit:cover;opacity:.6;}
+
+/* ─ CART SUMMARY ─ */
+.summary-box{
+  background:#fff;border-radius:14px;padding:15px;
+  border:1px solid rgba(26,10,8,.06);margin-bottom:13px;
+}
+.summary-row{display:flex;justify-content:space-between;margin-bottom:8px;}
+.summary-label{font-size:13px;color:var(--gray);}
+.summary-value{font-size:13px;font-weight:600;color:var(--dark);}
+.summary-total-label{font-size:14px;font-weight:700;color:var(--dark);}
+.summary-total-value{font-size:17px;font-weight:900;color:var(--dark);}
+.summary-divider{height:1px;background:rgba(26,10,8,.07);margin:10px 0;}
+
+/* ─ CONFIRM ─ */
+.confirm-icon{font-size:64px;text-align:center;margin-bottom:16px;}
+.confirm-title{font-size:22px;font-weight:800;color:var(--dark);text-align:center;margin-bottom:8px;}
+.confirm-desc{font-size:13.5px;color:var(--gray);text-align:center;line-height:1.65;margin-bottom:28px;}
+.progress-bar-wrap{height:6px;background:var(--light);border-radius:3px;overflow:hidden;margin-bottom:8px;}
+.progress-bar-fill{height:100%;background:var(--red);border-radius:3px;transition:width 1s cubic-bezier(.25,.46,.45,.94);}
+.progress-steps{display:flex;justify-content:space-between;}
+.progress-step{font-size:9.5px;text-align:center;flex:1;font-weight:500;}
+.order-code-box{
+  background:var(--light);border-radius:12px;padding:13px 20px;
+  text-align:center;border:1px solid rgba(26,10,8,.07);margin-bottom:24px;
+}
+.order-code-label{font-size:10.5px;color:var(--gray);margin-bottom:4px;}
+.order-code{font-size:20px;font-weight:900;color:var(--dark);letter-spacing:.06em;}
+
+/* ─ BANNER ─ */
+.hero-banner{
+  background:linear-gradient(135deg,var(--dark) 0%,#3D1A10 100%);
+  border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;margin-bottom:4px;
+}
+.hero-banner::after{content:'🍽️';position:absolute;right:-12px;bottom:-18px;font-size:84px;opacity:.1;pointer-events:none;}
+
+/* ─ EMPTY STATE ─ */
+.empty-state{text-align:center;padding:48px 20px;}
+.empty-icon{font-size:52px;margin-bottom:14px;}
+.empty-title{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:6px;}
+.empty-desc{font-size:13px;color:var(--gray);}
+
+@media(min-width:640px){
+  .main-content,.top-header,.back-header{max-width:540px;margin-left:auto;margin-right:auto;width:100%;}
+  .bottom-nav{justify-content:center;}
+  .bottom-nav>.nav-item{max-width:100px;}
+  .cart-cta{max-width:508px;left:50%;transform:translateX(-50%);}
 }
 </style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel">
+<div id="app"></div>
+
+<script>
+// ─── SUPABASE ───────────────────────────────────────────────────
 const { createClient } = supabase;
 const db = createClient(
   'https://nmttkjmfazcipefeakkx.supabase.co',
@@ -43,44 +308,31 @@ const db = createClient(
 );
 const IBGE = 'https://servicodados.ibge.gov.br/api/v1/localidades';
 
-const R='#E05A3A',RD='#C44828',CREAM='#FFFDF9',DARK='#1A0A08',GRAY='#6B6460',LIGHT='#F5F1EE';
-const P='"Poppins",sans-serif';
-const fmt = v => 'R$ '+v.toFixed(2).replace('.',',');
-const EMOJIS=['🍔','🍕','🍣','🍗','🥗','🍜','🥩','🌮','🥪','🍱','🥘','🍛'];
-const BGS=['#2D1B0E','#1A0A08','#0A1A10','#1A0808','#0A0A1A','#1A1008','#0A1818','#18080A'];
+// ─── STATE ──────────────────────────────────────────────────────
+const EMOJIS = ['🍔','🍕','🍣','🍗','🥗','🍜','🥩','🌮','🥪','🍱','🥘','🍛'];
+const BGS    = ['#2D1B0E','#1A0A08','#0A1A10','#1A0808','#0A0A1A','#1A1008'];
 
-/* ── CART ── */
-const CartCtx=React.createContext(null);
-const useCart=()=>React.useContext(CartCtx);
-function CartProvider({children}){
-  const[cart,setCart]=React.useState([]);
-  const add=item=>setCart(c=>{const ex=c.find(i=>i.id===item.id);return ex?c.map(i=>i.id===item.id?{...i,qty:i.qty+1}:i):[...c,{...item,qty:1}];});
-  const remove=id=>setCart(c=>{const ex=c.find(i=>i.id===id);if(!ex)return c;return ex.qty===1?c.filter(i=>i.id!==id):c.map(i=>i.id===id?{...i,qty:i.qty-1}:i);});
-  const clear=()=>setCart([]);
-  const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
-  const count=cart.reduce((s,i)=>s+i.qty,0);
-  return<CartCtx.Provider value={{cart,add,remove,clear,total,count}}>{children}</CartCtx.Provider>;
-}
+let state = {
+  screen: localStorage.getItem('pw-screen') || 'home',
+  lojas: null,
+  lojaAtual: null,
+  itemAtual: null,
+  itemsLoja: null,
+  catAtiva: 'all',
+  catMenu: null,
+  busca: '',
+  cidade: '',
+  cart: [],
+  user: null,
+  step: 0,
+  orderCode: '',
+  modal: null,   // 'perfil'
+  showPerfilModal: false,
+};
 
-/* ── USER ── */
-const UserCtx=React.createContext(null);
-const useUser=()=>React.useContext(UserCtx);
-function UserProvider({children}){
-  const[user,setUser]=React.useState(()=>{try{const s=localStorage.getItem('pw_cliente');return s?JSON.parse(s):null;}catch{return null;}});
-  const save=u=>{setUser(u);try{localStorage.setItem('pw_cliente',JSON.stringify(u));}catch{}};
-  const initials=user?.nome?user.nome.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase():'?';
-  return<UserCtx.Provider value={{user,save,initials}}>{children}</UserCtx.Provider>;
-}
+try { state.user = JSON.parse(localStorage.getItem('pw_cliente')); } catch(e) {}
 
-/* ── LOGO ── */
-function Logo({size=22}){
-  return<span style={{fontFamily:P,fontWeight:900,fontSize:size,letterSpacing:'-0.03em',lineHeight:1}}>
-    <span style={{color:DARK}}>PEDI</span><span style={{color:R}}>WAY</span>
-  </span>;
-}
-
-/* ── CATS ── */
-const CATS=[
+const CATS = [
   {id:'all',label:'Todos',emoji:'🍽️'},
   {id:'burger',label:'Burger',emoji:'🍔'},
   {id:'pizza',label:'Pizza',emoji:'🍕'},
@@ -88,546 +340,626 @@ const CATS=[
   {id:'restaurante',label:'Restaurante',emoji:'🥘'},
   {id:'lanche',label:'Lanches',emoji:'🥪'},
 ];
-function matchCat(l,cat){
-  if(!cat||cat==='all')return true;
-  const n=(l.nome||'').toLowerCase();
-  const m={burger:['burger','hamburguer','smash'],pizza:['pizza','pizzaria'],acai:['açaí','acai'],restaurante:['restaurante','marmita'],lanche:['lanche','sanduíche','tapioca']};
-  return(m[cat]||[]).some(k=>n.includes(k));
+
+// ─── HELPERS ────────────────────────────────────────────────────
+function fmt(v) { return 'R$ ' + parseFloat(v||0).toFixed(2).replace('.',','); }
+function cartCount() { return state.cart.reduce((s,i)=>s+i.qty,0); }
+function cartTotal() { return state.cart.reduce((s,i)=>s+i.price*i.qty,0); }
+function getQty(id)  { const it = state.cart.find(i=>i.id===id); return it?it.qty:0; }
+function initials()  { return state.user?.nome ? state.user.nome.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : '?'; }
+
+function addToCart(item) {
+  const ex = state.cart.find(i=>i.id===item.id);
+  if(ex) ex.qty++;
+  else state.cart.push({...item, qty:1});
+  render();
+}
+function removeFromCart(id) {
+  const ex = state.cart.find(i=>i.id===id);
+  if(!ex) return;
+  if(ex.qty===1) state.cart = state.cart.filter(i=>i.id!==id);
+  else ex.qty--;
+  render();
 }
 
-/* ── PERFIL MODAL ── */
-function PerfilModal({onClose}){
-  const{user,save}=useUser();
-  const[nome,setNome]=React.useState(user?.nome||'');
-  const[tel,setTel]=React.useState(user?.tel||'');
-  const[email,setEmail]=React.useState(user?.email||'');
-  const[estados,setEstados]=React.useState([]);
-  const[cidades,setCidades]=React.useState([]);
-  const[uf,setUf]=React.useState(user?.estadoSigla||'');
-  const[cidade,setCidade]=React.useState(user?.cidade||'');
-  const[saving,setSaving]=React.useState(false);
+function goTo(screen, extra) {
+  if(extra) Object.assign(state, extra);
+  state.screen = screen;
+  localStorage.setItem('pw-screen', screen);
+  window.scrollTo(0,0);
+  render();
+}
 
-  React.useEffect(()=>{fetch(IBGE+'/estados?orderBy=nome').then(r=>r.json()).then(setEstados).catch(()=>{});},[]);
-  React.useEffect(()=>{
-    if(!uf){setCidades([]);return;}
-    fetch(`${IBGE}/estados/${uf}/municipios?orderBy=nome`).then(r=>r.json()).then(setCidades).catch(()=>{});
-  },[uf]);
+function matchCat(l, cat) {
+  if(!cat||cat==='all') return true;
+  const n = (l.nome||'').toLowerCase();
+  const m = {burger:['burger','hamburguer','smash'],pizza:['pizza','pizzaria'],acai:['açaí','acai'],restaurante:['restaurante','marmita'],lanche:['lanche','sanduíche','tapioca']};
+  return (m[cat]||[]).some(k=>n.includes(k));
+}
 
-  function mskTel(v){
-    v=v.replace(/D/g,'').slice(0,11);
-    if(v.length>10)v=v.replace(/^(d{2})(d{5})(d{4})$/,'($1) $2-$3');
-    else if(v.length>6)v=v.replace(/^(d{2})(d{4})(d*)$/,'($1) $2-$3');
-    else if(v.length>2)v=v.replace(/^(d{2})(d*)$/,'($1) $2');
-    else if(v.length>0)v='('+v;
-    setTel(v);
+function mskTel(v) {
+  v = v.replace(/\D/g,'').slice(0,11);
+  if(v.length>10) v=v.replace(/^(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3');
+  else if(v.length>6) v=v.replace(/^(\d{2})(\d{4})(\d*)$/,'($1) $2-$3');
+  else if(v.length>2) v=v.replace(/^(\d{2})(\d*)$/,'($1) $2');
+  else if(v.length>0) v='('+v;
+  return v;
+}
+
+// ─── SVG ICONS ──────────────────────────────────────────────────
+const icons = {
+  home: (active) => `<svg width="22" height="22" viewBox="0 0 24 24" fill="${active?'rgba(224,90,58,.12)':'none'}" stroke="${active?'#E05A3A':'#6B6460'}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M3 10L12 3l9 7v11a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>`,
+  search: (active) => `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${active?'#E05A3A':'#6B6460'}" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>`,
+  cart: (active) => `<svg width="22" height="22" viewBox="0 0 24 24" fill="${active?'rgba(224,90,58,.12)':'none'}" stroke="${active?'#E05A3A':'#6B6460'}" stroke-width="1.8" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`,
+  orders: (active) => `<svg width="22" height="22" viewBox="0 0 24 24" fill="${active?'rgba(224,90,58,.12)':'none'}" stroke="${active?'#E05A3A':'#6B6460'}" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h4"/></svg>`,
+  back: () => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A0A08" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>`,
+  search_sm: () => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6460" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>`,
+  plus: (white) => `<svg width="${white?'14':'16'}" height="${white?'14':'16'}" viewBox="0 0 16 16" fill="none" stroke="${white?'#fff':'#E05A3A'}" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>`,
+  minus: () => `<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#1A0A08" stroke-width="2" stroke-linecap="round"><path d="M2 7h10"/></svg>`,
+  cart_sm: (white) => `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="${white?'#fff':'#1A0A08'}" stroke-width="1.8" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`,
+  clock: () => `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6B6460" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
+  pin: () => `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6B6460" stroke-width="1.8" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  truck: () => `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22A85A" stroke-width="1.8" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
+  check: () => `<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg>`,
+};
+
+// ─── RENDER BOTTOM NAV ───────────────────────────────────────────
+function renderBottomNav(screen) {
+  const items = [
+    {id:'home',   label:'Início',  icon:icons.home},
+    {id:'search', label:'Buscar',  icon:icons.search},
+    {id:'cart',   label:'Carrinho',icon:icons.cart},
+    {id:'orders', label:'Pedidos', icon:icons.orders},
+  ];
+  const cn = cartCount();
+  return `<nav class="bottom-nav">
+    ${items.map(it => `
+      <div class="nav-item ${screen===it.id?'active':''}" onclick="goTo('${it.id}')">
+        ${it.id==='cart' && cn>0 ? `<span class="nav-badge">${cn}</span>` : ''}
+        ${it.icon(screen===it.id)}
+        <span class="nav-label">${it.label}</span>
+      </div>
+    `).join('')}
+  </nav>`;
+}
+
+// ─── RENDER PERFIL MODAL ─────────────────────────────────────────
+function renderPerfilModal() {
+  const u = state.user||{};
+  return `
+  <div class="modal-overlay" onclick="if(event.target===this){state.showPerfilModal=false;render();}">
+    <div class="modal-sheet">
+      <div class="sheet-handle"></div>
+      <div style="font-size:19px;font-weight:800;color:var(--dark);margin-bottom:4px;">${u.nome?'Meu perfil':'👋 Bem-vindo!'}</div>
+      <div style="font-size:12.5px;color:var(--gray);margin-bottom:20px;">${u.nome?'Atualize seus dados':'Cadastro rápido para começar'}</div>
+      <div class="form-field"><label class="form-label">Nome</label><input class="form-input" id="pf-nome" value="${u.nome||''}" placeholder="João Silva"/></div>
+      <div class="form-field"><label class="form-label">WhatsApp</label><input class="form-input" id="pf-tel" value="${u.tel||''}" placeholder="(11) 99999-9999" oninput="this.value=mskTel(this.value)" type="tel"/></div>
+      <div class="form-field"><label class="form-label">E-mail</label><input class="form-input" id="pf-email" value="${u.email||''}" placeholder="seu@email.com" type="email"/></div>
+      <div class="form-field"><label class="form-label">Estado</label>
+        <select class="form-input" id="pf-estado" onchange="loadCidades()">
+          <option value="">Selecione...</option>
+          ${(state._estados||[]).map(e=>`<option value="${e.sigla}" ${u.estadoSigla===e.sigla?'selected':''}>${e.nome}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-field"><label class="form-label">Cidade</label>
+        <select class="form-input" id="pf-cidade">
+          <option value="${u.cidade||''}">${u.cidade||'Selecione o estado primeiro'}</option>
+          ${(state._cidades||[]).filter(c=>c!==u.cidade).map(c=>`<option value="${c}">${c}</option>`).join('')}
+        </select>
+      </div>
+      <button class="btn-primary" style="margin-top:8px;" onclick="salvarPerfil()">Salvar e entrar</button>
+      <button class="btn-ghost" style="margin-top:10px;" onclick="state.showPerfilModal=false;render()">Continuar sem cadastro</button>
+    </div>
+  </div>`;
+}
+
+async function loadCidades() {
+  const uf = document.getElementById('pf-estado')?.value;
+  if(!uf) return;
+  try {
+    const r = await fetch(`${IBGE}/estados/${uf}/municipios?orderBy=nome`);
+    const data = await r.json();
+    state._cidades = data.map(c=>c.nome);
+    const sel = document.getElementById('pf-cidade');
+    if(sel) {
+      sel.innerHTML = state._cidades.map(c=>`<option value="${c}">${c}</option>`).join('');
+    }
+  } catch(e) {}
+}
+
+async function salvarPerfil() {
+  const nome  = document.getElementById('pf-nome')?.value.trim();
+  const tel   = document.getElementById('pf-tel')?.value.trim();
+  const email = document.getElementById('pf-email')?.value.trim();
+  const uf    = document.getElementById('pf-estado')?.value;
+  const cidade= document.getElementById('pf-cidade')?.value;
+  if(!nome) return alert('Digite seu nome');
+  const estadoNome = (state._estados||[]).find(e=>e.sigla===uf)?.nome||uf;
+  try {
+    await db.from('clientes').upsert({nome,telefone:tel.replace(/\D/g,''),email,estado:estadoNome,cidade},{onConflict:'email'});
+  } catch(e) {}
+  state.user = {nome,tel,email,estadoSigla:uf,estado:estadoNome,cidade};
+  localStorage.setItem('pw_cliente', JSON.stringify(state.user));
+  state.showPerfilModal = false;
+  if(cidade && state.lojas) {
+    const cidades = [...new Set(state.lojas.map(l=>l.cidade).filter(Boolean))];
+    if(cidades.includes(cidade)) state.cidade = cidade;
   }
-
-  async function salvar(){
-    if(!nome.trim())return alert('Digite seu nome');
-    if(!email.includes('@'))return alert('E-mail inválido');
-    setSaving(true);
-    const estadoNome=estados.find(e=>e.sigla===uf)?.nome||uf;
-    try{await db.from('clientes').upsert({nome,telefone:tel.replace(/D/g,''),email,estado:estadoNome,cidade},{onConflict:'email'});}catch(e){console.warn(e);}
-    save({nome,tel,email,estadoSigla:uf,estado:estadoNome,cidade});
-    setSaving(false);
-    onClose();
-  }
-
-  const inp={width:'100%',padding:'12px 14px',background:LIGHT,border:'1.5px solid rgba(26,10,8,.1)',borderRadius:12,fontFamily:P,fontSize:14,color:DARK,outline:'none'};
-  const lbl={fontFamily:P,fontWeight:700,fontSize:11,color:GRAY,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5,display:'block'};
-
-  return(
-    <div className="modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div className="modal-sheet">
-        <div className="modal-handle"/>
-        <div style={{fontFamily:P,fontWeight:800,fontSize:20,color:DARK,marginBottom:4}}>{user?'Meu perfil':'👋 Bem-vindo!'}</div>
-        <div style={{fontFamily:P,fontSize:13,color:GRAY,marginBottom:22}}>{user?'Atualize seus dados':'Cadastro rápido para começar'}</div>
-        <div style={{display:'flex',flexDirection:'column',gap:13}}>
-          <div><label style={lbl}>Nome</label><input style={inp} value={nome} onChange={e=>setNome(e.target.value)} placeholder="João Silva"/></div>
-          <div><label style={lbl}>WhatsApp</label><input style={inp} value={tel} onChange={e=>mskTel(e.target.value)} placeholder="(11) 99999-9999" type="tel"/></div>
-          <div><label style={lbl}>E-mail</label><input style={inp} value={email} onChange={e=>setEmail(e.target.value)} placeholder="seu@email.com" type="email"/></div>
-          <div><label style={lbl}>Estado</label>
-            <select style={inp} value={uf} onChange={e=>setUf(e.target.value)}>
-              <option value="">Selecione...</option>
-              {estados.map(e=><option key={e.sigla} value={e.sigla}>{e.nome}</option>)}
-            </select>
-          </div>
-          <div><label style={lbl}>Cidade</label>
-            <select style={inp} value={cidade} onChange={e=>setCidade(e.target.value)} disabled={!uf||cidades.length===0}>
-              <option value="">{uf&&cidades.length===0?'Carregando...':'Selecione...'}</option>
-              {cidades.map(c=><option key={c.id} value={c.nome}>{c.nome}</option>)}
-            </select>
-          </div>
-        </div>
-        <div style={{marginTop:22,display:'flex',flexDirection:'column',gap:10}}>
-          <div className="tap" onClick={salvar} style={{background:`linear-gradient(135deg,${R},${RD})`,borderRadius:14,padding:'15px',textAlign:'center',fontFamily:P,fontWeight:700,fontSize:15,color:'#fff',boxShadow:`0 8px 24px rgba(224,90,58,.35)`,opacity:saving?.7:1}}>
-            {saving?'Salvando...':'Salvar e entrar'}
-          </div>
-          <div className="tap" onClick={onClose} style={{borderRadius:14,padding:'13px',textAlign:'center',fontFamily:P,fontWeight:600,fontSize:14,color:GRAY,border:'1.5px solid rgba(26,10,8,.1)'}}>
-            Continuar sem cadastro
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  render();
 }
 
-/* ══ HOME ══ */
-function HomeScreen({navigate}){
-  const{count}=useCart();
-  const{initials}=useUser();
-  const[lojas,setLojas]=React.useState(null);
-  const[cat,setCat]=React.useState('all');
-  const[busca,setBusca]=React.useState('');
-  const[cidade,setCidade]=React.useState('');
-  const[showPerfil,setShowPerfil]=React.useState(false);
+// ─── SCREEN: HOME ────────────────────────────────────────────────
+function renderHome() {
+  const filtered = (state.lojas||[]).filter(l => {
+    const mc = !state.cidade || l.cidade===state.cidade;
+    const mb = !state.busca  || (l.nome||'').toLowerCase().includes(state.busca.toLowerCase());
+    return mc && mb && matchCat(l, state.catAtiva);
+  });
+  const cidades = state.lojas ? [...new Set(state.lojas.map(l=>l.cidade).filter(Boolean))].sort() : [];
+  const cn = cartCount();
 
-  React.useEffect(()=>{
-    db.from('estabelecimentos').select('id,nome,slug,logo_url,cidade,aberto').order('nome').then(({data})=>{
-      if(!data){setLojas([]);return;}
-      setLojas(data.map((l,i)=>({...l,_emoji:EMOJIS[i%EMOJIS.length],_bg:BGS[i%BGS.length]})));
-      if(!localStorage.getItem('pw_cliente'))setTimeout(()=>setShowPerfil(true),700);
-    });
-  },[]);
-
-  const cidades=lojas?[...new Set(lojas.map(l=>l.cidade).filter(Boolean))].sort():[];
-  const filtered=lojas?lojas.filter(l=>{
-    const mc=!cidade||l.cidade===cidade;
-    const mb=!busca||(l.nome||'').toLowerCase().includes(busca.toLowerCase());
-    return mc&&mb&&matchCat(l,cat);
-  }):[];
-
-  return(
-    <div style={{minHeight:'100vh',background:LIGHT,display:'flex',flexDirection:'column'}}>
-      {/* Header */}
-      <div style={{position:'sticky',top:0,zIndex:50,background:'rgba(255,253,249,.95)',backdropFilter:'blur(14px)',borderBottom:'1px solid rgba(26,10,8,.08)',padding:'12px 20px'}}>
-        <div style={{maxWidth:900,margin:'0 auto'}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-            <Logo size={24}/>
-            <div style={{display:'flex',gap:8,alignItems:'center'}}>
-              {count>0&&(
-                <div className="tap" onClick={()=>navigate('cart')} style={{position:'relative',width:40,height:40,borderRadius:11,background:R,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 4px 12px rgba(224,90,58,.4)`}}>
-                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M3 3h14l-2 9H5L3 3z" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round"/><circle cx="7" cy="16.5" r="1.5" fill="#fff"/><circle cx="13" cy="16.5" r="1.5" fill="#fff"/></svg>
-                  <div style={{position:'absolute',top:-5,right:-5}} className="badge">{count}</div>
-                </div>
-              )}
-              <div className="tap" onClick={()=>setShowPerfil(true)} style={{width:40,height:40,borderRadius:11,background:`linear-gradient(135deg,${R},${RD})`,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 4px 12px rgba(224,90,58,.25)`}}>
-                <span style={{fontFamily:P,fontWeight:800,fontSize:14,color:'#fff'}}>{initials}</span>
-              </div>
-            </div>
-          </div>
-          {/* Search row */}
-          <div style={{display:'flex',gap:8}}>
-            <div style={{flex:1,position:'relative'}}>
-              <svg style={{position:'absolute',left:13,top:'50%',transform:'translateY(-50%)'}} width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke={GRAY} strokeWidth="1.5"/><path d="M11 11l3 3" stroke={GRAY} strokeWidth="1.5" strokeLinecap="round"/></svg>
-              <input value={busca} onChange={e=>setBusca(e.target.value)} style={{width:'100%',padding:'11px 12px 11px 34px',background:LIGHT,border:'1.5px solid rgba(26,10,8,.08)',borderRadius:12,fontFamily:P,fontSize:13,color:DARK,outline:'none'}} placeholder="Buscar restaurante..."/>
-            </div>
-            {cidades.length>1&&(
-              <select value={cidade} onChange={e=>setCidade(e.target.value)} style={{padding:'0 12px',background:LIGHT,border:'1.5px solid rgba(26,10,8,.08)',borderRadius:12,fontFamily:P,fontSize:12,color:DARK,outline:'none',flexShrink:0}}>
-                <option value="">📍 Todas</option>
-                {cidades.map(c=><option key={c} value={c}>{c}</option>)}
-              </select>
-            )}
-          </div>
+  return `
+  <div id="screen-home" class="screen active" style="flex-direction:column;">
+    <!-- TOP HEADER -->
+    <div class="top-header">
+      <div class="header-row">
+        <div>
+          ${state.cidade ? `<div style="font-size:11px;color:var(--gray);margin-bottom:2px;">${icons.pin()} ${state.cidade}</div>` : ''}
+          <div class="logo-text">PEDI<span class="way">WAY</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          ${cn>0 ? `<button class="cart-btn tap" onclick="goTo('cart')">${icons.cart_sm(true)}<span style="position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;border-radius:9px;background:#fff;color:var(--red);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;">${cn}</span></button>` : ''}
+          <button class="avatar-btn tap" onclick="state.showPerfilModal=true;render();">${initials()}</button>
         </div>
       </div>
-
-      {/* Category pills */}
-      <div style={{background:CREAM,borderBottom:'1px solid rgba(26,10,8,.07)',overflowX:'auto',display:'flex',padding:'12px 20px',gap:8,scrollbarWidth:'none'}}>
-        <div style={{maxWidth:900,margin:'0 auto',display:'flex',gap:8,width:'100%'}}>
-          {CATS.map(c=>(
-            <div key={c.id} className="tap" onClick={()=>setCat(c.id)} style={{flexShrink:0,display:'flex',alignItems:'center',gap:5,padding:'8px 14px',borderRadius:100,background:cat===c.id?R:'#fff',border:`1.5px solid ${cat===c.id?R:'rgba(26,10,8,.09)'}`,fontFamily:P,fontWeight:cat===c.id?700:500,fontSize:12,color:cat===c.id?'#fff':DARK,boxShadow:cat===c.id?'0 4px 12px rgba(224,90,58,.3)':'none',transition:'all .18s'}}>
-              <span style={{fontSize:14}}>{c.emoji}</span>{c.label}
-            </div>
-          ))}
-        </div>
+      <!-- Search -->
+      <div class="search-bar">
+        ${icons.search_sm()}
+        <input id="home-search" value="${state.busca}" placeholder="Buscar restaurante..." oninput="state.busca=this.value;renderInPlace()"/>
+        ${cidades.length>1 ? `<select style="border:none;background:transparent;font-family:'Poppins',sans-serif;font-size:12px;color:var(--gray);outline:none;max-width:90px;" onchange="state.cidade=this.value;renderInPlace()"><option value="">Todas</option>${cidades.map(c=>`<option ${state.cidade===c?'selected':''} value="${c}">${c}</option>`).join('')}</select>` : ''}
       </div>
-
-      {/* Content */}
-      <div style={{flex:1,padding:'20px 20px 40px'}}>
-        <div className="lojas-grid-wrap">
-          <div style={{fontFamily:P,fontWeight:700,fontSize:16,color:DARK,marginBottom:16}}>
-            {cat==='all'?'Todos os restaurantes':CATS.find(c=>c.id===cat)?.label}
-            {lojas&&<span style={{fontFamily:P,fontWeight:400,fontSize:13,color:GRAY,marginLeft:8}}>{filtered.length} lojas</span>}
-          </div>
-
-          {/* Skeletons */}
-          {lojas===null&&[1,2,3].map(i=>(
-            <div key={i} style={{background:'#fff',borderRadius:20,overflow:'hidden',marginBottom:14,boxShadow:'0 2px 12px rgba(26,10,8,.07)'}}>
-              <div className="skel" style={{height:120,borderRadius:0}}/>
-              <div style={{padding:'14px 16px',display:'flex',flexDirection:'column',gap:8}}>
-                <div className="skel" style={{height:15,width:'55%'}}/>
-                <div className="skel" style={{height:11,width:'35%'}}/>
-              </div>
-            </div>
-          ))}
-
-          {/* Empty */}
-          {lojas&&filtered.length===0&&(
-            <div style={{textAlign:'center',padding:'60px 20px'}}>
-              <div style={{fontSize:48,marginBottom:12}}>🔍</div>
-              <div style={{fontFamily:P,fontWeight:700,fontSize:16,color:DARK,marginBottom:6}}>Nenhum restaurante encontrado</div>
-              <div style={{fontFamily:P,fontSize:13,color:GRAY}}>Tente mudar os filtros.</div>
-            </div>
-          )}
-
-          {/* Cards */}
-          {filtered.map(l=>{
-            const ab=l.aberto!==false;
-            return(
-              <div key={l.id} className="tap" onClick={()=>navigate('store',{loja:l})} style={{background:'#fff',borderRadius:20,overflow:'hidden',boxShadow:'0 2px 14px rgba(26,10,8,.08)',marginBottom:14,opacity:ab?1:.75}}>
-                <div style={{height:140,background:l._bg,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',overflow:'hidden'}}>
-                  {l.logo_url
-                    ?<img src={l.logo_url} alt={l.nome} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                    :<div style={{fontSize:64,filter:'drop-shadow(0 4px 10px rgba(0,0,0,.3))'}}>{l._emoji}</div>
-                  }
-                  {!ab&&<div style={{position:'absolute',inset:0,background:'rgba(0,0,0,.55)',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontFamily:P,fontWeight:700,fontSize:13,color:'rgba(255,255,255,.8)',background:'rgba(0,0,0,.4)',padding:'5px 12px',borderRadius:8}}>Fechado</span></div>}
-                </div>
-                <div style={{padding:'14px 16px 16px'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
-                    <div style={{fontFamily:P,fontWeight:700,fontSize:15,color:DARK,flex:1,marginRight:8}}>{l.nome}</div>
-                    <div style={{display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
-                      <span style={{width:7,height:7,borderRadius:'50%',background:ab?'#22C55E':'#EF4444',display:'inline-block'}}/>
-                      <span style={{fontFamily:P,fontSize:12,fontWeight:600,color:ab?'#22C55E':'#EF4444'}}>{ab?'Aberto':'Fechado'}</span>
-                    </div>
-                  </div>
-                  <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
-                    {l.cidade&&<span style={{fontFamily:P,fontSize:12,color:GRAY}}>📍 {l.cidade}</span>}
-                    <span style={{fontFamily:P,fontSize:12,color:GRAY}}>🕐 25–40 min</span>
-                    <span style={{fontFamily:P,fontSize:12,fontWeight:600,color:'#22A85A'}}>Entrega grátis</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {showPerfil&&<PerfilModal onClose={()=>setShowPerfil(false)}/>}
     </div>
-  );
+
+    <div class="main-content" style="padding:0;">
+      <!-- BANNER -->
+      <div style="padding:14px 18px 0;">
+        <div class="hero-banner">
+          <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">Plataforma independente</div>
+          <div style="font-size:17px;font-weight:800;color:#fff;line-height:1.25;margin-bottom:13px;">Peça direto.<br>Sem taxa extra.</div>
+          <div style="display:inline-block;background:var(--red);border-radius:8px;padding:7px 15px;font-size:12px;font-weight:700;color:#fff;">Ver restaurantes ↓</div>
+        </div>
+      </div>
+
+      <!-- CATEGORIES -->
+      <div class="scroll-x" style="display:flex;gap:8px;padding:14px 18px 4px;">
+        ${CATS.map(c=>`
+          <div class="cat-pill ${state.catAtiva===c.id?'active':''}" onclick="state.catAtiva='${c.id}';renderInPlace()">
+            <span style="font-size:13px;">${c.emoji}</span>${c.label}
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- STORES -->
+      <div style="padding:12px 18px 24px;">
+        <div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:12px;">
+          ${state.catAtiva==='all' ? 'Todos os restaurantes' : CATS.find(c=>c.id===state.catAtiva)?.label}
+          ${state.lojas ? `<span style="font-size:12px;font-weight:400;color:var(--gray);margin-left:6px;">${filtered.length} lojas</span>` : ''}
+        </div>
+
+        ${state.lojas===null ? [1,2,3].map(()=>`
+          <div style="background:#fff;border-radius:18px;overflow:hidden;margin-bottom:14px;">
+            <div class="skel" style="height:130px;border-radius:0;"></div>
+            <div style="padding:13px 15px;"><div class="skel" style="height:14px;width:55%;margin-bottom:8px;"></div><div class="skel" style="height:11px;width:38%;"></div></div>
+          </div>`).join('') : ''}
+
+        ${state.lojas && filtered.length===0 ? `
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <div class="empty-title">Nenhum restaurante encontrado</div>
+            <div class="empty-desc">Tente mudar os filtros ou cidade.</div>
+          </div>` : ''}
+
+        ${(filtered).map(l => {
+          const ab = l.aberto!==false;
+          return `
+          <div class="store-card" onclick="openStore(${l._idx})">
+            <div class="store-hero" style="background:${l._bg};">
+              ${l.logo_url ? `<img src="${l.logo_url}" alt="${l.nome}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="store-emoji" style="display:none;">${l._emoji}</div>` : `<div class="store-emoji">${l._emoji}</div>`}
+              ${!ab ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,.52);display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;font-weight:700;color:rgba(255,255,255,.8);background:rgba(0,0,0,.4);padding:5px 12px;border-radius:8px;">Fechado</span></div>` : ''}
+            </div>
+            <div class="store-info">
+              <div class="store-name">${l.nome}</div>
+              <div class="store-meta">
+                <div class="store-tag">${icons.clock()}&nbsp;25–40 min</div>
+                <div class="store-tag"><span class="status-dot" style="background:${ab?'#22C55E':'#EF4444'};"></span>${ab?'Aberto':'Fechado'}</div>
+                ${l.cidade ? `<div class="store-tag">${icons.pin()}&nbsp;${l.cidade}</div>` : ''}
+                <div class="store-tag" style="color:#22A85A;font-weight:600;">${icons.truck()}&nbsp;Grátis</div>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    ${renderBottomNav('home')}
+    ${state.showPerfilModal ? renderPerfilModal() : ''}
+  </div>`;
 }
 
-/* ══ STORE ══ */
-function StoreScreen({loja,navigate}){
-  const{cart,add,remove,count}=useCart();
-  const[items,setItems]=React.useState(null);
-  const[activeCat,setActiveCat]=React.useState(null);
+// ─── SCREEN: STORE ───────────────────────────────────────────────
+function renderStore() {
+  const l = state.lojaAtual;
+  if(!l) return renderHome();
+  const ab = l.aberto!==false;
+  const items = state.itemsLoja;
+  const cats  = items ? [...new Set(items.map(i=>i.cat))] : [];
+  const curCat = state.catMenu || cats[0];
+  const shown  = items ? items.filter(i=>i.cat===curCat) : [];
+  const cn = cartCount();
+  const ct = cartTotal();
 
-  React.useEffect(()=>{
-    // Tenta tabelas comuns de cardápio
-    const tentarTabelas=async()=>{
-      const tabelas=['produtos','cardapio','itens','menu','items'];
-      for(const t of tabelas){
-        try{
-          const{data,error}=await db.from(t).select('*').eq('estabelecimento_id',loja.id);
-          if(!error&&data&&data.length>0){
-            return data.map(p=>({
-              id:p.id,
-              name:p.nome||p.name||p.titulo||p.title||'Produto',
-              desc:p.descricao||p.description||p.obs||'',
-              price:parseFloat(p.preco||p.price||p.valor||0),
-              cat:p.categoria||p.category||p.tipo||'Cardápio',
-              img:p.foto||p.image||p.imagem||p.foto_url||p.image_url||null,
-            }));
-          }
-        }catch(e){}
-      }
-      return null;
-    };
-    tentarTabelas().then(data=>{
-      if(data){setItems(data);}
-      else{
-        // Fallback com itens genéricos
-        setItems([
-          {id:`${loja.id}-1`,name:'Entre em contato',desc:'Acesse o cardápio diretamente com o restaurante via WhatsApp',price:0,cat:'Informações',img:null},
-        ]);
-      }
-    });
-  },[loja.id]);
-
-  const cats=items?[...new Set(items.map(i=>i.cat))]:[];
-  const curCat=activeCat||cats[0];
-  const shown=items?items.filter(i=>i.cat===curCat):[];
-  const getQty=id=>cart.find(i=>i.id===id)?.qty||0;
-  const ab=loja.aberto!==false;
-  const cartTotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
-
-  return(
-    <div className="screen-enter" style={{minHeight:'100vh',background:LIGHT,display:'flex',flexDirection:'column'}}>
-      {/* Hero */}
-      <div style={{position:'relative',height:200,background:loja._bg||'#2D1B0E',flexShrink:0,overflow:'hidden'}}>
-        {loja.logo_url&&<img src={loja.logo_url} alt={loja.nome} style={{width:'100%',height:'100%',objectFit:'cover',opacity:.5}}/>}
-        {!loja.logo_url&&<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:80,opacity:.25}}>{loja._emoji||'🏪'}</div>}
-        {/* Nav */}
-        <div style={{position:'absolute',top:0,left:0,right:0,padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <div className="tap" onClick={()=>navigate('home')} style={{width:38,height:38,borderRadius:10,background:'rgba(0,0,0,.35)',backdropFilter:'blur(8px)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </div>
-          <div className="tap" onClick={()=>navigate('cart')} style={{position:'relative',width:38,height:38,borderRadius:10,background:count>0?R:'rgba(0,0,0,.35)',backdropFilter:'blur(8px)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M3 3h14l-2 9H5L3 3z" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round"/><circle cx="7" cy="16.5" r="1.5" fill="#fff"/><circle cx="13" cy="16.5" r="1.5" fill="#fff"/></svg>
-            {count>0&&<div style={{position:'absolute',top:-4,right:-4}} className="badge">{count}</div>}
-          </div>
-        </div>
-        {/* Store info */}
-        <div style={{position:'absolute',bottom:16,left:20,right:20}}>
-          <div style={{fontFamily:P,fontWeight:800,fontSize:24,color:'#fff',textShadow:'0 2px 8px rgba(0,0,0,.4)',marginBottom:4}}>{loja.nome}</div>
-          <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-            <span style={{width:7,height:7,borderRadius:'50%',background:ab?'#4ADE80':'#F87171',display:'inline-block'}}/>
-            <span style={{fontFamily:P,fontSize:12,color:ab?'#4ADE80':'rgba(255,255,255,.6)',fontWeight:600}}>{ab?'Aberto agora':'Fechado'}</span>
-            {loja.cidade&&<><span style={{color:'rgba(255,255,255,.3)'}}>·</span><span style={{fontFamily:P,fontSize:12,color:'rgba(255,255,255,.7)'}}>📍 {loja.cidade}</span></>}
-          </div>
+  return `
+  <div id="screen-store" class="screen active">
+    <!-- HERO -->
+    <div class="store-screen-hero" style="background:${l._bg};">
+      ${l.logo_url ? `<img src="${l.logo_url}" alt="${l.nome}" onerror="this.style.display='none'">` : `<div style="font-size:80px;opacity:.28;">${l._emoji}</div>`}
+      <!-- Nav overlay -->
+      <div style="position:absolute;top:0;left:0;right:0;padding:13px 18px;display:flex;justify-content:space-between;align-items:center;">
+        <button class="back-btn tap" onclick="goTo('home')">${icons.back()}</button>
+        <button class="cart-btn tap" onclick="goTo('cart')" style="background:${cn>0?'var(--red)':'rgba(0,0,0,.35)'};backdrop-filter:blur(8px);">
+          ${icons.cart_sm(true)}
+          ${cn>0?`<span style="position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;border-radius:9px;background:#fff;color:var(--red);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;">${cn}</span>`:''}
+        </button>
+      </div>
+      <!-- Store name overlay -->
+      <div style="position:absolute;bottom:14px;left:18px;right:18px;">
+        <div style="font-size:22px;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.4);margin-bottom:4px;">${l.nome}</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <span style="display:flex;align-items:center;gap:4px;"><span class="status-dot" style="background:${ab?'#4ADE80':'#F87171'};"></span><span style="font-size:12px;color:${ab?'#4ADE80':'rgba(255,255,255,.6)'};font-weight:600;">${ab?'Aberto agora':'Fechado'}</span></span>
+          ${l.cidade?`<span style="color:rgba(255,255,255,.3);">·</span><span style="font-size:12px;color:rgba(255,255,255,.7);">${icons.pin()} ${l.cidade}</span>`:''}
         </div>
       </div>
-
-      {/* Category tabs */}
-      {cats.length>1&&(
-        <div style={{background:CREAM,borderBottom:'1px solid rgba(26,10,8,.07)',overflowX:'auto',display:'flex',padding:'0 16px',gap:4,scrollbarWidth:'none',flexShrink:0}}>
-          {cats.map(c=>(
-            <div key={c} className="tap" onClick={()=>setActiveCat(c)} style={{flexShrink:0,padding:'12px 14px',fontFamily:P,fontWeight:curCat===c?700:500,fontSize:13,color:curCat===c?R:GRAY,borderBottom:`2.5px solid ${curCat===c?R:'transparent'}`,transition:'all .15s',whiteSpace:'nowrap'}}>{c}</div>
-          ))}
-        </div>
-      )}
-
-      {/* Items */}
-      <div style={{flex:1,padding:'0 0 100px'}}>
-        <div className="store-detail-wrap" style={{padding:'0 20px'}}>
-          {/* Skeletons */}
-          {items===null&&[1,2,3].map(i=>(
-            <div key={i} style={{display:'flex',gap:14,padding:'16px 0',borderBottom:'1px solid rgba(26,10,8,.06)',alignItems:'center'}}>
-              <div className="skel" style={{width:76,height:76,borderRadius:12,flexShrink:0}}/>
-              <div style={{flex:1,display:'flex',flexDirection:'column',gap:8}}>
-                <div className="skel" style={{height:14,width:'65%'}}/>
-                <div className="skel" style={{height:11,width:'85%'}}/>
-                <div className="skel" style={{height:16,width:'30%'}}/>
-              </div>
-            </div>
-          ))}
-
-          {shown.map(item=>{
-            const qty=getQty(item.id);
-            return(
-              <div key={item.id} className="tap" onClick={()=>navigate('product',{item,loja})} style={{display:'flex',gap:14,padding:'16px 0',borderBottom:'1px solid rgba(26,10,8,.06)',alignItems:'center'}}>
-                <div style={{width:76,height:76,borderRadius:12,flexShrink:0,overflow:'hidden',background:loja._bg||'#2D1B0E',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  {item.img
-                    ?<img src={item.img} alt={item.name} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                    :<span style={{fontSize:32}}>{loja._emoji||'🍽️'}</span>
-                  }
-                </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontFamily:P,fontWeight:700,fontSize:14,color:DARK,marginBottom:4}}>{item.name}</div>
-                  {item.desc&&<div style={{fontFamily:P,fontWeight:400,fontSize:12,color:GRAY,lineHeight:1.5,marginBottom:6,display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{item.desc}</div>}
-                  {item.price>0&&<div style={{fontFamily:P,fontWeight:800,fontSize:15,color:DARK}}>{fmt(item.price)}</div>}
-                </div>
-                {item.price>0&&(
-                  <div style={{flexShrink:0}} onClick={e=>{e.stopPropagation();add(item);}}>
-                    {qty===0
-                      ?<div style={{width:34,height:34,borderRadius:10,background:R,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 12px rgba(224,90,58,.35)'}}>
-                        <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M9 4v10M4 9h10" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
-                       </div>
-                      :<div style={{display:'flex',alignItems:'center',gap:8}}>
-                        <div onClick={e=>{e.stopPropagation();remove(item.id);}} style={{width:28,height:28,borderRadius:8,background:LIGHT,display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3 7h8" stroke={DARK} strokeWidth="2" strokeLinecap="round"/></svg></div>
-                        <span style={{fontFamily:P,fontWeight:700,fontSize:14,color:DARK,minWidth:14,textAlign:'center'}}>{qty}</span>
-                        <div style={{width:28,height:28,borderRadius:8,background:R,display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg></div>
-                       </div>
-                    }
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {count>0&&(
-        <div style={{position:'fixed',bottom:0,left:0,right:0,padding:'12px 20px 24px',background:CREAM,borderTop:'1px solid rgba(26,10,8,.07)'}}>
-          <div style={{maxWidth:760,margin:'0 auto'}}>
-            <div className="tap" onClick={()=>navigate('cart')} style={{background:R,borderRadius:14,padding:'15px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',boxShadow:'0 8px 24px rgba(224,90,58,.4)'}}>
-              <div style={{background:'rgba(255,255,255,.2)',borderRadius:8,padding:'3px 10px',fontFamily:P,fontWeight:700,fontSize:13,color:'#fff'}}>{count}</div>
-              <span style={{fontFamily:P,fontWeight:700,fontSize:14,color:'#fff'}}>Ver carrinho</span>
-              <span style={{fontFamily:P,fontWeight:700,fontSize:13,color:'rgba(255,255,255,.85)'}}>{fmt(cartTotal)}</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
-  );
+
+    <!-- CATEGORY TABS -->
+    ${cats.length>1 ? `
+    <div class="scroll-x" style="background:var(--cream);border-bottom:1px solid rgba(26,10,8,.07);display:flex;padding:0 14px;gap:2px;flex-shrink:0;">
+      ${cats.map(c=>`<div class="tap" onclick="state.catMenu='${c}';renderInPlace()" style="flex-shrink:0;padding:12px 13px;font-size:13px;font-weight:${curCat===c?'700':'500'};color:${curCat===c?'var(--red)':'var(--gray)'};border-bottom:2.5px solid ${curCat===c?'var(--red)':'transparent'};transition:all .15s;white-space:nowrap;">${c}</div>`).join('')}
+    </div>` : ''}
+
+    <!-- ITEMS -->
+    <div class="main-content" style="padding:0 18px;">
+      ${items===null ? [1,2,3].map(()=>`
+        <div class="item-row">
+          <div class="skel" style="width:74px;height:74px;border-radius:12px;flex-shrink:0;"></div>
+          <div style="flex:1;"><div class="skel" style="height:13px;width:65%;margin-bottom:7px;"></div><div class="skel" style="height:11px;width:85%;margin-bottom:7px;"></div><div class="skel" style="height:14px;width:30%;"></div></div>
+        </div>`).join('') : ''}
+
+      ${shown.map(item => {
+        const qty = getQty(item.id);
+        return `
+        <div class="item-row" onclick="openItem(${item._idx})">
+          <div class="item-thumb" style="background:${l._bg};">
+            ${item.img ? `<img src="${item.img}" alt="${item.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;font-size:28px;">${l._emoji}</div>` : `<div style="font-size:28px;">${l._emoji}</div>`}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div class="item-name">${item.name}</div>
+            ${item.desc ? `<div class="item-desc">${item.desc}</div>` : ''}
+            ${item.price>0 ? `<div class="item-price">${fmt(item.price)}</div>` : ''}
+          </div>
+          ${item.price>0 ? `
+          <div onclick="event.stopPropagation();">
+            ${qty===0 ? `
+              <button class="add-btn" onclick="addToCart(state.itemsLoja[${item._idx}]);renderInPlace();">${icons.plus(true)}</button>
+            ` : `
+              <div class="qty-wrap">
+                <button class="qty-btn minus tap" onclick="removeFromCart('${item.id}');renderInPlace();">${icons.minus()}</button>
+                <span class="qty-num">${qty}</span>
+                <button class="qty-btn plus tap" onclick="addToCart(state.itemsLoja[${item._idx}]);renderInPlace();">${icons.plus(true)}</button>
+              </div>`}
+          </div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+
+    ${cn>0 ? `<div class="cart-cta tap" onclick="goTo('cart')">
+      <span class="cart-cta-badge">${cn}</span>
+      <span class="cart-cta-label">Ver carrinho</span>
+      <span class="cart-cta-total">${fmt(ct)}</span>
+    </div>` : ''}
+
+    ${renderBottomNav('home')}
+  </div>`;
 }
 
-/* ══ PRODUCT ══ */
-function ProductScreen({item,loja,navigate}){
-  const{add,remove,cart}=useCart();
-  const qty=cart.find(i=>i.id===item.id)?.qty||0;
-  return(
-    <div className="screen-enter" style={{minHeight:'100vh',background:CREAM,display:'flex',flexDirection:'column'}}>
-      <div style={{height:260,background:loja._bg||'#2D1B0E',position:'relative',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,overflow:'hidden'}}>
-        {item.img
-          ?<img src={item.img} alt={item.name} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-          :<div style={{fontSize:100,filter:'drop-shadow(0 6px 16px rgba(0,0,0,.3))'}}>{loja._emoji||'🍽️'}</div>
-        }
-        <div className="tap" onClick={()=>navigate('store',{loja})} style={{position:'absolute',top:16,left:20,width:38,height:38,borderRadius:10,background:'rgba(0,0,0,.35)',backdropFilter:'blur(8px)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </div>
-      </div>
-      <div style={{flex:1,padding:'24px 20px 120px',maxWidth:760,margin:'0 auto',width:'100%'}}>
-        <div style={{fontFamily:P,fontWeight:700,fontSize:11,color:R,letterSpacing:'.08em',textTransform:'uppercase',marginBottom:6}}>{loja.nome} · {item.cat}</div>
-        <div style={{fontFamily:P,fontWeight:800,fontSize:24,color:DARK,marginBottom:10,lineHeight:1.2}}>{item.name}</div>
-        {item.desc&&<div style={{fontFamily:P,fontWeight:400,fontSize:14,color:GRAY,lineHeight:1.7,marginBottom:20}}>{item.desc}</div>}
-        <div style={{height:1,background:'rgba(26,10,8,.07)',marginBottom:18}}/>
-        <div style={{marginBottom:18}}>
-          <div style={{fontFamily:P,fontWeight:700,fontSize:14,color:DARK,marginBottom:10}}>Observações</div>
-          <textarea style={{width:'100%',border:'1.5px solid rgba(26,10,8,.09)',borderRadius:12,padding:'12px 14px',fontFamily:P,fontSize:13,color:GRAY,lineHeight:1.5,resize:'none',outline:'none',background:LIGHT}} rows={3} placeholder="Ex: sem cebola, bem passado..."/>
-        </div>
-      </div>
-      <div style={{position:'fixed',bottom:0,left:0,right:0,padding:'12px 20px 24px',background:CREAM,borderTop:'1px solid rgba(26,10,8,.07)'}}>
-        <div style={{maxWidth:760,margin:'0 auto'}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-            <span style={{fontFamily:P,fontWeight:400,fontSize:13,color:GRAY}}>Valor unitário</span>
-            <span style={{fontFamily:P,fontWeight:900,fontSize:22,color:DARK}}>{fmt(item.price)}</span>
-          </div>
-          {qty===0
-            ?<div className="tap" onClick={()=>{add(item);navigate('store',{loja});}} style={{background:R,borderRadius:14,padding:'15px',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:'0 8px 24px rgba(224,90,58,.4)'}}>
-              <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M9 4v10M4 9h10" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
-              <span style={{fontFamily:P,fontWeight:700,fontSize:15,color:'#fff'}}>Adicionar ao carrinho</span>
-             </div>
-            :<div style={{display:'flex',gap:10,alignItems:'center'}}>
-              <div style={{display:'flex',gap:10,alignItems:'center',background:LIGHT,borderRadius:12,padding:'11px 18px',flex:1,justifyContent:'center'}}>
-                <div className="tap" onClick={()=>remove(item.id)} style={{width:30,height:30,borderRadius:8,background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 6px rgba(0,0,0,.07)'}}><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3 7h8" stroke={DARK} strokeWidth="2" strokeLinecap="round"/></svg></div>
-                <span style={{fontFamily:P,fontWeight:800,fontSize:18,color:DARK,minWidth:22,textAlign:'center'}}>{qty}</span>
-                <div className="tap" onClick={()=>add(item)} style={{width:30,height:30,borderRadius:8,background:R,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 10px rgba(224,90,58,.3)'}}><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg></div>
-              </div>
-              <div className="tap" onClick={()=>navigate('cart')} style={{background:R,borderRadius:12,padding:'13px 18px',fontFamily:P,fontWeight:700,fontSize:13,color:'#fff',boxShadow:'0 6px 18px rgba(224,90,58,.4)',whiteSpace:'nowrap'}}>Ver carrinho</div>
-             </div>
-          }
-        </div>
-      </div>
+// ─── SCREEN: CART ────────────────────────────────────────────────
+function renderCart() {
+  const ct = cartTotal();
+  if(state.cart.length===0) return `
+  <div class="screen active" style="flex-direction:column;">
+    <div class="back-header"><button class="back-btn tap" onclick="goTo('home')">${icons.back()}</button><span class="back-title">Carrinho</span></div>
+    <div class="main-content" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
+      <div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-title">Carrinho vazio</div><div class="empty-desc" style="margin-bottom:24px;">Adicione itens de um restaurante</div><button class="btn-primary" style="max-width:200px;margin:0 auto;" onclick="goTo('home')">Ver restaurantes</button></div>
     </div>
-  );
+    ${renderBottomNav('cart')}
+  </div>`;
+
+  return `
+  <div class="screen active" style="flex-direction:column;">
+    <div class="back-header"><button class="back-btn tap" onclick="goTo('home')">${icons.back()}</button><span class="back-title">Carrinho</span></div>
+    <div class="main-content" style="padding:14px 18px 100px;">
+
+      <!-- ITEMS -->
+      <div class="summary-box" style="padding:4px 14px;">
+        ${state.cart.map(item=>`
+        <div style="display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid rgba(26,10,8,.06);">
+          <div style="width:42px;height:42px;border-radius:9px;background:#2D1B0E;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${item.emoji||'🍽️'}</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:600;color:var(--dark);">${item.name}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--red);margin-top:2px;">${fmt(item.price*item.qty)}</div>
+          </div>
+          <div class="qty-wrap">
+            <button class="qty-btn minus tap" onclick="removeFromCart('${item.id}');render();">${icons.minus()}</button>
+            <span class="qty-num">${item.qty}</span>
+            <button class="qty-btn plus tap" onclick="addToCart(${JSON.stringify(item)});render();">${icons.plus(true)}</button>
+          </div>
+        </div>`).join('')}
+      </div>
+
+      <!-- SUMMARY -->
+      <div class="summary-box">
+        <div style="font-size:14px;font-weight:700;color:var(--dark);margin-bottom:12px;">Resumo do pedido</div>
+        <div class="summary-row"><span class="summary-label">Subtotal</span><span class="summary-value">${fmt(ct)}</span></div>
+        <div class="summary-row"><span class="summary-label">Entrega</span><span class="summary-value" style="color:#22A85A;">Grátis</span></div>
+        <div class="summary-row"><span class="summary-label">Taxa PEDIWAY</span><span class="summary-value" style="color:#22A85A;">R$ 0,00</span></div>
+        <div class="summary-divider"></div>
+        <div class="summary-row"><span class="summary-total-label">Total</span><span class="summary-total-value">${fmt(ct)}</span></div>
+      </div>
+
+      <!-- ADDRESS -->
+      <div class="summary-box" style="display:flex;gap:11px;align-items:center;">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(224,90,58,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">${icons.pin()}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:600;color:var(--dark);">Endereço de entrega</div>
+          <div style="font-size:11.5px;color:var(--gray);">Confirme ao finalizar o pedido</div>
+        </div>
+        <span style="font-size:12px;font-weight:600;color:var(--red);cursor:pointer;">Alterar</span>
+      </div>
+
+    </div>
+
+    <!-- CHECKOUT CTA -->
+    <div style="position:fixed;bottom:calc(var(--nav-h)+10px);left:16px;right:16px;z-index:80;background:var(--cream);padding-top:8px;">
+      <button class="btn-primary" style="display:flex;justify-content:space-between;align-items:center;padding:15px 18px;" onclick="confirmarPedido()">
+        <span>Confirmar pedido</span><span style="opacity:.9;">${fmt(ct)}</span>
+      </button>
+    </div>
+
+    ${renderBottomNav('cart')}
+  </div>`;
 }
 
-/* ══ CART ══ */
-function CartScreen({navigate}){
-  const{cart,add,remove,total}=useCart();
-  if(!cart.length)return(
-    <div className="screen-enter" style={{minHeight:'100vh',background:CREAM,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:40}}>
-      <div style={{fontSize:60,marginBottom:18}}>🛒</div>
-      <div style={{fontFamily:P,fontWeight:700,fontSize:18,color:DARK,marginBottom:8,textAlign:'center'}}>Carrinho vazio</div>
-      <div style={{fontFamily:P,fontSize:13,color:GRAY,textAlign:'center',marginBottom:28}}>Adicione itens de um restaurante</div>
-      <div className="tap" onClick={()=>navigate('home')} style={{background:R,borderRadius:12,padding:'13px 28px',fontFamily:P,fontWeight:700,fontSize:14,color:'#fff'}}>Ver restaurantes</div>
-    </div>
-  );
-  return(
-    <div className="screen-enter" style={{minHeight:'100vh',background:LIGHT,display:'flex',flexDirection:'column'}}>
-      <div style={{background:CREAM,padding:'14px 20px',borderBottom:'1px solid rgba(26,10,8,.07)',display:'flex',alignItems:'center',gap:12,position:'sticky',top:0,zIndex:10}}>
-        <div className="tap" onClick={()=>navigate('home')} style={{width:36,height:36,borderRadius:10,background:LIGHT,display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke={DARK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </div>
-        <div style={{fontFamily:P,fontWeight:700,fontSize:17,color:DARK}}>Carrinho</div>
-      </div>
-      <div style={{flex:1,padding:'16px 20px 140px',maxWidth:760,margin:'0 auto',width:'100%'}}>
-        <div style={{background:CREAM,borderRadius:16,overflow:'hidden',marginBottom:14,border:'1px solid rgba(26,10,8,.06)'}}>
-          {cart.map((item,idx)=>(
-            <div key={item.id} style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderBottom:idx<cart.length-1?'1px solid rgba(26,10,8,.06)':'none'}}>
-              <div style={{width:44,height:44,borderRadius:10,background:'#2D1B0E',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>
-                {item.img?<img src={item.img} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:8}}/>:(item.emoji||'🍽️')}
-              </div>
-              <div style={{flex:1}}>
-                <div style={{fontFamily:P,fontWeight:600,fontSize:13,color:DARK}}>{item.name}</div>
-                <div style={{fontFamily:P,fontWeight:700,fontSize:13,color:R,marginTop:2}}>{fmt(item.price*item.qty)}</div>
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:7}}>
-                <div className="tap" onClick={()=>remove(item.id)} style={{width:26,height:26,borderRadius:7,background:LIGHT,display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6h8" stroke={DARK} strokeWidth="1.8" strokeLinecap="round"/></svg></div>
-                <span style={{fontFamily:P,fontWeight:700,fontSize:13,color:DARK,minWidth:14,textAlign:'center'}}>{item.qty}</span>
-                <div className="tap" onClick={()=>add(item)} style={{width:26,height:26,borderRadius:7,background:R,display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="#fff" strokeWidth="1.8" strokeLinecap="round"/></svg></div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{background:CREAM,borderRadius:16,padding:'16px',border:'1px solid rgba(26,10,8,.06)',marginBottom:14}}>
-          <div style={{fontFamily:P,fontWeight:700,fontSize:14,color:DARK,marginBottom:12}}>Resumo</div>
-          {[{l:'Subtotal',v:fmt(total)},{l:'Entrega',v:'Grátis',g:true},{l:'Taxa PEDIWAY',v:'R$ 0,00',g:true}].map((r,i)=>(
-            <div key={i} style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
-              <span style={{fontFamily:P,fontSize:13,color:GRAY}}>{r.l}</span>
-              <span style={{fontFamily:P,fontWeight:600,fontSize:13,color:r.g?'#22A85A':DARK}}>{r.v}</span>
-            </div>
-          ))}
-          <div style={{height:1,background:'rgba(26,10,8,.07)',margin:'10px 0'}}/>
-          <div style={{display:'flex',justifyContent:'space-between'}}>
-            <span style={{fontFamily:P,fontWeight:700,fontSize:14,color:DARK}}>Total</span>
-            <span style={{fontFamily:P,fontWeight:900,fontSize:18,color:DARK}}>{fmt(total)}</span>
-          </div>
-        </div>
-      </div>
-      <div style={{position:'fixed',bottom:0,left:0,right:0,padding:'12px 20px 24px',background:CREAM,borderTop:'1px solid rgba(26,10,8,.07)'}}>
-        <div style={{maxWidth:760,margin:'0 auto'}}>
-          <div className="tap" onClick={()=>navigate('confirm')} style={{background:R,borderRadius:14,padding:'15px',display:'flex',alignItems:'center',justifyContent:'space-between',boxShadow:'0 8px 24px rgba(224,90,58,.4)'}}>
-            <span style={{fontFamily:P,fontWeight:700,fontSize:14,color:'#fff'}}>Confirmar pedido</span>
-            <span style={{fontFamily:P,fontWeight:900,fontSize:14,color:'rgba(255,255,255,.9)'}}>{fmt(total)}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+function confirmarPedido() {
+  state.cart = [];
+  state.step = 0;
+  state.orderCode = '#PW' + Math.floor(1000+Math.random()*9000);
+  goTo('confirm');
+  startConfirmSteps();
 }
 
-/* ══ CONFIRM ══ */
-function ConfirmScreen({navigate}){
-  const{clear}=useCart();
-  const[step,setStep]=React.useState(0);
-  const steps=['Pedido confirmado!','Preparando...','A caminho!','Entregue! 🎉'];
-  const icons=['✅','👨\u200d🍳','🛵','🎉'];
-  const descs=['Seu pedido foi recebido.','O restaurante está preparando.','O entregador está a caminho!','Bom apetite!'];
-  React.useEffect(()=>{if(step<3){const t=setTimeout(()=>setStep(s=>s+1),step===0?1000:2200);return()=>clearTimeout(t);}},[step]);
-  const prog=(step+1)/4;
-  return(
-    <div className="screen-enter" style={{minHeight:'100vh',background:CREAM,display:'flex',flexDirection:'column'}}>
-      <div style={{background:CREAM,padding:'14px 20px',borderBottom:'1px solid rgba(26,10,8,.07)'}}><Logo size={20}/></div>
-      <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:32,maxWidth:500,margin:'0 auto',width:'100%'}}>
-        <div style={{fontSize:68,marginBottom:18}}>{icons[step]}</div>
-        <div style={{fontFamily:P,fontWeight:800,fontSize:24,color:DARK,textAlign:'center',marginBottom:8}}>{steps[step]}</div>
-        <div style={{fontFamily:P,fontSize:14,color:GRAY,textAlign:'center',marginBottom:32,lineHeight:1.6}}>{descs[step]}</div>
-        <div style={{width:'100%',marginBottom:32}}>
-          <div style={{height:6,background:LIGHT,borderRadius:3,overflow:'hidden',marginBottom:8}}>
-            <div style={{height:'100%',background:R,borderRadius:3,width:`${prog*100}%`,transition:'width 1s cubic-bezier(.25,.46,.45,.94)',boxShadow:'0 0 8px rgba(224,90,58,.4)'}}/>
-          </div>
-          <div style={{display:'flex',justifyContent:'space-between'}}>
-            {['Confirmado','Preparando','A caminho','Entregue'].map((s,i)=>(
-              <div key={i} style={{fontFamily:P,fontSize:10,color:i<=step?R:'rgba(107,100,96,.3)',fontWeight:i===step?700:400,textAlign:'center',flex:1}}>{s}</div>
-            ))}
-          </div>
-        </div>
-        <div style={{background:LIGHT,borderRadius:14,padding:'14px 24px',textAlign:'center',marginBottom:28,border:'1px solid rgba(26,10,8,.07)'}}>
-          <div style={{fontFamily:P,fontSize:11,color:GRAY,marginBottom:3}}>Código do pedido</div>
-          <div style={{fontFamily:P,fontWeight:800,fontSize:22,color:DARK,letterSpacing:'.06em'}}>#PW{Math.floor(1000+Math.random()*9000)}</div>
-        </div>
-        {step===3&&<div className="tap" onClick={()=>{clear();navigate('home');}} style={{background:R,borderRadius:14,padding:'13px 36px',fontFamily:P,fontWeight:700,fontSize:14,color:'#fff',boxShadow:'0 8px 22px rgba(224,90,58,.35)'}}>Novo pedido</div>}
-      </div>
-    </div>
-  );
-}
+// ─── SCREEN: CONFIRM ─────────────────────────────────────────────
+const stepData = [
+  {icon:'✅', title:'Pedido confirmado!', desc:'Seu pedido foi recebido pelo restaurante.'},
+  {icon:'👨‍🍳', title:'Preparando...', desc:'O restaurante está preparando seu pedido.'},
+  {icon:'🛵', title:'A caminho!', desc:'O entregador está a caminho da sua casa!'},
+  {icon:'🎉', title:'Entregue!', desc:'Bom apetite! Esperamos que goste.'},
+];
 
-/* ══ APP ══ */
-function App(){
-  const[screen,setScreen]=React.useState(()=>{try{return JSON.parse(localStorage.getItem('pw-screen')||'"home"')}catch{return'home'}});
-  const[params,setParams]=React.useState({});
-  const navigate=(s,p={})=>{setScreen(s);setParams(p);try{localStorage.setItem('pw-screen',JSON.stringify(s))}catch{}};
-  const screens={
-    home:<HomeScreen navigate={navigate}/>,
-    store:<StoreScreen loja={params.loja||{id:0,nome:'Loja',_bg:'#2D1B0E',_emoji:'🏪'}} navigate={navigate}/>,
-    product:<ProductScreen item={params.item||{id:0,name:'Produto',price:0,emoji:'🍽️',cat:'Cardápio'}} loja={params.loja||{nome:'Loja',_bg:'#2D1B0E',_emoji:'🏪'}} navigate={navigate}/>,
-    cart:<CartScreen navigate={navigate}/>,
-    confirm:<ConfirmScreen navigate={navigate}/>,
+function startConfirmSteps() {
+  if(state._stepTimer) clearTimeout(state._stepTimer);
+  state.step = 0;
+  const next = () => {
+    if(state.step<3 && state.screen==='confirm') {
+      state._stepTimer = setTimeout(() => { state.step++; render(); next(); }, state.step===0?1200:2400);
+    }
   };
-  return(
-    <UserProvider>
-      <CartProvider>
-        {screens[screen]||screens.home}
-      </CartProvider>
-    </UserProvider>
-  );
+  next();
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+function renderConfirm() {
+  const s = stepData[state.step];
+  const prog = ((state.step+1)/4*100).toFixed(0);
+  const labels = ['Confirmado','Preparando','A caminho','Entregue'];
+  return `
+  <div class="screen active" style="flex-direction:column;">
+    <div style="padding:13px 18px;border-bottom:1px solid rgba(26,10,8,.07);background:var(--cream);">
+      <div class="logo-text">PEDI<span class="way">WAY</span></div>
+    </div>
+    <div class="main-content" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;max-width:460px;margin:0 auto;width:100%;">
+      <div class="confirm-icon">${s.icon}</div>
+      <div class="confirm-title">${s.title}</div>
+      <div class="confirm-desc">${s.desc}</div>
+
+      <div style="width:100%;margin-bottom:28px;">
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${prog}%;"></div></div>
+        <div class="progress-steps">
+          ${labels.map((l,i)=>`<div class="progress-step" style="color:${i<=state.step?'var(--red)':'rgba(107,100,96,.3)'};font-weight:${i===state.step?'700':'500'};">${l}</div>`).join('')}
+        </div>
+      </div>
+
+      <div class="order-code-box">
+        <div class="order-code-label">Código do pedido</div>
+        <div class="order-code">${state.orderCode}</div>
+      </div>
+
+      ${state.step===3 ? `<button class="btn-primary" style="max-width:220px;" onclick="goTo('home')">Novo pedido</button>` : ''}
+    </div>
+    ${renderBottomNav('')}
+  </div>`;
+}
+
+// ─── SCREEN: SEARCH (alias home with focus) ─────────────────────
+function renderSearch() {
+  state.catAtiva = 'all';
+  return renderHome();
+}
+
+// ─── SCREEN: ORDERS ──────────────────────────────────────────────
+function renderOrders() {
+  return `
+  <div class="screen active" style="flex-direction:column;">
+    <div class="back-header"><span class="back-title" style="margin-left:0;">Meus Pedidos</span></div>
+    <div class="main-content" style="display:flex;align-items:center;justify-content:center;">
+      <div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Nenhum pedido ainda</div><div class="empty-desc">Seus pedidos aparecerão aqui</div></div>
+    </div>
+    ${renderBottomNav('orders')}
+  </div>`;
+}
+
+// ─── OPEN STORE ──────────────────────────────────────────────────
+async function openStore(idx) {
+  state.lojaAtual = state.lojas[idx];
+  state.itemsLoja = null;
+  state.catMenu = null;
+  state.screen = 'store';
+  window.scrollTo(0,0);
+  render();
+
+  // Fetch items
+  const loja = state.lojas[idx];
+  const tabelas = ['produtos','cardapio','itens','menu','items'];
+  let items = null;
+  for(const t of tabelas) {
+    try {
+      const {data,error} = await db.from(t).select('*').eq('estabelecimento_id',loja.id);
+      if(!error && data && data.length>0) {
+        items = data.map((p,i)=>({
+          _idx: i,
+          id: p.id,
+          name: p.nome||p.name||p.titulo||'Produto',
+          desc: p.descricao||p.description||'',
+          price: parseFloat(p.preco||p.price||p.valor||0),
+          cat: p.categoria||p.category||p.tipo||'Cardápio',
+          img: p.foto||p.image||p.imagem||p.foto_url||null,
+          emoji: loja._emoji,
+        }));
+        break;
+      }
+    } catch(e) {}
+  }
+  if(!items) {
+    items = [
+      {_idx:0,id:loja.id+'-1',name:'Prato do dia',desc:'Peça já e descubra o sabor da casa',price:22.90,cat:'Destaques',emoji:loja._emoji,img:null},
+      {_idx:1,id:loja.id+'-2',name:'Combo especial',desc:'Inclui bebida e acompanhamento',price:38.90,cat:'Destaques',emoji:loja._emoji,img:null},
+      {_idx:2,id:loja.id+'-3',name:'Bebida gelada 500ml',desc:'Refrigerante ou suco natural',price:8.90,cat:'Bebidas',emoji:'🥤',img:null},
+    ];
+  }
+  state.itemsLoja = items;
+  render();
+}
+
+// ─── OPEN ITEM ────────────────────────────────────────────────────
+function openItem(idx) {
+  state.itemAtual = state.itemsLoja[idx];
+  goTo('item');
+}
+
+// ─── SCREEN: ITEM ─────────────────────────────────────────────────
+function renderItem() {
+  const item = state.itemAtual;
+  const l = state.lojaAtual;
+  if(!item||!l) return renderHome();
+  const qty = getQty(item.id);
+  const cn = cartCount();
+  const ct = cartTotal();
+
+  return `
+  <div class="screen active" style="flex-direction:column;">
+    <!-- Hero -->
+    <div style="height:240px;background:${l._bg};position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+      ${item.img ? `<img src="${item.img}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div style="display:none;font-size:90px;filter:drop-shadow(0 6px 16px rgba(0,0,0,.3))">${item.emoji}</div>` : `<div style="font-size:90px;filter:drop-shadow(0 6px 16px rgba(0,0,0,.3))">${item.emoji}</div>`}
+      <button class="back-btn tap" style="position:absolute;top:14px;left:18px;background:rgba(0,0,0,.35);backdrop-filter:blur(8px);" onclick="goTo('store')">${icons.back().replace('stroke="#1A0A08"','stroke="#fff"')}</button>
+    </div>
+
+    <div class="main-content" style="padding:20px 18px 120px;">
+      <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">${l.nome} · ${item.cat}</div>
+      <div style="font-size:22px;font-weight:800;color:var(--dark);line-height:1.2;margin-bottom:10px;">${item.name}</div>
+      ${item.desc ? `<div style="font-size:13.5px;color:var(--gray);line-height:1.72;margin-bottom:18px;">${item.desc}</div>` : ''}
+      <div style="height:1px;background:rgba(26,10,8,.07);margin-bottom:16px;"></div>
+      <div style="font-size:14px;font-weight:700;color:var(--dark);margin-bottom:8px;">Observações</div>
+      <textarea style="width:100%;border:1.5px solid rgba(26,10,8,.09);border-radius:12px;padding:11px 13px;font-family:'Poppins',sans-serif;font-size:13px;color:var(--gray);line-height:1.5;resize:none;outline:none;background:var(--light);" rows="3" placeholder="Ex: sem cebola, bem passado..."></textarea>
+    </div>
+
+    <!-- Bottom action -->
+    <div style="position:fixed;bottom:calc(var(--nav-h)+10px);left:0;right:0;padding:10px 18px;background:var(--cream);border-top:1px solid rgba(26,10,8,.07);z-index:80;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span style="font-size:13px;color:var(--gray);">Valor unitário</span>
+        <span style="font-size:21px;font-weight:900;color:var(--dark);">${fmt(item.price)}</span>
+      </div>
+      ${qty===0 ? `
+        <button class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;" onclick="addToCart(state.itemAtual);render();">
+          ${icons.plus(true)}&nbsp;Adicionar ao carrinho
+        </button>` : `
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div style="display:flex;gap:10px;align-items:center;background:var(--light);border-radius:12px;padding:11px 18px;flex:1;justify-content:center;">
+            <button class="qty-btn minus tap" onclick="removeFromCart('${item.id}');render();">${icons.minus()}</button>
+            <span style="font-size:17px;font-weight:800;color:var(--dark);min-width:20px;text-align:center;">${qty}</span>
+            <button class="qty-btn plus tap" onclick="addToCart(state.itemAtual);render();">${icons.plus(true)}</button>
+          </div>
+          <button style="background:var(--red);border:none;border-radius:12px;padding:13px 18px;font-family:'Poppins',sans-serif;font-weight:700;font-size:13px;color:#fff;cursor:pointer;white-space:nowrap;box-shadow:0 6px 16px rgba(224,90,58,.4);" onclick="goTo('cart')">Ver carrinho (${fmt(ct)})</button>
+        </div>`}
+    </div>
+    ${renderBottomNav('')}
+  </div>`;
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────
+function render() {
+  const screens = {
+    home:    renderHome,
+    store:   renderStore,
+    item:    renderItem,
+    cart:    renderCart,
+    confirm: renderConfirm,
+    search:  renderSearch,
+    orders:  renderOrders,
+  };
+  const fn = screens[state.screen] || renderHome;
+  document.getElementById('app').innerHTML = fn();
+}
+
+// Partial re-render (preserva cursor no input)
+function renderInPlace() {
+  render();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+async function init() {
+  // Carrega estados IBGE
+  try {
+    const r = await fetch(IBGE+'/estados?orderBy=nome');
+    state._estados = await r.json();
+  } catch(e) {}
+
+  render();
+
+  // Carrega lojas do Supabase
+  const {data} = await db.from('estabelecimentos').select('id,nome,slug,logo_url,cidade,aberto').order('nome');
+  if(data) {
+    state.lojas = data.map((l,i)=>({...l,_idx:i,_emoji:EMOJIS[i%EMOJIS.length],_bg:BGS[i%BGS.length]}));
+  } else {
+    state.lojas = [];
+  }
+
+  // Mostrar modal perfil na primeira visita
+  if(!state.user) {
+    setTimeout(()=>{ state.showPerfilModal=true; render(); }, 800);
+  }
+
+  render();
+}
+
+init();
 </script>
 </body>
 </html>
