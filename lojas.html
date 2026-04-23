@@ -1,537 +1,883 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>PEDIWAY — Encontre restaurantes perto de você</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    :root { --red:#C0392B; --red-dark:#a93226; --bg:#0f0f0f; --card:#1a1a1a; --border:rgba(255,255,255,0.08); }
-    body { font-family:'Poppins',sans-serif; background:var(--bg); color:#fff; min-height:100vh; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PEDIWAY App</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<template id="__bundler_thumbnail" data-bg-color="#F0ECE6">
+  <svg viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg">
+    <rect width="300" height="500" fill="#F0ECE6"/>
+    <rect x="75" y="40" width="150" height="420" rx="28" fill="#1A0A08"/>
+    <rect x="95" y="80" width="110" height="18" rx="6" fill="#2D2D2D"/>
+    <rect x="95" y="110" width="80" height="12" rx="4" fill="#2D2D2D"/>
+    <rect x="95" y="140" width="110" height="60" rx="10" fill="#2D1B0E"/>
+    <text x="150" y="178" text-anchor="middle" font-size="24">🍔</text>
+    <rect x="95" y="215" width="110" height="60" rx="10" fill="#1A0808"/>
+    <text x="150" y="253" text-anchor="middle" font-size="24">🍕</text>
+    <rect x="95" y="290" width="110" height="60" rx="10" fill="#0A1A10"/>
+    <text x="150" y="328" text-anchor="middle" font-size="24">🍣</text>
+    <text x="150" y="420" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="20" fill="#FFFDF9">PEDI<tspan fill="#E05A3A">WAY</tspan></text>
+  </svg>
+</template>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #F0ECE6; font-family: "Poppins", sans-serif; }
+#root { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 
-    /* HEADER */
-    header { position:sticky;top:0;z-index:100;background:rgba(15,15,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 6%;height:64px;display:flex;align-items:center;justify-content:space-between; }
-    .logo { font-size:1.3rem;font-weight:800;color:#fff;text-decoration:none; }
-    .logo span { color:var(--red); }
-    .btn-h { padding:8px 18px;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;border:none; }
-    .btn-outline { background:rgba(255,255,255,0.07);color:#fff;border:1.5px solid rgba(255,255,255,0.18) !important; }
-    .btn-red { background:var(--red);color:#fff; }
+.screen-enter { animation: slideInRight 0.3s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
+.screen-back  { animation: slideInLeft  0.3s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
+@keyframes slideInRight { from { transform: translateX(100%); opacity:0.6; } to { transform: translateX(0); opacity:1; } }
+@keyframes slideInLeft  { from { transform: translateX(-30%); opacity:0.6; } to { transform: translateX(0); opacity:1; } }
 
-    /* HERO */
-    .search-hero { background:linear-gradient(135deg,#1a0808 0%,#0f0f0f 60%);padding:48px 6% 36px;text-align:center;border-bottom:1px solid var(--border);position:relative;overflow:hidden; }
-    .search-hero::before { content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(192,57,43,0.15) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none; }
-    .search-hero h1 { font-size:clamp(1.4rem,3.5vw,2.4rem);font-weight:800;margin-bottom:6px;position:relative; }
-    .search-hero p { color:rgba(255,255,255,0.5);font-size:.88rem;margin-bottom:22px;position:relative; }
-    .search-bar { display:flex;gap:10px;max-width:580px;margin:0 auto; }
-    .search-wrap { flex:1;position:relative; }
-    .search-wrap svg { position:absolute;left:14px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.4);pointer-events:none; }
-    .search-input { width:100%;padding:12px 14px 12px 44px;border-radius:12px;border:1.5px solid var(--border);background:rgba(255,255,255,0.06);color:#fff;font-family:'Poppins',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s; }
-    .search-input::placeholder { color:rgba(255,255,255,0.35); }
-    .search-input:focus { border-color:var(--red); }
-    .city-sel { padding:12px 34px 12px 14px;border-radius:12px;border:1.5px solid var(--border);color:#fff;font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:600;outline:none;cursor:pointer;min-width:145px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-color:rgba(255,255,255,0.06);transition:border-color .2s; }
-    .city-sel option { background:#1a1a1a; }
-    .city-sel:focus { border-color:var(--red); }
+.scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.scroll::-webkit-scrollbar { display: none; }
 
-    /* FILTROS */
-    .filters-bar { padding:14px 6%;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border); }
-    .filters-bar::-webkit-scrollbar { display:none; }
-    .pill { padding:6px 16px;border-radius:50px;border:1.5px solid var(--border);background:transparent;color:rgba(255,255,255,0.45);font-family:'Poppins',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s; }
-    .pill:hover { border-color:rgba(255,255,255,0.25);color:#fff; }
-    .pill.ativo { background:var(--red);border-color:var(--red);color:#fff; }
+.tap { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: opacity 0.12s; }
+.tap:active { opacity: 0.7; }
 
-    /* MAIN */
-    .main { max-width:1100px;margin:0 auto;padding:24px 6% 60px; }
-    .results-info { display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px; }
-    .results-count { font-size:.8rem;color:rgba(255,255,255,0.45);font-weight:500; }
-    .results-count span { color:#fff;font-weight:700; }
-    .city-badge { background:rgba(192,57,43,0.15);color:var(--red);padding:4px 14px;border-radius:50px;font-size:.73rem;font-weight:700; }
+.badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; border-radius: 9px; padding: 0 5px;
+  background: #E05A3A; color: #fff; font-size: 11px; font-weight: 700;
+}
 
-    /* GRID */
-    .lojas-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px; }
+/* Skeleton shimmer */
+.skel {
+  background: linear-gradient(90deg, #EEEBE7 25%, #E4E0DB 50%, #EEEBE7 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 12px;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* CARD */
-    .loja-card { background:var(--card);border-radius:16px;border:1px solid var(--border);cursor:pointer;text-decoration:none;color:inherit;display:flex;flex-direction:column;align-items:center;padding:22px 10px 16px;gap:10px;text-align:center;transition:transform .18s,border-color .18s,box-shadow .18s; }
-    .loja-card:hover { transform:translateY(-4px);border-color:rgba(192,57,43,0.4);box-shadow:0 12px 40px rgba(0,0,0,0.5); }
-    .loja-logo { width:68px;height:68px;border-radius:50%;background:#2a2a2a;border:3px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:1.7rem;overflow:hidden;flex-shrink:0; }
-    .loja-logo img { width:100%;height:100%;object-fit:cover;border-radius:50%; }
-    .loja-nome { font-size:.8rem;font-weight:700;color:#fff;line-height:1.3; }
-    .loja-status { font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:50px; }
-    .s-aberta { background:rgba(22,163,74,0.2);color:#22c55e; }
-    .s-fechada { background:rgba(239,68,68,0.15);color:#ef4444; }
-
-    /* SKELETON */
-    .skeleton { background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:16px;height:150px; }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-
-    /* EMPTY */
-    .empty { text-align:center;padding:60px 20px;grid-column:1/-1; }
-    .empty .ic { font-size:3rem;margin-bottom:10px; }
-    .empty h3 { font-size:.95rem;font-weight:700;margin-bottom:6px; }
-    .empty p { font-size:.82rem;color:rgba(255,255,255,0.4);line-height:1.7; }
-
-    /* TOAST */
-    #lj-toast { position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:#1a1a1a;color:#fff;padding:11px 22px;border-radius:50px;font-size:.83rem;font-weight:600;border:1px solid rgba(255,255,255,0.1);box-shadow:0 8px 32px rgba(0,0,0,0.4);transition:transform .3s;z-index:9999;white-space:nowrap; }
-    #lj-toast.show { transform:translateX(-50%) translateY(0); }
-
-    /* MODAL CADASTRO */
-    #modal-cad { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px); }
-    #modal-cad.open { display:flex; }
-    .mbox { background:#1a1a1a;border-radius:24px;width:100%;max-width:380px;border:1px solid rgba(255,255,255,0.1);box-shadow:0 24px 80px rgba(0,0,0,0.6);overflow:hidden;animation:mIn .3s ease;max-height:92vh;overflow-y:auto; }
-    @keyframes mIn { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
-    .mhead { background:var(--red);padding:26px 26px 20px;text-align:center;position:sticky;top:0;z-index:1; }
-    .mhead .mico { font-size:2rem;margin-bottom:8px; }
-    .mhead h2 { font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:4px; }
-    .mhead p { font-size:.78rem;color:rgba(255,255,255,0.8);line-height:1.5; }
-    .mbody { padding:20px;display:flex;flex-direction:column;gap:13px; }
-    .mfield { display:flex;flex-direction:column;gap:5px; }
-    .mfield label { font-size:.7rem;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:.04em; }
-    .minput { padding:11px 13px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#fff;font-family:'Poppins',sans-serif;font-size:.86rem;outline:none;transition:border-color .2s;width:100%; }
-    .minput::placeholder { color:rgba(255,255,255,0.3); }
-    .minput:focus { border-color:var(--red); }
-    .minput option { background:#1a1a1a;color:#fff; }
-    .minput:disabled { opacity:.5;cursor:not-allowed; }
-    .mbtn { padding:13px;border-radius:11px;background:var(--red);color:#fff;border:none;font-family:'Poppins',sans-serif;font-size:.92rem;font-weight:800;cursor:pointer;width:100%;margin-top:2px;transition:background .15s; }
-    .mbtn:hover { background:var(--red-dark); }
-    .mbtn:disabled { opacity:.6;cursor:not-allowed; }
-    .mskip { text-align:center;font-size:.72rem;color:rgba(255,255,255,0.28);cursor:pointer;padding:4px; }
-    .mskip:hover { color:rgba(255,255,255,0.55); }
-    .mloading { text-align:center;font-size:.78rem;color:rgba(255,255,255,0.4);padding:8px 0; }
-
-    /* MODAL PERFIL (editar) */
-    #modal-perfil { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px); }
-    #modal-perfil.open { display:flex; }
-
-    /* MOBILE */
-    @media(max-width:600px){
-      header { padding:0 5%; }
-      .search-hero { padding:36px 5% 24px; }
-      .search-bar { flex-direction:column; }
-      .city-sel { min-width:auto; }
-      .filters-bar { padding:10px 5%; }
-      .main { padding:18px 5% 40px; }
-      .lojas-grid { grid-template-columns:repeat(3,1fr);gap:10px; }
-      .loja-logo { width:54px;height:54px;font-size:1.3rem; }
-      .loja-card { padding:16px 8px 12px;gap:8px; }
-      .loja-nome { font-size:.72rem; }
-    }
-    @media(max-width:360px){ .lojas-grid { grid-template-columns:repeat(2,1fr); } }
-  </style>
+/* Modal overlay */
+.modal-bg {
+  position: absolute; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(8px);
+  display: flex; align-items: flex-end;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.modal-sheet {
+  width: 100%; background: #FFFDF9; border-radius: 24px 24px 0 0;
+  padding: 12px 20px 32px;
+  animation: slideUp 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+  max-height: 90%;
+  overflow-y: auto;
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-handle { width: 36px; height: 4px; background: rgba(26,10,8,0.12); border-radius: 2px; margin: 0 auto 20px; }
+</style>
 </head>
 <body>
+<div id="root"></div>
+<script type="text/babel">
 
-<header>
-  <a class="logo" href="/">PEDI<span>WAY</span></a>
-  <button class="btn-h btn-outline" id="btn-perfil" onclick="abrirPerfil()">👤 Meu perfil</button>
-</header>
-
-<div class="search-hero">
-  <h1>Restaurantes <span style="color:var(--red);">perto de você</span></h1>
-  <p>Peça direto, sem intermediários e sem taxa extra.</p>
-  <div class="search-bar">
-    <div class="search-wrap">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input class="search-input" id="busca-input" type="text" placeholder="Buscar restaurante...">
-    </div>
-    <select class="city-sel" id="cidade-select" onchange="filtrar()">
-      <option value="">📍 Todas as cidades</option>
-    </select>
-  </div>
-</div>
-
-<div class="filters-bar">
-  <button class="pill ativo" data-cat="" onclick="selCat(this)">Todos</button>
-  <button class="pill" data-cat="burger" onclick="selCat(this)">🍔 Hamburgueria</button>
-  <button class="pill" data-cat="pizza" onclick="selCat(this)">🍕 Pizza</button>
-  <button class="pill" data-cat="acai" onclick="selCat(this)">🍧 Açaí</button>
-  <button class="pill" data-cat="restaurante" onclick="selCat(this)">🍽️ Restaurante</button>
-  <button class="pill" data-cat="lanche" onclick="selCat(this)">🥪 Lanches</button>
-  <button class="pill" data-cat="aberta" onclick="selCat(this)">🟢 Aberto agora</button>
-</div>
-
-<div class="main">
-  <div class="results-info" id="results-info" style="display:none;">
-    <p class="results-count">Mostrando <span id="results-num">0</span> restaurantes</p>
-    <span class="city-badge" id="city-badge" style="display:none;"></span>
-  </div>
-  <div class="lojas-grid" id="lojas-grid">
-    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
-    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
-  </div>
-</div>
-
-<!-- Modal cadastro (primeira visita) -->
-<div id="modal-cad">
-  <div class="mbox">
-    <div class="mhead">
-      <div class="mico">👋</div>
-      <h2>Bem-vindo ao PEDIWAY!</h2>
-      <p>Cadastro rápido para mostrar os restaurantes mais perto de você.</p>
-    </div>
-    <div class="mbody">
-      <div class="mfield">
-        <label>Seu nome</label>
-        <input class="minput" id="cad-nome" type="text" placeholder="João Silva">
-      </div>
-      <div class="mfield">
-        <label>WhatsApp</label>
-        <input class="minput" id="cad-tel" type="tel" placeholder="(11) 99999-9999" oninput="mskTel(this)">
-      </div>
-      <div class="mfield">
-        <label>E-mail</label>
-        <input class="minput" id="cad-email" type="email" placeholder="seu@email.com">
-      </div>
-      <div class="mfield">
-        <label>Estado</label>
-        <select class="minput" id="cad-estado" onchange="carregarCidades('cad-estado','cad-cidade')">
-          <option value="">Selecione o estado...</option>
-        </select>
-      </div>
-      <div class="mfield">
-        <label>Cidade</label>
-        <select class="minput" id="cad-cidade" disabled>
-          <option value="">Selecione o estado primeiro</option>
-        </select>
-      </div>
-      <button class="mbtn" id="cad-btn" onclick="salvarCad()">Entrar →</button>
-      <p class="mskip" onclick="fecharCad()">Continuar sem cadastro</p>
-    </div>
-  </div>
-</div>
-
-<!-- Modal perfil (editar) -->
-<div id="modal-perfil">
-  <div class="mbox">
-    <div class="mhead" style="background:#1a1a1a;border-bottom:1px solid rgba(255,255,255,0.08);">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div class="mico" style="font-size:1.6rem;margin-bottom:4px;">👤</div>
-          <h2>Meu perfil</h2>
-        </div>
-        <button onclick="fecharPerfil()" style="background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;">✕</button>
-      </div>
-    </div>
-    <div class="mbody">
-      <div class="mfield">
-        <label>Seu nome</label>
-        <input class="minput" id="perf-nome" type="text" placeholder="João Silva">
-      </div>
-      <div class="mfield">
-        <label>WhatsApp</label>
-        <input class="minput" id="perf-tel" type="tel" placeholder="(11) 99999-9999" oninput="mskTel(this)">
-      </div>
-      <div class="mfield">
-        <label>E-mail</label>
-        <input class="minput" id="perf-email" type="email" placeholder="seu@email.com">
-      </div>
-      <div class="mfield">
-        <label>Estado</label>
-        <select class="minput" id="perf-estado" onchange="carregarCidades('perf-estado','perf-cidade')">
-          <option value="">Selecione o estado...</option>
-        </select>
-      </div>
-      <div class="mfield">
-        <label>Cidade</label>
-        <select class="minput" id="perf-cidade" disabled>
-          <option value="">Selecione o estado primeiro</option>
-        </select>
-      </div>
-      <button class="mbtn" onclick="salvarPerfil()">💾 Salvar alterações</button>
-      <button onclick="fecharPerfil()" style="padding:11px;border-radius:11px;background:transparent;color:rgba(255,255,255,0.4);border:1.5px solid rgba(255,255,255,0.1);font-family:'Poppins',sans-serif;font-size:.85rem;cursor:pointer;width:100%;">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-<div id="lj-toast"></div>
-
-<script>
-const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
+/* ── SUPABASE ── */
 const { createClient } = supabase;
-const db = createClient(SUPA_URL, SUPA_KEY);
-
+const db = createClient(
+  'https://nmttkjmfazcipefeakkx.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo'
+);
 const IBGE = 'https://servicodados.ibge.gov.br/api/v1/localidades';
 
-let _lojas = [], _cat = '', _user = null;
+/* ── BRAND ── */
+const R = '#E05A3A';
+const RD = '#C44828';
+const CREAM = '#FFFDF9';
+const DARK = '#1A0A08';
+const GRAY = '#6B6460';
+const LIGHT = '#F5F1EE';
+const P = '"Poppins", sans-serif';
 
-// ── INIT ──────────────────────────────────────────────────────
-async function init() {
-  try { const s = localStorage.getItem('pw_cliente'); if(s) _user = JSON.parse(s); } catch(e){}
+/* ── CART CONTEXT ── */
+const CartCtx = React.createContext(null);
+const useCart = () => React.useContext(CartCtx);
 
-  // Carrega estados no IBGE
-  carregarEstados();
-
-  // Carrega lojas
-  const { data, error } = await db
-    .from('estabelecimentos')
-    .select('id,nome,slug,logo_url,cidade,aberto')
-    .order('nome', { ascending: true });
-
-  if (error) {
-    document.getElementById('lojas-grid').innerHTML =
-      '<div class="empty"><div class="ic">😕</div><h3>Erro ao carregar</h3><p>Tente recarregar a página.</p></div>';
-    return;
-  }
-
-  _lojas = data || [];
-  preencherCidadesFiltro();
-
-  if (_user?.cidade) {
-    const cidades = [...new Set(_lojas.map(l=>l.cidade).filter(Boolean).map(c=>c.trim()))];
-    if (cidades.includes(_user.cidade)) {
-      document.getElementById('cidade-select').value = _user.cidade;
-    }
-    filtrar();
-    atualizarBtnPerfil();
-  } else {
-    renderLojas(_lojas);
-    setTimeout(() => document.getElementById('modal-cad').classList.add('open'), 700);
-  }
+function CartProvider({ children }) {
+  const [cart, setCart] = React.useState([]);
+  const add    = item => setCart(c => { const ex=c.find(i=>i.id===item.id); return ex ? c.map(i=>i.id===item.id?{...i,qty:i.qty+1}:i) : [...c,{...item,qty:1}]; });
+  const remove = id   => setCart(c => { const ex=c.find(i=>i.id===id); if(!ex) return c; return ex.qty===1?c.filter(i=>i.id!==id):c.map(i=>i.id===id?{...i,qty:i.qty-1}:i); });
+  const clear  = ()   => setCart([]);
+  const total  = cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const count  = cart.reduce((s,i)=>s+i.qty,0);
+  return <CartCtx.Provider value={{cart,add,remove,clear,total,count}}>{children}</CartCtx.Provider>;
 }
 
-// ── IBGE ESTADOS ─────────────────────────────────────────────
-async function carregarEstados() {
-  try {
-    const res = await fetch(IBGE + '/estados?orderBy=nome');
-    const estados = await res.json();
-    ['cad-estado','perf-estado'].forEach(id => {
-      const sel = document.getElementById(id);
-      if (!sel) return;
-      sel.innerHTML = '<option value="">Selecione o estado...</option>';
-      estados.forEach(e => {
-        const opt = document.createElement('option');
-        opt.value = e.sigla;
-        opt.textContent = e.nome;
-        opt.dataset.nome = e.nome;
-        sel.appendChild(opt);
+/* ── USER CONTEXT ── */
+const UserCtx = React.createContext(null);
+const useUser = () => React.useContext(UserCtx);
+
+function UserProvider({ children }) {
+  const [user, setUser] = React.useState(() => {
+    try { const s=localStorage.getItem('pw_cliente'); return s?JSON.parse(s):null; } catch { return null; }
+  });
+  const save = u => { setUser(u); try{localStorage.setItem('pw_cliente',JSON.stringify(u))}catch{} };
+  const initials = user?.nome ? user.nome.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : '?';
+  return <UserCtx.Provider value={{user,save,initials}}>{children}</UserCtx.Provider>;
+}
+
+/* ── HELPERS ── */
+function Logo({ size=22, darkColor=DARK, wayColor=R }) {
+  return (
+    <span style={{ fontFamily:P, fontWeight:900, fontSize:size, letterSpacing:'-0.03em', lineHeight:1 }}>
+      <span style={{ color:darkColor }}>PEDI</span><span style={{ color:wayColor }}>WAY</span>
+    </span>
+  );
+}
+
+function StarIcon({ size=13 }) {
+  return <svg width={size} height={size} viewBox="0 0 14 14" fill={R}><path d="M7 1l1.5 4h4l-3.3 2.4 1.3 4L7 9 3.5 11.4l1.3-4L1.5 5h4z"/></svg>;
+}
+
+function fmt(v) { return 'R$ ' + v.toFixed(2).replace('.',','); }
+
+/* ── CATEGORIES ── */
+const CATS = [
+  {id:'all',label:'Todos',emoji:'🍽️'},
+  {id:'burger',label:'Burger',emoji:'🍔'},
+  {id:'pizza',label:'Pizza',emoji:'🍕'},
+  {id:'acai',label:'Açaí',emoji:'🍇'},
+  {id:'restaurante',label:'Restaurante',emoji:'🥘'},
+  {id:'lanche',label:'Lanches',emoji:'🥪'},
+];
+
+function matchCat(loja, cat) {
+  if (!cat || cat==='all') return true;
+  if (cat==='aberta') return loja.aberto===true;
+  const n = (loja.nome||'').toLowerCase();
+  const m = {burger:['burger','hamburguer','smash'],pizza:['pizza','pizzaria'],acai:['açaí','acai'],restaurante:['restaurante','marmita'],lanche:['lanche','sanduíche','tapioca']};
+  return (m[cat]||[]).some(k=>n.includes(k));
+}
+
+/* ── STORE CARD ── */
+function StoreCard({ loja, onPress }) {
+  const ab = loja.aberto !== false;
+  return (
+    <div className="tap" onClick={()=>onPress(loja)} style={{
+      background:'#fff', borderRadius:20, overflow:'hidden',
+      boxShadow:'0 2px 14px rgba(26,10,8,0.08)', marginBottom:14,
+    }}>
+      <div style={{
+        height:130, background:loja._bg||'#2D1B0E',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        position:'relative', overflow:'hidden',
+      }}>
+        {loja.logo_url
+          ? <img src={loja.logo_url} alt={loja.nome} style={{width:'100%',height:'100%',objectFit:'cover'}}
+              onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='flex';}}/>
+          : null
+        }
+        <div style={{fontSize:60,display:loja.logo_url?'none':'flex',alignItems:'center',justifyContent:'center',width:'100%',height:'100%',filter:'drop-shadow(0 4px 10px rgba(0,0,0,0.3))'}}>
+          {loja._emoji||'🏪'}
+        </div>
+        {!ab && (
+          <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.55)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <span style={{fontFamily:P,fontWeight:700,fontSize:13,color:'rgba(255,255,255,0.7)',background:'rgba(0,0,0,0.4)',padding:'6px 14px',borderRadius:8}}>Fechado</span>
+          </div>
+        )}
+      </div>
+      <div style={{padding:'14px 16px 16px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+          <div style={{fontFamily:P,fontWeight:700,fontSize:15,color:DARK,flex:1,marginRight:8}}>{loja.nome}</div>
+          <div style={{display:'flex',alignItems:'center',gap:3,flexShrink:0}}>
+            <StarIcon/><span style={{fontFamily:P,fontWeight:700,fontSize:13,color:DARK}}>{loja.rating||'Novo'}</span>
+          </div>
+        </div>
+        <div style={{display:'flex',gap:14,alignItems:'center'}}>
+          <div style={{display:'flex',alignItems:'center',gap:4}}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke={GRAY} strokeWidth="1.2"/><path d="M6 3v3l2 1.5" stroke={GRAY} strokeWidth="1.2" strokeLinecap="round"/></svg>
+            <span style={{fontFamily:P,fontSize:12,color:GRAY}}>25–40 min</span>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:3}}>
+            <span style={{width:6,height:6,borderRadius:'50%',background:ab?'#22C55E':'#EF4444',display:'inline-block'}}/>
+            <span style={{fontFamily:P,fontSize:12,color:ab?'#22C55E':'#EF4444',fontWeight:600}}>{ab?'Aberto':'Fechado'}</span>
+          </div>
+          {loja.cidade && <span style={{fontFamily:P,fontSize:11,color:GRAY}}>📍 {loja.cidade}</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── MODAL PERFIL / CADASTRO ── */
+function PerfilModal({ onClose }) {
+  const {user,save} = useUser();
+  const [nome,  setNome]  = React.useState(user?.nome||'');
+  const [tel,   setTel]   = React.useState(user?.tel||'');
+  const [email, setEmail] = React.useState(user?.email||'');
+  const [estados, setEstados] = React.useState([]);
+  const [cidades, setCidades] = React.useState([]);
+  const [uf,    setUf]    = React.useState(user?.estadoSigla||'');
+  const [cidade,setCidade]= React.useState(user?.cidade||'');
+  const [saving,setSaving]= React.useState(false);
+
+  React.useEffect(()=>{
+    fetch(IBGE+'/estados?orderBy=nome').then(r=>r.json()).then(setEstados).catch(()=>{});
+  },[]);
+
+  React.useEffect(()=>{
+    if(!uf){setCidades([]);return;}
+    fetch(`${IBGE}/estados/${uf}/municipios?orderBy=nome`).then(r=>r.json()).then(setCidades).catch(()=>{});
+  },[uf]);
+
+  function mskTel(v){
+    v=v.replace(/\D/g,'').slice(0,11);
+    if(v.length>10) v=v.replace(/^(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3');
+    else if(v.length>6) v=v.replace(/^(\d{2})(\d{4})(\d*)$/,'($1) $2-$3');
+    else if(v.length>2) v=v.replace(/^(\d{2})(\d*)$/,'($1) $2');
+    else if(v.length>0) v='('+v;
+    setTel(v);
+  }
+
+  async function salvar(){
+    if(!nome.trim()) return alert('Digite seu nome');
+    if(!email.includes('@')) return alert('E-mail inválido');
+    setSaving(true);
+    const estadoNome = estados.find(e=>e.sigla===uf)?.nome||uf;
+    try {
+      await db.from('clientes').upsert({nome,telefone:tel.replace(/\D/g,''),email,estado:estadoNome,cidade},{onConflict:'email'});
+    } catch(e){ console.warn(e); }
+    save({nome,tel,email,estadoSigla:uf,estado:estadoNome,cidade});
+    setSaving(false);
+    onClose();
+  }
+
+  const inputSt = { width:'100%', padding:'12px 14px', background:LIGHT, border:`1.5px solid rgba(26,10,8,0.1)`, borderRadius:12, fontFamily:P, fontSize:14, color:DARK, outline:'none' };
+  const labelSt = { fontFamily:P, fontWeight:700, fontSize:11, color:GRAY, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:5, display:'block' };
+
+  return (
+    <div className="modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="modal-sheet">
+        <div className="modal-handle"/>
+        <div style={{fontFamily:P,fontWeight:800,fontSize:20,color:DARK,marginBottom:4}}>
+          {user ? 'Meu perfil' : '👋 Bem-vindo!'}
+        </div>
+        <div style={{fontFamily:P,fontSize:13,color:GRAY,marginBottom:24}}>
+          {user ? 'Atualize seus dados' : 'Cadastro rápido para começar'}
+        </div>
+
+        <div style={{display:'flex',flexDirection:'column',gap:14}}>
+          <div><label style={labelSt}>Nome</label><input style={inputSt} value={nome} onChange={e=>setNome(e.target.value)} placeholder="João Silva"/></div>
+          <div><label style={labelSt}>WhatsApp</label><input style={inputSt} value={tel} onChange={e=>mskTel(e.target.value)} placeholder="(11) 99999-9999" type="tel"/></div>
+          <div><label style={labelSt}>E-mail</label><input style={inputSt} value={email} onChange={e=>setEmail(e.target.value)} placeholder="seu@email.com" type="email"/></div>
+          <div>
+            <label style={labelSt}>Estado</label>
+            <select style={inputSt} value={uf} onChange={e=>setUf(e.target.value)}>
+              <option value="">Selecione o estado...</option>
+              {estados.map(e=><option key={e.sigla} value={e.sigla}>{e.nome}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={labelSt}>Cidade</label>
+            <select style={inputSt} value={cidade} onChange={e=>setCidade(e.target.value)} disabled={!uf||cidades.length===0}>
+              <option value="">{uf&&cidades.length===0?'Carregando...':'Selecione a cidade...'}</option>
+              {cidades.map(c=><option key={c.id} value={c.nome}>{c.nome}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div style={{marginTop:24,display:'flex',flexDirection:'column',gap:10}}>
+          <div className="tap" onClick={salvar} style={{
+            background:`linear-gradient(135deg,${R},${RD})`, borderRadius:14, padding:'16px',
+            textAlign:'center', fontFamily:P, fontWeight:700, fontSize:15, color:'#fff',
+            boxShadow:`0 8px 24px rgba(224,90,58,0.35)`,
+            opacity:saving?0.7:1,
+          }}>{saving?'Salvando...':'Salvar e entrar'}</div>
+          <div className="tap" onClick={onClose} style={{
+            borderRadius:14, padding:'14px', textAlign:'center',
+            fontFamily:P, fontWeight:600, fontSize:14, color:GRAY,
+            border:`1.5px solid rgba(26,10,8,0.1)`,
+          }}>Continuar sem cadastro</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   SCREEN: HOME
+══════════════════════════════════════ */
+function HomeScreen({ navigate }) {
+  const {count}  = useCart();
+  const {user,initials} = useUser();
+  const [lojas,  setLojas]  = React.useState(null); // null=loading
+  const [cat,    setCat]    = React.useState('all');
+  const [busca,  setBusca]  = React.useState('');
+  const [cidade, setCidade] = React.useState('');
+  const [showPerfil, setShowPerfil] = React.useState(false);
+  const [scrollY,setScrollY]= React.useState(0);
+
+  /* Fetch lojas */
+  React.useEffect(()=>{
+    const EMOJIS = ['🍔','🍕','🍣','🍗','🥗','🍜','🥩','🌮','🥪','🍱'];
+    const BGS = ['#2D1B0E','#1A0A08','#0A1A10','#1A0808','#0A0A1A','#1A1008','#0A1818','#18080A'];
+    db.from('estabelecimentos').select('id,nome,slug,logo_url,cidade,aberto').order('nome').then(({data})=>{
+      if(!data){setLojas([]);return;}
+      const enriched = data.map((l,i)=>({
+        ...l,
+        _emoji: EMOJIS[i%EMOJIS.length],
+        _bg: BGS[i%BGS.length],
+        price: 'Grátis',
+        rating: (4.5+Math.random()*0.5).toFixed(1),
+      }));
+      setLojas(enriched);
+      // Show perfil modal on first visit
+      if(!localStorage.getItem('pw_cliente')){
+        setTimeout(()=>setShowPerfil(true),800);
+      }
+    });
+  },[]);
+
+  const cidades = lojas ? [...new Set(lojas.map(l=>l.cidade).filter(Boolean))].sort() : [];
+  const filtered = lojas ? lojas.filter(l=>{
+    const mc = !cidade || l.cidade===cidade;
+    const mb = !busca  || (l.nome||'').toLowerCase().includes(busca.toLowerCase());
+    return mc && mb && matchCat(l,cat);
+  }) : [];
+
+  const headerSolid = scrollY > 20;
+
+  return (
+    <div style={{position:'absolute',inset:0,background:LIGHT,display:'flex',flexDirection:'column'}}>
+
+      {/* Header */}
+      <div style={{
+        position:'relative', zIndex:10, flexShrink:0,
+        background: headerSolid ? 'rgba(255,253,249,0.95)' : CREAM,
+        backdropFilter: headerSolid ? 'blur(12px)' : 'none',
+        borderBottom: headerSolid ? '1px solid rgba(26,10,8,0.08)' : 'none',
+        padding:'12px 20px 10px',
+        transition:'all 0.25s',
+      }}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <div>
+            {cidade && <div style={{fontFamily:P,fontSize:11,color:GRAY,marginBottom:2}}>📍 {cidade}</div>}
+            <Logo size={22} dark/>
+          </div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            {count>0 && (
+              <div className="tap" onClick={()=>navigate('cart')} style={{
+                position:'relative',width:40,height:40,borderRadius:11,
+                background:R,display:'flex',alignItems:'center',justifyContent:'center',
+                boxShadow:`0 4px 12px rgba(224,90,58,0.4)`,
+              }}>
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                  <path d="M3 3h14l-2 9H5L3 3z" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round"/>
+                  <circle cx="7" cy="16.5" r="1.5" fill="#fff"/>
+                  <circle cx="13" cy="16.5" r="1.5" fill="#fff"/>
+                </svg>
+                <div style={{position:'absolute',top:-5,right:-5}} className="badge">{count}</div>
+              </div>
+            )}
+            {/* Avatar */}
+            <div className="tap" onClick={()=>setShowPerfil(true)} style={{
+              width:40,height:40,borderRadius:11,
+              background:`linear-gradient(135deg,${R},${RD})`,
+              display:'flex',alignItems:'center',justifyContent:'center',
+              boxShadow:`0 4px 12px rgba(224,90,58,0.25)`,
+            }}>
+              <span style={{fontFamily:P,fontWeight:800,fontSize:14,color:'#fff'}}>{initials}</span>
+            </div>
+          </div>
+        </div>
+        {/* Search */}
+        <div style={{display:'flex',gap:8}}>
+          <div style={{flex:1,position:'relative'}}>
+            <svg style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)'}} width="15" height="15" viewBox="0 0 16 16" fill="none">
+              <circle cx="7" cy="7" r="5" stroke={GRAY} strokeWidth="1.5"/><path d="M11 11l3 3" stroke={GRAY} strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <input value={busca} onChange={e=>setBusca(e.target.value)}
+              style={{width:'100%',padding:'11px 12px 11px 34px',background:LIGHT,border:'1.5px solid rgba(26,10,8,0.08)',borderRadius:12,fontFamily:P,fontSize:13,color:DARK,outline:'none'}}
+              placeholder="Buscar restaurante..."/>
+          </div>
+          {cidades.length>1 && (
+            <select value={cidade} onChange={e=>setCidade(e.target.value)} style={{
+              padding:'0 12px',background:LIGHT,border:'1.5px solid rgba(26,10,8,0.08)',borderRadius:12,fontFamily:P,fontSize:12,color:DARK,outline:'none',flexShrink:0,
+            }}>
+              <option value="">Todas</option>
+              {cidades.map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="scroll" style={{flex:1}} onScroll={e=>setScrollY(e.target.scrollTop)}>
+
+        {/* Banner */}
+        <div style={{padding:'14px 20px 0'}}>
+          <div style={{
+            background:`linear-gradient(135deg,${DARK} 0%,#3D1A10 100%)`,
+            borderRadius:18,padding:'18px 20px',position:'relative',overflow:'hidden',
+          }}>
+            <div style={{position:'absolute',right:-16,bottom:-24,fontSize:88,opacity:0.12}}>🍽️</div>
+            <div style={{fontFamily:P,fontWeight:700,fontSize:11,color:'rgba(255,255,255,0.55)',marginBottom:4,letterSpacing:'0.06em',textTransform:'uppercase'}}>Plataforma independente</div>
+            <div style={{fontFamily:P,fontWeight:800,fontSize:18,color:'#fff',lineHeight:1.25,marginBottom:12}}>Peça direto.<br/>Sem taxa extra.</div>
+            <div style={{display:'inline-block',background:R,borderRadius:8,padding:'7px 16px',fontFamily:P,fontWeight:700,fontSize:12,color:'#fff'}}>Ver restaurantes ↓</div>
+          </div>
+        </div>
+
+        {/* Categories */}
+        <div style={{paddingTop:16,paddingBottom:4}}>
+          <div style={{overflowX:'auto',display:'flex',gap:8,padding:'0 20px',scrollbarWidth:'none'}}>
+            {CATS.map(c=>(
+              <div key={c.id} className="tap" onClick={()=>setCat(c.id)} style={{
+                flexShrink:0,display:'flex',alignItems:'center',gap:5,
+                padding:'8px 14px',borderRadius:100,
+                background:cat===c.id?R:'#fff',
+                border:`1.5px solid ${cat===c.id?R:'rgba(26,10,8,0.09)'}`,
+                fontFamily:P,fontWeight:cat===c.id?700:500,fontSize:12,
+                color:cat===c.id?'#fff':DARK,
+                boxShadow:cat===c.id?`0 4px 12px rgba(224,90,58,0.3)`:'none',
+                transition:'all 0.18s',
+              }}>
+                <span style={{fontSize:14}}>{c.emoji}</span>{c.label}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Stores */}
+        <div style={{padding:'14px 20px 24px'}}>
+          <div style={{fontFamily:P,fontWeight:700,fontSize:16,color:DARK,marginBottom:12}}>
+            {cat==='all'?'Todos os restaurantes':CATS.find(c=>c.id===cat)?.label}
+            {lojas && <span style={{fontFamily:P,fontWeight:400,fontSize:12,color:GRAY,marginLeft:8}}>{filtered.length} lojas</span>}
+          </div>
+
+          {/* Loading skeletons */}
+          {lojas===null && [1,2,3].map(i=>(
+            <div key={i} style={{marginBottom:14}}>
+              <div className="skel" style={{height:130,borderRadius:'14px 14px 0 0'}}/>
+              <div style={{background:'#fff',borderRadius:'0 0 20px 20px',padding:'14px 16px',display:'flex',flexDirection:'column',gap:8}}>
+                <div className="skel" style={{height:16,width:'60%'}}/>
+                <div className="skel" style={{height:12,width:'40%'}}/>
+              </div>
+            </div>
+          ))}
+
+          {/* Empty */}
+          {lojas && filtered.length===0 && (
+            <div style={{textAlign:'center',padding:'40px 20px'}}>
+              <div style={{fontSize:48,marginBottom:12}}>🔍</div>
+              <div style={{fontFamily:P,fontWeight:700,fontSize:16,color:DARK,marginBottom:6}}>Nenhum restaurante encontrado</div>
+              <div style={{fontFamily:P,fontSize:13,color:GRAY}}>Tente mudar a cidade ou os filtros.</div>
+            </div>
+          )}
+
+          {/* Cards */}
+          {filtered.map(l=>(
+            <StoreCard key={l.id} loja={l} onPress={l=>navigate('store',{loja:l})}/>
+          ))}
+        </div>
+      </div>
+
+      <BottomNav active="home" navigate={navigate}/>
+      {showPerfil && <PerfilModal onClose={()=>setShowPerfil(false)}/>}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   SCREEN: STORE (cardápio)
+══════════════════════════════════════ */
+function StoreScreen({ loja, navigate }) {
+  const {cart,add,remove,count} = useCart();
+  const [items,    setItems]    = React.useState(null);
+  const [activeCat,setActiveCat]= React.useState(null);
+  const [scrollY,  setScrollY]  = React.useState(0);
+
+  React.useEffect(()=>{
+    // Tentar buscar itens do cardápio pelo slug da loja
+    db.from('produtos')
+      .select('*')
+      .eq('estabelecimento_id', loja.id)
+      .order('categoria')
+      .then(({data})=>{
+        if(data && data.length>0){
+          setItems(data.map(p=>({
+            id: p.id,
+            name: p.nome||p.name,
+            desc: p.descricao||p.description||'',
+            price: parseFloat(p.preco||p.price||0),
+            cat: p.categoria||p.category||'Cardápio',
+            emoji: '🍽️',
+          })));
+        } else {
+          // Fallback: itens de exemplo
+          setItems([
+            {id:`${loja.id}-1`,name:'Prato do dia',desc:'Peça já e descubra o sabor',price:22.90,cat:'Destaques',emoji:'⭐'},
+            {id:`${loja.id}-2`,name:'Combo especial',desc:'Inclui bebida e sobremesa',price:38.90,cat:'Destaques',emoji:'🎁'},
+            {id:`${loja.id}-3`,name:'Bebida gelada',desc:'Refrigerante ou suco 500ml',price:8.90,cat:'Bebidas',emoji:'🥤'},
+          ]);
+        }
+      })
+      .catch(()=>{
+        setItems([
+          {id:`${loja.id}-1`,name:'Prato do dia',desc:'Peça já e descubra o sabor',price:22.90,cat:'Destaques',emoji:'⭐'},
+          {id:`${loja.id}-2`,name:'Combo especial',desc:'Inclui bebida e sobremesa',price:38.90,cat:'Destaques',emoji:'🎁'},
+          {id:`${loja.id}-3`,name:'Bebida gelada',desc:'Refrigerante ou suco 500ml',price:8.90,cat:'Bebidas',emoji:'🥤'},
+        ]);
       });
-    });
-  } catch(e) { console.warn('Erro ao carregar estados:', e); }
+  },[loja.id]);
+
+  const cats = items ? [...new Set(items.map(i=>i.cat))] : [];
+  const curCat = activeCat||cats[0];
+  const shown = items ? items.filter(i=>i.cat===curCat) : [];
+  const getQty = id => cart.find(i=>i.id===id)?.qty||0;
+  const ab = loja.aberto !== false;
+
+  return (
+    <div className="screen-enter" style={{position:'absolute',inset:0,background:CREAM,display:'flex',flexDirection:'column'}}>
+
+      {/* Hero */}
+      <div style={{position:'relative',height:scrollY>70?62:190,transition:'height 0.28s ease',flexShrink:0}}>
+        <div style={{position:'absolute',inset:0,background:loja._bg||'#2D1B0E',overflow:'hidden',opacity:scrollY>70?0:1,transition:'opacity 0.28s'}}>
+          {loja.logo_url
+            ? <img src={loja.logo_url} alt={loja.nome} style={{width:'100%',height:'100%',objectFit:'cover',opacity:0.5}}/>
+            : <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:80,opacity:0.25}}>{loja._emoji||'🏪'}</div>
+          }
+        </div>
+        <div style={{
+          position:'absolute',inset:0,zIndex:5,
+          background:scrollY>70?CREAM:'transparent',
+          display:'flex',alignItems:'center',justifyContent:'space-between',
+          padding:scrollY>70?'0 20px':'14px 20px',
+          borderBottom:scrollY>70?'1px solid rgba(26,10,8,0.08)':'none',
+          transition:'background 0.28s',
+        }}>
+          <div className="tap" onClick={()=>navigate('home')} style={{
+            width:36,height:36,borderRadius:10,
+            background:scrollY>70?LIGHT:'rgba(0,0,0,0.35)',
+            backdropFilter:scrollY>70?'none':'blur(8px)',
+            display:'flex',alignItems:'center',justifyContent:'center',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke={scrollY>70?DARK:'#fff'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </div>
+          {scrollY>70 && <div style={{fontFamily:P,fontWeight:700,fontSize:15,color:DARK}}>{loja.nome}</div>}
+          <div className="tap" onClick={()=>navigate('cart')} style={{
+            position:'relative',width:36,height:36,borderRadius:10,
+            background:count>0?R:(scrollY>70?LIGHT:'rgba(0,0,0,0.35)'),
+            backdropFilter:scrollY>70?'none':'blur(8px)',
+            display:'flex',alignItems:'center',justifyContent:'center',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M3 3h14l-2 9H5L3 3z" stroke={count>0?'#fff':(scrollY>70?DARK:'#fff')} strokeWidth="1.6" strokeLinejoin="round"/><circle cx="7" cy="16.5" r="1.5" fill={count>0?'#fff':(scrollY>70?DARK:'#fff')}/><circle cx="13" cy="16.5" r="1.5" fill={count>0?'#fff':(scrollY>70?DARK:'#fff')}/></svg>
+            {count>0 && <div style={{position:'absolute',top:-4,right:-4}} className="badge">{count}</div>}
+          </div>
+        </div>
+        {scrollY<=70 && (
+          <div style={{position:'absolute',bottom:14,left:20,right:20,zIndex:5}}>
+            <div style={{fontFamily:P,fontWeight:800,fontSize:22,color:'#fff',textShadow:'0 2px 8px rgba(0,0,0,0.4)',marginBottom:4}}>{loja.nome}</div>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <span style={{width:7,height:7,borderRadius:'50%',background:ab?'#4ADE80':'#F87171',display:'inline-block'}}/>
+              <span style={{fontFamily:P,fontSize:12,color:ab?'#4ADE80':'rgba(255,255,255,0.6)',fontWeight:600}}>{ab?'Aberto agora':'Fechado'}</span>
+              {loja.cidade && <><span style={{color:'rgba(255,255,255,0.3)'}}>·</span><span style={{fontFamily:P,fontSize:12,color:'rgba(255,255,255,0.65)'}}>📍 {loja.cidade}</span></>}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Category tabs */}
+      {cats.length>0 && (
+        <div style={{background:CREAM,borderBottom:'1px solid rgba(26,10,8,0.07)',overflowX:'auto',display:'flex',padding:'0 16px',gap:4,scrollbarWidth:'none',flexShrink:0}}>
+          {cats.map(c=>(
+            <div key={c} className="tap" onClick={()=>setActiveCat(c)} style={{
+              flexShrink:0,padding:'12px 14px',fontFamily:P,fontWeight:curCat===c?700:500,
+              fontSize:13,color:curCat===c?R:GRAY,
+              borderBottom:`2.5px solid ${curCat===c?R:'transparent'}`,
+              transition:'all 0.15s',whiteSpace:'nowrap',
+            }}>{c}</div>
+          ))}
+        </div>
+      )}
+
+      {/* Items */}
+      <div className="scroll" style={{flex:1,padding:'12px 20px 24px'}} onScroll={e=>setScrollY(e.target.scrollTop)}>
+        {items===null && [1,2,3].map(i=>(
+          <div key={i} style={{display:'flex',gap:14,padding:'16px 0',borderBottom:'1px solid rgba(26,10,8,0.06)',alignItems:'center'}}>
+            <div className="skel" style={{width:76,height:76,borderRadius:12,flexShrink:0}}/>
+            <div style={{flex:1,display:'flex',flexDirection:'column',gap:8}}>
+              <div className="skel" style={{height:14,width:'70%'}}/>
+              <div className="skel" style={{height:11,width:'90%'}}/>
+              <div className="skel" style={{height:16,width:'30%'}}/>
+            </div>
+          </div>
+        ))}
+        {shown.map(item=>{
+          const qty=getQty(item.id);
+          return (
+            <div key={item.id} className="tap" onClick={()=>navigate('product',{item,loja})} style={{display:'flex',gap:14,padding:'16px 0',borderBottom:'1px solid rgba(26,10,8,0.06)',alignItems:'center'}}>
+              <div style={{width:76,height:76,borderRadius:12,flexShrink:0,background:loja._bg||'#2D1B0E',display:'flex',alignItems:'center',justifyContent:'center',fontSize:32}}>{item.emoji}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontFamily:P,fontWeight:700,fontSize:14,color:DARK,marginBottom:4}}>{item.name}</div>
+                {item.desc && <div style={{fontFamily:P,fontWeight:400,fontSize:12,color:GRAY,lineHeight:1.5,marginBottom:6,display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{item.desc}</div>}
+                <div style={{fontFamily:P,fontWeight:800,fontSize:15,color:DARK}}>{fmt(item.price)}</div>
+              </div>
+              <div style={{flexShrink:0}} onClick={e=>{e.stopPropagation();add(item);}}>
+                {qty===0
+                  ? <div style={{width:34,height:34,borderRadius:10,background:R,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 4px 12px rgba(224,90,58,0.35)`}}>
+                      <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M9 4v10M4 9h10" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+                    </div>
+                  : <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <div onClick={e=>{e.stopPropagation();remove(item.id);}} style={{width:28,height:28,borderRadius:8,background:LIGHT,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3 7h8" stroke={DARK} strokeWidth="2" strokeLinecap="round"/></svg>
+                      </div>
+                      <span style={{fontFamily:P,fontWeight:700,fontSize:14,color:DARK,minWidth:14,textAlign:'center'}}>{qty}</span>
+                      <div style={{width:28,height:28,borderRadius:8,background:R,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+                      </div>
+                    </div>
+                }
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {count>0 && (
+        <div style={{padding:'12px 20px 8px',background:CREAM,borderTop:'1px solid rgba(26,10,8,0.07)'}}>
+          <div className="tap" onClick={()=>navigate('cart')} style={{
+            background:R,borderRadius:14,padding:'15px 20px',
+            display:'flex',justifyContent:'space-between',alignItems:'center',
+            boxShadow:`0 8px 24px rgba(224,90,58,0.4)`,
+          }}>
+            <div style={{background:'rgba(255,255,255,0.2)',borderRadius:8,padding:'3px 10px',fontFamily:P,fontWeight:700,fontSize:13,color:'#fff'}}>{count}</div>
+            <span style={{fontFamily:P,fontWeight:700,fontSize:14,color:'#fff'}}>Ver carrinho</span>
+            <span style={{fontFamily:P,fontWeight:700,fontSize:13,color:'rgba(255,255,255,0.85)'}}>{fmt(cart.reduce((s,i)=>s+i.price*i.qty,0))}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
-async function carregarCidades(estadoId, cidadeId) {
-  const estadoSel = document.getElementById(estadoId);
-  const cidadeSel = document.getElementById(cidadeId);
-  const uf = estadoSel.value;
-
-  if (!uf) {
-    cidadeSel.innerHTML = '<option value="">Selecione o estado primeiro</option>';
-    cidadeSel.disabled = true;
-    return;
-  }
-
-  cidadeSel.disabled = true;
-  cidadeSel.innerHTML = '<option value="">Carregando cidades...</option>';
-
-  try {
-    const res = await fetch(`${IBGE}/estados/${uf}/municipios?orderBy=nome`);
-    const cidades = await res.json();
-    cidadeSel.innerHTML = '<option value="">Selecione a cidade...</option>';
-    cidades.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.nome;
-      opt.textContent = c.nome;
-      cidadeSel.appendChild(opt);
-    });
-    cidadeSel.disabled = false;
-  } catch(e) {
-    cidadeSel.innerHTML = '<option value="">Erro ao carregar cidades</option>';
-    cidadeSel.disabled = false;
-  }
+/* ══════════════════════════════════════
+   SCREEN: PRODUCT
+══════════════════════════════════════ */
+function ProductScreen({ item, loja, navigate }) {
+  const {add,remove,cart} = useCart();
+  const qty = cart.find(i=>i.id===item.id)?.qty||0;
+  return (
+    <div className="screen-enter" style={{position:'absolute',inset:0,background:CREAM,display:'flex',flexDirection:'column'}}>
+      <div style={{height:240,background:loja._bg||'#2D1B0E',position:'relative',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+        <div style={{fontSize:100,filter:'drop-shadow(0 6px 16px rgba(0,0,0,0.3))'}}>{item.emoji}</div>
+        <div className="tap" onClick={()=>navigate('store',{loja})} style={{position:'absolute',top:14,left:20,width:36,height:36,borderRadius:10,background:'rgba(0,0,0,0.35)',backdropFilter:'blur(8px)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </div>
+      </div>
+      <div className="scroll" style={{flex:1,padding:'24px 20px 0'}}>
+        <div style={{fontFamily:P,fontWeight:700,fontSize:11,color:R,letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:6}}>{loja.nome} · {item.cat}</div>
+        <div style={{fontFamily:P,fontWeight:800,fontSize:22,color:DARK,marginBottom:10,lineHeight:1.2}}>{item.name}</div>
+        {item.desc && <div style={{fontFamily:P,fontWeight:400,fontSize:14,color:GRAY,lineHeight:1.7,marginBottom:20}}>{item.desc}</div>}
+        <div style={{height:1,background:'rgba(26,10,8,0.07)',marginBottom:18}}/>
+        <div style={{marginBottom:18}}>
+          <div style={{fontFamily:P,fontWeight:700,fontSize:14,color:DARK,marginBottom:10}}>Observações</div>
+          <div style={{border:'1.5px solid rgba(26,10,8,0.09)',borderRadius:12,padding:'12px 14px',fontFamily:P,fontSize:13,color:'rgba(107,100,96,0.45)',lineHeight:1.5}}>Ex: sem cebola, bem passado...</div>
+        </div>
+      </div>
+      <div style={{padding:'12px 20px 8px',background:CREAM,borderTop:'1px solid rgba(26,10,8,0.07)'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+          <span style={{fontFamily:P,fontWeight:400,fontSize:13,color:GRAY}}>Valor unitário</span>
+          <span style={{fontFamily:P,fontWeight:900,fontSize:22,color:DARK}}>{fmt(item.price)}</span>
+        </div>
+        {qty===0
+          ? <div className="tap" onClick={()=>{add(item);navigate('store',{loja});}} style={{background:R,borderRadius:14,padding:'15px',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:`0 8px 24px rgba(224,90,58,0.4)`}}>
+              <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M9 4v10M4 9h10" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+              <span style={{fontFamily:P,fontWeight:700,fontSize:15,color:'#fff'}}>Adicionar ao carrinho</span>
+            </div>
+          : <div style={{display:'flex',gap:10,alignItems:'center'}}>
+              <div style={{display:'flex',gap:10,alignItems:'center',background:LIGHT,borderRadius:12,padding:'11px 18px',flex:1,justifyContent:'center'}}>
+                <div className="tap" onClick={()=>remove(item.id)} style={{width:30,height:30,borderRadius:8,background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 6px rgba(0,0,0,0.07)'}}><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3 7h8" stroke={DARK} strokeWidth="2" strokeLinecap="round"/></svg></div>
+                <span style={{fontFamily:P,fontWeight:800,fontSize:18,color:DARK,minWidth:22,textAlign:'center'}}>{qty}</span>
+                <div className="tap" onClick={()=>add(item)} style={{width:30,height:30,borderRadius:8,background:R,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 4px 10px rgba(224,90,58,0.3)`}}><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg></div>
+              </div>
+              <div className="tap" onClick={()=>navigate('cart')} style={{background:R,borderRadius:12,padding:'13px 18px',fontFamily:P,fontWeight:700,fontSize:13,color:'#fff',boxShadow:`0 6px 18px rgba(224,90,58,0.4)`,whiteSpace:'nowrap'}}>Ver carrinho</div>
+            </div>
+        }
+      </div>
+    </div>
+  );
 }
 
-// ── FILTRO DE CIDADES DAS LOJAS ───────────────────────────────
-function preencherCidadesFiltro() {
-  const cidades = [...new Set(_lojas.map(l=>l.cidade).filter(Boolean).map(c=>c.trim()))].sort();
-  const sel = document.getElementById('cidade-select');
-  sel.innerHTML = '<option value="">📍 Todas as cidades</option>';
-  cidades.forEach(c => {
-    const o = document.createElement('option');
-    o.value = c; o.textContent = '📍 ' + c;
-    sel.appendChild(o);
-  });
+/* ══════════════════════════════════════
+   SCREEN: CART
+══════════════════════════════════════ */
+function CartScreen({ navigate }) {
+  const {cart,add,remove,total} = useCart();
+  if(cart.length===0) return (
+    <div className="screen-enter" style={{position:'absolute',inset:0,background:CREAM,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:40}}>
+      <div style={{fontSize:60,marginBottom:18}}>🛒</div>
+      <div style={{fontFamily:P,fontWeight:700,fontSize:18,color:DARK,marginBottom:8,textAlign:'center'}}>Carrinho vazio</div>
+      <div style={{fontFamily:P,fontSize:13,color:GRAY,textAlign:'center',marginBottom:28}}>Adicione itens de um restaurante</div>
+      <div className="tap" onClick={()=>navigate('home')} style={{background:R,borderRadius:12,padding:'13px 28px',fontFamily:P,fontWeight:700,fontSize:14,color:'#fff'}}>Ver restaurantes</div>
+    </div>
+  );
+  return (
+    <div className="screen-enter" style={{position:'absolute',inset:0,background:LIGHT,display:'flex',flexDirection:'column'}}>
+      <div style={{background:CREAM,padding:'14px 20px',borderBottom:'1px solid rgba(26,10,8,0.07)',display:'flex',alignItems:'center',gap:12,flexShrink:0}}>
+        <div className="tap" onClick={()=>navigate('home')} style={{width:36,height:36,borderRadius:10,background:LIGHT,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke={DARK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </div>
+        <div style={{fontFamily:P,fontWeight:700,fontSize:17,color:DARK}}>Carrinho</div>
+      </div>
+      <div className="scroll" style={{flex:1,padding:'16px 20px'}}>
+        {/* Items */}
+        <div style={{background:CREAM,borderRadius:16,overflow:'hidden',marginBottom:14,border:'1px solid rgba(26,10,8,0.06)'}}>
+          {cart.map((item,idx)=>(
+            <div key={item.id} style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderBottom:idx<cart.length-1?'1px solid rgba(26,10,8,0.06)':'none'}}>
+              <div style={{width:44,height:44,borderRadius:10,background:'#2D1B0E',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{item.emoji}</div>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:P,fontWeight:600,fontSize:13,color:DARK}}>{item.name}</div>
+                <div style={{fontFamily:P,fontWeight:700,fontSize:13,color:R,marginTop:2}}>{fmt(item.price*item.qty)}</div>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:7}}>
+                <div className="tap" onClick={()=>remove(item.id)} style={{width:26,height:26,borderRadius:7,background:LIGHT,display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6h8" stroke={DARK} strokeWidth="1.8" strokeLinecap="round"/></svg></div>
+                <span style={{fontFamily:P,fontWeight:700,fontSize:13,color:DARK,minWidth:14,textAlign:'center'}}>{item.qty}</span>
+                <div className="tap" onClick={()=>add(item)} style={{width:26,height:26,borderRadius:7,background:R,display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="#fff" strokeWidth="1.8" strokeLinecap="round"/></svg></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Summary */}
+        <div style={{background:CREAM,borderRadius:16,padding:'16px',border:'1px solid rgba(26,10,8,0.06)',marginBottom:14}}>
+          <div style={{fontFamily:P,fontWeight:700,fontSize:14,color:DARK,marginBottom:12}}>Resumo do pedido</div>
+          {[{l:'Subtotal',v:fmt(total)},{l:'Entrega',v:'Grátis',g:true},{l:'Taxa',v:'R$ 0,00',g:true}].map((r,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
+              <span style={{fontFamily:P,fontSize:13,color:GRAY}}>{r.l}</span>
+              <span style={{fontFamily:P,fontWeight:600,fontSize:13,color:r.g?'#22A85A':DARK}}>{r.v}</span>
+            </div>
+          ))}
+          <div style={{height:1,background:'rgba(26,10,8,0.07)',margin:'10px 0'}}/>
+          <div style={{display:'flex',justifyContent:'space-between'}}>
+            <span style={{fontFamily:P,fontWeight:700,fontSize:14,color:DARK}}>Total</span>
+            <span style={{fontFamily:P,fontWeight:900,fontSize:18,color:DARK}}>{fmt(total)}</span>
+          </div>
+        </div>
+        {/* Address */}
+        <div style={{background:CREAM,borderRadius:14,padding:'13px 16px',border:'1px solid rgba(26,10,8,0.06)',display:'flex',gap:10,alignItems:'center'}}>
+          <div style={{width:36,height:36,background:`rgba(224,90,58,0.1)`,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M9 2a5 5 0 010 10C6 12 3 9 3 7a6 6 0 1112 0c0 2-3 5-6 5z" stroke={R} strokeWidth="1.5"/><circle cx="9" cy="7" r="2" stroke={R} strokeWidth="1.5"/></svg>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:P,fontWeight:600,fontSize:13,color:DARK}}>Endereço de entrega</div>
+            <div style={{fontFamily:P,fontSize:12,color:GRAY}}>Confirme ao finalizar o pedido</div>
+          </div>
+          <span style={{fontFamily:P,fontWeight:600,fontSize:12,color:R,flexShrink:0}}>Alterar</span>
+        </div>
+      </div>
+      <div style={{padding:'12px 20px 8px',background:CREAM,borderTop:'1px solid rgba(26,10,8,0.07)'}}>
+        <div className="tap" onClick={()=>navigate('confirm')} style={{
+          background:R,borderRadius:14,padding:'15px',
+          display:'flex',alignItems:'center',justifyContent:'space-between',
+          boxShadow:`0 8px 24px rgba(224,90,58,0.4)`,
+        }}>
+          <span style={{fontFamily:P,fontWeight:700,fontSize:14,color:'#fff'}}>Confirmar pedido</span>
+          <span style={{fontFamily:P,fontWeight:900,fontSize:14,color:'rgba(255,255,255,0.9)'}}>{fmt(total)}</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-// ── MODAL CADASTRO ────────────────────────────────────────────
-function fecharCad() { document.getElementById('modal-cad').classList.remove('open'); }
-
-async function salvarCad() {
-  const nome   = document.getElementById('cad-nome').value.trim();
-  const tel    = document.getElementById('cad-tel').value.trim();
-  const email  = document.getElementById('cad-email').value.trim();
-  const estado = document.getElementById('cad-estado');
-  const estadoSigla = estado.value;
-  const estadoNome  = estado.options[estado.selectedIndex]?.dataset.nome || estadoSigla;
-  const cidade = document.getElementById('cad-cidade').value;
-
-  if (!nome)                        return toast('Digite seu nome');
-  if (!tel || tel.replace(/\D/g,'').length < 10) return toast('Digite um WhatsApp válido');
-  if (!email || !email.includes('@')) return toast('Digite um e-mail válido');
-  if (!estadoSigla)                 return toast('Selecione o estado');
-  if (!cidade)                      return toast('Selecione a cidade');
-
-  const btn = document.getElementById('cad-btn');
-  btn.disabled = true; btn.textContent = 'Salvando...';
-
-  try {
-    // Salva no Supabase
-    const { error } = await db.from('clientes').upsert({
-      nome, telefone: tel.replace(/\D/g,''), email, estado: estadoNome, cidade
-    }, { onConflict: 'email' });
-
-    if (error && !error.message.includes('does not exist')) {
-      console.warn('Supabase clientes:', error.message);
-    }
-
-    // Salva no localStorage
-    _user = { nome, tel, email, estado: estadoNome, estadoSigla, cidade };
-    localStorage.setItem('pw_cliente', JSON.stringify(_user));
-
-    fecharCad();
-    atualizarBtnPerfil();
-    toast('✅ Bem-vindo, ' + nome.split(' ')[0] + '!');
-
-    // Aplica filtro da cidade
-    const cidades = [...new Set(_lojas.map(l=>l.cidade).filter(Boolean).map(c=>c.trim()))];
-    if (cidades.includes(cidade)) {
-      document.getElementById('cidade-select').value = cidade;
-    }
-    filtrar();
-
-  } catch(e) {
-    toast('Erro ao salvar. Tente novamente.');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Entrar →';
-  }
+/* ══════════════════════════════════════
+   SCREEN: CONFIRM
+══════════════════════════════════════ */
+function ConfirmScreen({ navigate }) {
+  const {clear} = useCart();
+  const [step,setStep] = React.useState(0);
+  const steps = ['Pedido confirmado!','Preparando...','A caminho!','Entregue! 🎉'];
+  const icons  = ['✅','👨‍🍳','🛵','🎉'];
+  const descs  = ['Seu pedido foi recebido.','O restaurante está preparando.','O entregador está a caminho!','Bom apetite!'];
+  React.useEffect(()=>{ if(step<3){const t=setTimeout(()=>setStep(s=>s+1),step===0?1000:2200);return()=>clearTimeout(t);} },[step]);
+  const prog = (step+1)/4;
+  return (
+    <div className="screen-enter" style={{position:'absolute',inset:0,background:CREAM,display:'flex',flexDirection:'column'}}>
+      <div style={{background:CREAM,padding:'14px 20px',borderBottom:'1px solid rgba(26,10,8,0.07)',flexShrink:0}}><Logo size={20} dark/></div>
+      <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:28}}>
+        <div style={{fontSize:68,marginBottom:18,transition:'all 0.4s'}}>{icons[step]}</div>
+        <div style={{fontFamily:P,fontWeight:800,fontSize:22,color:DARK,textAlign:'center',marginBottom:8}}>{steps[step]}</div>
+        <div style={{fontFamily:P,fontSize:14,color:GRAY,textAlign:'center',marginBottom:32,lineHeight:1.6}}>{descs[step]}</div>
+        <div style={{width:'100%',maxWidth:260,marginBottom:32}}>
+          <div style={{height:6,background:LIGHT,borderRadius:3,overflow:'hidden',marginBottom:8}}>
+            <div style={{height:'100%',background:R,borderRadius:3,width:`${prog*100}%`,transition:'width 1s cubic-bezier(0.25,0.46,0.45,0.94)',boxShadow:`0 0 8px rgba(224,90,58,0.4)`}}/>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between'}}>
+            {['Confirmado','Preparando','A caminho','Entregue'].map((s,i)=>(
+              <div key={i} style={{fontFamily:P,fontSize:9,color:i<=step?R:'rgba(107,100,96,0.3)',fontWeight:i===step?700:400,textAlign:'center',flex:1}}>{s}</div>
+            ))}
+          </div>
+        </div>
+        <div style={{background:LIGHT,borderRadius:12,padding:'12px 22px',textAlign:'center',marginBottom:28,border:'1px solid rgba(26,10,8,0.07)'}}>
+          <div style={{fontFamily:P,fontSize:11,color:GRAY,marginBottom:3}}>Código do pedido</div>
+          <div style={{fontFamily:P,fontWeight:800,fontSize:20,color:DARK,letterSpacing:'0.06em'}}>#PW{Math.floor(1000+Math.random()*9000)}</div>
+        </div>
+        {step===3 && (
+          <div className="tap" onClick={()=>{clear();navigate('home');}} style={{background:R,borderRadius:14,padding:'13px 36px',fontFamily:P,fontWeight:700,fontSize:14,color:'#fff',boxShadow:`0 8px 22px rgba(224,90,58,0.35)`}}>
+            Novo pedido
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
-// ── MODAL PERFIL ──────────────────────────────────────────────
-async function abrirPerfil() {
-  if (!_user) {
-    document.getElementById('modal-cad').classList.add('open');
-    return;
-  }
-  document.getElementById('modal-perfil').classList.add('open');
-  document.getElementById('perf-nome').value  = _user.nome  || '';
-  document.getElementById('perf-tel').value   = _user.tel   || '';
-  document.getElementById('perf-email').value = _user.email || '';
-
-  // Aguarda estados carregarem
-  await new Promise(r => setTimeout(r, 300));
-  if (_user.estadoSigla) {
-    const sel = document.getElementById('perf-estado');
-    sel.value = _user.estadoSigla;
-    await carregarCidades('perf-estado','perf-cidade');
-    if (_user.cidade) document.getElementById('perf-cidade').value = _user.cidade;
-  }
+/* ── BOTTOM NAV ── */
+function BottomNav({ active, navigate }) {
+  const {count} = useCart();
+  const items = [
+    {id:'home',label:'Início',icon:a=><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 10L11 3l8 7v8a1 1 0 01-1 1H14v-5H8v5H4a1 1 0 01-1-1v-8z" stroke={a?R:GRAY} strokeWidth="1.8" strokeLinejoin="round" fill={a?`rgba(224,90,58,0.1)`:'none'}/></svg>},
+    {id:'search',label:'Buscar',icon:a=><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="10" cy="10" r="7" stroke={a?R:GRAY} strokeWidth="1.8"/><path d="M16 16l3.5 3.5" stroke={a?R:GRAY} strokeWidth="1.8" strokeLinecap="round"/></svg>},
+    {id:'cart',label:'Carrinho',icon:a=><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 3h16l-2.5 10H5.5L3 3z" stroke={a?R:GRAY} strokeWidth="1.8" strokeLinejoin="round" fill={a?`rgba(224,90,58,0.1)`:'none'}/><circle cx="8.5" cy="18.5" r="2" stroke={a?R:GRAY} strokeWidth="1.6"/><circle cx="15.5" cy="18.5" r="2" stroke={a?R:GRAY} strokeWidth="1.6"/></svg>},
+    {id:'orders',label:'Pedidos',icon:a=><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="4" y="3" width="14" height="16" rx="2" stroke={a?R:GRAY} strokeWidth="1.8" fill={a?`rgba(224,90,58,0.1)`:'none'}/><path d="M8 8h6M8 12h4" stroke={a?R:GRAY} strokeWidth="1.8" strokeLinecap="round"/></svg>},
+  ];
+  return (
+    <div style={{background:CREAM,borderTop:'1px solid rgba(26,10,8,0.08)',padding:'8px 0 4px',display:'flex',flexShrink:0}}>
+      {items.map(item=>(
+        <div key={item.id} className="tap" onClick={()=>navigate(item.id)} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3,padding:'4px 0',position:'relative'}}>
+          {item.id==='cart'&&count>0&&<div style={{position:'absolute',top:0,right:'18%'}} className="badge">{count}</div>}
+          {item.icon(active===item.id)}
+          <span style={{fontFamily:P,fontSize:10,fontWeight:active===item.id?700:500,color:active===item.id?R:GRAY}}>{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
-function fecharPerfil() { document.getElementById('modal-perfil').classList.remove('open'); }
-
-async function salvarPerfil() {
-  const nome   = document.getElementById('perf-nome').value.trim();
-  const tel    = document.getElementById('perf-tel').value.trim();
-  const email  = document.getElementById('perf-email').value.trim();
-  const estado = document.getElementById('perf-estado');
-  const estadoSigla = estado.value;
-  const estadoNome  = estado.options[estado.selectedIndex]?.dataset.nome || estadoSigla;
-  const cidade = document.getElementById('perf-cidade').value;
-
-  if (!nome)   return toast('Digite seu nome');
-  if (!tel || tel.replace(/\D/g,'').length < 10) return toast('WhatsApp inválido');
-  if (!email || !email.includes('@')) return toast('E-mail inválido');
-  if (!estadoSigla) return toast('Selecione o estado');
-  if (!cidade)      return toast('Selecione a cidade');
-
-  try {
-    await db.from('clientes').upsert({
-      nome, telefone: tel.replace(/\D/g,''), email, estado: estadoNome, cidade
-    }, { onConflict: 'email' });
-  } catch(e) { console.warn('Supabase:', e); }
-
-  _user = { nome, tel, email, estado: estadoNome, estadoSigla, cidade };
-  localStorage.setItem('pw_cliente', JSON.stringify(_user));
-  fecharPerfil();
-  atualizarBtnPerfil();
-  toast('✅ Perfil atualizado!');
-
-  const cidades = [...new Set(_lojas.map(l=>l.cidade).filter(Boolean).map(c=>c.trim()))];
-  if (cidades.includes(cidade)) document.getElementById('cidade-select').value = cidade;
-  filtrar();
+/* ── APP ROUTER ── */
+function App() {
+  const [screen,setScreen] = React.useState(()=>{ try{return JSON.parse(localStorage.getItem('pw-app-screen')||'"home"')}catch{return'home'} });
+  const [params,setParams] = React.useState({});
+  const navigate = (s,p={}) => { setScreen(s); setParams(p); try{localStorage.setItem('pw-app-screen',JSON.stringify(s))}catch{} };
+  const screens = {
+    home:    <HomeScreen navigate={navigate}/>,
+    store:   <StoreScreen loja={params.loja||{id:0,nome:'Loja',_bg:'#2D1B0E',_emoji:'🏪'}} navigate={navigate}/>,
+    product: <ProductScreen item={params.item||{id:0,name:'Produto',price:0,emoji:'🍽️',cat:'Cardápio'}} loja={params.loja||{nome:'Loja',_bg:'#2D1B0E',_emoji:'🏪'}} navigate={navigate}/>,
+    cart:    <CartScreen navigate={navigate}/>,
+    confirm: <ConfirmScreen navigate={navigate}/>,
+    search:  <HomeScreen navigate={navigate}/>,
+    orders:  <CartScreen navigate={navigate}/>,
+  };
+  return (
+    <UserProvider>
+      <CartProvider>
+        <IOSDevice statusBarStyle="dark">
+          <div style={{position:'absolute',inset:0,overflow:'hidden',background:CREAM}}>
+            {screens[screen]||screens.home}
+          </div>
+        </IOSDevice>
+      </CartProvider>
+    </UserProvider>
+  );
 }
 
-function atualizarBtnPerfil() {
-  const btn = document.getElementById('btn-perfil');
-  if (_user?.nome) btn.textContent = '👤 ' + _user.nome.split(' ')[0];
-}
-
-// ── FILTRAR ───────────────────────────────────────────────────
-function filtrar() {
-  const termo  = document.getElementById('busca-input').value.toLowerCase().trim();
-  const cidade = document.getElementById('cidade-select').value;
-  const res = _lojas.filter(l => {
-    const mc = !cidade || (l.cidade && l.cidade.trim() === cidade);
-    const mb = !termo  || l.nome?.toLowerCase().includes(termo);
-    return mc && mb && matchCat(l);
-  });
-  renderLojas(res);
-  const badge = document.getElementById('city-badge');
-  if (cidade) { badge.textContent='📍 '+cidade; badge.style.display=''; }
-  else badge.style.display='none';
-}
-
-function matchCat(l) {
-  if (!_cat) return true;
-  if (_cat === 'aberta') return l.aberto === true;
-  const n = l.nome.toLowerCase();
-  const m = { burger:['burger','hamburguer','smash','burguer'], pizza:['pizza','pizzaria'], acai:['açaí','acai'], restaurante:['restaurante','marmita'], lanche:['lanche','sanduíche','tapioca'] };
-  return (m[_cat]||[]).some(k => n.includes(k));
-}
-
-function selCat(btn) {
-  document.querySelectorAll('.pill').forEach(b=>b.classList.remove('ativo'));
-  btn.classList.add('ativo'); _cat = btn.dataset.cat; filtrar();
-}
-
-// ── RENDER ────────────────────────────────────────────────────
-function renderLojas(lista) {
-  const grid = document.getElementById('lojas-grid');
-  document.getElementById('results-num').textContent = lista.length;
-  document.getElementById('results-info').style.display = 'flex';
-  if (!lista.length) {
-    grid.innerHTML = '<div class="empty"><div class="ic">🔍</div><h3>Nenhum restaurante encontrado</h3><p>Tente mudar a cidade ou os filtros.</p></div>';
-    return;
-  }
-  grid.innerHTML = lista.map(l => {
-    const ab = l.aberto !== false;
-    const lg = l.logo_url
-      ? `<div class="loja-logo"><img src="${l.logo_url}" alt="${l.nome}" onerror="this.parentElement.innerHTML='🏪'"></div>`
-      : `<div class="loja-logo">🏪</div>`;
-    return `<a class="loja-card" href="/${l.slug}">${lg}<span class="loja-nome">${l.nome}</span><span class="loja-status ${ab?'s-aberta':'s-fechada'}">${ab?'● Aberto':'● Fechado'}</span></a>`;
-  }).join('');
-}
-
-// ── HELPERS ───────────────────────────────────────────────────
-function mskTel(inp) {
-  let v = inp.value.replace(/\D/g,'').slice(0,11);
-  if(v.length>10) v=v.replace(/^(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3');
-  else if(v.length>6) v=v.replace(/^(\d{2})(\d{4})(\d*)$/,'($1) $2-$3');
-  else if(v.length>2) v=v.replace(/^(\d{2})(\d*)$/,'($1) $2');
-  else if(v.length>0) v='('+v;
-  inp.value=v;
-}
-
-function toast(msg) {
-  const el=document.getElementById('lj-toast');
-  el.textContent=msg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'),3000);
-}
-
-let _deb;
-document.getElementById('busca-input').addEventListener('input',()=>{ clearTimeout(_deb); _deb=setTimeout(filtrar,250); });
-
-init();
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
