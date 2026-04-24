@@ -334,6 +334,7 @@ try { state.user = JSON.parse(localStorage.getItem('pw_cliente')); } catch(e) {}
 
 const CATS = [
   {id:'all',label:'Todos',emoji:'🍽️'},
+  {id:'promo',label:'Promoção',emoji:'🔥'},
   {id:'burger',label:'Burger',emoji:'🍔'},
   {id:'pizza',label:'Pizza',emoji:'🍕'},
   {id:'acai',label:'Açaí',emoji:'🍇'},
@@ -372,6 +373,7 @@ function goTo(screen, extra) {
 
 function matchCat(l, cat) {
   if(!cat||cat==='all') return true;
+  if(cat==='promo') return l.promocao_ativa && l.desconto_percent > 0;
   const n = (l.nome||'').toLowerCase();
   const m = {burger:['burger','hamburguer','smash'],pizza:['pizza','pizzaria'],acai:['açaí','acai'],restaurante:['restaurante','marmita'],lanche:['lanche','sanduíche','tapioca']};
   return (m[cat]||[]).some(k=>n.includes(k));
@@ -531,35 +533,17 @@ function renderHome() {
   return `
   <div id="screen-home" class="screen active" style="flex-direction:column;">
     <!-- TOP HEADER -->
-    <div class="top-header">
-      <div class="header-row">
-        <div>
-          ${state.cidade ? `<div style="font-size:11px;color:var(--gray);margin-bottom:2px;">${icons.pin()} ${state.cidade}</div>` : ''}
-          <div class="logo-text">PEDI<span class="way">WAY</span></div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          ${cn>0 ? `<button class="cart-btn tap" onclick="goTo('cart')">${icons.cart_sm(true)}<span style="position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;border-radius:9px;background:#fff;color:var(--red);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;">${cn}</span></button>` : ''}
-          <button class="avatar-btn tap" onclick="state.showPerfilModal=true;render();">${initials()}</button>
-        </div>
-      </div>
 
-    </div>
 
     <div class="main-content" style="padding:0;">
-      <!-- BANNER -->
-      <div style="padding:14px 18px 0;">
-        <div class="hero-banner">
-          <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">Plataforma independente</div>
-          <div style="font-size:17px;font-weight:800;color:#fff;line-height:1.25;margin-bottom:13px;">Peça direto.<br>Sem taxa extra.</div>
-          <div style="display:inline-block;background:var(--red);border-radius:8px;padding:7px 15px;font-size:12px;font-weight:700;color:#fff;">Ver restaurantes ↓</div>
-        </div>
-      </div>
+      <!-- BANNER PROMOÇÕES -->
+      ${renderBanner()}
 
       <!-- SEARCH BAR (inline, below banner) -->
       <div style="padding:12px 18px 0;">
         <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid rgba(26,10,8,.08);border-radius:12px;padding:10px 14px;box-shadow:0 2px 8px rgba(26,10,8,.06);">
           ${icons.search_sm()}
-          <input id="home-search-bottom" value="${state.busca}" placeholder="Buscar restaurante ou categoria..." oninput="state.busca=this.value;renderInPlace()" style="border:none;background:transparent;font-family:'Poppins',sans-serif;font-size:13px;color:var(--dark);outline:none;width:100%;"/>
+          <input id="home-search-bottom" value="${state.busca}" placeholder="Buscar restaurante..." oninput="onSearch(this.value)" style="border:none;background:transparent;font-family:'Poppins',sans-serif;font-size:13px;color:var(--dark);outline:none;width:100%;" autocomplete="off"/>
           ${state.cidade ? `<div style="display:flex;align-items:center;gap:5px;background:rgba(224,90,58,.08);border-radius:8px;padding:4px 10px;white-space:nowrap;"><span style="font-size:11px;font-weight:700;color:var(--red);">📍 ${state.cidade}</span><span onclick="state.cidade='';renderInPlace();" style="font-size:11px;color:var(--gray);cursor:pointer;margin-left:2px;">✕</span></div>` : ''}
         </div>
       </div>
@@ -577,7 +561,7 @@ function renderHome() {
       <div style="padding:12px 18px 24px;">
         <div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:12px;">
           ${state.catAtiva==='all' ? 'Todos os restaurantes' : CATS.find(c=>c.id===state.catAtiva)?.label}
-          ${state.lojas ? `<span style="font-size:12px;font-weight:400;color:var(--gray);margin-left:6px;">${filtered.length} lojas</span>` : ''}
+          ${state.lojas ? `<span id="stores-count" style="font-size:12px;font-weight:400;color:var(--gray);margin-left:6px;">${filtered.length} lojas</span>` : ''}
         </div>
 
         ${state.lojas===null ? [1,2,3].map(()=>`
@@ -593,25 +577,7 @@ function renderHome() {
             <div class="empty-desc">Tente mudar os filtros ou cidade.</div>
           </div>` : ''}
 
-        ${(filtered).map(l => {
-          const ab = l.aberto!==false;
-          return `
-          <div class="store-card" onclick="openStore(${l._idx})">
-            <div class="store-hero" style="background:${l._bg};">
-              ${l.logo_url ? `<img src="${l.logo_url}" alt="${l.nome}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="store-emoji" style="display:none;">${l._emoji}</div>` : `<div class="store-emoji">${l._emoji}</div>`}
-              ${!ab ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,.52);display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;font-weight:700;color:rgba(255,255,255,.8);background:rgba(0,0,0,.4);padding:5px 12px;border-radius:8px;">Fechado</span></div>` : ''}
-            </div>
-            <div class="store-info">
-              <div class="store-name">${l.nome}</div>
-              <div class="store-meta">
-                <div class="store-tag">${icons.clock()}&nbsp;25–40 min</div>
-                <div class="store-tag"><span class="status-dot" style="background:${ab?'#22C55E':'#EF4444'};"></span>${ab?'Aberto':'Fechado'}</div>
-                ${l.cidade ? `<div class="store-tag">${icons.pin()}&nbsp;${l.cidade}</div>` : ''}
-                <div class="store-tag" style="color:#22A85A;font-weight:600;">${icons.truck()}&nbsp;Grátis</div>
-              </div>
-            </div>
-          </div>`;
-        }).join('')}
+        <div id="stores-grid">${filtered.map(l => storeCardHTML(l)).join('')}</div>
       </div>
     </div>
 
@@ -834,14 +800,41 @@ function renderConfirm() {
 
 // ─── SCREEN: SEARCH ─────────────────────────────────────────────
 function renderSearch() {
-  state.catAtiva = 'all';
-  const r = renderHome();
-  // Auto-focus search after render
-  setTimeout(() => {
-    const inp = document.getElementById('home-search-bottom');
-    if(inp) { inp.focus(); inp.scrollIntoView({behavior:'smooth'}); }
-  }, 100);
-  return r;
+  const filtered = (state.lojas||[]).filter(l => {
+    const mc = !state.cidade || l.cidade === state.cidade;
+    const mb = !state.busca || (l.nome||'').toLowerCase().includes(state.busca.toLowerCase());
+    return mc && mb;
+  });
+  return `
+  <div class="screen active" style="flex-direction:column;">
+    <div style="position:sticky;top:0;z-index:50;background:rgba(255,253,249,.95);backdrop-filter:blur(14px);border-bottom:1px solid rgba(26,10,8,.08);padding:12px 18px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="logo-text" style="flex:1;">PEDI<span class="way">WAY</span></div>
+        <button class="avatar-btn tap" onclick="state.showPerfilModal=true;render();">${initials()}</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--light);border:1.5px solid rgba(26,10,8,.08);border-radius:12px;padding:10px 14px;margin-top:10px;">
+        ${icons.search_sm()}
+        <input id="search-screen-input" value="${state.busca}" placeholder="Buscar restaurante..." oninput="onSearch(this.value)" style="border:none;background:transparent;font-family:'Poppins',sans-serif;font-size:13px;color:var(--dark);outline:none;width:100%;" autocomplete="off" autofocus/>
+        ${state.busca ? `<span onclick="state.busca='';render();" style="font-size:13px;color:var(--gray);cursor:pointer;">✕</span>` : ''}
+      </div>
+    </div>
+    <div class="main-content" style="padding:14px 18px;">
+      ${state.busca === '' ? `
+        <div style="font-size:13px;font-weight:700;color:var(--gray);margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em;">Categorias</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+          ${CATS.filter(c=>c.id!=='all').map(cat=>`
+            <div onclick="state.catAtiva='${cat.id}';goTo('home');" style="background:#fff;border-radius:14px;padding:16px;display:flex;align-items:center;gap:10px;cursor:pointer;box-shadow:0 2px 8px rgba(26,10,8,.07);border:1px solid rgba(26,10,8,.05);">
+              <span style="font-size:22px;">${cat.emoji}</span>
+              <span style="font-size:13px;font-weight:700;color:var(--dark);">${cat.label}</span>
+            </div>`).join('')}
+        </div>` : `
+        <div style="font-size:13px;font-weight:700;color:var(--gray);margin-bottom:12px;">${filtered.length} resultado(s) para "${state.busca}"</div>
+        ${filtered.length === 0 ? `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Sem resultados</div><div class="empty-desc">Tente outro nome</div></div>` : filtered.map(l => storeCardHTML(l)).join('')}
+      `}
+    </div>
+    ${renderBottomNav('search')}
+    ${state.showPerfilModal ? renderPerfilModal() : ''}
+  </div>`;
 }
 
 // ─── SCREEN: ORDERS ──────────────────────────────────────────────
@@ -954,6 +947,79 @@ function renderItem() {
   </div>`;
 }
 
+// ─── SEARCH SEM RE-RENDER ────────────────────────────────────────
+let _st = null;
+function onSearch(val) {
+  state.busca = val;
+  clearTimeout(_st);
+  _st = setTimeout(() => {
+    // Atualiza apenas a grid de lojas, sem re-render completo
+    const grid = document.querySelector('#stores-grid');
+    const countEl = document.querySelector('#stores-count');
+    if (!grid) { render(); return; }
+    const filtered = (state.lojas||[]).filter(l => {
+      const mc = !state.cidade || l.cidade === state.cidade;
+      const mb = !val || (l.nome||'').toLowerCase().includes(val.toLowerCase());
+      return mc && mb && matchCat(l, state.catAtiva);
+    });
+    if (countEl) countEl.textContent = filtered.length + ' lojas';
+    grid.innerHTML = filtered.length === 0
+      ? '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Nenhum resultado</div><div class="empty-desc">Tente outro nome</div></div>'
+      : filtered.map(l => storeCardHTML(l)).join('');
+  }, 200);
+}
+
+function storeCardHTML(l) {
+  const ab = l.aberto !== false;
+  const temPromo = l.promocao_ativa && l.desconto_percent > 0;
+  return `
+    <div class="store-card" onclick="window.location.href='/${l.slug}'">
+      <div class="store-hero" style="background:${l._bg};">
+        ${l.logo_url ? `<img src="${l.logo_url}" alt="${l.nome}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="store-emoji" style="display:none;">${l._emoji}</div>` : `<div class="store-emoji">${l._emoji}</div>`}
+        ${!ab ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,.52);display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;font-weight:700;color:rgba(255,255,255,.8);background:rgba(0,0,0,.4);padding:5px 12px;border-radius:8px;">Fechado</span></div>` : ''}
+        ${temPromo ? `<div style="position:absolute;top:10px;left:10px;background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;box-shadow:0 3px 10px rgba(224,90,58,.4);">-${l.desconto_percent}% OFF</div>` : ''}
+      </div>
+      <div class="store-info">
+        <div class="store-name">${l.nome}</div>
+        <div class="store-meta">
+          <div class="store-tag">${icons.clock()}&nbsp;25–40 min</div>
+          <div class="store-tag"><span class="status-dot" style="background:${ab?'#22C55E':'#EF4444'};"></span>${ab?'Aberto':'Fechado'}</div>
+          ${l.cidade ? `<div class="store-tag">${icons.pin()}&nbsp;${l.cidade}</div>` : ''}
+          <div class="store-tag" style="color:#22A85A;font-weight:600;">${icons.truck()}&nbsp;Grátis</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── BANNER PROMOÇÕES ─────────────────────────────────────────────
+function renderBanner() {
+  const promos = (state.lojas||[]).filter(l => l.promocao_ativa && l.desconto_percent > 0 && l.aberto !== false);
+  if (promos.length === 0) {
+    return `<div style="padding:14px 18px 0;">
+      <div class="hero-banner">
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">Plataforma independente</div>
+        <div style="font-size:17px;font-weight:800;color:#fff;line-height:1.25;margin-bottom:4px;">Peça direto.</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.55);">Sem comissão, sem taxa extra.</div>
+      </div>
+    </div>`;
+  }
+  return `<div style="padding:14px 18px 0;">
+    <div class="hero-banner" style="cursor:pointer;" onclick="state.catAtiva='promo';renderInPlace();">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">🔥 Promoções ativas</div>
+      <div style="font-size:19px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:10px;">Até <span style="color:#FFD166;">${Math.max(...promos.map(l=>l.desconto_percent))}% OFF</span> hoje!</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        ${promos.slice(0,3).map(l=>`
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border-radius:8px;padding:5px 10px;">
+            ${l.logo_url ? `<img src="${l.logo_url}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">` : `<span style="font-size:14px;">${l._emoji}</span>`}
+            <span style="font-size:11px;font-weight:700;color:#fff;">${l.nome}</span>
+            <span style="font-size:11px;font-weight:800;color:#FFD166;">-${l.desconto_percent}%</span>
+          </div>`).join('')}
+        ${promos.length > 3 ? `<span style="font-size:11px;color:rgba(255,255,255,.5);">+${promos.length-3} mais</span>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
 // ─── RENDER ───────────────────────────────────────────────────────
 function render() {
   const screens = {
@@ -985,7 +1051,7 @@ async function init() {
   render();
 
   // Carrega lojas do Supabase
-  const {data} = await db.from('estabelecimentos').select('id,nome,slug,logo_url,cidade,aberto').order('nome');
+  const {data} = await db.from('estabelecimentos').select('id,nome,slug,logo_url,cidade,aberto,promocao_ativa,desconto_percent').order('nome');
   if(data) {
     state.lojas = data.map((l,i)=>({...l,_idx:i,_emoji:EMOJIS[i%EMOJIS.length],_bg:BGS[i%BGS.length]}));
   } else {
