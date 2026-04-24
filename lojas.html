@@ -509,8 +509,9 @@ async function init() {
   // Carrega pedidos salvos
   renderOrders();
 
-  // Inicia polling
-  _pollingId = setInterval(pollarPedidos, 5000);
+  // Inicia polling rápido (2s) + Supabase Realtime
+  _pollingId = setInterval(pollarPedidos, 2000);
+  iniciarRealtime();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1578,39 +1579,77 @@ async function pollarPedidos() {
     const {data} = await db.from('pedidos')
       .select('id,status,total,estabelecimento_id')
       .eq('cliente_whats',whats)
-      .not('status','in','("cancelado")')
       .order('created_at',{ascending:false})
-      .limit(20);
+      .limit(30);
 
     let mudou=false;
     (data||[]).forEach(p => {
       const ant=_statusAnt[p.id];
-      if(ant && ant!==p.status) {
+      if(ant !== undefined && ant!==p.status) {
         mudou=true;
         const loja=_lojas.find(l=>l.id===p.estabelecimento_id);
         const nomeLoja=loja?.nome||'Loja';
         const msgs={
           aceito:  `🍳 ${nomeLoja}: Pedido em preparo!`,
-          pronto:  `🎉 ${nomeLoja}: Pedido pronto! Pode retirar.`,
+          pronto:  `🎉 ${nomeLoja}: Pedido pronto!`,
           entregue:`✅ ${nomeLoja}: Pedido entregue!`,
           cancelado:`❌ ${nomeLoja}: Pedido cancelado.`,
         };
         if(msgs[p.status]) toast(msgs[p.status]);
-
-        // Atualiza localStorage
-        if(loja?.slug) {
-          const peds=JSON.parse(localStorage.getItem('pw_peds_'+loja.slug)||'[]');
-          const idx=peds.findIndex(pd=>pd.id===p.id);
-          if(idx>=0) { peds[idx].status=p.status; localStorage.setItem('pw_peds_'+loja.slug,JSON.stringify(peds)); }
-        }
+        atualizarStatusLocal(p.id, p.status, p.estabelecimento_id);
       }
       _statusAnt[p.id]=p.status;
     });
 
-    // Re-renderiza pedidos se houve mudança
-    if(mudou && _screen==='orders') renderOrders();
-    if(mudou && _screen==='store' && _tabAtiva==='pedidos') renderStorePedidos();
+    if(mudou) {
+      if(_screen==='orders') renderOrders();
+      if(_screen==='store' && _tabAtiva==='pedidos') renderStorePedidos();
+    }
   } catch(e){}
+}
+
+function atualizarStatusLocal(pedidoId, novoStatus, estabId) {
+  const loja = _lojas.find(l=>l.id===estabId);
+  if(!loja?.slug) return;
+  const key = 'pw_peds_'+loja.slug;
+  const peds = JSON.parse(localStorage.getItem(key)||'[]');
+  const idx = peds.findIndex(p=>p.id===pedidoId);
+  if(idx>=0) { peds[idx].status=novoStatus; localStorage.setItem(key,JSON.stringify(peds)); }
+}
+
+// Supabase Realtime para updates instantâneos
+function iniciarRealtime() {
+  if(!_user?.tel) return;
+  const whats = _user.tel.replace(/\D/g,'');
+  if(!whats||whats.length<10) return;
+  try {
+    db.channel('pedidos-cliente')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'pedidos',
+        filter: `cliente_whats=eq.${whats}`
+      }, payload => {
+        const p = payload.new;
+        const ant = _statusAnt[p.id];
+        if(ant !== undefined && ant !== p.status) {
+          const loja = _lojas.find(l=>l.id===p.estabelecimento_id);
+          const nomeLoja = loja?.nome||'Loja';
+          const msgs = {
+            aceito:   `🍳 ${nomeLoja}: Pedido em preparo!`,
+            pronto:   `🎉 ${nomeLoja}: Pedido pronto!`,
+            entregue: `✅ ${nomeLoja}: Pedido entregue!`,
+            cancelado:`❌ ${nomeLoja}: Pedido cancelado.`,
+          };
+          if(msgs[p.status]) toast(msgs[p.status]);
+          atualizarStatusLocal(p.id, p.status, p.estabelecimento_id);
+        }
+        _statusAnt[p.id] = p.status;
+        if(_screen==='orders') renderOrders();
+        if(_screen==='store' && _tabAtiva==='pedidos') renderStorePedidos();
+      })
+      .subscribe();
+  } catch(e) { console.warn('Realtime:', e); }
 }
 
 // ═══════════════════════════════════════════════════════
