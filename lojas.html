@@ -84,23 +84,23 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
 /* ══════════════════════════════════════
    STORE SCREEN — Cardápio
 ══════════════════════════════════════ */
-/* Capa do estabelecimento — igual ao cliente.html */
+/* Capa do estabelecimento */
 .store-capa{flex-shrink:0;background:var(--st-red,#C0392B);}
-.loja-capa-header{display:flex;align-items:center;gap:12px;padding:16px 14px 12px;}
-.loja-capa-logo{width:56px;height:56px;border-radius:14px;object-fit:cover;border:2px solid rgba(255,255,255,.3);flex-shrink:0;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden;}
+.loja-capa-header{display:flex;align-items:center;gap:14px;padding:18px 16px 10px;}
+.loja-capa-logo{width:68px;height:68px;border-radius:16px;flex-shrink:0;background:rgba(255,255,255,.15);border:2.5px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.2);}
 .loja-capa-logo img{width:100%;height:100%;object-fit:cover;display:block;}
-.loja-capa-nome{font-size:17px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:3px;}
-.loja-capa-desc{font-size:12px;color:rgba(255,255,255,.75);}
-.loja-capa-meta{display:flex;gap:8px;padding:0 14px 14px;flex-wrap:wrap;}
-.loja-capa-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,.25);backdrop-filter:blur(4px);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;color:#fff;}
+.loja-capa-nome{font-size:17px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:2px;}
+.loja-capa-desc{font-size:11px;color:rgba(255,255,255,.7);line-height:1.4;}
+.loja-capa-meta{display:flex;gap:6px;padding:6px 16px 14px;flex-wrap:wrap;}
+.loja-capa-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,0,0,.22);backdrop-filter:blur(4px);border-radius:7px;padding:4px 9px;font-size:10px;font-weight:600;color:#fff;}
 .badge-capa{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:4px 10px;font-size:11px;color:#fff;font-weight:600;}
 
 /* Tabs */
 .store-tabs{flex-shrink:0;display:flex;background:var(--card);border-bottom:1px solid var(--border);}
-.store-tab{flex:1;padding:12px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--gray);cursor:pointer;border:none;background:none;font-family:var(--font);border-bottom:2.5px solid transparent;transition:all .15s;position:relative;}
+.store-tab{flex:1;padding:12px 4px;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:700;color:var(--gray);cursor:pointer;border:none;background:none;font-family:var(--font);border-bottom:2.5px solid transparent;transition:all .15s;}
 .store-tab.active{color:var(--st-red);border-bottom-color:var(--st-red);}
-.tab-dot{position:absolute;top:8px;right:calc(50% - 16px);width:6px;height:6px;border-radius:50%;background:var(--st-red);display:none;}
-.tab-dot.show{display:block;}
+.tab-dot{display:none;width:6px;height:6px;border-radius:50%;background:var(--st-red);margin-left:4px;flex-shrink:0;}
+.tab-dot.show{display:inline-block;}
 
 /* Fresquinho */
 .fresquinho-wrap{flex-shrink:0;padding:12px 0 12px 14px;border-bottom:1px solid var(--border);background:var(--card);}
@@ -118,12 +118,12 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
 .filtro-pill.ativo{background:var(--st-red);border-color:var(--st-red);color:#fff;}
 
 /* Produto card */
-.produto-card{background:var(--card);border-radius:14px;overflow:hidden;display:flex;align-items:stretch;gap:0;box-shadow:0 1px 8px rgba(26,10,8,.07);border:1px solid var(--border);cursor:pointer;transition:transform .12s;}
+.produto-card{background:var(--card);border-radius:14px;overflow:hidden;display:flex;align-items:stretch;box-shadow:0 1px 8px rgba(26,10,8,.07);border:1px solid var(--border);cursor:pointer;transition:transform .12s;}
 .produto-card:active{transform:scale(.99);}
-.produto-img-wrap{width:100px;height:100px;flex-shrink:0;overflow:hidden;background:var(--cream);border-radius:0;}
-.produto-img-wrap img{width:100px;height:100px;object-fit:cover;display:block;flex-shrink:0;}
+.produto-img-wrap{width:100px;height:auto;min-height:100px;min-width:100px;overflow:hidden;background:var(--cream);flex-shrink:0;align-self:stretch;}
+.produto-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;min-height:100px;}
 .produto-emoji-bg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;}
-.promo-badge{position:absolute;top:4px;left:4px;background:var(--st-red);color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:6px;}
+.promo-badge{position:absolute;top:4px;left:4px;background:var(--st-red);color:#fff;font-size:10px;padding:2px 5px;border-radius:6px;}
 .produto-body{flex:1;padding:12px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;}
 .produto-cat{font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px;}
 .produto-nome{font-size:13px;font-weight:800;color:var(--dark);line-height:1.3;margin-bottom:3px;}
@@ -337,7 +337,7 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
 
   <!-- STORE (cardápio da loja) -->
   <div id="screen-store" class="screen" style="flex-direction:column;">
-    <div class="back-header" id="store-back-header">
+    <div class="back-header" id="store-back-header" style="background:#fff;">
       <button class="back-btn" onclick="voltarHome()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--dark)" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
@@ -814,8 +814,11 @@ async function abrirLoja(id) {
   document.documentElement.style.setProperty('--st-red', hex);
   document.documentElement.style.setProperty('--st-red2', darken(hex,20));
 
-  // Header
+  // Header — só nome, sem badge de promo
   $('store-header-nome').textContent = loja.nome;
+  // Remove any leftover promo badge from nav
+  const oldBadge = document.querySelector('.store-promo-nav-badge');
+  if(oldBadge) oldBadge.remove();
   $('store-content').innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--gray);font-size:13px;">Carregando cardápio...</div>`;
   showScreen('store');
   atualizarCarrinhoBtns();
@@ -900,7 +903,7 @@ function renderStore(fresquinhos=[]) {
     <!-- Tabs -->
     <div class="store-tabs">
       <button class="store-tab active" id="tab-cardapio" onclick="storeTab('cardapio',this)">CARDÁPIO</button>
-      <button class="store-tab" id="tab-promo" onclick="storeTab('promo',this)">PROMOÇÃO<span class="tab-dot${temPromo?' show':''}"></span></button>
+      <button class="store-tab" id="tab-promo" onclick="storeTab('promo',this)" style="display:flex;align-items:center;justify-content:center;gap:4px;">PROMOÇÃO<span class="tab-dot${temPromo?' show':''}"></span></button>
       <button class="store-tab" id="tab-pedidos" onclick="storeTab('pedidos',this)">MEUS PEDIDOS</button>
     </div>
 
@@ -1005,10 +1008,13 @@ function pedidoCardHTML(p) {
 }
 
 function produtoCardHTML(p) {
+  const temPromoItem = p.promocao || p.em_promocao;
   return `<div class="produto-card" onclick="abrirProduto('${p.id}')">
     <div class="produto-img-wrap">
-      ${p.foto_url?`<img src="${p.foto_url}" alt="${p.nome}" loading="lazy">`:`<div class="produto-emoji-bg">${p.emoji||'🍔'}</div>`}
-      ${(p.promocao||p.em_promocao)?`<div class="promo-badge">🔥 PROMO</div>`:''}
+      ${p.foto_url
+        ? `<img src="${p.foto_url}" alt="${p.nome}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">`
+        : `<div class="produto-emoji-bg">${p.emoji||'🍔'}</div>`}
+      ${temPromoItem?`<div class="promo-badge">🔥</div>`:''}
     </div>
     <div class="produto-body">
       <div>
