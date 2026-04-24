@@ -50,10 +50,24 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
 /* ── STORE CARD ── */
 .store-card{background:var(--card);border-radius:18px;overflow:hidden;box-shadow:0 2px 12px rgba(26,10,8,.07);border:1px solid var(--border);cursor:pointer;transition:transform .15s,box-shadow .15s;}
 .store-card:active{transform:scale(.98);}
-.store-hero{height:110px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:#eee;}
-.store-hero img{width:100%;height:100%;object-fit:cover;}
+/* Card A — hero com logo flutuante (padrão) */
+.store-hero{height:90px;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:0 14px 0;}
+.store-hero-bg{position:absolute;inset:0;}
+.store-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55) 0%,rgba(0,0,0,.05) 60%);}
+.store-logo-circle{width:54px;height:54px;border-radius:50%;background:var(--card);border:3px solid #fff;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;position:relative;z-index:2;margin-bottom:-20px;box-shadow:0 2px 10px rgba(0,0,0,.2);}
+.store-logo-circle img{width:100%;height:100%;object-fit:cover;}
+/* Card B — horizontal: logo grande + info lado a lado */
+.store-card-b{background:var(--card);border-radius:18px;overflow:hidden;box-shadow:0 2px 12px rgba(26,10,8,.07);border:1px solid var(--border);cursor:pointer;transition:transform .15s,box-shadow .15s;display:flex;align-items:stretch;}
+.store-card-b:active{transform:scale(.98);}
+.store-card-b-img{width:110px;flex-shrink:0;position:relative;overflow:hidden;}
+.store-card-b-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.store-card-b-img .store-card-b-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:44px;}
+.store-card-b-body{flex:1;padding:14px 14px 12px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;}
+.store-card-b-nome{font-size:15px;font-weight:800;color:var(--dark);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.store-card-b-meta{display:flex;gap:5px;flex-wrap:wrap;}
+.store-card-b-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--gray);font-weight:500;background:var(--cream);padding:3px 7px;border-radius:6px;}
 .store-emoji{font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;}
-.store-info{padding:12px 14px;}
+.store-info{padding:24px 14px 12px;}
 .store-name{font-size:14px;font-weight:800;color:var(--dark);margin-bottom:5px;}
 .store-meta{display:flex;gap:8px;flex-wrap:wrap;}
 .store-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--gray);font-weight:500;background:var(--cream);padding:3px 8px;border-radius:6px;}
@@ -105,8 +119,8 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
 /* Produto card */
 .produto-card{background:var(--card);border-radius:14px;overflow:hidden;display:flex;gap:0;box-shadow:0 1px 8px rgba(26,10,8,.07);border:1px solid var(--border);cursor:pointer;transition:transform .12s;}
 .produto-card:active{transform:scale(.99);}
-.produto-img-wrap{width:96px;height:96px;flex-shrink:0;position:relative;overflow:hidden;background:var(--cream);border-radius:12px 0 0 12px;}
-.produto-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.produto-img-wrap{width:96px;height:96px;flex-shrink:0;position:relative;overflow:hidden;background:var(--cream);border-radius:12px 0 0 12px;aspect-ratio:1/1;}
+.produto-img-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
 .produto-emoji-bg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;}
 .promo-badge{position:absolute;top:4px;left:4px;background:var(--st-red);color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:6px;}
 .produto-body{flex:1;padding:12px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;}
@@ -187,6 +201,14 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
 /* TOAST */
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:#fff;padding:10px 20px;border-radius:50px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:9999;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── CARROSSEL BANNER ── */
+.promo-carousel{position:relative;border-radius:18px;overflow:hidden;min-height:150px;}
+.promo-slides{display:flex;transition:transform .45s cubic-bezier(.4,0,.2,1);}
+.promo-slide{min-width:100%;padding:24px 22px 20px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;}
+.promo-slide::after{content:'';position:absolute;right:-20px;bottom:-20px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.07);}
+.carousel-dots{display:flex;gap:5px;justify-content:center;margin-top:10px;}
+.carousel-dot{height:5px;border-radius:3px;background:rgba(255,255,255,.35);transition:all .3s;cursor:pointer;}
 
 /* Empty */
 .empty-state{text-align:center;padding:60px 20px;}
@@ -276,19 +298,18 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
       </div>
     </div>
     <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-      <!-- BANNER -->
+      <!-- BANNER CARROSSEL -->
       <div style="padding:14px 18px 0;" id="banner-wrap">
-        <div class="hero-banner" style="min-height:140px;padding:22px;">
-          <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Plataforma independente</div>
-          <div style="font-size:22px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:4px;">Peça direto.</div>
-          <div style="font-size:13px;color:rgba(255,255,255,.55);">Sem comissão, sem taxa extra.</div>
-        </div>
+        <!-- preenchido por renderCarrossel() -->
       </div>
       <!-- CATS -->
       <div class="scroll-x" id="home-cats"></div>
       <!-- LOJAS -->
       <div style="padding:4px 18px 100px;" id="home-lojas">
-        <div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:12px;" id="home-lojas-title">Todos os restaurantes</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:15px;font-weight:700;color:var(--dark);" id="home-lojas-title">Todos os restaurantes</div>
+          <button id="toggle-card-btn" onclick="toggleCardStyle()" style="width:32px;height:32px;border-radius:9px;background:var(--cream);border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;" title="Mudar layout">⊞</button>
+        </div>
         <div id="home-grid" style="display:flex;flex-direction:column;gap:12px;"></div>
       </div>
     </div>
@@ -517,6 +538,37 @@ function renderHome() {
   atualizarCartBtn();
 }
 
+function filtrarPorDesconto(pct) {
+  // Mostra lojas que têm itens com esse desconto
+  const lojasComDesconto = _promoItems
+    .filter(item => item.desconto >= pct)
+    .map(item => item.estabelecimento_id);
+  const unicas = [...new Set(lojasComDesconto)];
+
+  if(!unicas.length) {
+    toast('Nenhuma loja com ' + pct + '% OFF no momento');
+    return;
+  }
+
+  // Filtra e mostra no grid principal
+  const antes = _catAtiva;
+  _catAtiva = 'promo';
+  const grid = $('home-grid');
+  const title = $('home-lojas-title');
+  if(title) title.textContent = 'Promoção de -' + pct + '% OFF';
+
+  const lojasFiltradas = _lojas.filter(l => unicas.includes(l.id));
+  if(grid) {
+    grid.innerHTML = lojasFiltradas.length
+      ? lojasFiltradas.map(l => storeCardHTML(l)).join('')
+      : '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Sem lojas</div></div>';
+  }
+
+  // Scroll suave até os cards
+  const el = $('home-lojas');
+  if(el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
 function filtrarLojas() {
   return _lojas.filter(l => {
     const mc = !_cidade || (l.cidade||'').trim() === _cidade;
@@ -531,14 +583,32 @@ function filtrarLojas() {
 
 function setCat(id) { _catAtiva=id; renderHome(); }
 
+function toggleCardStyle() {
+  _cardStyle = _cardStyle === 'A' ? 'B' : 'A';
+  const btn = $('toggle-card-btn');
+  if(btn) btn.textContent = _cardStyle === 'A' ? '⊞' : '☰';
+  renderHome();
+}
+
+let _cardStyle = 'A'; // 'A' = hero flutuante, 'B' = horizontal
+
 function storeCardHTML(l) {
   const ab = l.aberto!==false;
   const temPromo = l.promocao_ativa && l.desconto_percent>0;
+
+  if(_cardStyle === 'B') return storeCardHTMLb(l, ab, temPromo);
+
+  const logoHTML = l.logo_url
+    ? `<div class="store-logo-circle"><img src="${l.logo_url}" alt="${l.nome}" onerror="this.outerHTML='<div class=store-logo-circle style=background:${l._bg}22>${l._emoji}</div>'"></div>`
+    : `<div class="store-logo-circle" style="background:${l._bg}22;font-size:24px;">${l._emoji}</div>`;
+
   return `<div class="store-card" onclick="abrirLoja('${l.id}')">
-    <div class="store-hero" style="background:${l._bg}20;">
-      ${l.logo_url ? `<img src="${l.logo_url}" alt="${l.nome}" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="store-emoji" style="display:none">${l._emoji}</div>` : `<div class="store-emoji">${l._emoji}</div>`}
-      ${!ab?`<div style="position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;"><span style="color:#fff;font-size:12px;font-weight:700;background:rgba(0,0,0,.4);padding:5px 12px;border-radius:8px;">Fechado</span></div>`:''}
-      ${temPromo?`<div class="promo-badge" style="position:absolute;top:8px;left:8px;font-size:10px;padding:3px 8px;">🔥 -${l.desconto_percent}%</div>`:''}
+    <div class="store-hero">
+      <div class="store-hero-bg" style="background:linear-gradient(135deg,${l._bg}44,${l._bg}22);"></div>
+      <div class="store-hero-overlay"></div>
+      ${!ab?`<div style="position:absolute;inset:0;background:rgba(0,0,0,.52);display:flex;align-items:center;justify-content:center;z-index:3;"><span style="color:#fff;font-size:12px;font-weight:700;background:rgba(0,0,0,.4);padding:5px 12px;border-radius:8px;">Fechado</span></div>`:''}
+      ${temPromo?`<div style="position:absolute;top:8px;right:8px;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:3px 9px;border-radius:7px;z-index:3;">🔥 -${l.desconto_percent}%</div>`:''}
+      ${logoHTML}
     </div>
     <div class="store-info">
       <div class="store-name">${l.nome}</div>
@@ -552,57 +622,155 @@ function storeCardHTML(l) {
   </div>`;
 }
 
-// ═══════════════════════════════════════════════════════
-// BANNER PROMOÇÕES
-// ═══════════════════════════════════════════════════════
-let _bannerTimer=null, _bannerIdx=0, _promoItems=[];
-async function renderBanner() {
-  try {
-    const {data} = await db.from('produtos').select('id,nome,preco,desconto_percent,estabelecimento_id').eq('em_promocao',true).gt('desconto_percent',0).eq('disponivel',true);
-    _promoItems = (data||[]).map(p => {
-      const pn = parseFloat(p.preco||0), dc = parseInt(p.desconto_percent||0);
-      return { ...p, name:p.nome, desconto:dc, preco_com_desc: pn*(1-dc/100) };
-    });
-  } catch(e) { _promoItems = []; }
-
-  if(!_promoItems.length) return; // mantém banner padrão
-  showBannerItem();
-}
-
-function showBannerItem() {
-  if(!_promoItems.length) return;
-  clearTimeout(_bannerTimer);
-  const idx = _bannerIdx % _promoItems.length;
-  const item = _promoItems[idx];
-  const loja = _lojas.find(l => l.id === item.estabelecimento_id)||{};
-  const dots = _promoItems.length>1 ? `<div style="display:flex;gap:5px;margin-top:12px;">${_promoItems.map((_,i)=>`<div style="width:${i===idx?'18':'6'}px;height:6px;border-radius:3px;background:${i===idx?'#fff':'rgba(255,255,255,.3)'};transition:all .3s;"></div>`).join('')}</div>` : '';
-  $('banner-wrap').innerHTML = `<div style="padding:14px 18px 0;">
-    <div class="hero-banner" style="cursor:pointer;min-height:150px;padding:22px 22px 18px;" onclick="abrirLoja('${loja.id||''}')">
-      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">🔥 Promoção ativa</div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-        <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
-          ${loja.logo_url?`<img src="${loja.logo_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='<span style=font-size:22px>${loja._emoji||'🍽️'}</span>'">`:`<span style="font-size:22px;">${loja._emoji||'🍽️'}</span>`}
-        </div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:11px;color:rgba(255,255,255,.6);">${loja.nome||''}</div>
-          <div style="font-size:15px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
-        </div>
-        <div style="flex-shrink:0;background:#FFD166;border-radius:10px;padding:6px 12px;text-align:center;">
-          <div style="font-size:18px;font-weight:900;color:#1A0A08;line-height:1;">-${item.desconto}%</div>
-          <div style="font-size:9px;font-weight:700;color:rgba(26,10,8,.6);">OFF</div>
-        </div>
+// Card estilo B: horizontal com imagem à esquerda
+function storeCardHTMLb(l, ab, temPromo) {
+  const imgContent = l.logo_url
+    ? `<img src="${l.logo_url}" alt="${l.nome}" onerror="this.style.display='none'">`
+    : `<div class="store-card-b-emoji">${l._emoji}</div>`;
+  return `<div class="store-card-b" onclick="abrirLoja('${l.id}')">
+    <div class="store-card-b-img" style="background:${l._bg}18;">
+      ${imgContent}
+      ${!ab?`<div style="position:absolute;inset:0;background:rgba(0,0,0,.48);display:flex;align-items:center;justify-content:center;"><span style="color:#fff;font-size:11px;font-weight:700;background:rgba(0,0,0,.35);padding:4px 10px;border-radius:7px;">Fechado</span></div>`:''}
+      ${temPromo?`<div style="position:absolute;top:7px;left:7px;background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;">🔥 -${l.desconto_percent}%</div>`:''}
+    </div>
+    <div class="store-card-b-body">
+      <div>
+        <div class="store-card-b-nome">${l.nome}</div>
+        ${l.descricao?`<div style="font-size:11px;color:var(--gray);line-height:1.4;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${l.descricao}</div>`:''}
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <span style="font-size:12px;color:rgba(255,255,255,.45);text-decoration:line-through;">${fmt(item.preco)}</span>
-          <span style="font-size:16px;font-weight:900;color:#FFD166;margin-left:6px;">${fmt(item.preco_com_desc)}</span>
-        </div>
-        <span style="font-size:11px;color:rgba(255,255,255,.6);">Ver oferta →</span>
+      <div class="store-card-b-meta">
+        <span class="store-card-b-tag" style="color:${ab?'#16A34A':'#DC2626'};background:${ab?'rgba(22,163,74,.08)':'rgba(220,38,38,.08)'};">
+          <span style="width:5px;height:5px;border-radius:50%;background:${ab?'#22C55E':'#EF4444'};display:inline-block;"></span>
+          ${ab?'Aberto':'Fechado'}
+        </span>
+        ${l.tempo_entrega?`<span class="store-card-b-tag">⏱ ${l.tempo_entrega}</span>`:`<span class="store-card-b-tag">⏱ 25–40 min</span>`}
+        ${l.taxa_entrega>0?`<span class="store-card-b-tag">🛵 ${fmt(l.taxa_entrega)}</span>`:`<span class="store-card-b-tag" style="color:#16A34A;font-weight:700;">🛵 Grátis</span>`}
       </div>
-      ${dots}
     </div>
   </div>`;
-  _bannerTimer = setTimeout(()=>{ _bannerIdx=(_bannerIdx+1)%_promoItems.length; showBannerItem(); }, 3500);
+}
+
+// ═══════════════════════════════════════════════════════
+// CARROSSEL BANNER
+// ═══════════════════════════════════════════════════════
+let _bannerTimer=null, _bannerIdx=0, _promoItems=[], _carouselSlides=[];
+
+// Slides fixos de desconto + slides de promoções reais
+const SLIDES_FIXOS = [
+  { desconto:10, cor1:'#1A0A08', cor2:'#3D1A10', emoji:'🔥', label:'Economize hoje' },
+  { desconto:20, cor1:'#0F1A3D', cor2:'#1A2D6B', emoji:'⚡', label:'Oferta especial' },
+  { desconto:30, cor1:'#1A0A1A', cor2:'#3D0F3D', emoji:'🎉', label:'Super desconto' },
+];
+
+async function renderBanner() {
+  // Carrega promos reais do banco
+  try {
+    const {data} = await db.from('produtos')
+      .select('id,nome,preco,desconto_percent,estabelecimento_id')
+      .eq('em_promocao',true).gt('desconto_percent',0).eq('disponivel',true);
+    _promoItems = (data||[]).map(p => ({
+      ...p, name:p.nome, desconto:parseInt(p.desconto_percent||0),
+      preco_com_desc: parseFloat(p.preco||0)*(1-parseInt(p.desconto_percent||0)/100),
+    }));
+  } catch(e) { _promoItems = []; }
+
+  // Monta slides: promos reais primeiro, depois os fixos de demo
+  _carouselSlides = [
+    ..._promoItems.map(item => {
+      const loja = _lojas.find(l=>l.id===item.estabelecimento_id)||{};
+      return { tipo:'real', item, loja };
+    }),
+    ...SLIDES_FIXOS.map(s => ({ tipo:'demo', ...s })),
+  ];
+  _bannerIdx = 0;
+  buildCarousel();
+  iniciarTimer();
+}
+
+function buildCarousel() {
+  const slides = _carouselSlides;
+  if(!slides.length) return;
+
+  const slidesHTML = slides.map((s,i) => {
+    if(s.tipo==='real') {
+      const {item,loja} = s;
+      return `<div class="promo-slide" style="background:linear-gradient(135deg,#1A0A08,#3D1A10);cursor:pointer;" onclick="abrirLoja('${loja.id||''}')">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">🔥 Promoção ativa</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+              ${loja.logo_url?`<img src="${loja.logo_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`:`<span style="font-size:20px;">${loja._emoji||'🍽️'}</span>`}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;color:rgba(255,255,255,.55);">${loja.nome||''}</div>
+              <div style="font-size:15px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
+            </div>
+            <div style="background:#FFD166;border-radius:10px;padding:6px 12px;text-align:center;flex-shrink:0;">
+              <div style="font-size:18px;font-weight:900;color:#1A0A08;line-height:1;">-${item.desconto}%</div>
+              <div style="font-size:9px;font-weight:700;color:rgba(26,10,8,.6);">OFF</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+          <div>
+            <span style="font-size:12px;color:rgba(255,255,255,.4);text-decoration:line-through;">${fmt(item.preco)}</span>
+            <span style="font-size:16px;font-weight:900;color:#FFD166;margin-left:8px;">${fmt(item.preco_com_desc)}</span>
+          </div>
+          <span style="font-size:11px;color:rgba(255,255,255,.55);">Ver oferta →</span>
+        </div>
+      </div>`;
+    } else {
+      // Slide de demo com percentual
+      return `<div class="promo-slide" style="background:linear-gradient(135deg,${s.cor1},${s.cor2});cursor:pointer;" onclick="filtrarPorDesconto(${s.desconto})">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">${s.label}</div>
+          <div style="font-size:44px;font-weight:900;color:#FFD166;line-height:1;">-${s.desconto}%</div>
+          <div style="font-size:24px;font-weight:900;color:#fff;line-height:1.2;margin-top:2px;">OFF</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+          <div style="font-size:13px;color:rgba(255,255,255,.65);line-height:1.4;">${s.emoji} Em itens selecionados<br>dos restaurantes parceiros</div>
+          <div style="background:rgba(255,255,255,.15);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;">Ver lojas →</div>
+        </div>
+      </div>`;
+    }
+  }).join('');
+
+  const dotsHTML = slides.length>1 ? `<div class="carousel-dots" id="carousel-dots">
+    ${slides.map((_,i)=>`<div class="carousel-dot" id="cdot-${i}" style="width:${i===0?'18':'6'}px;background:${i===0?'rgba(26,10,8,.5)':'rgba(26,10,8,.18)'};" onclick="irSlide(${i})"></div>`).join('')}
+  </div>` : '';
+
+  $('banner-wrap').innerHTML = `<div style="padding:14px 18px 0;">
+    <div class="promo-carousel" id="promo-carousel" style="border-radius:18px;box-shadow:0 2px 12px rgba(26,10,8,.1);">
+      <div class="promo-slides" id="promo-slides" style="transform:translateX(0%);">${slidesHTML}</div>
+    </div>
+    ${dotsHTML}
+  </div>`;
+}
+
+function irSlide(idx) {
+  clearTimeout(_bannerTimer);
+  _bannerIdx = idx;
+  const el = $('promo-slides');
+  if(el) el.style.transform = `translateX(-${idx*100}%)`;
+  atualizarDots(idx);
+  iniciarTimer();
+}
+
+function atualizarDots(idx) {
+  _carouselSlides.forEach((_,i) => {
+    const d=$('cdot-'+i); if(!d) return;
+    d.style.width   = i===idx ? '18px' : '6px';
+    d.style.background = i===idx ? 'rgba(26,10,8,.5)' : 'rgba(26,10,8,.18)';
+  });
+}
+
+function iniciarTimer() {
+  clearTimeout(_bannerTimer);
+  if(_carouselSlides.length<2) return;
+  _bannerTimer = setTimeout(() => {
+    _bannerIdx = (_bannerIdx+1) % _carouselSlides.length;
+    irSlide(_bannerIdx);
+  }, 3500);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -792,16 +960,39 @@ function renderStorePedidos() {
 }
 
 function pedidoCardHTML(p) {
-  const statusMap = {novo:'🟡 Aguardando',aceito:'🟠 Em preparo',pronto:'🟢 Pronto',entregue:'✅ Entregue',cancelado:'❌ Cancelado'};
-  const sc = {novo:'rgba(234,179,8,.15)',aceito:'rgba(249,115,22,.15)',pronto:'rgba(34,197,94,.15)',entregue:'rgba(34,197,94,.1)',cancelado:'rgba(239,68,68,.15)'};
+  const STATUS = {
+    novo:     { label:'Aguardando confirmação', cor:'#D97706', bg:'rgba(217,119,6,.1)',    icon:'⏳' },
+    aceito:   { label:'Em preparo',             cor:'#EA580C', bg:'rgba(234,88,12,.1)',    icon:'🍳' },
+    pronto:   { label:'Pronto para retirar',    cor:'#16A34A', bg:'rgba(22,163,74,.1)',    icon:'✅' },
+    entregue: { label:'Entregue',               cor:'#16A34A', bg:'rgba(22,163,74,.08)',   icon:'🎉' },
+    cancelado:{ label:'Cancelado',              cor:'#DC2626', bg:'rgba(220,38,38,.1)',    icon:'❌' },
+  };
   const st = p.status||'novo';
-  return `<div class="pedido-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <span style="font-size:12px;font-weight:700;color:var(--gray);">Pedido #${String(p.id||'').slice(-4)||'----'}</span>
-      <span class="pedido-status" style="background:${sc[st]||sc.novo};">${statusMap[st]||st}</span>
+  const s = STATUS[st]||STATUS.novo;
+
+  // Barra de progresso visual
+  const steps=['novo','aceito','pronto','entregue'];
+  const stepIdx=steps.indexOf(st);
+  const progressBar = st!=='cancelado' ? `
+    <div style="display:flex;align-items:center;gap:4px;margin:10px 0 8px;">
+      ${steps.map((step,i)=>{
+        const done=i<=stepIdx;
+        return `<div style="flex:1;height:4px;border-radius:2px;background:${done?s.cor:'rgba(26,10,8,.1)'};transition:background .4s;"></div>`;
+      }).join('')}
     </div>
-    <div style="font-size:13px;color:var(--dark);margin-bottom:6px;">${(p.itens||[]).map(i=>i.qtd+'x '+i.nome).join(', ')}</div>
-    <div style="font-size:14px;font-weight:800;color:var(--dark);">${fmt(p.total)}</div>
+    <div style="font-size:10px;color:${s.cor};font-weight:600;margin-bottom:8px;">${s.icon} ${s.label}</div>` : `
+    <div style="margin:8px 0;"><span style="font-size:11px;color:#DC2626;font-weight:600;">❌ Pedido cancelado</span></div>`;
+
+  return `<div class="pedido-card" style="border-left:3px solid ${s.cor};">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--gray);">Pedido #${String(p.id||'').slice(-4)||'----'}</div>
+        ${p.lojaNome?`<div style="font-size:12px;font-weight:700;color:var(--dark);">${p.lojaNome}</div>`:''}
+      </div>
+      <span style="font-size:14px;font-weight:900;color:var(--dark);">${fmt(p.total)}</span>
+    </div>
+    ${progressBar}
+    <div style="font-size:12px;color:var(--gray);line-height:1.5;">${(p.itens||[]).map(i=>i.qtd+'x '+i.nome).join(' · ')}</div>
   </div>`;
 }
 
@@ -1216,79 +1407,6 @@ window.validarEntrega = function(lid) {
   }
   nextStep(lid);
 };
-  const el=$('cart-content'); if(!el) return;
-  const lojas=Object.values(_carrinhos).filter(c=>c.itens.length>0);
-  if(!lojas.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-title">Sacola vazia</div><div class="empty-desc">Adicione itens do cardápio</div></div>';return;}
-
-  // Dados do cliente salvos
-  const nome=_user?.nome||''; const tel=(_user?.tel||'').replace(/\D/g,'').replace(/^(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3');
-
-  el.innerHTML = lojas.map((c,li) => {
-    const l=c.loja;
-    const sub=c.itens.reduce((s,i)=>s+i.preco*i.qtd,0);
-    const taxa=parseFloat(l.taxa_entrega||0);
-    const total=sub+taxa;
-    return `
-    <div class="cart-loja-header">
-      <div class="cart-loja-nome">${l.nome}</div>
-    </div>
-    ${c.itens.map((item,ii)=>`
-    <div class="cart-item">
-      <div style="flex:1;">
-        <div class="cart-item-nome">${item.qtd}x ${item.nome}</div>
-        ${item.adicionais&&item.adicionais.length?`<div class="cart-item-adic">${item.adicionais.map(a=>'+ '+a.nome).join('<br>')}</div>`:''}
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div class="qty-ctrl">
-          <button onclick="mudaCartItem('${l.id}',${ii},-1)">−</button>
-          <span>${item.qtd}</span>
-          <button onclick="mudaCartItem('${l.id}',${ii},1)">+</button>
-        </div>
-        <div class="cart-item-preco">${fmt(item.preco*item.qtd)}</div>
-      </div>
-    </div>`).join('')}
-
-    <div class="checkout-section">
-      <div class="checkout-label">Entrega</div>
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
-        ${l.faz_entrega!==false?`<button class="pag-btn${_opcaoEntrega==='entrega'?' ativo':''}" onclick="setEntrega('entrega',this,'${l.id}')">🛵 Entrega</button>`:''}
-        ${l.faz_retirada!==false?`<button class="pag-btn${_opcaoEntrega==='retirada'?' ativo':''}" onclick="setEntrega('retirada',this,'${l.id}')">🏃 Retirada</button>`:''}
-      </div>
-      <div id="campos-entrega-${l.id}" style="${_opcaoEntrega==='entrega'?'':'display:none;'}">
-        <input class="checkout-input" id="rua-${l.id}" placeholder="Rua / Avenida">
-        <input class="checkout-input" id="num-${l.id}" placeholder="Número" style="width:120px;">
-        <input class="checkout-input" id="compl-${l.id}" placeholder="Complemento (opcional)">
-      </div>
-
-      <div class="checkout-label" style="margin-top:10px;">Seus dados</div>
-      <input class="checkout-input" id="cli-nome-${l.id}" value="${nome}" placeholder="Seu nome">
-      <input class="checkout-input" id="cli-tel-${l.id}" value="${tel}" placeholder="WhatsApp (DDD + número)" oninput="mskTel(this)">
-      <input class="checkout-input" id="cli-obs-${l.id}" placeholder="Observações (opcional)">
-
-      <div class="checkout-label" style="margin-top:10px;">Pagamento</div>
-      <div class="pag-opt">
-        <button class="pag-btn ativo" id="pag-pix-${l.id}" onclick="setPag('pix','${l.id}')">💠 PIX</button>
-        <button class="pag-btn" id="pag-cartao-${l.id}" onclick="setPag('cartao','${l.id}')">💳 Cartão</button>
-        <button class="pag-btn" id="pag-dinheiro-${l.id}" onclick="setPag('dinheiro','${l.id}')">💵 Dinheiro</button>
-      </div>
-      <div id="troco-${l.id}" style="display:none;">
-        <input class="checkout-input" id="troco-val-${l.id}" placeholder="Troco para quanto?">
-      </div>
-
-      <!-- Resumo -->
-      <div style="background:var(--cream);border-radius:12px;padding:12px;margin-top:12px;">
-        <div class="resumo-row"><span>Subtotal</span><span>${fmt(sub)}</span></div>
-        <div class="resumo-row"><span>Taxa de entrega</span><span style="${taxa===0?'color:#22A85A;font-weight:700;':''}">${taxa===0?'Grátis':fmt(taxa)}</span></div>
-        <div class="resumo-row" style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px;">
-          <span style="font-weight:800;color:var(--dark);">Total</span>
-          <span class="resumo-total">${fmt(total)}</span>
-        </div>
-      </div>
-      <button class="btn-finalizar" onclick="finalizarPedido('${l.id}')">Mandar o pedido! 🚀</button>
-    </div>
-    <div style="height:1px;background:var(--border);margin:8px 0;"></div>`;
-  }).join('');
-}
 
 window.mudaCartItem = function(lid, ii, d) {
   const c=_carrinhos[lid]; if(!c) return;
@@ -1300,18 +1418,9 @@ window.mudaCartItem = function(lid, ii, d) {
   atualizarCartBtn();
 };
 
-window.setEntrega = function(op, btn, lid) {
-  _opcaoEntrega=op;
-  document.querySelectorAll(`[onclick*="setEntrega"][onclick*="${lid}"]`).forEach(b=>b.classList.remove('ativo'));
-  btn.classList.add('ativo');
-  $('campos-entrega-'+lid).style.display=op==='entrega'?'':'none';
-};
 
-window.setPag = function(pag, lid) {
-  _opcaoPag=pag;
-  ['pix','cartao','dinheiro'].forEach(p=>{ const b=$(`pag-${p}-${lid}`); if(b) b.classList.toggle('ativo',p===pag); });
-  $('troco-'+lid).style.display=pag==='dinheiro'?'block':'none';
-};
+
+
 
 // ═══════════════════════════════════════════════════════
 // FINALIZAR PEDIDO
@@ -1408,22 +1517,7 @@ function renderOrders() {
   if(!allPeds.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Nenhum pedido ainda</div><div class="empty-desc">Faça seu primeiro pedido!</div></div>';return;}
   allPeds.sort((a,b)=>b.id>a.id?1:-1);
   el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;">Meus pedidos</div>` +
-    allPeds.slice(0,20).map(p=>{
-      const statusMap={novo:'🟡 Aguardando',aceito:'🟠 Em preparo',pronto:'🟢 Pronto',entregue:'✅ Entregue',cancelado:'❌ Cancelado'};
-      const sc={novo:'rgba(234,179,8,.15)',aceito:'rgba(249,115,22,.15)',pronto:'rgba(34,197,94,.15)',entregue:'rgba(34,197,94,.1)',cancelado:'rgba(239,68,68,.15)'};
-      const st=p.status||'novo';
-      return `<div class="pedido-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <div>
-            <div style="font-size:12px;font-weight:700;color:var(--gray);">Pedido #${String(p.id||'').slice(-4)||'----'}</div>
-            <div style="font-size:11px;color:var(--gray);">${p.lojaNome||''}</div>
-          </div>
-          <span class="pedido-status" style="background:${sc[st]||sc.novo};">${statusMap[st]||st}</span>
-        </div>
-        <div style="font-size:12px;color:var(--mid);margin-bottom:6px;">${(p.itens||[]).map(i=>i.qtd+'x '+i.nome).join(', ')}</div>
-        <div style="font-size:15px;font-weight:900;color:var(--dark);">${fmt(p.total)}</div>
-      </div>`;
-    }).join('');
+    allPeds.slice(0,20).map(p => pedidoCardHTML(p)).join('');
 }
 
 async function pollarPedidos() {
@@ -1431,14 +1525,41 @@ async function pollarPedidos() {
   const whats=_user.tel.replace(/\D/g,'');
   if(!whats||whats.length<10) return;
   try {
-    const {data} = await db.from('pedidos').select('id,status,total').eq('cliente_whats',whats).in('status',['aceito','pronto','entregue']).order('created_at',{ascending:false}).limit(10);
+    const {data} = await db.from('pedidos')
+      .select('id,status,total,estabelecimento_id')
+      .eq('cliente_whats',whats)
+      .not('status','in','("cancelado")')
+      .order('created_at',{ascending:false})
+      .limit(20);
+
+    let mudou=false;
     (data||[]).forEach(p => {
-      if(_statusAnt[p.id]&&_statusAnt[p.id]!==p.status) {
-        const msgs={aceito:'Pedido em preparo! 🍳',pronto:'Pedido pronto! 🎉',entregue:'Pedido entregue! ✅'};
+      const ant=_statusAnt[p.id];
+      if(ant && ant!==p.status) {
+        mudou=true;
+        const loja=_lojas.find(l=>l.id===p.estabelecimento_id);
+        const nomeLoja=loja?.nome||'Loja';
+        const msgs={
+          aceito:  `🍳 ${nomeLoja}: Pedido em preparo!`,
+          pronto:  `🎉 ${nomeLoja}: Pedido pronto! Pode retirar.`,
+          entregue:`✅ ${nomeLoja}: Pedido entregue!`,
+          cancelado:`❌ ${nomeLoja}: Pedido cancelado.`,
+        };
         if(msgs[p.status]) toast(msgs[p.status]);
+
+        // Atualiza localStorage
+        if(loja?.slug) {
+          const peds=JSON.parse(localStorage.getItem('pw_peds_'+loja.slug)||'[]');
+          const idx=peds.findIndex(pd=>pd.id===p.id);
+          if(idx>=0) { peds[idx].status=p.status; localStorage.setItem('pw_peds_'+loja.slug,JSON.stringify(peds)); }
+        }
       }
       _statusAnt[p.id]=p.status;
     });
+
+    // Re-renderiza pedidos se houve mudança
+    if(mudou && _screen==='orders') renderOrders();
+    if(mudou && _screen==='store' && _tabAtiva==='pedidos') renderStorePedidos();
   } catch(e){}
 }
 
