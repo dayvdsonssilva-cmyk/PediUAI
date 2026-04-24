@@ -49,13 +49,12 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
 
 /* ── STORE CARD ── */
 .store-card{background:var(--card);border-radius:18px;overflow:hidden;box-shadow:0 2px 12px rgba(26,10,8,.07);border:1px solid var(--border);cursor:pointer;transition:transform .15s,box-shadow .15s;}
-.store-card:active{transform:scale(.98);}
-/* Card A — hero com logo flutuante (padrão) */
-.store-hero{height:90px;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:0 14px 0;}
-.store-hero-bg{position:absolute;inset:0;}
-.store-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55) 0%,rgba(0,0,0,.05) 60%);}
-.store-logo-circle{width:54px;height:54px;border-radius:50%;background:var(--card);border:3px solid #fff;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;position:relative;z-index:2;margin-bottom:-20px;box-shadow:0 2px 10px rgba(0,0,0,.2);}
-.store-logo-circle img{width:100%;height:100%;object-fit:cover;}
+.store-card:active{transform:scale(.99);}
+.store-hero{height:120px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.store-hero-logo{width:72px;height:72px;border-radius:18px;object-fit:cover;border:3px solid rgba(255,255,255,.3);box-shadow:0 4px 16px rgba(0,0,0,.35);display:block;}
+.store-hero-emoji{width:72px;height:72px;border-radius:18px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:34px;border:3px solid rgba(255,255,255,.2);}
+.store-info{padding:12px 14px 14px;}
+.store-name{font-size:14px;font-weight:800;color:var(--dark);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 /* Card B — horizontal: logo grande + info lado a lado */
 .store-card-b{background:var(--card);border-radius:18px;overflow:hidden;box-shadow:0 2px 12px rgba(26,10,8,.07);border:1px solid var(--border);cursor:pointer;transition:transform .15s,box-shadow .15s;display:flex;align-items:stretch;}
 .store-card-b:active{transform:scale(.98);}
@@ -67,7 +66,7 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
 .store-card-b-meta{display:flex;gap:5px;flex-wrap:wrap;}
 .store-card-b-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--gray);font-weight:500;background:var(--cream);padding:3px 7px;border-radius:6px;}
 .store-emoji{font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;}
-.store-info{padding:24px 14px 12px;}
+
 .store-name{font-size:14px;font-weight:800;color:var(--dark);margin-bottom:5px;}
 .store-meta{display:flex;gap:8px;flex-wrap:wrap;}
 .store-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--gray);font-weight:500;background:var(--cream);padding:3px 8px;border-radius:6px;}
@@ -85,14 +84,15 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
 /* ══════════════════════════════════════
    STORE SCREEN — Cardápio
 ══════════════════════════════════════ */
-.store-capa{height:190px;position:relative;overflow:hidden;flex-shrink:0;display:flex;flex-direction:column;}
-.store-capa-visual{flex:1;display:flex;align-items:center;justify-content:center;position:relative;}
-.store-capa-logo{width:80px;height:80px;border-radius:20px;object-fit:cover;border:3px solid rgba(255,255,255,.25);box-shadow:0 4px 20px rgba(0,0,0,.3);}
-.store-capa-gradient{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 60%);}
-.store-capa-info{position:absolute;bottom:14px;left:14px;right:14px;}
-.store-capa-nome{font-size:20px;font-weight:900;color:#fff;line-height:1.2;}
-.store-capa-desc{font-size:12px;color:rgba(255,255,255,.75);margin-top:3px;}
-.store-capa-badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+/* Capa do estabelecimento — igual ao cliente.html */
+.store-capa{flex-shrink:0;background:var(--st-red,#C0392B);}
+.loja-capa-header{display:flex;align-items:center;gap:12px;padding:16px 14px 12px;}
+.loja-capa-logo{width:56px;height:56px;border-radius:14px;object-fit:cover;border:2px solid rgba(255,255,255,.3);flex-shrink:0;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden;}
+.loja-capa-logo img{width:100%;height:100%;object-fit:cover;display:block;}
+.loja-capa-nome{font-size:17px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:3px;}
+.loja-capa-desc{font-size:12px;color:rgba(255,255,255,.75);}
+.loja-capa-meta{display:flex;gap:8px;padding:0 14px 14px;flex-wrap:wrap;}
+.loja-capa-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,.25);backdrop-filter:blur(4px);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;color:#fff;}
 .badge-capa{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:4px 10px;font-size:11px;color:#fff;font-weight:600;}
 
 /* Tabs */
@@ -217,7 +217,7 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
 .empty-title{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:6px;}
 .empty-desc{font-size:13px;color:var(--gray);line-height:1.6;}
 
-@media(max-width:400px){.store-capa{height:170px;}.store-capa-nome{font-size:17px;}}
+
 </style>
 </head>
 <body>
@@ -591,32 +591,28 @@ function toggleCardStyle() {
   renderHome();
 }
 
-let _cardStyle = 'A'; // 'A' = hero flutuante, 'B' = horizontal
+let _cardStyle = 'A';
 
 function storeCardHTML(l) {
   const ab = l.aberto!==false;
   const temPromo = l.promocao_ativa && l.desconto_percent>0;
-
   if(_cardStyle === 'B') return storeCardHTMLb(l, ab, temPromo);
-
-  const logoHTML = l.logo_url
-    ? `<div class="store-logo-circle"><img src="${l.logo_url}" alt="${l.nome}" onerror="this.outerHTML='<div class=store-logo-circle style=background:${l._bg}22>${l._emoji}</div>'"></div>`
-    : `<div class="store-logo-circle" style="background:${l._bg}22;font-size:24px;">${l._emoji}</div>`;
-
-  const hex = normalizeHex(l._bg||'#C0392B');
+  const hex = normalizeHex(l.cor_primaria||'#C0392B');
+  const logoContent = l.logo_url
+    ? `<img class="store-hero-logo" src="${l.logo_url}" alt="${l.nome}" onerror="this.outerHTML='<div class=store-hero-emoji>${l._emoji}</div>'">`
+    : `<div class="store-hero-emoji">${l._emoji}</div>`;
   return `<div class="store-card" onclick="abrirLoja('${l.id}')">
-    <div class="store-hero" style="background:linear-gradient(135deg,${hex}bb 0%,${darken(hex,30)}ff 100%);">
-      <div class="store-hero-bg"></div>
-      <div class="store-hero-overlay" style="background:linear-gradient(to top,rgba(0,0,0,.6) 0%,rgba(0,0,0,.1) 70%);"></div>
-      <!-- Nome da loja no fundo do hero -->
-      <div style="position:absolute;bottom:28px;left:80px;right:8px;z-index:3;">
-        <div style="font-size:13px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.nome}</div>
-      </div>
-      ${!ab?`<div style="position:absolute;inset:0;background:rgba(0,0,0,.52);display:flex;align-items:center;justify-content:center;z-index:3;"><span style="color:#fff;font-size:12px;font-weight:700;background:rgba(0,0,0,.4);padding:5px 12px;border-radius:8px;">Fechado</span></div>`:''}
+    <div class="store-hero" style="background:linear-gradient(160deg,${hex}cc,${darken(hex,35)}ff);">
+      <!-- esferas deco -->
+      <div style="position:absolute;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.07);top:-40px;right:-30px;pointer-events:none;"></div>
+      <div style="position:absolute;width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.05);bottom:-20px;left:10px;pointer-events:none;"></div>
+      <!-- logo centralizada -->
+      <div style="position:relative;z-index:2;">${logoContent}</div>
+      ${!ab?`<div style="position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:3;"><span style="color:#fff;font-size:12px;font-weight:700;background:rgba(0,0,0,.4);padding:5px 12px;border-radius:8px;">Fechado</span></div>`:''}
       ${temPromo?`<div style="position:absolute;top:8px;right:8px;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:3px 9px;border-radius:7px;z-index:3;">🔥 -${l.desconto_percent}%</div>`:''}
-      ${logoHTML}
     </div>
     <div class="store-info">
+      <div class="store-name">${l.nome}</div>
       <div class="store-meta">
         <div class="store-tag"><span class="status-dot" style="background:${ab?'#22C55E':'#EF4444'};"></span>${ab?'Aberto':'Fechado'}</div>
         ${l.tempo_entrega?`<div class="store-tag">⏱ ${l.tempo_entrega}</div>`:`<div class="store-tag">⏱ 25–40 min</div>`}
@@ -878,30 +874,28 @@ function renderStore(fresquinhos=[]) {
   </div>`;
 
   $('store-content').innerHTML = `
-    <!-- Capa redesenhada -->
-    ${(()=>{const hex=normalizeHex(l.cor_primaria||'#C0392B');return `
-    <div class="store-capa" style="background:linear-gradient(160deg,${hex}ee 0%,${darken(hex,40)}ff 100%);">
-      <div class="store-capa-visual">
-        <div style="position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.06);top:-60px;right:-40px;pointer-events:none;"></div>
-        <div style="position:absolute;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.04);bottom:-30px;left:20px;pointer-events:none;"></div>
-        <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:16px;">
-          ${l.logo_url
-            ? `<img class="store-capa-logo" src="${l.logo_url}" alt="${l.nome}" onerror="this.outerHTML='<div style=\'width:80px;height:80px;border-radius:20px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:44px;\'>${l._emoji}</div>'">`
-            : `<div style="width:80px;height:80px;border-radius:20px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:44px;">${l._emoji}</div>`}
+    <!-- Capa igual ao cliente.html -->
+    <div class="store-capa" style="background:${normalizeHex(l.cor_primaria||'#C0392B')};">
+      <div class="loja-capa-header">
+        <div class="loja-capa-logo">
+          ${l.logo_url?`<img src="${l.logo_url}" alt="${l.nome}" onerror="this.style.display='none'">`:`${l._emoji}`}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div class="loja-capa-nome">${l.nome}</div>
+          ${l.descricao?`<div class="loja-capa-desc">${l.descricao.slice(0,60)}${l.descricao.length>60?'...':''}</div>`:''}
+        </div>
+        <div class="loja-capa-badge" style="align-self:flex-start;">
+          <span style="width:7px;height:7px;border-radius:50%;background:${ab?'#22C55E':'#EF4444'};"></span>
+          ${ab?'Aberto':'Fechado'}
         </div>
       </div>
-      <div style="background:rgba(0,0,0,.35);backdrop-filter:blur(8px);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div class="store-capa-nome" style="font-size:16px;">${l.nome}</div>
-          ${l.descricao?`<div class="store-capa-desc" style="font-size:11px;">${l.descricao.slice(0,50)}${l.descricao.length>50?'...':''}</div>`:''}
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-          <span class="badge-capa" style="font-size:10px;padding:3px 8px;"><span style="width:6px;height:6px;border-radius:50%;background:${ab?'#22C55E':'#EF4444'};display:inline-block;"></span>&nbsp;${ab?'Aberto':'Fechado'}</span>
-          ${l.tempo_entrega?`<span class="badge-capa" style="font-size:10px;padding:3px 8px;">⏱ ${l.tempo_entrega}</span>`:''}
-          ${l.taxa_entrega>0?`<span class="badge-capa" style="font-size:10px;padding:3px 8px;">🛵 ${fmt(l.taxa_entrega)}</span>`:`<span class="badge-capa" style="font-size:10px;padding:3px 8px;color:#22C55E;">🛵 Grátis</span>`}
-        </div>
+      <div class="loja-capa-meta">
+        ${l.tempo_entrega?`<span class="loja-capa-badge">⏱ ${l.tempo_entrega}</span>`:`<span class="loja-capa-badge">⏱ 25–40 min</span>`}
+        ${l.taxa_entrega>0?`<span class="loja-capa-badge">🛵 ${fmt(l.taxa_entrega)}</span>`:`<span class="loja-capa-badge" style="color:#4ade80;">🛵 Entrega grátis</span>`}
+        ${l.cidade?`<span class="loja-capa-badge">📍 ${l.cidade}</span>`:''}
+        ${l.whatsapp?`<span class="loja-capa-badge">📞 Contato</span>`:''}
       </div>
-    </div>`;})()}
+    </div>
 
     <!-- Tabs -->
     <div class="store-tabs">
