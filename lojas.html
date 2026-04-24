@@ -47,9 +47,9 @@ html,body{width:100%;min-height:100%;background:var(--light);font-family:'Poppin
   background:rgba(255,253,249,.95);
   backdrop-filter:blur(14px);
   border-bottom:1px solid rgba(26,10,8,.08);
-  padding:10px 18px;
+  padding:12px 18px;
 }
-.header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0;}
 .logo-text{font-size:1.3rem;font-weight:900;letter-spacing:-.03em;line-height:1;}
 .logo-text .way{color:var(--red);}
 .avatar-btn{
@@ -426,12 +426,27 @@ function renderBottomNav(screen) {
 // ─── RENDER PERFIL MODAL ─────────────────────────────────────────
 function renderPerfilModal() {
   const u = state.user||{};
+  const logado = !!u.nome;
   return `
   <div class="modal-overlay" onclick="if(event.target===this){state.showPerfilModal=false;render();}">
     <div class="modal-sheet">
       <div class="sheet-handle"></div>
-      <div style="font-size:19px;font-weight:800;color:var(--dark);margin-bottom:4px;">${u.nome?'Meu perfil':'👋 Bem-vindo!'}</div>
-      <div style="font-size:12.5px;color:var(--gray);margin-bottom:20px;">${u.nome?'Atualize seus dados':'Cadastro rápido para começar'}</div>
+
+      ${logado ? `
+      <!-- Cabeçalho quando logado -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+        <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--red),var(--red-d));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;">${initials()}</div>
+        <div>
+          <div style="font-size:16px;font-weight:800;color:var(--dark);">${u.nome}</div>
+          <div style="font-size:12px;color:var(--gray);">${u.cidade||'Cidade não definida'} ${u.estado?'· '+u.estado:''}</div>
+        </div>
+      </div>
+      <div style="height:1px;background:rgba(26,10,8,.07);margin-bottom:16px;"></div>
+      ` : `
+      <div style="font-size:19px;font-weight:800;color:var(--dark);margin-bottom:4px;">👋 Bem-vindo!</div>
+      <div style="font-size:12.5px;color:var(--gray);margin-bottom:20px;">Cadastro rápido para começar</div>
+      `}
+
       <div class="form-field"><label class="form-label">Nome</label><input class="form-input" id="pf-nome" value="${u.nome||''}" placeholder="João Silva"/></div>
       <div class="form-field"><label class="form-label">WhatsApp</label><input class="form-input" id="pf-tel" value="${u.tel||''}" placeholder="(11) 99999-9999" oninput="this.value=mskTel(this.value)" type="tel"/></div>
       <div class="form-field"><label class="form-label">E-mail</label><input class="form-input" id="pf-email" value="${u.email||''}" placeholder="seu@email.com" type="email"/></div>
@@ -447,10 +462,25 @@ function renderPerfilModal() {
           ${(state._cidades||[]).filter(c=>c!==u.cidade).map(c=>`<option value="${c}">${c}</option>`).join('')}
         </select>
       </div>
-      <button class="btn-primary" style="margin-top:8px;" onclick="salvarPerfil()">Salvar e entrar</button>
+
+      <button class="btn-primary" style="margin-top:8px;" onclick="salvarPerfil()">${logado?'💾 Salvar alterações':'Entrar →'}</button>
+
+      ${logado ? `
+      <div style="height:1px;background:rgba(26,10,8,.07);margin:14px 0;"></div>
+      <button class="btn-ghost" onclick="sair()" style="color:#E05A3A;border-color:rgba(224,90,58,.2);">Sair da conta</button>
+      ` : `
       <button class="btn-ghost" style="margin-top:10px;" onclick="state.showPerfilModal=false;render()">Continuar sem cadastro</button>
+      `}
     </div>
   </div>`;
+}
+
+function sair() {
+  state.user = null;
+  state.cidade = '';
+  localStorage.removeItem('pw_cliente');
+  state.showPerfilModal = false;
+  render();
 }
 
 async function loadCidades() {
@@ -481,9 +511,9 @@ async function salvarPerfil() {
   state.user = {nome,tel,email,estadoSigla:uf,estado:estadoNome,cidade};
   localStorage.setItem('pw_cliente', JSON.stringify(state.user));
   state.showPerfilModal = false;
-  if(cidade && state.lojas) {
-    const cidades = [...new Set(state.lojas.map(l=>l.cidade).filter(Boolean))];
-    if(cidades.includes(cidade)) state.cidade = cidade;
+  // Auto-aplica filtro de cidade imediatamente
+  if(cidade) {
+    state.cidade = cidade;
   }
   render();
 }
@@ -512,12 +542,7 @@ function renderHome() {
           <button class="avatar-btn tap" onclick="state.showPerfilModal=true;render();">${initials()}</button>
         </div>
       </div>
-      <!-- Search -->
-      <div class="search-bar">
-        ${icons.search_sm()}
-        <input id="home-search" value="${state.busca}" placeholder="Buscar restaurante..." oninput="state.busca=this.value;renderInPlace()"/>
-        ${cidades.length>1 ? `<select style="border:none;background:transparent;font-family:'Poppins',sans-serif;font-size:12px;color:var(--gray);outline:none;max-width:90px;" onchange="state.cidade=this.value;renderInPlace()"><option value="">Todas</option>${cidades.map(c=>`<option ${state.cidade===c?'selected':''} value="${c}">${c}</option>`).join('')}</select>` : ''}
-      </div>
+
     </div>
 
     <div class="main-content" style="padding:0;">
@@ -530,8 +555,17 @@ function renderHome() {
         </div>
       </div>
 
+      <!-- SEARCH BAR (inline, below banner) -->
+      <div style="padding:12px 18px 0;">
+        <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid rgba(26,10,8,.08);border-radius:12px;padding:10px 14px;box-shadow:0 2px 8px rgba(26,10,8,.06);">
+          ${icons.search_sm()}
+          <input id="home-search-bottom" value="${state.busca}" placeholder="Buscar restaurante ou categoria..." oninput="state.busca=this.value;renderInPlace()" style="border:none;background:transparent;font-family:'Poppins',sans-serif;font-size:13px;color:var(--dark);outline:none;width:100%;"/>
+          ${state.cidade ? `<div style="display:flex;align-items:center;gap:5px;background:rgba(224,90,58,.08);border-radius:8px;padding:4px 10px;white-space:nowrap;"><span style="font-size:11px;font-weight:700;color:var(--red);">📍 ${state.cidade}</span><span onclick="state.cidade='';renderInPlace();" style="font-size:11px;color:var(--gray);cursor:pointer;margin-left:2px;">✕</span></div>` : ''}
+        </div>
+      </div>
+
       <!-- CATEGORIES -->
-      <div class="scroll-x" style="display:flex;gap:8px;padding:14px 18px 4px;">
+      <div class="scroll-x" style="display:flex;gap:8px;padding:12px 18px 4px;">
         ${CATS.map(c=>`
           <div class="cat-pill ${state.catAtiva===c.id?'active':''}" onclick="state.catAtiva='${c.id}';renderInPlace()">
             <span style="font-size:13px;">${c.emoji}</span>${c.label}
@@ -798,10 +832,16 @@ function renderConfirm() {
   </div>`;
 }
 
-// ─── SCREEN: SEARCH (alias home with focus) ─────────────────────
+// ─── SCREEN: SEARCH ─────────────────────────────────────────────
 function renderSearch() {
   state.catAtiva = 'all';
-  return renderHome();
+  const r = renderHome();
+  // Auto-focus search after render
+  setTimeout(() => {
+    const inp = document.getElementById('home-search-bottom');
+    if(inp) { inp.focus(); inp.scrollIntoView({behavior:'smooth'}); }
+  }, 100);
+  return r;
 }
 
 // ─── SCREEN: ORDERS ──────────────────────────────────────────────
@@ -827,7 +867,7 @@ async function openStore(idx) {
 
   // Fetch items
   const loja = state.lojas[idx];
-  const tabelas = ['produtos','cardapio','itens','menu','items'];
+  const tabelas = ['produtos','cardapio','itens','menu','items']; // 'produtos' is the main table
   let items = null;
   for(const t of tabelas) {
     try {
@@ -840,9 +880,10 @@ async function openStore(idx) {
           desc: p.descricao||p.description||'',
           price: parseFloat(p.preco||p.price||p.valor||0),
           cat: p.categoria||p.category||p.tipo||'Cardápio',
-          img: p.foto||p.image||p.imagem||p.foto_url||null,
+          img: p.foto_url||p.foto||p.image||p.imagem||null,
           emoji: loja._emoji,
-        }));
+          disponivel: p.disponivel !== false,
+        })).filter(p => p.disponivel);
         break;
       }
     } catch(e) {}
@@ -949,6 +990,11 @@ async function init() {
     state.lojas = data.map((l,i)=>({...l,_idx:i,_emoji:EMOJIS[i%EMOJIS.length],_bg:BGS[i%BGS.length]}));
   } else {
     state.lojas = [];
+  }
+
+  // Aplica cidade do usuário salvo automaticamente
+  if(state.user?.cidade) {
+    state.cidade = state.user.cidade;
   }
 
   // Mostrar modal perfil na primeira visita
