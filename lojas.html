@@ -326,8 +326,9 @@ let state = {
   user: null,
   step: 0,
   orderCode: '',
-  modal: null,   // 'perfil'
+  modal: null,
   showPerfilModal: false,
+  promoItems: null,
 };
 
 try { state.user = JSON.parse(localStorage.getItem('pw_cliente')); } catch(e) {}
@@ -533,7 +534,18 @@ function renderHome() {
   return `
   <div id="screen-home" class="screen active" style="flex-direction:column;">
     <!-- TOP HEADER -->
-
+    <div class="top-header">
+      <div class="header-row">
+        <div>
+          ${state.cidade ? `<div style="font-size:11px;color:var(--gray);margin-bottom:2px;">${icons.pin()} ${state.cidade}</div>` : ''}
+          <div class="logo-text">PEDI<span class="way">WAY</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          ${cn>0 ? `<button class="cart-btn tap" onclick="goTo('cart')">${icons.cart_sm(true)}<span style="position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;border-radius:9px;background:#fff;color:var(--red);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;">${cn}</span></button>` : ''}
+          <button class="avatar-btn tap" onclick="state.showPerfilModal=true;render();">${initials()}</button>
+        </div>
+      </div>
+    </div>
 
     <div class="main-content" style="padding:0;">
       <!-- BANNER PROMOÇÕES -->
@@ -1055,6 +1067,37 @@ async function init() {
   // Aplica cidade do usuário salvo automaticamente
   if(state.user?.cidade) {
     state.cidade = state.user.cidade;
+  }
+
+  // Carrega itens em promoção
+  state.promoItems = null;
+  render();
+  try {
+    const {data:promoData} = await db
+      .from('produtos')
+      .select('id,nome,preco,desconto_percent,estabelecimento_id')
+      .eq('em_promocao', true)
+      .gt('desconto_percent', 0)
+      .eq('disponivel', true);
+    if (promoData && promoData.length > 0) {
+      state.promoItems = promoData.map(p => {
+        const precoNum = parseFloat(p.preco||0);
+        const desc = parseInt(p.desconto_percent||0);
+        const precoDesc = precoNum * (1 - desc/100);
+        return {
+          id: p.id,
+          name: p.nome||'Produto',
+          desconto: desc,
+          estabelecimento_id: p.estabelecimento_id,
+          preco_original: 'R$ ' + precoNum.toFixed(2).replace('.',','),
+          preco_com_desconto: 'R$ ' + precoDesc.toFixed(2).replace('.',','),
+        };
+      });
+    } else {
+      state.promoItems = [];
+    }
+  } catch(e) {
+    state.promoItems = [];
   }
 
   // Mostrar modal perfil na primeira visita
