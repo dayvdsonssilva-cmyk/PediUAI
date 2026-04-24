@@ -123,7 +123,7 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
 .produto-img-wrap{width:100px;height:auto;min-height:100px;min-width:100px;overflow:hidden;background:var(--cream);flex-shrink:0;align-self:stretch;}
 .produto-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;min-height:100px;}
 .produto-emoji-bg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;}
-.promo-badge{position:absolute;top:4px;left:4px;background:var(--st-red);color:#fff;font-size:10px;padding:2px 5px;border-radius:6px;}
+
 .produto-body{flex:1;padding:12px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;}
 .produto-cat{font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px;}
 .produto-nome{font-size:13px;font-weight:800;color:var(--dark);line-height:1.3;margin-bottom:3px;}
@@ -365,6 +365,26 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
     <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:100px;" id="cart-content"></div>
   </div>
 
+  <!-- PROMOS SCREEN -->
+  <div id="screen-promos" class="screen" style="flex-direction:column;">
+    <div class="back-header">
+      <button class="back-btn" onclick="showScreen('home')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--dark)" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="flex:1;">
+        <div style="font-size:10px;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Promoções</div>
+        <div id="promos-title" style="font-size:15px;font-weight:800;color:var(--dark);"></div>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:14px 16px 100px;" id="promos-list"></div>
+    <nav class="bottom-nav">
+      <button class="nav-item" onclick="showScreen('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Início
+      </button>
+    </nav>
+  </div>
+
   <!-- PEDIDOS -->
   <div id="screen-orders" class="screen" style="flex-direction:column;">
     <div class="top-header">
@@ -500,7 +520,8 @@ function showScreen(name) {
   if(name !== 'store' && name !== 'cart' && name !== 'orders') _prevScreen = _screen;
   _screen = name;
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  $('screen-'+name)?.classList.add('active');
+  const scEl = $('screen-'+name);
+  if(scEl) scEl.classList.add('active');
   // nav
   ['home','search','cart','orders'].forEach(n => {
     $('nav-'+n)?.classList.toggle('active', n===name);
@@ -540,34 +561,46 @@ function renderHome() {
 }
 
 function filtrarPorDesconto(pct) {
-  // Mostra lojas que têm itens com esse desconto
-  const lojasComDesconto = _promoItems
-    .filter(item => item.desconto >= pct)
-    .map(item => item.estabelecimento_id);
-  const unicas = [...new Set(lojasComDesconto)];
-
-  if(!unicas.length) {
-    toast('Nenhuma loja com ' + pct + '% OFF no momento');
+  // Pega itens com >= pct% de desconto
+  const itens = _promoItems.filter(item => item.desconto >= pct);
+  if(!itens.length) {
+    toast('Nenhuma promoção de ' + pct + '% no momento');
     return;
   }
+  abrirTelaPromos(pct, itens);
+}
 
-  // Filtra e mostra no grid principal
-  const antes = _catAtiva;
-  _catAtiva = 'promo';
-  const grid = $('home-grid');
-  const title = $('home-lojas-title');
-  if(title) title.textContent = 'Promoção de -' + pct + '% OFF';
+function abrirTelaPromos(pct, itens) {
+  const el = $('screen-promos');
+  if(!el) return;
 
-  const lojasFiltradas = _lojas.filter(l => unicas.includes(l.id));
-  if(grid) {
-    grid.innerHTML = lojasFiltradas.length
-      ? lojasFiltradas.map(l => storeCardHTML(l)).join('')
-      : '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Sem lojas</div></div>';
-  }
+  $('promos-title').textContent = '-' + pct + '% OFF ou mais';
 
-  // Scroll suave até os cards
-  const el = $('home-lojas');
-  if(el) el.scrollIntoView({ behavior: 'smooth' });
+  const html = itens.map(item => {
+    const loja = _lojas.find(l => l.id === item.estabelecimento_id) || {};
+    const precoOrig = parseFloat(item.preco || 0);
+    const precoDesc = precoOrig * (1 - item.desconto / 100);
+    const lojaHex = normalizeHex(loja.cor_primaria || '#C0392B');
+    return `<div style="background:#fff;border-radius:16px;overflow:hidden;display:flex;align-items:stretch;box-shadow:0 1px 8px rgba(26,10,8,.07);border:1px solid rgba(26,10,8,.07);cursor:pointer;margin-bottom:10px;" onclick="abrirLoja('${loja.id || ''}')">
+      <div style="width:96px;min-height:96px;flex-shrink:0;background:${lojaHex}22;display:flex;align-items:center;justify-content:center;font-size:32px;position:relative;overflow:hidden;">
+        ${item.foto_url ? `<img src="${item.foto_url}" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;">` : (loja._emoji || '🍽️')}
+        <div style="position:absolute;top:6px;left:6px;background:#E05A3A;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;">-${item.desconto}%</div>
+      </div>
+      <div style="flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:#9B7B72;text-transform:uppercase;margin-bottom:2px;">${loja.nome || ''}</div>
+          <div style="font-size:14px;font-weight:800;color:#1A0A08;margin-bottom:4px;">${item.name}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:12px;color:#9B7B72;text-decoration:line-through;">${fmt(precoOrig)}</span>
+          <span style="font-size:16px;font-weight:900;color:#E05A3A;">${fmt(precoDesc)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  $('promos-list').innerHTML = html;
+  showScreen('promos');
 }
 
 function filtrarLojas() {
@@ -1014,7 +1047,7 @@ function produtoCardHTML(p) {
       ${p.foto_url
         ? `<img src="${p.foto_url}" alt="${p.nome}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">`
         : `<div class="produto-emoji-bg">${p.emoji||'🍔'}</div>`}
-      ${temPromoItem?`<div class="promo-badge">🔥</div>`:''}
+
     </div>
     <div class="produto-body">
       <div>
