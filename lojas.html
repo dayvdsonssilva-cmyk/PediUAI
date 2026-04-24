@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0f0f0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>PEDIWAY</title>
+<title>PEDEUAI</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -103,10 +103,10 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
 .filtro-pill.ativo{background:var(--st-red);border-color:var(--st-red);color:#fff;}
 
 /* Produto card */
-.produto-card{background:var(--card);border-radius:16px;overflow:hidden;display:flex;gap:0;box-shadow:0 1px 6px rgba(26,10,8,.06);border:1px solid var(--border);cursor:pointer;transition:transform .12s;}
+.produto-card{background:var(--card);border-radius:14px;overflow:hidden;display:flex;gap:0;box-shadow:0 1px 8px rgba(26,10,8,.07);border:1px solid var(--border);cursor:pointer;transition:transform .12s;}
 .produto-card:active{transform:scale(.99);}
-.produto-img-wrap{width:90px;height:90px;flex-shrink:0;position:relative;overflow:hidden;background:var(--cream);}
-.produto-img-wrap img{width:100%;height:100%;object-fit:cover;}
+.produto-img-wrap{width:96px;height:96px;flex-shrink:0;position:relative;overflow:hidden;background:var(--cream);border-radius:12px 0 0 12px;}
+.produto-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
 .produto-emoji-bg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;}
 .promo-badge{position:absolute;top:4px;left:4px;background:var(--st-red);color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:6px;}
 .produto-body{flex:1;padding:12px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;}
@@ -264,8 +264,8 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
   <div id="screen-home" class="screen active" style="flex-direction:column;">
     <div class="top-header">
       <div>
-        <div id="home-cidade" style="font-size:11px;color:var(--gray);margin-bottom:2px;display:none;"></div>
-        <div class="logo-text">PEDI<span class="way">WAY</span></div>
+        <div class="logo-text">PEDE<span class="way">UAI</span></div>
+        <div id="home-cidade" style="font-size:11px;color:var(--gray);margin-top:1px;display:none;"></div>
       </div>
       <div style="display:flex;gap:8px;">
         <button class="cart-btn" id="home-cart-btn" onclick="showScreen('cart')" style="display:none;">
@@ -298,7 +298,7 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
   <div id="screen-search" class="screen" style="flex-direction:column;">
     <div class="top-header" style="flex-direction:column;align-items:stretch;gap:10px;">
       <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div class="logo-text">PEDI<span class="way">WAY</span></div>
+        <div class="logo-text">PEDE<span class="way">UAI</span></div>
         <button class="avatar-btn" onclick="abrirPerfil()" id="search-avatar">?</button>
       </div>
       <div class="search-box">
@@ -346,7 +346,7 @@ html,body{height:100%;overflow:hidden;background:var(--light);font-family:var(--
   <!-- PEDIDOS -->
   <div id="screen-orders" class="screen" style="flex-direction:column;">
     <div class="top-header">
-      <div class="logo-text">PEDI<span class="way">WAY</span></div>
+      <div class="logo-text">PEDE<span class="way">UAI</span></div>
     </div>
     <div style="flex:1;overflow-y:auto;padding:14px 18px 100px;" id="orders-content">
       <div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Nenhum pedido ainda</div><div class="empty-desc">Faça seu primeiro pedido!</div></div>
@@ -980,9 +980,242 @@ function atualizarCarrinhoBtns() {
 }
 
 // ═══════════════════════════════════════════════════════
-// CARRINHO SCREEN
+// CARRINHO SCREEN — checkout em etapas
 // ═══════════════════════════════════════════════════════
+// Etapas: 1=Sacola, 2=Entrega, 3=Pagamento, 4=Confirmação
+let _checkoutStep = {}; // { [lid]: 1|2|3|4 }
+let _checkoutData = {}; // { [lid]: { opcaoEntrega, rua, num, compl, nome, tel, obs, pag } }
+
+function getStep(lid) { return _checkoutStep[lid] || 1; }
+function setStep(lid, step) { _checkoutStep[lid] = step; renderCarrinho(); }
+
+window.nextStep = function(lid) { setStep(lid, getStep(lid)+1); };
+window.prevStep = function(lid) { setStep(lid, getStep(lid)-1); };
+window.goStep   = function(lid, s) { setStep(lid, s); };
+
+function saveStepData(lid) {
+  const d = _checkoutData[lid] || {};
+  _checkoutData[lid] = {
+    ...d,
+    opcaoEntrega: d.opcaoEntrega||'entrega',
+    rua:   $('rua-'+lid)?.value||d.rua||'',
+    num:   $('num-'+lid)?.value||d.num||'',
+    compl: $('compl-'+lid)?.value||d.compl||'',
+    nome:  $('cli-nome-'+lid)?.value||d.nome||_user?.nome||'',
+    tel:   $('cli-tel-'+lid)?.value||d.tel||_user?.tel||'',
+    obs:   $('cli-obs-'+lid)?.value||d.obs||'',
+    pag:   d.pag||'pix',
+  };
+}
+
 function renderCarrinho() {
+  const el=$('cart-content'); if(!el) return;
+  const lojas=Object.values(_carrinhos).filter(c=>c.itens.length>0);
+  if(!lojas.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-title">Sacola vazia</div><div class="empty-desc">Adicione itens do cardápio</div></div>';
+    return;
+  }
+  el.innerHTML = lojas.map(c => renderCheckoutLoja(c)).join('');
+}
+
+function renderCheckoutLoja(c) {
+  const l = c.loja;
+  const lid = l.id;
+  const step = getStep(lid);
+  const d = _checkoutData[lid] || {};
+
+  const sub = c.itens.reduce((s,i)=>s+i.preco*i.qtd, 0);
+  const taxa = parseFloat(l.taxa_entrega||0);
+  const total = sub + (d.opcaoEntrega==='retirada' ? 0 : taxa);
+
+  // Step indicator
+  const steps = ['Itens','Entrega','Pagamento'];
+  const stepBar = `<div style="display:flex;align-items:center;gap:0;margin-bottom:20px;">
+    ${steps.map((s,i)=>{
+      const n=i+1, done=step>n, active=step===n;
+      return `
+      <div style="display:flex;align-items:center;flex:1;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
+          <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;cursor:${done?'pointer':'default'};
+            background:${done?'#22C55E':active?'var(--st-red,#C0392B)':'rgba(26,10,8,.08)'};
+            color:${done||active?'#fff':'var(--gray)'};
+            transition:all .2s;" ${done?`onclick="goStep('${lid}',${n})"`:''}>
+            ${done?'✓':n}
+          </div>
+          <div style="font-size:10px;font-weight:${active?'700':'500'};color:${active?'var(--st-red,#C0392B)':'var(--gray)'};">${s}</div>
+        </div>
+        ${i<2?`<div style="height:2px;flex:0 0 20px;background:${step>n+1?'#22C55E':step===n+1?'var(--st-red,#C0392B)':'rgba(26,10,8,.08)'};margin-bottom:14px;border-radius:1px;transition:background .3s;"></div>`:''}
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  let content = '';
+
+  // ── ETAPA 1: ITENS ──
+  if(step===1) {
+    content = `
+    <div style="margin-bottom:16px;">
+      ${c.itens.map((item,ii)=>`
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:700;color:var(--dark);">${item.nome}</div>
+          ${item.adicionais&&item.adicionais.length?`<div style="font-size:11px;color:var(--gray);margin-top:2px;line-height:1.5;">${item.adicionais.map(a=>'+ '+a.nome).join(' · ')}</div>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button onclick="mudaCartItem('${lid}',${ii},-1)" style="width:28px;height:28px;border-radius:8px;background:var(--cream);border:none;font-size:1rem;font-weight:800;cursor:pointer;color:var(--dark);display:flex;align-items:center;justify-content:center;">−</button>
+            <span style="font-size:14px;font-weight:700;color:var(--dark);min-width:18px;text-align:center;">${item.qtd}</span>
+            <button onclick="mudaCartItem('${lid}',${ii},1)" style="width:28px;height:28px;border-radius:8px;background:var(--cream);border:none;font-size:1rem;font-weight:800;cursor:pointer;color:var(--dark);display:flex;align-items:center;justify-content:center;">+</button>
+          </div>
+          <span style="font-size:14px;font-weight:800;color:var(--st-red,#C0392B);min-width:60px;text-align:right;">${fmt(item.preco*item.qtd)}</span>
+        </div>
+      </div>`).join('')}
+    </div>
+
+    <div style="background:var(--cream);border-radius:12px;padding:14px;margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mid);margin-bottom:4px;"><span>Subtotal</span><span>${fmt(sub)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mid);"><span>Entrega</span><span>${taxa>0?fmt(taxa):'A calcular'}</span></div>
+    </div>
+
+    <button onclick="nextStep('${lid}')" style="width:100%;padding:15px;border-radius:14px;background:var(--st-red,#C0392B);color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;">
+      Continuar → Entrega
+    </button>`;
+  }
+
+  // ── ETAPA 2: ENTREGA ──
+  else if(step===2) {
+    const temEnt = l.faz_entrega!==false;
+    const temRet = l.faz_retirada!==false;
+    const op = d.opcaoEntrega || (temEnt?'entrega':'retirada');
+    content = `
+    <div style="margin-bottom:18px;">
+      <div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">Como quer receber?</div>
+      <div style="display:flex;gap:10px;margin-bottom:18px;">
+        ${temEnt?`<button id="btn-ent-${lid}" class="pag-btn${op==='entrega'?' ativo':''}"
+          style="flex:1;padding:14px;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:4px;"
+          onclick="setOpcaoEnt('${lid}','entrega')">
+          <span style="font-size:22px;">🛵</span><span>Entrega</span>
+          ${taxa>0?`<span style="font-size:11px;opacity:.7;">${fmt(taxa)}</span>`:`<span style="font-size:11px;color:#22A85A;font-weight:700;">Grátis</span>`}
+        </button>`:''}
+        ${temRet?`<button id="btn-ret-${lid}" class="pag-btn${op==='retirada'?' ativo':''}"
+          style="flex:1;padding:14px;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:4px;"
+          onclick="setOpcaoEnt('${lid}','retirada')">
+          <span style="font-size:22px;">🏃</span><span>Retirada</span>
+          <span style="font-size:11px;opacity:.7;">No local</span>
+        </button>`:''}
+      </div>
+
+      <div id="campos-ent-${lid}" style="${op==='entrega'?'':'display:none;'}">
+        <div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">Endereço de entrega</div>
+        <input class="checkout-input" id="rua-${lid}" value="${d.rua||''}" placeholder="Rua / Avenida" style="margin-bottom:8px;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <input class="checkout-input" id="num-${lid}" value="${d.num||''}" placeholder="Número" style="flex:0 0 100px;">
+          <input class="checkout-input" id="compl-${lid}" value="${d.compl||''}" placeholder="Complemento" style="flex:1;">
+        </div>
+      </div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;margin-top:6px;">Seus dados</div>
+      <input class="checkout-input" id="cli-nome-${lid}" value="${d.nome||_user?.nome||''}" placeholder="Seu nome completo" style="margin-bottom:8px;">
+      <input class="checkout-input" id="cli-tel-${lid}" value="${d.tel||_user?.tel||''}" placeholder="WhatsApp (DDD + número)" oninput="mskTel(this)" type="tel" style="margin-bottom:8px;">
+      <input class="checkout-input" id="cli-obs-${lid}" value="${d.obs||''}" placeholder="Observações (opcional)">
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button onclick="prevStep('${lid}')" style="padding:15px 20px;border-radius:14px;background:var(--cream);border:1.5px solid var(--border);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;color:var(--mid);">← Voltar</button>
+      <button onclick="validarEntrega('${lid}')" style="flex:1;padding:15px;border-radius:14px;background:var(--st-red,#C0392B);color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;">Continuar → Pagamento</button>
+    </div>`;
+  }
+
+  // ── ETAPA 3: PAGAMENTO + RESUMO ──
+  else if(step===3) {
+    const op = d.opcaoEntrega||'entrega';
+    const taxaFinal = op==='retirada' ? 0 : taxa;
+    const totalFinal = sub + taxaFinal;
+    const pag = d.pag||'pix';
+    content = `
+    <div style="background:var(--cream);border-radius:14px;padding:14px;margin-bottom:18px;">
+      <div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">Resumo do pedido</div>
+      ${c.itens.map(i=>`<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mid);padding:3px 0;"><span>${i.qtd}x ${i.nome}</span><span>${fmt(i.preco*i.qtd)}</span></div>`).join('')}
+      <div style="border-top:1px solid var(--border);margin:10px 0;padding-top:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mid);margin-bottom:4px;"><span>Subtotal</span><span>${fmt(sub)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mid);margin-bottom:8px;"><span>${op==='retirada'?'Retirada':'Taxa de entrega'}</span><span style="${taxaFinal===0?'color:#22A85A;font-weight:700;':''}">${taxaFinal===0?'Grátis':fmt(taxaFinal)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:900;color:var(--dark);"><span>Total</span><span>${fmt(totalFinal)}</span></div>
+      </div>
+      <div style="font-size:12px;color:var(--mid);margin-top:6px;">📍 ${op==='retirada'?'Retirada no local':(d.rua?d.rua+(d.num?' Nº '+d.num:'')+(d.compl?' - '+d.compl:''):'Endereço não informado')}</div>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px;">Forma de pagamento</div>
+      <div style="display:flex;gap:10px;">
+        <button id="ppix-${lid}" class="pag-btn${pag==='pix'?' ativo':''}"
+          style="flex:1;padding:14px;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:5px;"
+          onclick="setPagStep('${lid}','pix')">
+          <span style="font-size:20px;">💠</span><span>PIX</span>
+        </button>
+        <button id="pcartao-${lid}" class="pag-btn${pag==='cartao'?' ativo':''}"
+          style="flex:1;padding:14px;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:5px;"
+          onclick="setPagStep('${lid}','cartao')">
+          <span style="font-size:20px;">💳</span><span>Cartão</span>
+        </button>
+        <button id="pdinheiro-${lid}" class="pag-btn${pag==='dinheiro'?' ativo':''}"
+          style="flex:1;padding:14px;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:5px;"
+          onclick="setPagStep('${lid}','dinheiro')">
+          <span style="font-size:20px;">💵</span><span>Dinheiro</span>
+        </button>
+      </div>
+      <div id="troco-wrap-${lid}" style="margin-top:10px;${pag==='dinheiro'?'':'display:none;'}">
+        <input class="checkout-input" id="troco-val-${lid}" placeholder="Troco para quanto? (opcional)">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button onclick="saveStepData('${lid}');prevStep('${lid}')" style="padding:15px 20px;border-radius:14px;background:var(--cream);border:1.5px solid var(--border);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;color:var(--mid);">← Voltar</button>
+      <button onclick="finalizarPedido('${lid}')" style="flex:1;padding:15px;border-radius:14px;background:var(--st-red,#C0392B);color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;" id="btn-fin-${lid}">
+        Mandar o pedido! 🚀
+      </button>
+    </div>`;
+  }
+
+  return `<div style="padding:18px 18px 24px;border-bottom:3px solid var(--cream);">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+      ${l.logo_url?`<img src="${l.logo_url}" style="width:36px;height:36px;border-radius:10px;object-fit:cover;" onerror="this.style.display='none'">`:`<div style="width:36px;height:36px;border-radius:10px;background:${l._bg}22;display:flex;align-items:center;justify-content:center;font-size:18px;">${l._emoji}</div>`}
+      <div style="font-size:15px;font-weight:800;color:var(--dark);">${l.nome}</div>
+    </div>
+    ${stepBar}
+    ${content}
+  </div>`;
+}
+
+window.setOpcaoEnt = function(lid, op) {
+  if(!_checkoutData[lid]) _checkoutData[lid]={};
+  _checkoutData[lid].opcaoEntrega=op;
+  document.querySelectorAll(`[id^="btn-ent-${lid}"], [id^="btn-ret-${lid}"]`).forEach(b=>b.classList.remove('ativo'));
+  $('btn-'+(op==='entrega'?'ent':'ret')+'-'+lid)?.classList.add('ativo');
+  const campos=$('campos-ent-'+lid);
+  if(campos) campos.style.display=op==='entrega'?'':'none';
+};
+
+window.setPagStep = function(lid, pag) {
+  if(!_checkoutData[lid]) _checkoutData[lid]={};
+  _checkoutData[lid].pag=pag;
+  ['pix','cartao','dinheiro'].forEach(p=>{
+    const b=$('p'+p+'-'+lid); if(b) b.classList.toggle('ativo',p===pag);
+  });
+  const tw=$('troco-wrap-'+lid); if(tw) tw.style.display=pag==='dinheiro'?'':'none';
+};
+
+window.validarEntrega = function(lid) {
+  saveStepData(lid);
+  const d=_checkoutData[lid]||{};
+  const op=d.opcaoEntrega||'entrega';
+  if(!d.nome||!d.nome.trim()) return toast('Digite seu nome');
+  if(!d.tel||d.tel.replace(/\D/g,'').length<10) return toast('WhatsApp inválido');
+  if(op==='entrega') {
+    if(!d.rua||!d.rua.trim()) return toast('Digite a rua');
+    if(!d.num||!d.num.trim()) return toast('Digite o número');
+  }
+  nextStep(lid);
+};
   const el=$('cart-content'); if(!el) return;
   const lojas=Object.values(_carrinhos).filter(c=>c.itens.length>0);
   if(!lojas.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-title">Sacola vazia</div><div class="empty-desc">Adicione itens do cardápio</div></div>';return;}
@@ -1084,27 +1317,29 @@ window.setPag = function(pag, lid) {
 // FINALIZAR PEDIDO
 // ═══════════════════════════════════════════════════════
 window.finalizarPedido = async function(lid) {
+  saveStepData(lid);
   const c=_carrinhos[lid]; if(!c||!c.itens.length) return toast('Sacola vazia');
   const l=c.loja;
   if(l.aberto===false) return toast('Loja fechada no momento');
-
-  const nome  = $('cli-nome-'+lid)?.value.trim();
-  const whats = ($('cli-tel-'+lid)?.value||'').replace(/\D/g,'');
-  const obs   = $('cli-obs-'+lid)?.value.trim()||'';
-  const rua   = $('rua-'+lid)?.value.trim()||'';
-  const num   = $('num-'+lid)?.value.trim()||'';
-  const compl = $('compl-'+lid)?.value.trim()||'';
+  const d=_checkoutData[lid]||{};
+  const nome  = d.nome?.trim();
+  const whats = (d.tel||'').replace(/\D/g,'');
+  const obs   = d.obs?.trim()||'';
+  const op    = d.opcaoEntrega||'entrega';
+  const rua   = d.rua?.trim()||'';
+  const num   = d.num?.trim()||'';
+  const compl = d.compl?.trim()||'';
 
   if(!nome) return toast('Digite seu nome');
   if(!whats||whats.length<10) return toast('WhatsApp inválido');
-  if(_opcaoEntrega==='entrega') {
+  if(op==='entrega') {
     if(!rua) return toast('Digite a rua');
     if(!num) return toast('Digite o número');
   }
 
-  const endereco = _opcaoEntrega==='entrega' ? [rua, num?'Nº '+num:'', compl].filter(Boolean).join(', ') : 'Retirada no local';
+  const endereco = op==='entrega' ? [rua, num?'Nº '+num:'', compl].filter(Boolean).join(', ') : 'Retirada no local';
   const sub = c.itens.reduce((s,i)=>s+i.preco*i.qtd,0);
-  const taxa = parseFloat(l.taxa_entrega||0);
+  const taxa = op==='retirada' ? 0 : parseFloat(l.taxa_entrega||0);
   const total = sub+taxa;
   const itens = c.itens.map(i=>({id:i.id,nome:i.nome,preco:i.preco,qtd:i.qtd,emoji:i.emoji,adicionais:i.adicionais||[]}));
 
@@ -1120,7 +1355,7 @@ window.finalizarPedido = async function(lid) {
       itens, total,
       status: 'novo',
       endereco,
-      pagamento: _opcaoPag,
+      pagamento: d.pag||'pix',
       taxa_entrega: taxa,
     });
     if(error) throw error;
@@ -1144,6 +1379,8 @@ window.finalizarPedido = async function(lid) {
     localStorage.setItem('pw_cliente',JSON.stringify(_user));
 
     delete _carrinhos[lid];
+    delete _checkoutStep[lid];
+    delete _checkoutData[lid];
     atualizarFab('cart');
     atualizarCartBtn();
     renderCarrinho();
