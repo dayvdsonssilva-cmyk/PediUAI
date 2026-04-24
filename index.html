@@ -1707,6 +1707,7 @@ window.carregarEstadosCadastro = async function() {
     estados.forEach(e => {
       const opt = document.createElement('option');
       opt.value = e.sigla; opt.textContent = e.nome; opt.dataset.nome = e.nome;
+      opt.style.background = '#2a2a2a';
       sel.appendChild(opt);
     });
     _estadosCadastroCarregados = true;
@@ -1725,7 +1726,9 @@ window.carregarCidadesCadastro = async function(uf) {
     cidSel.innerHTML='<option value="">Selecione a cidade...</option>';
     cidades.forEach(c => { const opt=document.createElement('option'); opt.value=c.nome; opt.textContent=c.nome; cidSel.appendChild(opt); });
     cidSel.disabled=false; cidSel.style.opacity='1';
-  } catch(e) { cidSel.innerHTML='<option value="">Erro ao carregar</option>'; cidSel.disabled=false; cidSel.style.opacity='1'; }
+    // Add bg color to new options
+    Array.from(cidSel.options).forEach(o => o.style.background='#2a2a2a');
+  } catch(e) { cidSel.innerHTML='<option value="" style="background:#2a2a2a">Erro ao carregar</option>'; cidSel.disabled=false; cidSel.style.opacity='1'; }
 };
 </script>
 
@@ -1774,14 +1777,20 @@ window.carregarCidadesCadastro = async function(uf) {
       <div class="form-group"><label>WhatsApp (com DDD)</label><input type="tel" id="rtel" placeholder="(99) 99999-9999" maxlength="15" oninput="mascaraTel(this)"></div>
       <div class="form-group"><label>Nome do estabelecimento</label><input type="text" id="rn" placeholder="Ex: Burguer do Ze"></div>
       <div class="form-group"><label>Estado</label>
-        <select id="r-estado" class="form-input" onchange="carregarCidadesCadastro(this.value)" style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.07);color:#fff;font-family:inherit;font-size:.9rem;outline:none;">
-          <option value="">Selecione o estado...</option>
-        </select>
+        <div style="position:relative;">
+          <select id="r-estado" onchange="carregarCidadesCadastro(this.value)" style="width:100%;padding:12px 36px 12px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.12);background:#2a2a2a;color:#fff;font-family:inherit;font-size:.9rem;outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;">
+            <option value="" style="background:#2a2a2a;">Selecione o estado...</option>
+          </select>
+          <svg style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
       </div>
       <div class="form-group"><label>Cidade</label>
-        <select id="rcidade" class="form-input" disabled style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.07);color:#fff;font-family:inherit;font-size:.9rem;outline:none;opacity:.5;">
-          <option value="">Selecione o estado primeiro</option>
-        </select>
+        <div style="position:relative;">
+          <select id="rcidade" disabled style="width:100%;padding:12px 36px 12px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.12);background:#2a2a2a;color:#fff;font-family:inherit;font-size:.9rem;outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;opacity:.45;">
+            <option value="" style="background:#2a2a2a;">Selecione o estado primeiro</option>
+          </select>
+          <svg style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
       </div>
       <div class="form-group"><label>CPF ou CNPJ</label><input type="text" id="rdoc" placeholder="000.000.000-00" maxlength="18" oninput="mascaraDoc(this)"></div>
       <div class="form-group"><label>E-mail</label><input type="email" id="re" placeholder="seu@email.com"></div>
