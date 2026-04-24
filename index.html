@@ -1692,6 +1692,41 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 
   document.querySelectorAll('.lp-reveal, .lp-reveal-scale').forEach(el => io.observe(el));
 })();
+
+// ── IBGE Estado/Cidade no cadastro ──────────────────────────────
+let _estadosCadastroCarregados = false;
+
+window.carregarEstadosCadastro = async function() {
+  if(_estadosCadastroCarregados) return;
+  const sel = document.getElementById('r-estado');
+  if(!sel) return;
+  try {
+    const r = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
+    const estados = await r.json();
+    sel.innerHTML = '<option value="">Selecione o estado...</option>';
+    estados.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.sigla; opt.textContent = e.nome; opt.dataset.nome = e.nome;
+      sel.appendChild(opt);
+    });
+    _estadosCadastroCarregados = true;
+  } catch(e) { console.warn('IBGE estados:', e); }
+};
+
+window.carregarCidadesCadastro = async function(uf) {
+  const cidSel = document.getElementById('rcidade');
+  if(!cidSel) return;
+  if(!uf) { cidSel.innerHTML='<option value="">Selecione o estado primeiro</option>'; cidSel.disabled=true; cidSel.style.opacity='.5'; return; }
+  cidSel.disabled=true; cidSel.style.opacity='.5';
+  cidSel.innerHTML='<option>Carregando cidades...</option>';
+  try {
+    const r = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
+    const cidades = await r.json();
+    cidSel.innerHTML='<option value="">Selecione a cidade...</option>';
+    cidades.forEach(c => { const opt=document.createElement('option'); opt.value=c.nome; opt.textContent=c.nome; cidSel.appendChild(opt); });
+    cidSel.disabled=false; cidSel.style.opacity='1';
+  } catch(e) { cidSel.innerHTML='<option value="">Erro ao carregar</option>'; cidSel.disabled=false; cidSel.style.opacity='1'; }
+};
 </script>
 
 </div>
@@ -2970,44 +3005,6 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 </script>
 <script type="module" src="/src/main.js"></script>
 
-// ── IBGE Estado/Cidade no cadastro ──────────────────────────────
-let _estadosCadastroCarregados = false;
-
-window.carregarEstadosCadastro = async function() {
-  if(_estadosCadastroCarregados) return;
-  const sel = document.getElementById('r-estado');
-  if(!sel || sel.options.length > 1) return;
-  try {
-    const r = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
-    const estados = await r.json();
-    estados.forEach(e => {
-      const opt = document.createElement('option');
-      opt.value = e.sigla;
-      opt.textContent = e.nome;
-      opt.dataset.nome = e.nome;
-      sel.appendChild(opt);
-    });
-    _estadosCadastroCarregados = true;
-    console.log('Estados carregados:', estados.length);
-  } catch(e) { console.warn('IBGE estados:', e); }
-};
-
-window.carregarCidadesCadastro = async function(uf) {
-  const cidSel = document.getElementById('rcidade');
-  if(!cidSel) return;
-  if(!uf) { cidSel.innerHTML='<option value="">Selecione o estado primeiro</option>'; cidSel.disabled=true; cidSel.style.opacity='.5'; return; }
-  cidSel.disabled=true; cidSel.style.opacity='.5';
-  cidSel.innerHTML='<option>Carregando cidades...</option>';
-  try {
-    const r = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
-    const cidades = await r.json();
-    cidSel.innerHTML='<option value="">Selecione a cidade...</option>';
-    cidades.forEach(c => {
-      const opt=document.createElement('option'); opt.value=c.nome; opt.textContent=c.nome; cidSel.appendChild(opt);
-    });
-    cidSel.disabled=false; cidSel.style.opacity='1';
-  } catch(e) { cidSel.innerHTML='<option value="">Erro ao carregar</option>'; cidSel.disabled=false; cidSel.style.opacity='1'; }
-};
 
 </body>
 </html>
