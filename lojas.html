@@ -516,7 +516,7 @@ async function init() {
 
   // Carrega status atuais antes de iniciar monitoramento
   await carregarStatusIniciais();
-  _pollingId = setInterval(pollarPedidos, 4000);
+  _pollingId = setInterval(pollarPedidos, 3000);
 
   iniciarRealtime();
 }
@@ -1749,14 +1749,11 @@ async function carregarStatusIniciais() {
       .order('created_at',{ascending:false})
       .limit(50);
     (data||[]).forEach(p => {
-      // Salva status atual como referência para o polling
       _statusAnt[p.id] = p.status;
-      // Atualiza _pedidosLocais com o status real do banco
-      const li = _pedidosLocais.findIndex(pl => pl.id === p.id);
-      if(li >= 0) _pedidosLocais[li].status = p.status;
+      const li = _pedidosLocais.findIndex(pl=>pl.id===p.id);
+      if(li>=0) _pedidosLocais[li].status = p.status;
     });
-    console.log('[PEDIUAI] Status iniciais:', data?.length);
-  } catch(e) { console.warn('carregarStatusIniciais:', e); }
+  } catch(e) {}
 }
 
 async function pollarPedidos() {
@@ -1839,10 +1836,9 @@ function iniciarRealtime() {
           atualizarStatusLocal(p.id, p.status, p.estabelecimento_id);
         }
         _statusAnt[p.id] = p.status;
-        // Atualiza _pedidosLocais também
         const li = _pedidosLocais.findIndex(pl=>pl.id===p.id);
         if(li>=0) _pedidosLocais[li].status = p.status;
-        if(_screen==='orders') renderOrders();
+        if(_screen==='orders') atualizarCardsStatus([p]);
       })
       .subscribe();
   } catch(e) { console.warn('Realtime:', e); }
