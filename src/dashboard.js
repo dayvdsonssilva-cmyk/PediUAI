@@ -632,9 +632,16 @@ async function renderCardapio() {
         <div class="item-desc-text">${p.descricao || ''}</div>
         <div class="item-footer">
           <div>
-            ${p.promocao && p.preco_original ? `<div class="item-preco-original">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</div>` : ''}
-            ${p.em_promocao && p.desconto_percent > 0 ? `<div class="item-promo-badge" style="background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;display:inline-block;">🔥 -${p.desconto_percent}%</div>` : ''}
-            <div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>
+            ${p.em_promocao && p.desconto_percent > 0
+              ? `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                  <span class="item-promo-badge" style="background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;">🔥 ${p.desconto_percent}% OFF</span>
+                  <span class="item-preco-original">R$ ${Number(p.preco_original||p.preco).toFixed(2).replace('.',',')}</span>
+                </div>
+                <div class="item-preco" style="color:var(--red);">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`
+              : p.promocao && p.preco_original
+                ? `<div class="item-preco-original">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</div>
+                   <div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`
+                : `<div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`}
           </div>
           <div class="item-acoes">
             <button class="btn-icon" onclick="editarItem('${p.id}')">✏️</button>
@@ -1036,7 +1043,9 @@ export async function editarItem(id) {
   setTimeout(() => {
     const set = (sel, val) => { const el=$(sel); if(el && val!=null) el.value=val; };
     set('item-nome', p.nome); set('item-desc', p.descricao||'');
-    set('item-cat',  p.categoria||''); set('item-preco', p.preco);
+    set('item-cat', p.categoria||'');
+    // Se tem desconto %, o campo mostra o preço ORIGINAL (o que o dono digitou)
+    set('item-preco', p.em_promocao && p.preco_original ? p.preco_original : p.preco);
     set('item-preco-orig', p.preco_original||'');
     const pr = $('item-promocao'); if (pr) {
       pr.checked = !!p.promocao;
@@ -1088,12 +1097,19 @@ export async function editarItem(id) {
           const promocao   = $('item-promocao')?.checked || false;
           const preco_orig = parseFloat($('item-preco-orig')?.value) || null;
           const desconto_pct_u = parseInt($('item-desconto-percent')?.value||'0');
+          const precoBase = parseFloat($('item-preco')?.value);
+          let precoFinalU = precoBase;
+          let precoOrigU = promocao ? preco_orig : null;
+          if (promocao && desconto_pct_u > 0) {
+            precoOrigU = precoBase;
+            precoFinalU = parseFloat((precoBase * (1 - desconto_pct_u / 100)).toFixed(2));
+          }
           const { error } = await getSupa().from('produtos').update({
             nome:         $('item-nome')?.value.trim(),
             descricao:    $('item-desc')?.value.trim(),
             categoria:    $('item-cat')?.value.trim().toUpperCase(),
-            preco:        parseFloat($('item-preco')?.value),
-            preco_original: promocao ? preco_orig : null,
+            preco:        precoFinalU,
+            preco_original: precoOrigU,
             foto_url, fotos_urls, emoji: emojiSel, promocao,
             em_promocao: promocao && desconto_pct_u > 0,
             desconto_percent: promocao ? desconto_pct_u : 0,
