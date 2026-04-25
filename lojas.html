@@ -516,6 +516,8 @@ async function init() {
   // Carrega status atuais antes de iniciar monitoramento
   await carregarStatusIniciais();
   _pollingId = setInterval(pollarPedidos, 3000);
+  // Refresh forçado da tela de pedidos a cada 8s quando estiver aberta
+  setInterval(() => { if(_screen==='orders') renderOrders(); }, 8000);
   iniciarRealtime();
 }
 
@@ -533,7 +535,7 @@ function showScreen(name) {
     $('nav-'+n)?.classList.toggle('active', n===name);
   });
   if(name==='cart') renderCarrinho();
-  if(name==='orders') renderOrders();
+  if(name==='orders') { renderOrders(); }
   if(name==='search') setTimeout(()=>$('search-input')?.focus(), 150);
   atualizarFab(name);
 }
@@ -1608,16 +1610,68 @@ window.finalizarPedido = async function(lid) {
 // ═══════════════════════════════════════════════════════
 // MEUS PEDIDOS (global)
 // ═══════════════════════════════════════════════════════
-function renderOrders() {
+async function renderOrders() {
   const el=$('orders-content'); if(!el) return;
+
+  // Mostra loading
+  el.innerHTML=`<div style="padding:40px 20px;text-align:center;">
+    <div style="font-size:13px;color:var(--gray);">Carregando pedidos...</div>
+  </div>`;
+
+  const whats = (_user?.tel||'').replace(/\D/g,'');
+
+  // Busca pedidos do banco se tiver WhatsApp
+  if(whats && whats.length>=10) {
+    try {
+      const {data} = await db.from('pedidos')
+        .select('id,status,total,itens,endereco,estabelecimento_id,created_at,pagamento')
+        .eq('cliente_whats', whats)
+        .order('created_at', {ascending:false})
+        .limit(30);
+
+      if(data && data.length>0) {
+        // Atualiza _statusAnt e localStorage com dados frescos
+        data.forEach(p => {
+          _statusAnt[p.id] = p.status;
+          const loja = _lojas.find(l=>l.id===p.estabelecimento_id);
+          if(loja?.slug) {
+            const key='pw_peds_'+loja.slug;
+            const peds=JSON.parse(localStorage.getItem(key)||'[]');
+            const idx=peds.findIndex(pd=>pd.id===p.id);
+            if(idx>=0) { peds[idx].status=p.status; localStorage.setItem(key,JSON.stringify(peds)); }
+          }
+        });
+
+        const allPeds = data.map(p => {
+          const loja = _lojas.find(l=>l.id===p.estabelecimento_id)||{};
+          return {...p, lojaNome:loja.nome||'Loja', lojaId:p.estabelecimento_id};
+        });
+
+        el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
+          allPeds.map(p => pedidoCardHTML(p)).join('');
+        return;
+      }
+    } catch(e) { console.warn('renderOrders:', e); }
+  }
+
+  // Fallback: localStorage
   const allPeds=[];
   _lojas.forEach(l => {
     const peds=JSON.parse(localStorage.getItem('pw_peds_'+l.slug)||'[]');
     peds.forEach(p=>allPeds.push({...p,lojaNome:l.nome,lojaId:l.id}));
   });
-  if(!allPeds.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Nenhum pedido ainda</div><div class="empty-desc">Faça seu primeiro pedido!</div></div>';return;}
-  allPeds.sort((a,b)=>b.id>a.id?1:-1);
-  el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;">Meus pedidos</div>` +
+
+  if(!allPeds.length){
+    el.innerHTML=`<div class="empty-state" style="padding:80px 20px;">
+      <div style="font-size:56px;margin-bottom:14px;">📋</div>
+      <div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:8px;">Nenhum pedido ainda</div>
+      <div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:22px;">Faça seu primeiro pedido em um dos restaurantes!</div>
+      <button onclick="showScreen('home')" style="padding:12px 24px;border-radius:12px;background:var(--red);color:#fff;border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;">Ver restaurantes →</button>
+    </div>`;
+    return;
+  }
+  allPeds.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+  el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
     allPeds.slice(0,20).map(p => pedidoCardHTML(p)).join('');
 }
 
@@ -1668,7 +1722,6 @@ async function pollarPedidos() {
 
     if(mudou) {
       if(_screen==='orders') renderOrders();
-      if(_screen==='store' && _tabAtiva==='pedidos') renderStorePedidos();
     }
   } catch(e){}
 }
