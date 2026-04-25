@@ -1042,7 +1042,8 @@ function pedidoCardHTML(p) {
   const st = p.status||'novo';
   const isRetirada = (p.endereco||'').toLowerCase().includes('retirada');
 
-  if(st==='cancelado') return `<div class="pedido-card" data-pedido-id="${p.id}" style="border-left:3px solid #DC2626;opacity:.75;">
+  // Pedido recusado/cancelado
+  if(st==='recusado'||st==='cancelado') return `<div class="pedido-card" data-pedido-id="${p.id}" style="border-left:3px solid #DC2626;opacity:.7;">
     <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
       <div>
         <div style="font-size:11px;color:var(--gray);">Pedido #${String(p.id||'').slice(-4)}</div>
@@ -1050,27 +1051,28 @@ function pedidoCardHTML(p) {
       </div>
       <span style="font-size:15px;font-weight:900;color:var(--dark);">${fmt(p.total)}</span>
     </div>
-    <div style="font-size:11px;color:#DC2626;font-weight:700;margin-bottom:6px;">❌ Pedido cancelado</div>
+    <div style="font-size:11px;color:#DC2626;font-weight:700;margin-bottom:6px;">❌ Pedido recusado</div>
     <div style="font-size:12px;color:var(--gray);">${(p.itens||[]).map(i=>i.qtd+'x '+i.nome).join(' · ')}</div>
   </div>`;
 
-  // 3 etapas
+  // 3 etapas — alinhadas com o dashboard:
+  // novo → preparo → pronto
   const ETAPAS = [
-    { ids:['novo'],              label:'Aguardando',  cor:'#F59E0B' },
-    { ids:['aceito'],            label:'Preparando',  cor:'#F97316' },
-    { ids:['pronto','entregue'], label: isRetirada?'Pronto':'Entregue', cor:'#16A34A' },
+    { ids:['novo'],    label:'Aguardando', cor:'#F59E0B' },
+    { ids:['preparo'], label:'Preparando', cor:'#F97316' },
+    { ids:['pronto'],  label: isRetirada?'Pronto':'Entregue', cor:'#16A34A' },
   ];
 
   const etapaAtual = ETAPAS.findIndex(e => e.ids.includes(st));
-  const corAtual   = ETAPAS[etapaAtual]?.cor || '#F59E0B';
+  const idx = etapaAtual < 0 ? 0 : etapaAtual;
+  const corAtual = ETAPAS[idx].cor;
 
   const STATUS_LABEL = {
-    novo:     { icon:'⏳', txt:'Aguardando confirmação' },
-    aceito:   { icon:'🍳', txt:'Confirmado — em preparo' },
-    pronto:   { icon: isRetirada?'🏃':'🛵', txt: isRetirada?'Pronto para retirar':'Saiu para entrega' },
-    entregue: { icon:'🎉', txt: isRetirada?'Retirado com sucesso':'Entregue com sucesso' },
+    novo:    { icon:'⏳', txt:'Aguardando confirmação' },
+    preparo: { icon:'🍳', txt:'Confirmado — em preparo' },
+    pronto:  { icon: isRetirada?'🏃':'✅', txt: isRetirada?'Pronto para retirar':'Pronto! Pedido entregue' },
   };
-  const sl = STATUS_LABEL[st]||STATUS_LABEL.novo;
+  const sl = STATUS_LABEL[st] || STATUS_LABEL.novo;
 
   const barras = ETAPAS.map((e,i)=>{
     const done  = i < etapaAtual;
@@ -1786,10 +1788,9 @@ async function pollarPedidos() {
         const loja = _lojas.find(l=>l.id===p.estabelecimento_id);
         const nomeLoja = loja?.nome||'Loja';
         const msgs = {
-          aceito:   `🍳 ${nomeLoja}: Pedido em preparo!`,
+          preparo:  `🍳 ${nomeLoja}: Pedido em preparo!`,
           pronto:   `🎉 ${nomeLoja}: Pedido pronto!`,
-          entregue: `✅ ${nomeLoja}: Pedido entregue!`,
-          cancelado:`❌ ${nomeLoja}: Pedido cancelado.`,
+          recusado: `❌ ${nomeLoja}: Pedido recusado.`,
         };
         if(msgs[p.status]) toast(msgs[p.status]);
       }
