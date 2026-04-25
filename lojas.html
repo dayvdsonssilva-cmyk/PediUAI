@@ -1463,7 +1463,7 @@ function renderCheckoutLoja(c) {
       ${l.logo_url?`<img src="${l.logo_url}" style="width:40px;height:40px;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,.6);" onerror="this.style.display='none'">`:`<div style="width:40px;height:40px;border-radius:12px;background:${normalizeHex(l.cor_primaria||'#C0392B')}30;display:flex;align-items:center;justify-content:center;font-size:20px;">${l._emoji}</div>`}
       <div style="flex:1;">
         <div style="font-size:14px;font-weight:800;color:var(--dark);">${l.nome}</div>
-        <div style="font-size:11px;color:var(--gray);">${l.itens.reduce((s,i)=>s+i.qtd,0)} ${l.itens.reduce((s,i)=>s+i.qtd,0)===1?'item':'itens'} na sacola</div>
+        <div style="font-size:11px;color:var(--gray);">${c.itens.reduce((s,i)=>s+i.qtd,0)} ${c.itens.reduce((s,i)=>s+i.qtd,0)===1?'item':'itens'} na sacola</div>
       </div>
     </div>
     <div style="padding:16px 16px 18px;">
