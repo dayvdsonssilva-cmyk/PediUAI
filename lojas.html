@@ -698,11 +698,19 @@ function storeCardHTMLb(l, ab, temPromo) {
 let _bannerTimer=null, _bannerIdx=0, _promoItems=[], _carouselSlides=[];
 
 // Slides fixos de desconto + slides de promoções reais
-const SLIDES_FIXOS = [
-  { desconto:10, cor1:'#1A0A08', cor2:'#3D1A10', emoji:'🔥', label:'Economize hoje' },
-  { desconto:20, cor1:'#0F1A3D', cor2:'#1A2D6B', emoji:'⚡', label:'Oferta especial' },
-  { desconto:30, cor1:'#1A0A1A', cor2:'#3D0F3D', emoji:'🎉', label:'Super desconto' },
-];
+// Paletas por faixa de desconto
+const PALETAS = {
+  5:  { cor1:'#1A3D1A', cor2:'#0F2D0F', emoji:'💚' },
+  10: { cor1:'#1A2E3D', cor2:'#0F1D2D', emoji:'🔵' },
+  15: { cor1:'#2E2A1A', cor2:'#1D1A0F', emoji:'🟡' },
+  20: { cor1:'#1A1A3D', cor2:'#0F0F2D', emoji:'💜' },
+  25: { cor1:'#3D1A1A', cor2:'#2D0F0F', emoji:'🔴' },
+  30: { cor1:'#1A0A08', cor2:'#3D1A10', emoji:'🔥' },
+  35: { cor1:'#3D2A0A', cor2:'#2D1A05', emoji:'🧡' },
+  40: { cor1:'#0F1A3D', cor2:'#0A0F2D', emoji:'⚡' },
+  45: { cor1:'#1A0A2D', cor2:'#0F0520', emoji:'✨' },
+  50: { cor1:'#2D0A0A', cor2:'#1A0505', emoji:'🎉' },
+};
 
 async function renderBanner() {
   // Carrega promos reais do banco
@@ -733,80 +741,46 @@ function buildCarousel() {
   const slides = _carouselSlides;
   if(!slides.length) return;
 
-  const slidesHTML = slides.map((s,i) => {
-    if(s.tipo==='real') {
-      const {item,loja} = s;
-      return `<div class="promo-slide" style="background:linear-gradient(135deg,#1A0A08,#3D1A10);cursor:pointer;" onclick="abrirLoja('${loja.id||''}')">
+  const slidesHTML = slides.map((s, i) => {
+    const pal = PALETAS[s.pct] || PALETAS[30];
+    const item = s.itens[0];
+    const loja = _lojas.find(l=>l.id===item.estabelecimento_id)||{};
+    const mais = s.itens.length > 1 ? `+${s.itens.length-1} itens` : '';
+    return `<div class="promo-slide"
+      style="background:linear-gradient(135deg,${pal.cor1},${pal.cor2});cursor:pointer;"
+      onclick="abrirTelaPromos(${s.pct}, _promoItems.filter(p=>p.desconto===${s.pct}))">
+
+      <!-- Percentual grande -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
         <div>
-          <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">🔥 Promoção ativa</div>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <div style="width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
-              ${loja.logo_url?`<img src="${loja.logo_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`:`<span style="font-size:20px;">${loja._emoji||'🍽️'}</span>`}
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11px;color:rgba(255,255,255,.55);">${loja.nome||''}</div>
-              <div style="font-size:15px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
-            </div>
-            <div style="background:#FFD166;border-radius:10px;padding:6px 12px;text-align:center;flex-shrink:0;">
-              <div style="font-size:18px;font-weight:900;color:#1A0A08;line-height:1;">-${item.desconto}%</div>
-              <div style="font-size:9px;font-weight:700;color:rgba(26,10,8,.6);">OFF</div>
-            </div>
+          <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">${pal.emoji} ${s.itens.length} ${s.itens.length===1?'item':'itens'} em oferta</div>
+          <div style="display:flex;align-items:baseline;gap:4px;">
+            <span style="font-size:40px;font-weight:900;color:#FFD166;line-height:1;">${s.pct}%</span>
+            <span style="font-size:18px;font-weight:900;color:#fff;">OFF</span>
           </div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
-          <div>
-            <span style="font-size:12px;color:rgba(255,255,255,.4);text-decoration:line-through;">${fmt(item.preco)}</span>
-            <span style="font-size:16px;font-weight:900;color:#FFD166;margin-left:8px;">${fmt(item.preco_com_desc)}</span>
+        <!-- Logo + nome do produto -->
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+          <div style="width:44px;height:44px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;">
+            ${loja.logo_url?`<img src="${loja.logo_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`:`<span style="font-size:20px;">${loja._emoji||'🍽️'}</span>`}
           </div>
-          <span style="font-size:11px;color:rgba(255,255,255,.55);">Ver oferta →</span>
         </div>
-      </div>`;
-    } else {
-      // Slide de demo com percentual
-      // Se tiver itens reais nesse desconto, mostra o primeiro item
-      const itensDesc = _promoItems.filter(p => p.desconto >= s.desconto);
-      if(itensDesc.length) {
-        const item = itensDesc[0];
-        const loja = _lojas.find(l=>l.id===item.estabelecimento_id)||{};
-        return `<div class="promo-slide" style="background:linear-gradient(135deg,${s.cor1},${s.cor2});cursor:pointer;" onclick="abrirTelaPromos(${s.desconto},_promoItems.filter(p=>p.desconto>=${s.desconto}))">
-          <div>
-            <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">🔥 ${itensDesc.length} ${itensDesc.length===1?'item':'itens'} com ${s.desconto}%+ OFF</div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div style="width:44px;height:44px;border-radius:11px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
-                ${loja.logo_url?`<img src="${loja.logo_url}" style="width:100%;height:100%;object-fit:cover;">`:`<span style="font-size:20px;">${loja._emoji||'🍽️'}</span>`}
-              </div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-size:10px;color:rgba(255,255,255,.5);">${loja.nome||''}</div>
-                <div style="font-size:14px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
-              </div>
-              <div style="background:#FFD166;border-radius:9px;padding:5px 11px;text-align:center;flex-shrink:0;">
-                <div style="font-size:17px;font-weight:900;color:#1A0A08;line-height:1;">${item.desconto}%</div>
-                <div style="font-size:8px;font-weight:700;color:rgba(26,10,8,.6);">OFF</div>
-              </div>
-            </div>
+      </div>
+
+      <!-- Item em destaque -->
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:10px;color:rgba(255,255,255,.5);">${loja.nome||''}</div>
+          <div style="font-size:13px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
+            <span style="font-size:11px;color:rgba(255,255,255,.4);text-decoration:line-through;">R$ ${item.preco_cheio.toFixed(2).replace('.',',')}</span>
+            <span style="font-size:14px;font-weight:900;color:#FFD166;">R$ ${item.preco_com_desc.toFixed(2).replace('.',',')}</span>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
-            <div>
-              <span style="font-size:12px;color:rgba(255,255,255,.4);text-decoration:line-through;">${fmt(item.preco)}</span>
-              <span style="font-size:15px;font-weight:900;color:#FFD166;margin-left:8px;">${fmt(item.preco_com_desc)}</span>
-            </div>
-            <span style="font-size:11px;color:rgba(255,255,255,.55);">Ver todos →</span>
-          </div>
-        </div>`;
-      }
-      // Sem itens reais: slide genérico sem "-"
-      return `<div class="promo-slide" style="background:linear-gradient(135deg,${s.cor1},${s.cor2});cursor:pointer;" onclick="filtrarPorDesconto(${s.desconto})">
-        <div>
-          <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">${s.label}</div>
-          <div style="font-size:20px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:2px;">${s.desconto}% <span style="color:#FFD166;">OFF</span></div>
-          <div style="font-size:11px;color:rgba(255,255,255,.5);">Em itens selecionados</div>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
-          <div style="font-size:11px;color:rgba(255,255,255,.55);">${s.emoji} Restaurantes parceiros</div>
-          <div style="background:rgba(255,255,255,.12);border-radius:7px;padding:5px 11px;font-size:10px;font-weight:700;color:#fff;">Ver lojas →</div>
-        </div>
-      </div>`;
-    }
+        ${mais?`<div style="background:rgba(255,255,255,.12);border-radius:8px;padding:4px 10px;font-size:10px;font-weight:700;color:rgba(255,255,255,.7);white-space:nowrap;">${mais}</div>`:''}
+        <div style="margin-left:10px;font-size:11px;color:rgba(255,255,255,.55);white-space:nowrap;">Ver →</div>
+      </div>
+    </div>`;
   }).join('');
 
   const dotsHTML = slides.length>1 ? `<div class="carousel-dots" id="carousel-dots">
@@ -819,7 +793,6 @@ function buildCarousel() {
     </div>
     ${dotsHTML}`;
 }
-
 function irSlide(idx) {
   clearTimeout(_bannerTimer);
   _bannerIdx = idx;
