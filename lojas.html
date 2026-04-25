@@ -138,12 +138,14 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 /* Modal produto */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:800;align-items:flex-end;justify-content:center;}
 .modal-overlay.open{display:flex;}
-.modal-sheet{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease;}
+.modal-sheet{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease;display:flex;flex-direction:column;}
+.modal-body{flex:1;overflow-y:auto;padding:18px 18px 0;}
+.modal-footer{padding:12px 18px 20px;background:#fff;border-top:1px solid var(--accent2,#FFE4DE);}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .sheet-handle{width:36px;height:4px;background:rgba(26,10,8,.15);border-radius:2px;margin:12px auto 0;}
 .modal-img{width:100%;display:block;max-height:260px;object-fit:cover;}
 .modal-emoji{display:flex;align-items:center;justify-content:center;font-size:80px;padding:32px;background:var(--cream);}
-.modal-body{padding:18px 18px 24px;}
+.modal-body{padding:12px 18px 8px;}
 .modal-cat{font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;}
 .modal-nome{font-size:18px;font-weight:900;color:var(--dark);margin-bottom:6px;}
 .modal-desc{font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:14px;}
@@ -160,7 +162,7 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 .btn-add-cart:hover{background:#C0392B;}
 
 /* FAB carrinho */
-.fab-bar{position:fixed;bottom:68px;left:50%;transform:translateX(-50%);max-width:460px;width:calc(100% - 16px);background:var(--dark);border-radius:16px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:700;display:none;cursor:pointer;}
+.fab-bar{position:fixed;bottom:68px;left:50%;transform:translateX(-50%);max-width:460px;width:calc(100% - 16px);background:var(--dark);border-radius:16px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:500;display:none;cursor:pointer;}
 .fab-bar.show{display:flex;}
 
 /* ══ CARRINHO / CHECKOUT ══ */
@@ -200,8 +202,14 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 .btn-primary{width:100%;padding:14px;border-radius:14px;background:var(--red);color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;}
 .btn-ghost{width:100%;padding:12px;border-radius:14px;background:transparent;color:var(--gray);border:1.5px solid var(--border);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;}
 
+/* LIGHTBOX */
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:9999;align-items:center;justify-content:center;flex-direction:column;}
+.lightbox.open{display:flex;}
+.lightbox img{max-width:100%;max-height:88vh;object-fit:contain;border-radius:8px;}
+.lightbox-close{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
 /* TOAST */
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:#fff;padding:10px 20px;border-radius:50px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:9999;white-space:nowrap;pointer-events:none;}
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:#fff;padding:10px 20px;border-radius:50px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:6000;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* ── CARROSSEL BANNER ── */
@@ -258,6 +266,8 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
           <span class="qty-num" id="modal-qtd">1</span>
           <button class="qty-btn" onclick="mudaQtd(1)">+</button>
         </div>
+      </div>
+      <div class="modal-footer">
         <button class="btn-add-cart" onclick="adicionarAoCarrinho()">Adicionar ao carrinho</button>
       </div>
     </div>
@@ -273,6 +283,11 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 
   <!-- ══ TOAST ══ -->
   <div class="toast" id="app-toast"></div>
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox" onclick="fecharLightbox()">
+    <button class="lightbox-close" onclick="fecharLightbox()">✕</button>
+    <img id="lightbox-img" src="" alt="">
+  </div>
   <!-- ══ FAB CARRINHO ══ -->
   <div class="fab-bar" id="fab-bar" onclick="showScreen('cart')">
     <div style="display:flex;align-items:center;gap:10px;">
@@ -381,12 +396,6 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
       </div>
     </div>
     <div style="flex:1;overflow-y:auto;padding:14px 16px 100px;" id="promos-list"></div>
-    <nav class="bottom-nav">
-      <button class="nav-item" onclick="showScreen('home')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Início
-      </button>
-    </nav>
   </div>
 
   <!-- PEDIDOS -->
@@ -493,6 +502,18 @@ async function init() {
   // Carrega estados IBGE em background
   carregarEstados();
 
+  // Carrega promos ANTES das lojas para ter _promoItems disponível
+  try {
+    const {data:pd} = await db.from('produtos')
+      .select('id,nome,preco,preco_original,desconto_percent,estabelecimento_id,foto_url')
+      .eq('em_promocao',true).gt('desconto_percent',0).eq('disponivel',true);
+    _promoItems = (pd||[]).map(p=>({
+      ...p, name:p.nome, desconto:parseInt(p.desconto_percent||0),
+      preco_com_desc:parseFloat(p.preco||0),
+      preco_cheio:parseFloat(p.preco_original||p.preco||0),
+    }));
+  } catch(e){ _promoItems=[]; }
+
   // Carrega lojas
   const {data, error} = await db.from('estabelecimentos')
     .select('id,nome,slug,logo_url,cor_primaria,cidade,aberto,descricao,taxa_entrega,tempo_entrega,faz_entrega,faz_retirada,whatsapp,promocao_ativa,desconto_percent')
@@ -532,7 +553,7 @@ function showScreen(name) {
   if(scEl) scEl.classList.add('active');
   // nav
   ['home','search','cart','orders'].forEach(n => {
-    $('nav-'+n)?.classList.toggle('active', n===name);
+    $('nav-'+n)?.classList.toggle('active', n===name || (n==='home' && name==='promos'));
   });
   if(name==='cart') renderCarrinho();
   if(name==='orders') { renderOrders(); }
@@ -746,19 +767,18 @@ const PALETAS = {
 };
 
 async function renderBanner() {
-  try {
-    const {data} = await db.from('produtos')
-      .select('id,nome,preco,preco_original,desconto_percent,estabelecimento_id,foto_url')
-      .eq('em_promocao',true).gt('desconto_percent',0).eq('disponivel',true);
-
-    _promoItems = (data||[]).map(p => ({
-      ...p,
-      name:          p.nome,
-      desconto:      parseInt(p.desconto_percent||0),
-      preco_com_desc: parseFloat(p.preco||0),
-      preco_cheio:   parseFloat(p.preco_original||p.preco||0),
-    }));
-  } catch(e) { _promoItems = []; }
+  // _promoItems já carregado no init — só re-busca se estiver vazio
+  if(!_promoItems.length) {
+    try {
+      const {data} = await db.from('produtos')
+        .select('id,nome,preco,preco_original,desconto_percent,estabelecimento_id,foto_url')
+        .eq('em_promocao',true).gt('desconto_percent',0).eq('disponivel',true);
+      _promoItems = (data||[]).map(p=>({
+        ...p, name:p.nome, desconto:parseInt(p.desconto_percent||0),
+        preco_com_desc:parseFloat(p.preco||0), preco_cheio:parseFloat(p.preco_original||p.preco||0),
+      }));
+    } catch(e){ _promoItems=[]; }
+  }
 
   // Agrupa por percentual
   const grupos = {};
@@ -1123,6 +1143,26 @@ function pedidoCardHTML(p) {
     </div>`;
   }).join('');
 
+  const itensStr = (p.itens||[]).map(i=>i.qtd+'x '+i.nome).join(' · ');
+  const itensHtml = p.itens && p.itens.length > 0 ? `
+    <div style="font-size:12px;color:var(--gray);margin-bottom:8px;">${itensStr}</div>
+    ${p.itens.length > 0 ? `<details style="font-size:11px;color:var(--gray);">
+      <summary style="cursor:pointer;color:#E05A3A;font-weight:600;list-style:none;display:flex;align-items:center;gap:4px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Ver detalhes
+      </summary>
+      <div style="margin-top:8px;padding:8px;background:var(--accent,#FFF0EC);border-radius:10px;">
+        ${(p.itens||[]).map(i=>`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(224,90,58,.1);">
+          <span>${i.qtd}x ${i.nome}</span>
+          <span style="font-weight:700;">${fmt(i.preco*i.qtd)}</span>
+        </div>`).join('')}
+        <div style="display:flex;justify-content:space-between;padding:6px 0 0;font-weight:800;">
+          <span>Total</span><span style="color:#E05A3A;">${fmt(p.total)}</span>
+        </div>
+      </div>
+    </details>` : ''}
+  ` : `<div style="font-size:12px;color:var(--gray);">${itensStr}</div>`;
+
   return `<div class="pedido-card" data-pedido-id="${p.id}" style="border-left:3px solid ${corAtual};">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px;">
       <div>
@@ -1133,7 +1173,7 @@ function pedidoCardHTML(p) {
     </div>
     <div style="display:flex;gap:6px;margin:12px 0 6px;">${barras}</div>
     <div style="font-size:11px;font-weight:700;color:${corAtual};margin-bottom:8px;">${sl.icon} ${sl.txt}</div>
-    <div style="font-size:12px;color:var(--gray);">${(p.itens||[]).map(i=>i.qtd+'x '+i.nome).join(' · ')}</div>
+    ${itensHtml}
   </div>`;
 }
 
@@ -1191,7 +1231,7 @@ window.abrirProduto = function(id) {
   if(fotos.length) {
     let fi=0;
     const dots=()=>fotos.map((_,i)=>`<div style="width:7px;height:7px;border-radius:50%;background:${i===fi?'#fff':'rgba(255,255,255,0.4)'};transition:background 0.2s"></div>`).join('');
-    const renderF=()=>{ media.innerHTML=`<div style="position:relative;background:#000"><img class="modal-img" src="${fotos[fi]}" style="width:100%;display:block;max-height:260px;object-fit:cover;">${fotos.length>1?`<button onclick="_mfoto(-1)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.55);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.3rem;cursor:pointer;z-index:5;">‹</button><button onclick="_mfoto(1)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.55);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.3rem;cursor:pointer;z-index:5;">›</button><div id="mdots" style="position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px">${dots()}</div>`:''}</div>`; };
+    const renderF=()=>{ media.innerHTML=`<div style="position:relative;background:#000"><img class="modal-img" src="${fotos[fi]}" style="width:100%;display:block;max-height:260px;object-fit:cover;cursor:zoom-in;" onclick="abrirLightbox('${fotos[fi]}')">${fotos.length>1?`<button onclick="_mfoto(-1)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.55);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.3rem;cursor:pointer;z-index:5;">‹</button><button onclick="_mfoto(1)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.55);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.3rem;cursor:pointer;z-index:5;">›</button><div id="mdots" style="position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px">${dots()}</div>`:''}</div>`; };
     window._mfoto=dir=>{fi=(fi+dir+fotos.length)%fotos.length;const img=media.querySelector('img');if(img)img.src=fotos[fi];const d=$('mdots');if(d)d.innerHTML=dots();};
     renderF();
   } else {
@@ -1247,6 +1287,8 @@ window.toggleAdic = function(i, max) {
 window.mudaQtd = function(d) { _qtdAtual=Math.max(1,_qtdAtual+d); $('modal-qtd').textContent=_qtdAtual; };
 
 window.fecharModal = function() { $('modal-prod').classList.remove('open'); _prodAtual=null; document.body.style.overflow=''; };
+window.abrirLightbox = function(src) { const lb=$('lightbox'); const img=$('lightbox-img'); if(!lb||!img||!src) return; img.src=src; lb.classList.add('open'); };
+window.fecharLightbox = function() { $('lightbox')?.classList.remove('open'); };
 
 window.adicionarAoCarrinho = function() {
   if(!_prodAtual) return;
@@ -1452,16 +1494,22 @@ function renderCheckoutLoja(c) {
       <div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">Como quer receber?</div>
       <div style="display:flex;gap:10px;margin-bottom:18px;">
         ${temEnt?`<button id="btn-ent-${lid}" class="pag-btn${op==='entrega'?' ativo':''}"
-          style="flex:1;padding:14px;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:4px;"
+          style="flex:1;padding:10px 8px;font-size:12px;display:flex;align-items:center;gap:8px;justify-content:center;"
           onclick="setOpcaoEnt('${lid}','entrega')">
-          <span style="font-size:22px;">🛵</span><span>Entrega</span>
-          ${taxa>0?`<span style="font-size:11px;opacity:.7;">${fmt(taxa)}</span>`:`<span style="font-size:11px;color:#22A85A;font-weight:700;">Grátis</span>`}
+          <span style="font-size:18px;">🛵</span>
+          <div style="text-align:left;">
+            <div style="font-weight:700;">Entrega</div>
+            <div style="font-size:10px;opacity:.7;">${taxa>0?fmt(taxa):'Grátis'}</div>
+          </div>
         </button>`:''}
         ${temRet?`<button id="btn-ret-${lid}" class="pag-btn${op==='retirada'?' ativo':''}"
-          style="flex:1;padding:14px;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:4px;"
+          style="flex:1;padding:10px 8px;font-size:12px;display:flex;align-items:center;gap:8px;justify-content:center;"
           onclick="setOpcaoEnt('${lid}','retirada')">
-          <span style="font-size:22px;">🏃</span><span>Retirada</span>
-          <span style="font-size:11px;opacity:.7;">No local</span>
+          <span style="font-size:18px;">🏃</span>
+          <div style="text-align:left;">
+            <div style="font-weight:700;">Retirada</div>
+            <div style="font-size:10px;opacity:.7;">No local</div>
+          </div>
         </button>`:''}
       </div>
 
@@ -1480,9 +1528,9 @@ function renderCheckoutLoja(c) {
       <input class="checkout-input" id="cli-obs-${lid}" value="${d.obs||''}" placeholder="Observações (opcional)">
     </div>
 
-    <div style="display:flex;gap:10px;">
-      <button onclick="prevStep('${lid}')" style="padding:15px 20px;border-radius:14px;background:var(--cream);border:1.5px solid var(--border);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;color:var(--mid);">← Voltar</button>
-      <button onclick="validarEntrega('${lid}')" style="flex:1;padding:15px;border-radius:14px;background:#E05A3A;color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;">Continuar → Pagamento</button>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button onclick="prevStep('${lid}')" style="padding:12px 16px;border-radius:12px;background:var(--cream);border:1.5px solid var(--border);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;color:var(--mid);">← Voltar</button>
+      <button onclick="validarEntrega('${lid}')" style="flex:1;padding:12px;border-radius:12px;background:#E05A3A;color:#fff;border:none;font-family:var(--font);font-size:13px;font-weight:800;cursor:pointer;">Continuar → Pagamento</button>
     </div>`;
   }
 
