@@ -586,22 +586,27 @@ function abrirTelaPromos(pct, itens) {
 
   const html = itens.map(item => {
     const loja = _lojas.find(l => l.id === item.estabelecimento_id) || {};
-    const precoOrig = parseFloat(item.preco || 0);
-    const precoDesc = precoOrig * (1 - item.desconto / 100);
     const lojaHex = normalizeHex(loja.cor_primaria || '#C0392B');
-    return `<div style="background:#fff;border-radius:16px;overflow:hidden;display:flex;align-items:stretch;box-shadow:0 1px 8px rgba(26,10,8,.07);border:1px solid rgba(26,10,8,.07);cursor:pointer;margin-bottom:10px;" onclick="abrirLoja('${loja.id || ''}')">
-      <div style="width:96px;min-height:96px;flex-shrink:0;background:${lojaHex}22;display:flex;align-items:center;justify-content:center;font-size:32px;position:relative;overflow:hidden;">
-        ${item.foto_url ? `<img src="${item.foto_url}" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;">` : (loja._emoji || '🍽️')}
-        <div style="position:absolute;top:6px;left:6px;background:#E05A3A;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;">-${item.desconto}%</div>
+    return `<div style="background:#fff;border-radius:16px;overflow:hidden;display:flex;align-items:stretch;box-shadow:0 2px 12px rgba(224,90,58,.08);border:1px solid rgba(224,90,58,.12);cursor:pointer;margin-bottom:10px;"
+      onclick="abrirLoja('${loja.id || ''}')">
+      <!-- Imagem do item -->
+      <div style="width:100px;min-height:100px;flex-shrink:0;background:${lojaHex}18;display:flex;align-items:center;justify-content:center;font-size:36px;position:relative;overflow:hidden;">
+        ${item.foto_url ? `<img src="${item.foto_url}" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;">` : `<span>${loja._emoji||'🍽️'}</span>`}
+        <div style="position:absolute;top:6px;left:6px;background:#E05A3A;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;">${item.desconto}%</div>
       </div>
-      <div style="flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;">
+      <!-- Info -->
+      <div style="flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;">
         <div>
-          <div style="font-size:10px;font-weight:700;color:#9B7B72;text-transform:uppercase;margin-bottom:2px;">${loja.nome || ''}</div>
-          <div style="font-size:14px;font-weight:800;color:#1A0A08;margin-bottom:4px;">${item.name}</div>
+          <!-- Loja -->
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            ${loja.logo_url?`<img src="${loja.logo_url}" style="width:18px;height:18px;border-radius:5px;object-fit:cover;" onerror="this.style.display='none'">`:'' }
+            <span style="font-size:10px;font-weight:700;color:#9B7B72;text-transform:uppercase;">${loja.nome||''}</span>
+          </div>
+          <div style="font-size:14px;font-weight:800;color:#1A0A08;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:12px;color:#9B7B72;text-decoration:line-through;">${fmt(precoOrig)}</span>
-          <span style="font-size:16px;font-weight:900;color:#E05A3A;">${fmt(precoDesc)}</span>
+          <span style="font-size:12px;color:#9B7B72;text-decoration:line-through;">${fmt(item.preco_cheio||item.preco_com_desc)}</span>
+          <span style="font-size:16px;font-weight:900;color:#E05A3A;">${fmt(item.preco_com_desc)}</span>
         </div>
       </div>
     </div>`;
@@ -698,18 +703,18 @@ function storeCardHTMLb(l, ab, temPromo) {
 let _bannerTimer=null, _bannerIdx=0, _promoItems=[], _carouselSlides=[];
 
 // Slides fixos de desconto + slides de promoções reais
-// Paletas por faixa de desconto
+// Paletas + emojis 3D por faixa de desconto
 const PALETAS = {
-  5:  { cor1:'#1A3D1A', cor2:'#0F2D0F', emoji:'💚' },
-  10: { cor1:'#1A2E3D', cor2:'#0F1D2D', emoji:'🔵' },
-  15: { cor1:'#2E2A1A', cor2:'#1D1A0F', emoji:'🟡' },
-  20: { cor1:'#1A1A3D', cor2:'#0F0F2D', emoji:'💜' },
-  25: { cor1:'#3D1A1A', cor2:'#2D0F0F', emoji:'🔴' },
-  30: { cor1:'#1A0A08', cor2:'#3D1A10', emoji:'🔥' },
-  35: { cor1:'#3D2A0A', cor2:'#2D1A05', emoji:'🧡' },
-  40: { cor1:'#0F1A3D', cor2:'#0A0F2D', emoji:'⚡' },
-  45: { cor1:'#1A0A2D', cor2:'#0F0520', emoji:'✨' },
-  50: { cor1:'#2D0A0A', cor2:'#1A0505', emoji:'🎉' },
+  5:  { cor1:'#1A3D1A', cor2:'#0F2D0F', emoji:'💚', food:'🥗', food2:'🫙' },
+  10: { cor1:'#1A2E3D', cor2:'#0F1D2D', emoji:'🔵', food:'🍔', food2:'🍟' },
+  15: { cor1:'#2E2A1A', cor2:'#1D1A0F', emoji:'🟡', food:'🌮', food2:'🧀' },
+  20: { cor1:'#1A1A3D', cor2:'#0F0F2D', emoji:'💜', food:'🍕', food2:'🍷' },
+  25: { cor1:'#3D1A1A', cor2:'#2D0F0F', emoji:'🔴', food:'🍣', food2:'🥢' },
+  30: { cor1:'#1A0A08', cor2:'#3D1A10', emoji:'🔥', food:'🍔', food2:'🍟' },
+  35: { cor1:'#3D2A0A', cor2:'#2D1A05', emoji:'🧡', food:'🌯', food2:'🥤' },
+  40: { cor1:'#0F1A3D', cor2:'#0A0F2D', emoji:'⚡', food:'🍕', food2:'🧃' },
+  45: { cor1:'#1A0A2D', cor2:'#0F0520', emoji:'✨', food:'🧁', food2:'🍰' },
+  50: { cor1:'#2D0A0A', cor2:'#1A0505', emoji:'🎉', food:'🍔', food2:'🌮' },
 };
 
 async function renderBanner() {
@@ -764,39 +769,57 @@ function buildCarousel() {
     const item = s.itens[0];
     const loja = _lojas.find(l=>l.id===item.estabelecimento_id)||{};
     const mais = s.itens.length > 1 ? `+${s.itens.length-1} itens` : '';
+    // Lojas únicas nesse slide
+    const lojasUnicas = [...new Set(s.itens.map(i=>i.estabelecimento_id))]
+      .map(id => _lojas.find(l=>l.id===id)).filter(Boolean);
+    const qtdLojas = lojasUnicas.length;
+    const qtdItens = s.itens.length;
+
     return `<div class="promo-slide"
-      style="background:linear-gradient(135deg,${pal.cor1},${pal.cor2});cursor:pointer;"
+      style="background:linear-gradient(135deg,${pal.cor1} 0%,${pal.cor2} 100%);cursor:pointer;overflow:hidden;position:relative;"
       onclick="abrirTelaPromos(${s.pct}, _promoItems.filter(p=>p.desconto===${s.pct}))">
 
-      <!-- Percentual grande -->
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
-        <div>
-          <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">${pal.emoji} ${s.itens.length} ${s.itens.length===1?'item':'itens'} em oferta</div>
-          <div style="display:flex;align-items:baseline;gap:4px;">
-            <span style="font-size:40px;font-weight:900;color:#FFD166;line-height:1;">${s.pct}%</span>
-            <span style="font-size:18px;font-weight:900;color:#fff;">OFF</span>
-          </div>
-        </div>
-        <!-- Logo + nome do produto -->
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-          <div style="width:44px;height:44px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;">
-            ${loja.logo_url?`<img src="${loja.logo_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`:`<span style="font-size:20px;">${loja._emoji||'🍽️'}</span>`}
-          </div>
-        </div>
-      </div>
+      <!-- Emojis 3D flutuantes decorativos -->
+      <div style="position:absolute;right:-10px;top:-14px;font-size:72px;opacity:.15;transform:rotate(15deg);pointer-events:none;line-height:1;">${pal.food}</div>
+      <div style="position:absolute;right:42px;bottom:-16px;font-size:56px;opacity:.12;transform:rotate(-10deg);pointer-events:none;line-height:1;">${pal.food2}</div>
 
-      <!-- Item em destaque -->
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:10px;color:rgba(255,255,255,.5);">${loja.nome||''}</div>
-          <div style="font-size:13px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
-            <span style="font-size:11px;color:rgba(255,255,255,.4);text-decoration:line-through;">R$ ${item.preco_cheio.toFixed(2).replace('.',',')}</span>
-            <span style="font-size:14px;font-weight:900;color:#FFD166;">R$ ${item.preco_com_desc.toFixed(2).replace('.',',')}</span>
+      <!-- Conteúdo -->
+      <div style="position:relative;z-index:1;">
+        <!-- Badge de quantidade -->
+        <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.1);border-radius:20px;padding:3px 10px;margin-bottom:8px;">
+          <span style="font-size:9px;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em;">${pal.emoji} ${qtdItens} ${qtdItens===1?'item':'itens'} · ${qtdLojas} ${qtdLojas===1?'loja':'lojas'}</span>
+        </div>
+
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px;">
+          <!-- Percentual -->
+          <div>
+            <div style="display:flex;align-items:baseline;gap:3px;line-height:1;">
+              <span style="font-size:46px;font-weight:900;color:#FFD166;">${s.pct}%</span>
+              <span style="font-size:20px;font-weight:900;color:#fff;margin-bottom:4px;">OFF</span>
+            </div>
+          </div>
+          <!-- Logos das lojas (até 3) -->
+          <div style="display:flex;gap:-6px;">
+            ${lojasUnicas.slice(0,3).map((l,li)=>`
+              <div style="width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.3);overflow:hidden;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;margin-left:${li>0?'-8px':'0px'};z-index:${3-li};">
+                ${l.logo_url?`<img src="${l.logo_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`:`<span style="font-size:13px;">${l._emoji||'🍽️'}</span>`}
+              </div>`).join('')}
+            ${qtdLojas>3?`<div style="width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;margin-left:-8px;font-size:9px;font-weight:800;color:#fff;">+${qtdLojas-3}</div>`:''}
           </div>
         </div>
-        ${mais?`<div style="background:rgba(255,255,255,.12);border-radius:8px;padding:4px 10px;font-size:10px;font-weight:700;color:rgba(255,255,255,.7);white-space:nowrap;">${mais}</div>`:''}
-        <div style="margin-left:10px;font-size:11px;color:rgba(255,255,255,.55);white-space:nowrap;">Ver →</div>
+
+        <!-- Item destaque + CTA -->
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:10px;color:rgba(255,255,255,.45);">${loja.nome}</div>
+            <div style="font-size:13px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+              <span style="font-size:10px;color:rgba(255,255,255,.35);text-decoration:line-through;">R$ ${item.preco_cheio.toFixed(2).replace('.',',')}</span>
+              <span style="font-size:13px;font-weight:900;color:#FFD166;">R$ ${item.preco_com_desc.toFixed(2).replace('.',',')}</span>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;margin-left:10px;">Ver tudo →</div>
+        </div>
       </div>
     </div>`;
   }).join('');
