@@ -558,7 +558,10 @@ function renderHome() {
 
   // Lojas
   const filtered = filtrarLojas();
-  $('home-lojas-title').textContent = (CATS.find(c=>c.id===_catAtiva)?.label||'Todos') + ' os restaurantes';
+  const catLabel = CATS.find(cat=>cat.id===_catAtiva)?.label||'Todos';
+  $('home-lojas-title').textContent = _catAtiva==='promo'
+    ? '🔥 Restaurantes em promoção'
+    : catLabel + ' os restaurantes';
   const grid = $('home-grid');
   if(!filtered.length) {
     grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Nenhum restaurante</div><div class="empty-desc">Tente outra cidade ou categoria</div></div>';
@@ -617,11 +620,17 @@ function abrirTelaPromos(pct, itens) {
 }
 
 function filtrarLojas() {
+  // IDs das lojas que têm itens em promoção real (em_promocao=true no banco)
+  const lojasComPromo = new Set(_promoItems.map(p=>p.estabelecimento_id));
+
   return _lojas.filter(l => {
     const mc = !_cidade || (l.cidade||'').trim() === _cidade;
     const mb = !_busca  || (l.nome||'').toLowerCase().includes(_busca.toLowerCase());
-    if(_catAtiva==='promo') return mc && mb && l.promocao_ativa;
-    if(_catAtiva==='all')   return mc && mb;
+    if(_catAtiva==='promo') {
+      // Usa promoções reais dos produtos OU campo promocao_ativa do estabelecimento
+      return mc && mb && (lojasComPromo.has(l.id) || l.promocao_ativa);
+    }
+    if(_catAtiva==='all') return mc && mb;
     const n = (l.nome||'').toLowerCase();
     const m = {burger:['burger','hamburguer','smash'],pizza:['pizza','pizzaria'],acai:['açaí','acai'],restaurante:['restaurante','marmita'],lanche:['lanche','sanduíche','tapioca']};
     return mc && mb && (m[_catAtiva]||[]).some(k=>n.includes(k));
@@ -641,7 +650,8 @@ let _cardStyle = 'A';
 
 function storeCardHTML(l) {
   const ab = l.aberto!==false;
-  const temPromo = l.promocao_ativa && l.desconto_percent>0;
+  const temPromo = l.promocao_ativa || _promoItems.some(p=>p.estabelecimento_id===l.id);
+  const maxDesc = temPromo ? Math.max(..._promoItems.filter(p=>p.estabelecimento_id===l.id).map(p=>p.desconto), l.desconto_percent||0) : 0;
   if(_cardStyle === 'B') return storeCardHTMLb(l, ab, temPromo);
   const hex = normalizeHex(l.cor_primaria||'#C0392B');
   const logoContent = l.logo_url
@@ -655,7 +665,7 @@ function storeCardHTML(l) {
       <!-- logo centralizada -->
       <div style="position:relative;z-index:2;">${logoContent}</div>
       ${!ab?`<div style="position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:3;"><span style="color:#fff;font-size:12px;font-weight:700;background:rgba(0,0,0,.4);padding:5px 12px;border-radius:8px;">Fechado</span></div>`:''}
-      ${temPromo?`<div style="position:absolute;top:8px;right:8px;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:3px 9px;border-radius:7px;z-index:3;">🔥 -${l.desconto_percent}%</div>`:''}
+      ${temPromo&&maxDesc>0?`<div style="position:absolute;top:8px;right:8px;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:3px 9px;border-radius:7px;z-index:3;">🔥 ${maxDesc}% OFF</div>`:''}
     </div>
     <div class="store-info">
       <div class="store-name">${l.nome}</div>
