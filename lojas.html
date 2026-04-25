@@ -1760,6 +1760,50 @@ async function renderOrders() {
   }
 }
 
+// ── NOTIFICAÇÕES NATIVAS ──────────────────────────────────────
+function pedirPermissaoNotificacao() {
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'default') {
+    // Pede com delay para não assustar o usuário na abertura
+    setTimeout(() => {
+      Notification.requestPermission();
+    }, 3000);
+  }
+}
+
+function notificarNativo(titulo, corpo, icon) {
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    const n = new Notification(titulo, {
+      body:  corpo,
+      icon:  icon || '/favicon.ico',
+      badge: '/favicon.ico',
+      tag:   'pediuai-pedido', // substitui notif anterior do mesmo tipo
+      renotify: true,
+    });
+    n.onclick = () => { window.focus(); n.close(); showScreen('orders'); };
+    setTimeout(() => n.close(), 8000);
+  } catch(e) {}
+}
+
+function notificarStatus(nomeLoja, status, isRetirada) {
+  const msgs = {
+    preparo:  { titulo:`🍳 ${nomeLoja}`, corpo:'Seu pedido foi confirmado e está sendo preparado!' },
+    aceito:   { titulo:`🍳 ${nomeLoja}`, corpo:'Seu pedido foi confirmado e está sendo preparado!' },
+    pronto:   {
+      titulo:`${isRetirada?'🏃':'🛵'} ${nomeLoja}`,
+      corpo: isRetirada ? 'Seu pedido está pronto para retirada!' : 'Seu pedido saiu para entrega!'
+    },
+    entregue: { titulo:`🎉 ${nomeLoja}`, corpo:'Pedido entregue! Bom apetite 😋' },
+    cancelado:{ titulo:`❌ ${nomeLoja}`, corpo:'Seu pedido foi cancelado.' },
+    recusado: { titulo:`❌ ${nomeLoja}`, corpo:'Seu pedido foi recusado.' },
+  };
+  const m = msgs[status];
+  if(!m) return;
+  notificarNativo(m.titulo, m.corpo);
+  toast(`${m.titulo}: ${m.corpo}`);
+}
+
 async function carregarStatusIniciais() {
   const whats = ((_user?.tel||'').replace(/\D/g,''))
     || ((_user?._lastWhats||'').replace(/\D/g,''))
@@ -1837,14 +1881,13 @@ function iniciarRealtime() {
     || ((localStorage.getItem('pw_last_whats')||'').replace(/\D/g,''));
   if(!whats||whats.length<10) return;
   try {
-    db.channel('pedidos-cliente-'+Date.now())
+    db.channel('pediuai-cliente-'+whats.slice(-4))
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
         table: 'pedidos',
       }, payload => {
-        // Filtra pelo whats do usuário
-        if(payload.new?.cliente_whats !== whats) return;
+        if((payload.new?.cliente_whats||'').replace(/\D/g,'') !== whats) return;
         const p = payload.new;
         const ant = _statusAnt[p.id];
         if(ant !== undefined && ant !== p.status) {
@@ -1925,7 +1968,16 @@ async function carregarCidadesIBGE(uf, selId) {
 
 function abrirPerfil(primeiraVez=false) {
   const u=_user||{};
-  $('perfil-content').innerHTML = `
+  const notifBanner = ('Notification' in window && Notification.permission === 'default')
+    ? `<div onclick="Notification.requestPermission().then(renderHome)" style="background:rgba(224,90,58,.08);border:1.5px solid rgba(224,90,58,.2);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:14px;">
+        <span style="font-size:22px;">🔔</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--dark);">Ativar notificações</div>
+          <div style="font-size:11px;color:var(--gray);">Receba alertas quando seu pedido ficar pronto</div>
+        </div>
+      </div>` : '';
+
+  $('perfil-content').innerHTML = notifBanner + `
     ${u.nome&&!primeiraVez?`<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--border);">
       <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--red),var(--red-d));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;">${u.nome[0].toUpperCase()}</div>
       <div><div style="font-size:15px;font-weight:800;color:var(--dark);">${u.nome}</div><div style="font-size:12px;color:var(--gray);">${u.cidade||'Cidade não definida'}</div></div>
