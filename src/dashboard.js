@@ -633,6 +633,7 @@ async function renderCardapio() {
         <div class="item-footer">
           <div>
             ${p.promocao && p.preco_original ? `<div class="item-preco-original">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</div>` : ''}
+            ${p.em_promocao && p.desconto_percent > 0 ? `<div class="item-promo-badge" style="background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;display:inline-block;">🔥 -${p.desconto_percent}%</div>` : ''}
             <div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>
           </div>
           <div class="item-acoes">
@@ -702,6 +703,8 @@ function renderEmojiGrid() {
 export function abrirModalItem() {
   $('modal-item').classList.add('open');
   ['item-nome','item-desc','item-cat','item-preco','item-preco-orig'].forEach(id => { const el=$(id); if(el) el.value=''; });
+  const dd=$('item-desconto-percent'); if(dd) dd.value='0';
+  const dg=$('desconto-group'); if(dg) dg.style.display='none';
   const pr = $('item-promocao'); if (pr) pr.checked = false;
   const pg = $('preco-orig-group'); if (pg) pg.style.display = 'none';
   fotosFiles = []; fotosPosX = []; fotosPosY = [];
@@ -1035,7 +1038,12 @@ export async function editarItem(id) {
     set('item-nome', p.nome); set('item-desc', p.descricao||'');
     set('item-cat',  p.categoria||''); set('item-preco', p.preco);
     set('item-preco-orig', p.preco_original||'');
-    const pr = $('item-promocao'); if (pr) { pr.checked = !!p.promocao; const g=$('preco-orig-group'); if(g) g.style.display=p.promocao?'flex':'none'; }
+    const pr = $('item-promocao'); if (pr) {
+      pr.checked = !!p.promocao;
+      const g=$('preco-orig-group'); if(g) g.style.display=p.promocao?'flex':'none';
+      const dd=$('item-desconto-percent'); if(dd) dd.value=p.desconto_percent||'0';
+      const dg=$('desconto-group'); if(dg) dg.style.display=p.promocao?'flex':'none';
+    }
     emojiSel = p.emoji || '🍔'; renderEmojiGrid();
     // Fotos existentes — carrega no mesmo sistema de drag 1:1
     const fotosExist = (p.fotos_urls && p.fotos_urls.length) ? p.fotos_urls : (p.foto_url ? [p.foto_url] : []);
@@ -1079,6 +1087,7 @@ export async function editarItem(id) {
           const foto_url = fotos_urls[0] || null;
           const promocao   = $('item-promocao')?.checked || false;
           const preco_orig = parseFloat($('item-preco-orig')?.value) || null;
+          const desconto_pct_u = parseInt($('item-desconto-percent')?.value||'0');
           const { error } = await getSupa().from('produtos').update({
             nome:         $('item-nome')?.value.trim(),
             descricao:    $('item-desc')?.value.trim(),
@@ -1086,6 +1095,8 @@ export async function editarItem(id) {
             preco:        parseFloat($('item-preco')?.value),
             preco_original: promocao ? preco_orig : null,
             foto_url, fotos_urls, emoji: emojiSel, promocao,
+            em_promocao: promocao && desconto_pct_u > 0,
+            desconto_percent: promocao ? desconto_pct_u : 0,
           }).eq('id', id);
           if (error) throw new Error(error.message);
           await renderCardapio(); fecharModal(); showToast('Item atualizado!');
