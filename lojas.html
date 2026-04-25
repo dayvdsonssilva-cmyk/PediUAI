@@ -713,25 +713,43 @@ const PALETAS = {
 };
 
 async function renderBanner() {
-  // Carrega promos reais do banco
   try {
     const {data} = await db.from('produtos')
-      .select('id,nome,preco,desconto_percent,estabelecimento_id')
+      .select('id,nome,preco,preco_original,desconto_percent,estabelecimento_id,foto_url')
       .eq('em_promocao',true).gt('desconto_percent',0).eq('disponivel',true);
+
     _promoItems = (data||[]).map(p => ({
-      ...p, name:p.nome, desconto:parseInt(p.desconto_percent||0),
-      preco_com_desc: parseFloat(p.preco||0)*(1-parseInt(p.desconto_percent||0)/100),
+      ...p,
+      name:          p.nome,
+      desconto:      parseInt(p.desconto_percent||0),
+      preco_com_desc: parseFloat(p.preco||0),
+      preco_cheio:   parseFloat(p.preco_original||p.preco||0),
     }));
   } catch(e) { _promoItems = []; }
 
-  // Monta slides: promos reais primeiro, depois os fixos de demo
-  _carouselSlides = [
-    ..._promoItems.map(item => {
-      const loja = _lojas.find(l=>l.id===item.estabelecimento_id)||{};
-      return { tipo:'real', item, loja };
-    }),
-    ...SLIDES_FIXOS.map(s => ({ tipo:'demo', ...s })),
-  ];
+  // Agrupa por percentual
+  const grupos = {};
+  _promoItems.forEach(item => {
+    const pct = item.desconto;
+    if(!grupos[pct]) grupos[pct] = [];
+    grupos[pct].push(item);
+  });
+  const percentuais = Object.keys(grupos).map(Number).sort((a,b)=>b-a);
+
+  if(!percentuais.length) {
+    // Banner padrão sem promoções
+    $('banner-wrap').innerHTML = `<div style="margin:10px 18px 0;">
+      <div class="hero-banner" style="min-height:120px;padding:20px 22px;">
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Plataforma independente</div>
+        <div style="font-size:20px;font-weight:900;color:#fff;margin-bottom:4px;">Peça direto.</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.55);">Sem comissão, sem taxa extra.</div>
+      </div>
+    </div>`;
+    return;
+  }
+
+  // Um slide por percentual
+  _carouselSlides = percentuais.map(pct => ({ tipo:'grupo', pct, itens:grupos[pct] }));
   _bannerIdx = 0;
   buildCarousel();
   iniciarTimer();
