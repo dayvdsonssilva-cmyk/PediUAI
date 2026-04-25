@@ -1629,23 +1629,13 @@ window.finalizarPedido = async function(lid) {
 async function renderOrders() {
   const el=$('orders-content'); if(!el) return;
 
-  // ── Mostra pedidos locais imediatamente (sem esperar banco) ──
-  const mostrarImediato = () => {
-    if(!_pedidosLocais.length) return false;
-    el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
-      _pedidosLocais.map(p => pedidoCardHTML(p)).join('');
-    return true;
-  };
-
-  const temLocal = mostrarImediato();
-  if(!temLocal) {
-    el.innerHTML=`<div style="padding:40px 20px;text-align:center;font-size:13px;color:var(--gray);">Carregando pedidos...</div>`;
-  }
+  // Sempre busca do banco — mostra local apenas se não houver whats ainda
+  el.innerHTML=`<div style="padding:20px;text-align:center;font-size:13px;color:var(--gray);">Atualizando...</div>`;
 
   // ── Busca do banco em background ──
   const whats = (_user?.tel||'').replace(/\D/g,'');
   if(!whats || whats.length<10) {
-    if(!temLocal) el.innerHTML=`<div class="empty-state" style="padding:80px 20px;">
+    el.innerHTML=`<div class="empty-state" style="padding:80px 20px;">
       <div style="font-size:56px;margin-bottom:14px;">📋</div>
       <div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:8px;">Nenhum pedido ainda</div>
       <div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:22px;">Faça seu primeiro pedido!</div>
@@ -1685,7 +1675,7 @@ async function renderOrders() {
 
       el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
         allPeds.map(p => pedidoCardHTML(p)).join('');
-    } else if(!temLocal) {
+    } else {
       el.innerHTML=`<div class="empty-state" style="padding:80px 20px;">
         <div style="font-size:56px;margin-bottom:14px;">📋</div>
         <div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:8px;">Nenhum pedido ainda</div>
@@ -1695,7 +1685,7 @@ async function renderOrders() {
     }
   } catch(e) {
     console.warn('renderOrders error:', e);
-    if(!temLocal) el.innerHTML=`<div style="padding:40px;text-align:center;font-size:13px;color:var(--gray);">Erro ao carregar. Tente novamente.</div>`;
+    el.innerHTML=`<div style="padding:40px;text-align:center;font-size:13px;color:var(--gray);">Erro ao carregar. Tente novamente.</div>`;
   }
 }
 
@@ -1709,8 +1699,14 @@ async function carregarStatusIniciais() {
       .eq('cliente_whats', whats)
       .order('created_at',{ascending:false})
       .limit(50);
-    (data||[]).forEach(p => { _statusAnt[p.id] = p.status; });
-    console.log('[PEDIUAI] Status iniciais carregados:', data?.length);
+    (data||[]).forEach(p => {
+      // Salva status atual como referência para o polling
+      _statusAnt[p.id] = p.status;
+      // Atualiza _pedidosLocais com o status real do banco
+      const li = _pedidosLocais.findIndex(pl => pl.id === p.id);
+      if(li >= 0) _pedidosLocais[li].status = p.status;
+    });
+    console.log('[PEDIUAI] Status iniciais:', data?.length);
   } catch(e) { console.warn('carregarStatusIniciais:', e); }
 }
 
@@ -1727,12 +1723,19 @@ async function pollarPedidos() {
 
     let mudou=false;
     (data||[]).forEach(p => {
-      const ant=_statusAnt[p.id];
-      if(ant !== undefined && ant!==p.status) {
-        mudou=true;
-        const loja=_lojas.find(l=>l.id===p.estabelecimento_id);
-        const nomeLoja=loja?.nome||'Loja';
-        const msgs={
+      const ant = _statusAnt[p.id];
+      // Sempre sincroniza _pedidosLocais com o status real do banco
+      const localIdx = _pedidosLocais.findIndex(pl => pl.id === p.id);
+      if(localIdx >= 0 && _pedidosLocais[localIdx].status !== p.status) {
+        _pedidosLocais[localIdx].status = p.status;
+        mudou = true;
+      }
+      // Notifica mudança de status
+      if(ant !== undefined && ant !== p.status) {
+        mudou = true;
+        const loja = _lojas.find(l=>l.id===p.estabelecimento_id);
+        const nomeLoja = loja?.nome||'Loja';
+        const msgs = {
           aceito:   `🍳 ${nomeLoja}: Pedido em preparo!`,
           pronto:   `🎉 ${nomeLoja}: Pedido pronto!`,
           entregue: `✅ ${nomeLoja}: Pedido entregue!`,
@@ -1740,10 +1743,7 @@ async function pollarPedidos() {
         };
         if(msgs[p.status]) toast(msgs[p.status]);
       }
-      // Sempre atualiza _statusAnt e _pedidosLocais
       _statusAnt[p.id] = p.status;
-      const localIdx = _pedidosLocais.findIndex(pl=>pl.id===p.id);
-      if(localIdx>=0) _pedidosLocais[localIdx].status = p.status;
     });
 
     if(mudou && _screen==='orders') renderOrders();
