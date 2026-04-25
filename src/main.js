@@ -41,7 +41,9 @@ window.mascaraWhatsInput = function(input) {
 
 window.togglePromo = function(cb) {
   const g = document.getElementById('preco-orig-group');
+  const d = document.getElementById('desconto-group');
   if (g) g.style.display = cb.checked ? 'flex' : 'none';
+  if (d) d.style.display = cb.checked ? 'flex' : 'none';
 };
 
 window.atualizarCfgLink = function(val) {
