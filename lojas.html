@@ -1824,45 +1824,43 @@ async function carregarStatusIniciais() {
 }
 
 async function pollarPedidos() {
-  if(!_user?.tel) return;
-  let whats = (_user?.tel||'').replace(/\D/g,'');
-  if(!whats||whats.length<10) {
-    whats = (_pedidosLocais[0]?.cliente_whats||'').replace(/\D/g,'');
-  }
+  // Pega whats de qualquer fonte disponível
+  const whats = ((_user?.tel||'').replace(/\D/g,''))
+    || ((_user?._lastWhats||'').replace(/\D/g,''))
+    || ((localStorage.getItem('pw_last_whats')||'').replace(/\D/g,''))
+    || ((_pedidosLocais[0]?.cliente_whats||'').replace(/\D/g,''));
   if(!whats||whats.length<10) return;
+
   try {
     const {data} = await db.from('pedidos')
-      .select('id,status,total,estabelecimento_id')
-      .eq('cliente_whats',whats)
+      .select('id,status,estabelecimento_id')
+      .eq('cliente_whats', whats)
       .order('created_at',{ascending:false})
-      .limit(30);
+      .limit(40);
 
-    let mudou=false;
-    (data||[]).forEach(p => {
+    if(!data) return;
+
+    let temMudanca = false;
+    data.forEach(p => {
       const ant = _statusAnt[p.id];
-      // Sempre sincroniza _pedidosLocais com o status real do banco
-      const localIdx = _pedidosLocais.findIndex(pl => pl.id === p.id);
-      if(localIdx >= 0 && _pedidosLocais[localIdx].status !== p.status) {
-        _pedidosLocais[localIdx].status = p.status;
-        mudou = true;
-      }
       // Notifica mudança de status
       if(ant !== undefined && ant !== p.status) {
-        mudou = true;
+        temMudanca = true;
         const loja = _lojas.find(l=>l.id===p.estabelecimento_id);
-        const nomeLoja = loja?.nome||'Loja';
-        const msgs = {
-          preparo:  `🍳 ${nomeLoja}: Pedido em preparo!`,
-          pronto:   `🎉 ${nomeLoja}: Pedido pronto!`,
-          recusado: `❌ ${nomeLoja}: Pedido recusado.`,
-        };
-        if(msgs[p.status]) toast(msgs[p.status]);
+        const local = _pedidosLocais.find(pl=>pl.id===p.id);
+        const isRet = (local?.endereco||'').toLowerCase().includes('retirada');
+        notificarStatus(loja?.nome||'Loja', p.status, isRet);
       }
       _statusAnt[p.id] = p.status;
+      // Atualiza _pedidosLocais
+      const li = _pedidosLocais.findIndex(pl=>pl.id===p.id);
+      if(li>=0) _pedidosLocais[li].status = p.status;
     });
 
-    if(mudou && _screen==='orders') renderOrders();
-  } catch(e){}
+    // SEMPRE atualiza a tela de pedidos — não espera mudança
+    if(_screen==='orders') renderOrders();
+
+  } catch(e){ console.warn('poll err:', e); }
 }
 
 function atualizarStatusLocal(pedidoId, novoStatus, estabId) {
