@@ -1046,7 +1046,7 @@ function pedidoCardHTML(p) {
   if(st==='recusado'||st==='cancelado') return `<div class="pedido-card" data-pedido-id="${p.id}" style="border-left:3px solid #DC2626;opacity:.7;">
     <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
       <div>
-        <div style="font-size:11px;color:var(--gray);">Pedido #${String(p.id||'').slice(-4)}</div>
+        <div style="font-size:11px;color:var(--gray);">Pedido #${String(p.id||'').slice(-4).toUpperCase()}</div>
         ${p.lojaNome?`<div style="font-size:13px;font-weight:800;color:var(--dark);">${p.lojaNome}</div>`:''}
       </div>
       <span style="font-size:15px;font-weight:900;color:var(--dark);">${fmt(p.total)}</span>
@@ -1087,7 +1087,7 @@ function pedidoCardHTML(p) {
   return `<div class="pedido-card" data-pedido-id="${p.id}" style="border-left:3px solid ${corAtual};">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px;">
       <div>
-        <div style="font-size:11px;font-weight:600;color:var(--gray);">Pedido #${String(p.id||'').slice(-4)}</div>
+        <div style="font-size:11px;font-weight:600;color:var(--gray);">Pedido #${String(p.id||'').slice(-4).toUpperCase()}</div>
         ${p.lojaNome?`<div style="font-size:13px;font-weight:800;color:var(--dark);">${p.lojaNome}</div>`:''}
       </div>
       <span style="font-size:15px;font-weight:900;color:var(--dark);">${fmt(p.total)}</span>
@@ -1607,24 +1607,13 @@ window.finalizarPedido = async function(lid) {
 
 
 
-    // Guarda whats do pedido no user imediatamente
+    // Salva dados do cliente
     if(!_user) _user = {};
     _user.tel = $('cli-tel-'+lid)?.value || _user.tel || '';
     _user.nome = nome;
+    _user._lastWhats = whats; // whats sempre disponível
     localStorage.setItem('pw_cliente', JSON.stringify(_user));
-
-    // Adiciona pedido local imediatamente (sem esperar Supabase)
-    _pedidosLocais.unshift({
-      id: pedId,
-      itens, total, status: 'novo',
-      endereco,
-      lojaNome: l.nome,
-      lojaId: lid,
-      cliente_whats: whats,
-      created_at: new Date().toISOString(),
-    });
-    // Atualiza _statusAnt
-    _statusAnt[pedId] = 'novo';
+    localStorage.setItem('pw_last_whats', whats);
 
     delete _carrinhos[lid];
     delete _checkoutStep[lid];
@@ -1663,33 +1652,18 @@ async function renderOrders() {
     }
   }
 
-  // ── Busca whats de todas as fontes possíveis ──
-  // 1. _user.tel  2. _pedidosLocais  3. localStorage de qualquer pedido
-  let whats = (_user?.tel||'').replace(/\D/g,'');
-  if(!whats || whats.length<10) {
-    whats = (_pedidosLocais[0]?.cliente_whats||'').replace(/\D/g,'');
-  }
-  if(!whats || whats.length<10) {
-    // tenta achar no localStorage
-    for(const l of _lojas) {
-      const peds = JSON.parse(localStorage.getItem('pw_peds_'+l.slug)||'[]');
-      if(peds[0]?.cliente_whats) { whats=(peds[0].cliente_whats||'').replace(/\D/g,''); break; }
-    }
-  }
+  // Pega whats de todas as fontes
+  let whats = (_user?.tel||'').replace(/\D/g,'')
+    || (_user?._lastWhats||'').replace(/\D/g,'')
+    || (localStorage.getItem('pw_last_whats')||'').replace(/\D/g,'');
 
-  // Se ainda não tem whats mas tem pedidos locais, mostra eles
   if(!whats || whats.length<10) {
-    if(_pedidosLocais.length) {
-      el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
-        _pedidosLocais.map(p => pedidoCardHTML(p)).join('');
-    } else {
-      el.innerHTML=`<div class="empty-state" style="padding:80px 20px;">
-        <div style="font-size:56px;margin-bottom:14px;">📋</div>
-        <div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:8px;">Nenhum pedido ainda</div>
-        <div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:22px;">Faça seu primeiro pedido!</div>
-        <button onclick="showScreen('home')" style="padding:12px 24px;border-radius:12px;background:var(--red);color:#fff;border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;">Ver restaurantes →</button>
-      </div>`;
-    }
+    el.innerHTML=`<div class="empty-state" style="padding:80px 20px;">
+      <div style="font-size:56px;margin-bottom:14px;">📋</div>
+      <div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:8px;">Nenhum pedido ainda</div>
+      <div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:22px;">Faça seu primeiro pedido!</div>
+      <button onclick="showScreen('home')" style="padding:12px 24px;border-radius:12px;background:var(--red);color:#fff;border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;">Ver restaurantes →</button>
+    </div>`;
     return;
   }
 
@@ -1704,22 +1678,12 @@ async function renderOrders() {
       // Atualiza status local
       data.forEach(p => { _statusAnt[p.id] = p.status; });
 
-      // Merge: banco primeiro, locais só se não estiverem no banco
-      const idsNoBanco = new Set(data.map(p=>p.id));
-      const soLocais = _pedidosLocais.filter(p=>!idsNoBanco.has(p.id));
+      // Atualiza _statusAnt com dados frescos do banco
+      data.forEach(p => { _statusAnt[p.id] = p.status; });
 
-      const allPeds = [
-        ...soLocais,
-        ...data.map(p => {
-          const loja = _lojas.find(l=>l.id===p.estabelecimento_id)||{};
-          return {...p, lojaNome:loja.nome||'Loja', lojaId:p.estabelecimento_id};
-        })
-      ];
-
-      // Detecta mudança de status nos pedidos locais e atualiza
-      _pedidosLocais = _pedidosLocais.map(pl => {
-        const fromDB = data.find(p=>p.id===pl.id);
-        return fromDB ? {...pl, status:fromDB.status} : pl;
+      const allPeds = data.map(p => {
+        const loja = _lojas.find(l=>l.id===p.estabelecimento_id)||{};
+        return {...p, lojaNome:loja.nome||'Loja'};
       });
 
       el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
@@ -1739,8 +1703,9 @@ async function renderOrders() {
 }
 
 async function carregarStatusIniciais() {
-  let whats = (_user?.tel||'').replace(/\D/g,'');
-  if(!whats||whats.length<10) whats = (_pedidosLocais[0]?.cliente_whats||'').replace(/\D/g,'');
+  const whats = ((_user?.tel||'').replace(/\D/g,''))
+    || ((_user?._lastWhats||'').replace(/\D/g,''))
+    || ((localStorage.getItem('pw_last_whats')||'').replace(/\D/g,''));
   if(!whats||whats.length<10) return;
   try {
     const {data} = await db.from('pedidos')
@@ -1809,8 +1774,9 @@ function atualizarStatusLocal(pedidoId, novoStatus, estabId) {
 
 // Supabase Realtime para updates instantâneos
 function iniciarRealtime() {
-  let whats = (_user?.tel||'').replace(/\D/g,'');
-  if(!whats||whats.length<10) whats = (_pedidosLocais[0]?.cliente_whats||'').replace(/\D/g,'');
+  const whats = ((_user?.tel||'').replace(/\D/g,''))
+    || ((_user?._lastWhats||'').replace(/\D/g,''))
+    || ((localStorage.getItem('pw_last_whats')||'').replace(/\D/g,''));
   if(!whats||whats.length<10) return;
   try {
     db.channel('pedidos-cliente-'+Date.now())
