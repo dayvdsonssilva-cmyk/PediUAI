@@ -437,6 +437,7 @@ const db = createClient(SUPA_URL, SUPA_KEY);
 // ═══════════════════════════════════════════════════════
 let _user     = null;
 let _lojas    = [];
+let _pedidosLocais = []; // pedidos colocados nessa sessão, exibidos imediatamente
 let _catAtiva = 'all';
 let _busca    = '';
 let _cidade   = '';
@@ -1582,10 +1583,26 @@ window.finalizarPedido = async function(lid) {
     peds.unshift({id:pedId,itens,total,status:'novo',endereco,cliente_whats:whats,cliente_nome:nome});
     localStorage.setItem('pw_peds_'+slug,JSON.stringify(peds.slice(0,20)));
 
-    // Salva dados do cliente
-    if(!_user) _user={};
-    _user.nome=nome; _user.tel=$('cli-tel-'+lid)?.value||'';
-    localStorage.setItem('pw_cliente',JSON.stringify(_user));
+
+
+    // Guarda whats do pedido no user imediatamente
+    if(!_user) _user = {};
+    _user.tel = $('cli-tel-'+lid)?.value || _user.tel || '';
+    _user.nome = nome;
+    localStorage.setItem('pw_cliente', JSON.stringify(_user));
+
+    // Adiciona pedido local imediatamente (sem esperar Supabase)
+    _pedidosLocais.unshift({
+      id: pedId,
+      itens, total, status: 'novo',
+      endereco,
+      lojaNome: l.nome,
+      lojaId: lid,
+      cliente_whats: whats,
+      created_at: new Date().toISOString(),
+    });
+    // Atualiza _statusAnt
+    _statusAnt[pedId] = 'novo';
 
     delete _carrinhos[lid];
     delete _checkoutStep[lid];
@@ -1593,12 +1610,11 @@ window.finalizarPedido = async function(lid) {
     atualizarFab('cart');
     atualizarCartBtn();
     renderCarrinho();
-    // Aguarda um tick para o localStorage estar disponível
-    setTimeout(() => {
-      renderOrders();
-      showScreen('orders');
-      toast('Pedido enviado! Aguardando confirmação ✅');
-    }, 100);
+
+    // Mostra pedidos imediatamente
+    showScreen('orders');
+    renderOrders();
+    toast('Pedido enviado! Aguardando confirmação ✅');
 
   } catch(e) {
     toast('Erro: '+(e.message||'Tente novamente'));
@@ -1613,66 +1629,74 @@ window.finalizarPedido = async function(lid) {
 async function renderOrders() {
   const el=$('orders-content'); if(!el) return;
 
-  // Mostra loading
-  el.innerHTML=`<div style="padding:40px 20px;text-align:center;">
-    <div style="font-size:13px;color:var(--gray);">Carregando pedidos...</div>
-  </div>`;
+  // ── Mostra pedidos locais imediatamente (sem esperar banco) ──
+  const mostrarImediato = () => {
+    if(!_pedidosLocais.length) return false;
+    el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
+      _pedidosLocais.map(p => pedidoCardHTML(p)).join('');
+    return true;
+  };
 
-  const whats = (_user?.tel||'').replace(/\D/g,'');
-
-  // Busca pedidos do banco se tiver WhatsApp
-  if(whats && whats.length>=10) {
-    try {
-      const {data} = await db.from('pedidos')
-        .select('id,status,total,itens,endereco,estabelecimento_id,created_at,pagamento')
-        .eq('cliente_whats', whats)
-        .order('created_at', {ascending:false})
-        .limit(30);
-
-      if(data && data.length>0) {
-        // Atualiza _statusAnt e localStorage com dados frescos
-        data.forEach(p => {
-          _statusAnt[p.id] = p.status;
-          const loja = _lojas.find(l=>l.id===p.estabelecimento_id);
-          if(loja?.slug) {
-            const key='pw_peds_'+loja.slug;
-            const peds=JSON.parse(localStorage.getItem(key)||'[]');
-            const idx=peds.findIndex(pd=>pd.id===p.id);
-            if(idx>=0) { peds[idx].status=p.status; localStorage.setItem(key,JSON.stringify(peds)); }
-          }
-        });
-
-        const allPeds = data.map(p => {
-          const loja = _lojas.find(l=>l.id===p.estabelecimento_id)||{};
-          return {...p, lojaNome:loja.nome||'Loja', lojaId:p.estabelecimento_id};
-        });
-
-        el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
-          allPeds.map(p => pedidoCardHTML(p)).join('');
-        return;
-      }
-    } catch(e) { console.warn('renderOrders:', e); }
+  const temLocal = mostrarImediato();
+  if(!temLocal) {
+    el.innerHTML=`<div style="padding:40px 20px;text-align:center;font-size:13px;color:var(--gray);">Carregando pedidos...</div>`;
   }
 
-  // Fallback: localStorage
-  const allPeds=[];
-  _lojas.forEach(l => {
-    const peds=JSON.parse(localStorage.getItem('pw_peds_'+l.slug)||'[]');
-    peds.forEach(p=>allPeds.push({...p,lojaNome:l.nome,lojaId:l.id}));
-  });
-
-  if(!allPeds.length){
-    el.innerHTML=`<div class="empty-state" style="padding:80px 20px;">
+  // ── Busca do banco em background ──
+  const whats = (_user?.tel||'').replace(/\D/g,'');
+  if(!whats || whats.length<10) {
+    if(!temLocal) el.innerHTML=`<div class="empty-state" style="padding:80px 20px;">
       <div style="font-size:56px;margin-bottom:14px;">📋</div>
       <div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:8px;">Nenhum pedido ainda</div>
-      <div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:22px;">Faça seu primeiro pedido em um dos restaurantes!</div>
+      <div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:22px;">Faça seu primeiro pedido!</div>
       <button onclick="showScreen('home')" style="padding:12px 24px;border-radius:12px;background:var(--red);color:#fff;border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;">Ver restaurantes →</button>
     </div>`;
     return;
   }
-  allPeds.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
-  el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
-    allPeds.slice(0,20).map(p => pedidoCardHTML(p)).join('');
+
+  try {
+    const {data} = await db.from('pedidos')
+      .select('id,status,total,itens,endereco,estabelecimento_id,created_at,pagamento')
+      .eq('cliente_whats', whats)
+      .order('created_at', {ascending:false})
+      .limit(40);
+
+    if(data && data.length>0) {
+      // Atualiza status local
+      data.forEach(p => { _statusAnt[p.id] = p.status; });
+
+      // Merge: banco primeiro, locais só se não estiverem no banco
+      const idsNoBanco = new Set(data.map(p=>p.id));
+      const soLocais = _pedidosLocais.filter(p=>!idsNoBanco.has(p.id));
+
+      const allPeds = [
+        ...soLocais,
+        ...data.map(p => {
+          const loja = _lojas.find(l=>l.id===p.estabelecimento_id)||{};
+          return {...p, lojaNome:loja.nome||'Loja', lojaId:p.estabelecimento_id};
+        })
+      ];
+
+      // Detecta mudança de status nos pedidos locais e atualiza
+      _pedidosLocais = _pedidosLocais.map(pl => {
+        const fromDB = data.find(p=>p.id===pl.id);
+        return fromDB ? {...pl, status:fromDB.status} : pl;
+      });
+
+      el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
+        allPeds.map(p => pedidoCardHTML(p)).join('');
+    } else if(!temLocal) {
+      el.innerHTML=`<div class="empty-state" style="padding:80px 20px;">
+        <div style="font-size:56px;margin-bottom:14px;">📋</div>
+        <div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:8px;">Nenhum pedido ainda</div>
+        <div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:22px;">Faça seu primeiro pedido!</div>
+        <button onclick="showScreen('home')" style="padding:12px 24px;border-radius:12px;background:var(--red);color:#fff;border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;">Ver restaurantes →</button>
+      </div>`;
+    }
+  } catch(e) {
+    console.warn('renderOrders error:', e);
+    if(!temLocal) el.innerHTML=`<div style="padding:40px;text-align:center;font-size:13px;color:var(--gray);">Erro ao carregar. Tente novamente.</div>`;
+  }
 }
 
 async function carregarStatusIniciais() {
