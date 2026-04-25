@@ -645,7 +645,9 @@ function filtrarLojas() {
   const lojasComPromo = new Set(_promoItems.map(p=>p.estabelecimento_id));
 
   return _lojas.filter(l => {
-    const mc = !_cidade || (l.cidade||'').trim() === _cidade;
+    // Mostra loja se: sem cidade definida pelo user, OU cidades batem, OU loja não tem cidade cadastrada
+    const lojaCidade = (l.cidade||'').trim();
+    const mc = !_cidade || !lojaCidade || lojaCidade === _cidade;
     const mb = !_busca  || (l.nome||'').toLowerCase().includes(_busca.toLowerCase());
     if(_catAtiva==='promo') {
       // Usa promoções reais dos produtos OU campo promocao_ativa do estabelecimento
@@ -672,7 +674,8 @@ let _cardStyle = 'A';
 function storeCardHTML(l) {
   const ab = l.aberto!==false;
   const temPromo = l.promocao_ativa || _promoItems.some(p=>p.estabelecimento_id===l.id);
-  const maxDesc = temPromo ? Math.max(..._promoItems.filter(p=>p.estabelecimento_id===l.id).map(p=>p.desconto), l.desconto_percent||0) : 0;
+  const promosDaLoja = _promoItems.filter(p=>p.estabelecimento_id===l.id).map(p=>p.desconto);
+  const maxDesc = temPromo && promosDaLoja.length ? Math.max(...promosDaLoja, l.desconto_percent||0) : (l.desconto_percent||0);
   if(_cardStyle === 'B') return storeCardHTMLb(l, ab, temPromo);
   const hex = normalizeHex(l.cor_primaria||'#C0392B');
   const logoContent = l.logo_url
