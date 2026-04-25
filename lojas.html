@@ -1686,8 +1686,10 @@ async function renderOrders() {
         return {...p, lojaNome:loja.nome||'Loja'};
       });
 
-      el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
+      const novoHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
         allPeds.map(p => pedidoCardHTML(p)).join('');
+      // Só re-renderiza se o conteúdo mudou — evita flash desnecessário
+      if(el.innerHTML !== novoHTML) el.innerHTML = novoHTML;
     } else {
       el.innerHTML=`<div class="empty-state" style="padding:80px 20px;">
         <div style="font-size:56px;margin-bottom:14px;">📋</div>
@@ -1804,7 +1806,7 @@ function iniciarRealtime() {
         _statusAnt[p.id] = p.status;
         const li = _pedidosLocais.findIndex(pl=>pl.id===p.id);
         if(li>=0) _pedidosLocais[li].status = p.status;
-        if(_screen==='orders') atualizarCardsStatus([p]);
+        if(_screen==='orders') renderOrders();
       })
       .subscribe();
   } catch(e) { console.warn('Realtime:', e); }
