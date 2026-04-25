@@ -509,8 +509,9 @@ async function init() {
   // Carrega pedidos salvos
   renderOrders();
 
-  // Inicia polling rápido (2s) + Supabase Realtime
-  _pollingId = setInterval(pollarPedidos, 2000);
+  // Carrega status atuais antes de iniciar monitoramento
+  await carregarStatusIniciais();
+  _pollingId = setInterval(pollarPedidos, 3000);
   iniciarRealtime();
 }
 
@@ -952,9 +953,7 @@ function renderStore(fresquinhos=[]) {
     <div id="tab-content-promo" class="tab-content" style="display:none;">
       <div id="store-promos" style="display:flex;flex-direction:column;gap:10px;padding:14px 14px 120px;"></div>
     </div>
-    <div id="tab-content-pedidos" class="tab-content" style="display:none;">
-      <div id="store-pedidos" style="padding:14px 14px 100px;"></div>
-    </div>
+
   `;
 
   renderStoreProdutos('Todos');
@@ -1571,6 +1570,21 @@ function renderOrders() {
     allPeds.slice(0,20).map(p => pedidoCardHTML(p)).join('');
 }
 
+async function carregarStatusIniciais() {
+  if(!_user?.tel) return;
+  const whats = _user.tel.replace(/\D/g,'');
+  if(!whats||whats.length<10) return;
+  try {
+    const {data} = await db.from('pedidos')
+      .select('id,status,estabelecimento_id')
+      .eq('cliente_whats', whats)
+      .order('created_at',{ascending:false})
+      .limit(50);
+    (data||[]).forEach(p => { _statusAnt[p.id] = p.status; });
+    console.log('[PEDIUAI] Status iniciais carregados:', data?.length);
+  } catch(e) { console.warn('carregarStatusIniciais:', e); }
+}
+
 async function pollarPedidos() {
   if(!_user?.tel) return;
   const whats=_user.tel.replace(/\D/g,'');
@@ -1623,13 +1637,14 @@ function iniciarRealtime() {
   const whats = _user.tel.replace(/\D/g,'');
   if(!whats||whats.length<10) return;
   try {
-    db.channel('pedidos-cliente')
+    db.channel('pedidos-cliente-'+Date.now())
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
         table: 'pedidos',
-        filter: `cliente_whats=eq.${whats}`
       }, payload => {
+        // Filtra pelo whats do usuário
+        if(payload.new?.cliente_whats !== whats) return;
         const p = payload.new;
         const ant = _statusAnt[p.id];
         if(ant !== undefined && ant !== p.status) {
