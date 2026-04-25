@@ -516,7 +516,7 @@ async function init() {
 
   // Carrega status atuais antes de iniciar monitoramento
   await carregarStatusIniciais();
-  _pollingId = setInterval(pollarPedidos, 3000);
+  _pollingId = setInterval(pollarPedidos, 2000);
   // Refresh forçado da tela de pedidos a cada 8s quando estiver aberta
   setInterval(() => { if(_screen==='orders') renderOrders(); }, 8000);
   iniciarRealtime();
@@ -1733,20 +1733,20 @@ async function pollarPedidos() {
         const loja=_lojas.find(l=>l.id===p.estabelecimento_id);
         const nomeLoja=loja?.nome||'Loja';
         const msgs={
-          aceito:  `🍳 ${nomeLoja}: Pedido em preparo!`,
-          pronto:  `🎉 ${nomeLoja}: Pedido pronto!`,
-          entregue:`✅ ${nomeLoja}: Pedido entregue!`,
+          aceito:   `🍳 ${nomeLoja}: Pedido em preparo!`,
+          pronto:   `🎉 ${nomeLoja}: Pedido pronto!`,
+          entregue: `✅ ${nomeLoja}: Pedido entregue!`,
           cancelado:`❌ ${nomeLoja}: Pedido cancelado.`,
         };
         if(msgs[p.status]) toast(msgs[p.status]);
-        atualizarStatusLocal(p.id, p.status, p.estabelecimento_id);
       }
-      _statusAnt[p.id]=p.status;
+      // Sempre atualiza _statusAnt e _pedidosLocais
+      _statusAnt[p.id] = p.status;
+      const localIdx = _pedidosLocais.findIndex(pl=>pl.id===p.id);
+      if(localIdx>=0) _pedidosLocais[localIdx].status = p.status;
     });
 
-    if(mudou) {
-      if(_screen==='orders') renderOrders();
-    }
+    if(mudou && _screen==='orders') renderOrders();
   } catch(e){}
 }
 
@@ -1788,8 +1788,10 @@ function iniciarRealtime() {
           atualizarStatusLocal(p.id, p.status, p.estabelecimento_id);
         }
         _statusAnt[p.id] = p.status;
+        // Atualiza _pedidosLocais também
+        const li = _pedidosLocais.findIndex(pl=>pl.id===p.id);
+        if(li>=0) _pedidosLocais[li].status = p.status;
         if(_screen==='orders') renderOrders();
-        if(_screen==='store' && _tabAtiva==='pedidos') renderStorePedidos();
       })
       .subscribe();
   } catch(e) { console.warn('Realtime:', e); }
