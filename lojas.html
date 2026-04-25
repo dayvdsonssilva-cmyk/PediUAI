@@ -1630,17 +1630,41 @@ async function renderOrders() {
   const el=$('orders-content'); if(!el) return;
 
   // Sempre busca do banco — mostra local apenas se não houver whats ainda
-  el.innerHTML=`<div style="padding:20px;text-align:center;font-size:13px;color:var(--gray);">Atualizando...</div>`;
+  // Mostra pedidos locais enquanto busca do banco
+  if(_pedidosLocais.length) {
+    el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
+      _pedidosLocais.map(p => pedidoCardHTML(p)).join('');
+  } else {
+    el.innerHTML=`<div style="padding:20px;text-align:center;font-size:13px;color:var(--gray);">Atualizando...</div>`;
+  }
 
-  // ── Busca do banco em background ──
-  const whats = (_user?.tel||'').replace(/\D/g,'');
+  // ── Busca whats de todas as fontes possíveis ──
+  // 1. _user.tel  2. _pedidosLocais  3. localStorage de qualquer pedido
+  let whats = (_user?.tel||'').replace(/\D/g,'');
   if(!whats || whats.length<10) {
-    el.innerHTML=`<div class="empty-state" style="padding:80px 20px;">
-      <div style="font-size:56px;margin-bottom:14px;">📋</div>
-      <div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:8px;">Nenhum pedido ainda</div>
-      <div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:22px;">Faça seu primeiro pedido!</div>
-      <button onclick="showScreen('home')" style="padding:12px 24px;border-radius:12px;background:var(--red);color:#fff;border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;">Ver restaurantes →</button>
-    </div>`;
+    whats = (_pedidosLocais[0]?.cliente_whats||'').replace(/\D/g,'');
+  }
+  if(!whats || whats.length<10) {
+    // tenta achar no localStorage
+    for(const l of _lojas) {
+      const peds = JSON.parse(localStorage.getItem('pw_peds_'+l.slug)||'[]');
+      if(peds[0]?.cliente_whats) { whats=(peds[0].cliente_whats||'').replace(/\D/g,''); break; }
+    }
+  }
+
+  // Se ainda não tem whats mas tem pedidos locais, mostra eles
+  if(!whats || whats.length<10) {
+    if(_pedidosLocais.length) {
+      el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
+        _pedidosLocais.map(p => pedidoCardHTML(p)).join('');
+    } else {
+      el.innerHTML=`<div class="empty-state" style="padding:80px 20px;">
+        <div style="font-size:56px;margin-bottom:14px;">📋</div>
+        <div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:8px;">Nenhum pedido ainda</div>
+        <div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:22px;">Faça seu primeiro pedido!</div>
+        <button onclick="showScreen('home')" style="padding:12px 24px;border-radius:12px;background:var(--red);color:#fff;border:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;">Ver restaurantes →</button>
+      </div>`;
+    }
     return;
   }
 
@@ -1690,8 +1714,8 @@ async function renderOrders() {
 }
 
 async function carregarStatusIniciais() {
-  if(!_user?.tel) return;
-  const whats = _user.tel.replace(/\D/g,'');
+  let whats = (_user?.tel||'').replace(/\D/g,'');
+  if(!whats||whats.length<10) whats = (_pedidosLocais[0]?.cliente_whats||'').replace(/\D/g,'');
   if(!whats||whats.length<10) return;
   try {
     const {data} = await db.from('pedidos')
@@ -1712,7 +1736,10 @@ async function carregarStatusIniciais() {
 
 async function pollarPedidos() {
   if(!_user?.tel) return;
-  const whats=_user.tel.replace(/\D/g,'');
+  let whats = (_user?.tel||'').replace(/\D/g,'');
+  if(!whats||whats.length<10) {
+    whats = (_pedidosLocais[0]?.cliente_whats||'').replace(/\D/g,'');
+  }
   if(!whats||whats.length<10) return;
   try {
     const {data} = await db.from('pedidos')
@@ -1761,8 +1788,8 @@ function atualizarStatusLocal(pedidoId, novoStatus, estabId) {
 
 // Supabase Realtime para updates instantâneos
 function iniciarRealtime() {
-  if(!_user?.tel) return;
-  const whats = _user.tel.replace(/\D/g,'');
+  let whats = (_user?.tel||'').replace(/\D/g,'');
+  if(!whats||whats.length<10) whats = (_pedidosLocais[0]?.cliente_whats||'').replace(/\D/g,'');
   if(!whats||whats.length<10) return;
   try {
     db.channel('pedidos-cliente-'+Date.now())
