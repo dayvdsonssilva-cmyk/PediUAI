@@ -1633,7 +1633,8 @@ window.finalizarPedido = async function(lid) {
   if(btn){btn.disabled=true;btn.textContent='Enviando...';}
 
   try {
-    const {error} = await db.from('pedidos').insert({
+    // INSERT retornando o ID direto
+    const {data:insertData, error} = await db.from('pedidos').insert({
       estabelecimento_id: lid,
       cliente_nome: nome,
       cliente_whats: whats,
@@ -1643,23 +1644,24 @@ window.finalizarPedido = async function(lid) {
       endereco,
       pagamento: d.pag||'pix',
       taxa_entrega: taxa,
-    });
+    }).select('id').single();
     if(error) throw error;
 
-    // Busca ID
-    const {data:pNovo} = await db.from('pedidos')
-      .select('id,status,itens,total,endereco')
-      .eq('estabelecimento_id',lid).eq('cliente_whats',whats).eq('status','novo')
-      .order('created_at',{ascending:false}).limit(1).maybeSingle();
-    const pedId = pNovo?.id||('local_'+Date.now());
-
-    // Salva localStorage
-    const slug=l.slug;
-    const peds=JSON.parse(localStorage.getItem('pw_peds_'+slug)||'[]');
-    peds.unshift({id:pedId,itens,total,status:'novo',endereco,cliente_whats:whats,cliente_nome:nome});
-    localStorage.setItem('pw_peds_'+slug,JSON.stringify(peds.slice(0,20)));
+    const pedId = insertData?.id || ('local_'+Date.now());
 
 
+
+    // Adiciona na lista local com ID real do banco
+    _pedidosLocais.unshift({
+      id: pedId,
+      itens, total, status: 'novo',
+      endereco,
+      lojaNome: l.nome,
+      lojaId: lid,
+      cliente_whats: whats,
+      created_at: new Date().toISOString(),
+    });
+    _statusAnt[pedId] = 'novo';
 
     // Salva dados do cliente
     if(!_user) _user = {};
