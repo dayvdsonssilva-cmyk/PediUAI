@@ -516,9 +516,8 @@ async function init() {
 
   // Carrega status atuais antes de iniciar monitoramento
   await carregarStatusIniciais();
-  _pollingId = setInterval(pollarPedidos, 2000);
-  // Refresh forçado da tela de pedidos a cada 8s quando estiver aberta
-  setInterval(() => { if(_screen==='orders') renderOrders(); }, 8000);
+  _pollingId = setInterval(pollarPedidos, 4000);
+
   iniciarRealtime();
 }
 
@@ -1040,38 +1039,78 @@ function renderStorePedidos() {
 }
 
 function pedidoCardHTML(p) {
-  const STATUS = {
-    novo:     { label:'Aguardando confirmação', cor:'#D97706', bg:'rgba(217,119,6,.1)',    icon:'⏳' },
-    aceito:   { label:'Em preparo',             cor:'#EA580C', bg:'rgba(234,88,12,.1)',    icon:'🍳' },
-    pronto:   { label:'Pronto para retirar',    cor:'#16A34A', bg:'rgba(22,163,74,.1)',    icon:'✅' },
-    entregue: { label:'Entregue',               cor:'#16A34A', bg:'rgba(22,163,74,.08)',   icon:'🎉' },
-    cancelado:{ label:'Cancelado',              cor:'#DC2626', bg:'rgba(220,38,38,.1)',    icon:'❌' },
-  };
   const st = p.status||'novo';
+  const isRetirada = (p.endereco||'').toLowerCase().includes('retirada');
+
+  // Status por etapa
+  const STATUS = {
+    novo:     { label:'Aguardando confirmação', cor:'#D97706', icon:'⏳' },
+    aceito:   { label:'Confirmado • Preparando', cor:'#EA580C', icon:'🍳' },
+    pronto:   { label: isRetirada ? 'Pronto para retirar 🏃' : 'Saiu para entrega 🛵', cor:'#2563EB', icon: isRetirada ? '🏃' : '🛵' },
+    entregue: { label: isRetirada ? 'Retirado ✓' : 'Entregue ✓', cor:'#16A34A', icon:'🎉' },
+    cancelado:{ label:'Cancelado', cor:'#DC2626', icon:'❌' },
+  };
   const s = STATUS[st]||STATUS.novo;
 
-  // Barra de progresso visual
-  const steps=['novo','aceito','pronto','entregue'];
-  const stepIdx=steps.indexOf(st);
-  const progressBar = st!=='cancelado' ? `
-    <div style="display:flex;align-items:center;gap:4px;margin:10px 0 8px;">
-      ${steps.map((step,i)=>{
-        const done=i<=stepIdx;
-        return `<div style="flex:1;height:4px;border-radius:2px;background:${done?s.cor:'rgba(26,10,8,.1)'};transition:background .4s;"></div>`;
-      }).join('')}
+  if(st==='cancelado') {
+    return `<div class="pedido-card" style="border-left:3px solid #DC2626;opacity:.7;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--gray);">Pedido #${String(p.id||'').slice(-4)||'----'}</div>
+          ${p.lojaNome?`<div style="font-size:13px;font-weight:700;color:var(--dark);">${p.lojaNome}</div>`:''}
+        </div>
+        <span style="font-size:14px;font-weight:900;color:var(--dark);">${fmt(p.total)}</span>
+      </div>
+      <div style="font-size:11px;color:#DC2626;font-weight:600;margin-bottom:6px;">❌ Pedido cancelado</div>
+      <div style="font-size:12px;color:var(--gray);">${(p.itens||[]).map(i=>i.qtd+'x '+i.nome).join(' · ')}</div>
+    </div>`;
+  }
+
+  // 4 etapas na barra
+  const ETAPAS = [
+    { id:'novo',     short:'Aguardando' },
+    { id:'aceito',   short:'Preparando' },
+    { id:'pronto',   short: isRetirada ? 'Pronto' : 'A caminho' },
+    { id:'entregue', short: isRetirada ? 'Retirado' : 'Entregue' },
+  ];
+  const stepIdx = ETAPAS.findIndex(e=>e.id===st);
+
+  const barraHTML = `
+    <div style="margin:12px 0 4px;">
+      <div style="display:flex;gap:3px;margin-bottom:8px;">
+        ${ETAPAS.map((e,i)=>{
+          const done  = i < stepIdx;
+          const atual = i === stepIdx;
+          return `<div style="flex:1;height:5px;border-radius:3px;
+            background:${done?'#16A34A':atual?s.cor:'rgba(26,10,8,.1)'};
+            transition:background .5s;"></div>`;
+        }).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        ${ETAPAS.map((e,i)=>{
+          const done  = i < stepIdx;
+          const atual = i === stepIdx;
+          return `<div style="flex:1;text-align:center;">
+            <div style="font-size:9px;font-weight:${atual?'800':'500'};
+              color:${done?'#16A34A':atual?s.cor:'rgba(26,10,8,.25)'};
+              line-height:1.3;">${e.short}</div>
+          </div>`;
+        }).join('')}
+      </div>
     </div>
-    <div style="font-size:10px;color:${s.cor};font-weight:600;margin-bottom:8px;">${s.icon} ${s.label}</div>` : `
-    <div style="margin:8px 0;"><span style="font-size:11px;color:#DC2626;font-weight:600;">❌ Pedido cancelado</span></div>`;
+    <div style="font-size:11px;color:${s.cor};font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:5px;">
+      <span>${s.icon}</span><span>${s.label}</span>
+    </div>`;
 
   return `<div class="pedido-card" style="border-left:3px solid ${s.cor};">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px;">
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--gray);">Pedido #${String(p.id||'').slice(-4)||'----'}</div>
-        ${p.lojaNome?`<div style="font-size:12px;font-weight:700;color:var(--dark);">${p.lojaNome}</div>`:''}
+        ${p.lojaNome?`<div style="font-size:13px;font-weight:800;color:var(--dark);">${p.lojaNome}</div>`:''}
       </div>
-      <span style="font-size:14px;font-weight:900;color:var(--dark);">${fmt(p.total)}</span>
+      <span style="font-size:15px;font-weight:900;color:var(--dark);">${fmt(p.total)}</span>
     </div>
-    ${progressBar}
+    ${barraHTML}
     <div style="font-size:12px;color:var(--gray);line-height:1.5;">${(p.itens||[]).map(i=>i.qtd+'x '+i.nome).join(' · ')}</div>
   </div>`;
 }
@@ -1630,12 +1669,15 @@ async function renderOrders() {
   const el=$('orders-content'); if(!el) return;
 
   // Sempre busca do banco — mostra local apenas se não houver whats ainda
-  // Mostra pedidos locais enquanto busca do banco
-  if(_pedidosLocais.length) {
-    el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
-      _pedidosLocais.map(p => pedidoCardHTML(p)).join('');
-  } else {
-    el.innerHTML=`<div style="padding:20px;text-align:center;font-size:13px;color:var(--gray);">Atualizando...</div>`;
+  // Não limpa tela se já tiver conteúdo — evita clarão
+  const temConteudo = el.children.length > 0 && !el.innerHTML.includes('Atualizando');
+  if(!temConteudo) {
+    if(_pedidosLocais.length) {
+      el.innerHTML = `<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:14px;padding:0 2px;">Meus pedidos</div>` +
+        _pedidosLocais.map(p => pedidoCardHTML(p)).join('');
+    } else {
+      el.innerHTML=`<div style="padding:20px;text-align:center;font-size:13px;color:var(--gray);">Atualizando...</div>`;
+    }
   }
 
   // ── Busca whats de todas as fontes possíveis ──
