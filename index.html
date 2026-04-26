@@ -16,7 +16,7 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
 input, select, textarea { max-width:100%; box-sizing:border-box; }
 .cfg-section { overflow:hidden; }
 /* Bloqueia zoom em toda a plataforma */
-
+html { touch-action:pan-x pan-y; }
 /* Dashboard mobile */
 @media(max-width:600px) {
   .dash-container { padding:14px 12px !important; }
@@ -144,7 +144,7 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .dash-store-name { font-size:0.9rem; font-weight:600; color:#555; }
 
 /* DASH NAV */
-.dash-nav { background:#fff; border-bottom:1px solid var(--border); padding:0 4%; display:flex; gap:0; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; white-space:nowrap; width:100%; box-sizing:border-box; touch-action:pan-x !important; }
+.dash-nav { background:#fff; border-bottom:1px solid var(--border); padding:0 4%; display:flex; gap:0; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; white-space:nowrap; width:100%; box-sizing:border-box; }
 /* Footer controlado pelo JS - main.js */
 .dash-nav::-webkit-scrollbar { display:none; }
 .tab-btn { background:none; border:none; border-bottom:2px solid transparent; padding:14px 16px; font-family:'Poppins',sans-serif; font-size:0.9rem; font-weight:500; color:#888; cursor:pointer; white-space:nowrap; transition:color 0.2s,border-color 0.2s; position:relative; }
@@ -170,9 +170,9 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .dash-container { max-width:1000px; margin:0 auto; padding:24px 4%; box-sizing:border-box; }
 
 /* LINK BOX */
-.link-box { background:#fff; border:1px solid var(--border); border-radius:12px; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; gap:12px; overflow:hidden; min-width:0; }
+.link-box { background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px 24px; display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; gap:16px; }
 .link-label { font-size:0.72rem; font-weight:700; color:var(--red); letter-spacing:0.06em; margin-bottom:4px; }
-.link-url { font-size:0.88rem; font-weight:600; color:#333; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; display:block; }
+.link-url { font-size:0.95rem; font-weight:600; color:#333; }
 .btn-copiar { background:var(--red); color:white; border:none; padding:10px 22px; border-radius:8px; font-family:'Poppins',sans-serif; font-size:0.9rem; font-weight:600; cursor:pointer; white-space:nowrap; }
 .btn-copiar:hover { background:var(--red-dark); }
 
@@ -905,7 +905,7 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 }
 
 /* ── SEM ZOOM NO MOBILE ── */
-
+html { touch-action: pan-y; }
 input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se font>=16px */
 
 /* ── SEÇÕES DO FINANCEIRO ─────────────────────────────────── */
@@ -1030,40 +1030,9 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 .ped-status-pronto   { border-left: 3px solid #22c55e !important; }
 .ped-status-recusado { border-left: 3px solid #ef4444 !important; opacity: .7; }
 
-
-/* ═══ ANTI-ZOOM UNIVERSAL ═══ */
-
-input, select, textarea { font-size:16px !important; touch-action:manipulation; }
-* { -webkit-text-size-adjust:100%; }
-
-/* ═══ ANTI-ZOOM GLOBAL ═══ */
-html, body {
-  overflow-x: hidden !important;
-  touch-action: pan-y !important;
-  overscroll-behavior-x: none !important;
-  -webkit-overflow-scrolling: touch;
-}
-/* touch-action apenas em elementos que não precisam de scroll horizontal */
-body > *, main, section, article, header, footer, form, p, h1, h2, h3, h4, h5, h6 { touch-action: pan-y; }
-* { -webkit-text-size-adjust: 100%; }
-canvas, [data-touch="free"] { touch-action: none !important; }
 </style>
 </head>
 <body>
-<script id="anti-zoom-global">
-(function(){
-  // Bloqueia pinch-zoom e gestos iOS
-  ['gesturestart','gesturechange','gestureend'].forEach(function(ev){
-    document.addEventListener(ev, function(e){ e.preventDefault(); }, { passive:false });
-  });
-  document.addEventListener('touchmove', function(e){
-    if(e.touches.length > 1 || (e.scale !== undefined && e.scale !== 1)){
-      e.preventDefault();
-    }
-  }, { passive:false });
-})();
-</script>
-
 
 <!-- LANDING -->
 <div data-screen="s-landing" class="screen active">
@@ -1768,7 +1737,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
     <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:24px;">
       <div>
         <div style="font-size:20px;font-weight:900;color:#fff;margin-bottom:6px;">PEDI<span style="color:#E05A3A;">WAY</span></div>
-        <div style="font-size:12px;color:rgba(255,255,255,.45);line-height:1.7;max-width:260px;">Plataforma de delivery independente.<br>Sem comissão. Direto do restaurante para você.<br><span style="color:rgba(255,255,255,.28);">🏢 Matriz · São Sebastião do Paraíso, MG</span></div>
+        <div style="font-size:12px;color:rgba(255,255,255,.45);line-height:1.7;max-width:260px;">Plataforma de delivery independente.<br>Sem comissão. Direto do restaurante para você.</div>
       </div>
       <div>
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Informações legais</div>
@@ -2006,7 +1975,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
         <!-- Link clientes -->
         <div class="link-box" style="margin-bottom:0">
-          <div style="flex:1;min-width:0;overflow:hidden;">
+          <div>
             <div class="link-label">🛵 LINK DO CARDÁPIO</div>
             <div class="link-url" id="link-url">pediway.vercel.app/meu-estabelecimento</div>
           </div>
@@ -2014,9 +1983,9 @@ canvas, [data-touch="free"] { touch-action: none !important; }
         </div>
         <!-- Link garçons -->
         <div class="link-box" style="margin-bottom:0;background:#faf5f0;border:1.5px dashed #d4a574">
-          <div style="flex:1;min-width:0;overflow:hidden;">
+          <div>
             <div class="link-label" style="color:#b07040">🍽️ COMANDAS DIGITAIS <span style="background:#f0e0d0;padding:1px 7px;border-radius:50px;font-size:.58rem;margin-left:4px;color:#b07040">GARÇOM</span></div>
-            <div class="link-url" id="link-url-garcom" style="color:#6b4c30;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;display:block;">pediway.vercel.app/comandas/...</div>
+            <div class="link-url" id="link-url-garcom" style="color:#6b4c30">pediway.vercel.app/comandas/...</div>
           </div>
           <button class="btn-copiar" onclick="copiarLinkGarcom()" style="background:#b07040;border:none">Copiar</button>
         </div>
@@ -2301,613 +2270,392 @@ canvas, [data-touch="free"] { touch-action: none !important; }
   <div class="tab-content" id="tab-configuracoes">
     <div class="dash-container">
       <h3>Configurações</h3>
-      <div class="config-card" style="margin-top:24px">
+      <div style="margin-top:24px;max-width:560px;">
 
-        <!-- Logo -->
-        <div class="form-group-light">
-          <label>Logo do estabelecimento</label>
-          <div class="logo-upload-wrap" id="logo-upload-wrap" onclick="document.getElementById('logo-input').click()">
-            <img id="logo-preview-img" class="logo-img-preview" src="" alt="Logo">
-            <div id="logo-placeholder-text" class="logo-upload-placeholder">
-              <span style="font-size:2.5rem">🏪</span>
-              <span style="font-size:0.82rem;color:#aaa;margin-top:6px">Clique para adicionar logo</span>
-            </div>
+
+<style id="cfg-accordion-css">
+.cfg-section-hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; cursor:pointer; border-radius:12px;
+  background:#faf8f5; border:1.5px solid var(--border);
+  margin-bottom:0; user-select:none; transition:background .15s;
+}
+.cfg-section-hdr:hover { background:#f5ede6; }
+.cfg-section-hdr.open { border-radius:12px 12px 0 0; border-bottom:1.5px solid transparent; background:#fff3ee; border-color:rgba(192,57,43,.2); }
+.cfg-section-hdr .cfg-hdr-title { font-size:.88rem; font-weight:800; color:#1a1a1a; display:flex; align-items:center; gap:8px; }
+.cfg-section-hdr .cfg-hdr-icon { font-size:1rem; }
+.cfg-section-hdr .cfg-hdr-arrow { font-size:.75rem; color:#aaa; transition:transform .25s; }
+.cfg-section-hdr.open .cfg-hdr-arrow { transform:rotate(180deg); }
+.cfg-section-body {
+  display:none; border:1.5px solid rgba(192,57,43,.15); border-top:none;
+  border-radius:0 0 12px 12px; padding:18px 16px;
+  background:#fff; margin-bottom:12px;
+}
+.cfg-section-body.open { display:flex; flex-direction:column; gap:14px; }
+.cfg-section-wrap { margin-bottom:4px; }
+</style>
+
+
+<!-- ═══ 1. IDENTIDADE VISUAL ═══ -->
+<div class="cfg-section-wrap">
+  <div class="cfg-section-hdr open" onclick="toggleCfgSection(this)">
+    <div class="cfg-hdr-title"><span class="cfg-hdr-icon">🏪</span> Identidade Visual</div>
+    <span class="cfg-hdr-arrow">▼</span>
+  </div>
+  <div class="cfg-section-body open">
+    <!-- Logo -->
+    <div class="form-group-light">
+      <label>Logo do estabelecimento</label>
+      <div class="logo-upload-wrap" id="logo-upload-wrap" onclick="document.getElementById('logo-input').click()">
+        <img id="logo-preview-img" class="logo-img-preview" src="" alt="Logo">
+        <div id="logo-placeholder-text" class="logo-upload-placeholder">
+          <span style="font-size:2.5rem">🏪</span>
+          <span style="font-size:0.82rem;color:#aaa;margin-top:6px">Clique para adicionar logo</span>
+        </div>
+      </div>
+      <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="abrirCropLogo(event)">
+    </div>
+    <!-- Cor -->
+    <div class="form-group-light">
+      <label>Cor do estabelecimento</label>
+      <div class="cores-grid" id="cores-grid"></div>
+    </div>
+    <!-- Preview capa -->
+    <div class="form-group-light">
+      <label>Preview da capa do cardápio</label>
+      <div id="capa-preview" style="width:100%;height:80px;border-radius:12px;background:var(--red);transition:background 0.4s;display:flex;align-items:center;justify-content:center;">
+        <span style="color:rgba(255,255,255,0.5);font-size:0.75rem;font-weight:600">Cor refletida do cardápio</span>
+      </div>
+      <p style="font-size:0.72rem;color:#aaa;margin-top:4px">A capa usa a cor acima com degradê automático.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 2. INFORMAÇÕES DO ESTABELECIMENTO ═══ -->
+<div class="cfg-section-wrap">
+  <div class="cfg-section-hdr open" onclick="toggleCfgSection(this)">
+    <div class="cfg-hdr-title"><span class="cfg-hdr-icon">📋</span> Informações do Estabelecimento</div>
+    <span class="cfg-hdr-arrow">▼</span>
+  </div>
+  <div class="cfg-section-body open">
+    <!-- Status loja -->
+    <div class="form-group-light">
+      <label>Status da loja</label>
+      <div style="background:#faf6f1;border:1px solid var(--border);border-radius:10px;padding:4px;">
+        <div class="toggle-row" style="border-bottom:none;">
+          <div class="toggle-info">
+            <span class="toggle-label-text">Loja aberta</span>
+            <span class="toggle-desc">Clientes podem fazer pedidos</span>
           </div>
-          <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="abrirCropLogo(event)">
-        </div>
-
-        <!-- Preview da capa — reflexo da cor escolhida -->
-        <div class="form-group-light">
-          <label>Preview da capa do cardápio</label>
-          <div id="capa-preview" style="width:100%;height:90px;border-radius:14px;background:var(--red);transition:background 0.4s;display:flex;align-items:center;justify-content:center;margin-bottom:4px">
-            <span style="color:rgba(255,255,255,0.5);font-size:0.75rem;font-weight:600">Cor refletida do cardápio</span>
-          </div>
-          <p style="font-size:0.72rem;color:#aaa">A capa do cardápio usa a cor selecionada abaixo com degradê automático.</p>
-        </div>
-
-        <!-- Status loja -->
-        <div class="form-group-light">
-          <label>Status da loja</label>
-          <div style="background:#faf6f1;border:1px solid var(--border);border-radius:10px;padding:4px;">
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <span class="toggle-label-text">Loja aberta</span>
-                <span class="toggle-desc">Clientes podem fazer pedidos</span>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="cfg-aberto" checked onchange="atualizarStatusLoja(this.checked)">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <!-- Nome e descricao -->
-        <div class="form-group-light">
-          <label>Nome do estabelecimento</label>
-          <input type="text" class="input-light" id="cfg-nome" placeholder="Burguer do Ze">
-        </div>
-        <div class="form-group-light">
-          <label>Descrição <span id="cfg-desc-count" style="font-size:.7rem;color:#aaa;font-weight:400;">0/80</span></label>
-          <input type="text" class="input-light" id="cfg-desc" placeholder="Os melhores burguers da cidade!" maxlength="80" oninput="document.getElementById('cfg-desc-count').textContent=this.value.length+'/80'">
-        </div>
-        <div class="form-group-light">
-          <label>Cidade</label>
-          <div style="position:relative;margin-bottom:8px;">
-            <select id="cfg-estado" class="input-light" onchange="carregarCidadesDash(this.value)" style="width:100%;appearance:none;-webkit-appearance:none;padding-right:32px;cursor:pointer;">
-              <option value="">Selecione o estado...</option>
-            </select>
-            <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
-          <div style="position:relative;">
-            <select id="cfg-cidade" class="input-light" disabled style="width:100%;appearance:none;-webkit-appearance:none;padding-right:32px;cursor:pointer;opacity:.5;">
-              <option value="">Selecione o estado primeiro</option>
-            </select>
-            <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
-        </div>
-        <div class="form-group-light">
-          <label>Endereço (aparece no cardápio)</label>
-          <input type="text" class="input-light" id="cfg-endereco" placeholder="Rua das Flores, 123 - Centro">
-        </div>
-        <div class="form-group-light">
-          <label>Tempo de entrega</label>
-          <select class="input-light" id="cfg-tempo">
-            <option value="10-20 min">10 - 20 min</option>
-            <option value="20-30 min">20 - 30 min</option>
-            <option value="30-45 min" selected>30 - 45 min</option>
-            <option value="40-60 min">40 - 60 min</option>
-            <option value="60-90 min">60 - 90 min</option>
-            <option value="Retirada apenas">Apenas retirada</option>
-          </select>
-        </div>
-
-        <!-- Link -->
-        <div class="form-group-light">
-          <label>Link do cardápio</label>
-          <input type="text" class="input-light" id="cfg-slug" placeholder="meu-estabelecimento" oninput="atualizarCfgLink(this.value)">
-          <div class="link-preview-light" id="cfg-link-preview" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">pediway.vercel.app/</div>
-        </div>
-
-        <!-- Link do garçom -->
-        <div class="form-group-light">
-          <label style="display:flex;align-items:center;gap:6px">
-            🍽️ Link das Comandas <span style="background:#f0e9e0;padding:1px 7px;border-radius:50px;font-size:.6rem;font-weight:700;color:#888">GARÇOM</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg-aberto" checked onchange="atualizarStatusLoja(this.checked)">
+            <span class="toggle-slider"></span>
           </label>
-          <div style="display:flex;align-items:center;gap:8px;overflow:hidden;min-width:0;max-width:100%;width:100%;">
-            <div class="link-preview-light" id="cfg-link-garcom" style="flex:1;min-width:0;max-width:calc(100% - 80px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;word-break:break-all;">pediway.vercel.app/comandas/</div>
-            <button onclick="copiarLinkGarcom()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer;white-space:nowrap;flex-shrink:0">Copiar</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group-light">
+      <label>Nome do estabelecimento</label>
+      <input type="text" class="input-light" id="cfg-nome" placeholder="Burguer do Ze">
+    </div>
+    <div class="form-group-light">
+      <label>Descrição <span id="cfg-desc-count" style="font-size:.7rem;color:#aaa;font-weight:400;">0/80</span></label>
+      <input type="text" class="input-light" id="cfg-desc" placeholder="Os melhores burguers da cidade!" maxlength="80" oninput="document.getElementById('cfg-desc-count').textContent=this.value.length+'/80'">
+    </div>
+    <div class="form-group-light">
+      <label>Estado</label>
+      <div style="position:relative;">
+        <select id="cfg-estado" class="input-light" onchange="carregarCidadesDash(this.value)" style="width:100%;appearance:none;-webkit-appearance:none;padding-right:32px;cursor:pointer;">
+          <option value="">Selecione o estado...</option>
+        </select>
+        <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <div class="form-group-light">
+      <label>Cidade</label>
+      <div style="position:relative;">
+        <select id="cfg-cidade" class="input-light" disabled style="width:100%;appearance:none;-webkit-appearance:none;padding-right:32px;cursor:pointer;opacity:.5;">
+          <option value="">Selecione o estado primeiro</option>
+        </select>
+        <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <div class="form-group-light">
+      <label>Endereço (aparece no cardápio)</label>
+      <input type="text" class="input-light" id="cfg-endereco" placeholder="Rua das Flores, 123 - Centro">
+    </div>
+    <div class="form-group-light">
+      <label>Tempo de entrega</label>
+      <select class="input-light" id="cfg-tempo">
+        <option value="10-20 min">10 - 20 min</option>
+        <option value="20-30 min">20 - 30 min</option>
+        <option value="30-45 min" selected>30 - 45 min</option>
+        <option value="40-60 min">40 - 60 min</option>
+        <option value="60-90 min">60 - 90 min</option>
+        <option value="Retirada apenas">Apenas retirada</option>
+      </select>
+    </div>
+    <div class="form-group-light">
+      <label>WhatsApp</label>
+      <input type="text" class="input-light" id="cfg-whats" placeholder="(11) 99999-9999" maxlength="15" oninput="mascaraWhatsInput(this)">
+    </div>
+    <div class="form-group-light">
+      <label>Telefone de contato</label>
+      <input type="text" class="input-light" id="cfg-telefone" placeholder="(11) 3333-4444">
+    </div>
+    <div class="form-group-light">
+      <label>CNPJ do estabelecimento <span style="font-size:.65rem;color:#aaa;font-weight:400">(aparece na nota fiscal)</span></label>
+      <input type="text" class="input-light" id="cfg-cnpj" placeholder="00.000.000/0001-00" maxlength="18" oninput="mascaraDoc(this)">
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 3. LINKS E ACESSO ═══ -->
+<div class="cfg-section-wrap">
+  <div class="cfg-section-hdr" onclick="toggleCfgSection(this)">
+    <div class="cfg-hdr-title"><span class="cfg-hdr-icon">🔗</span> Links e Acesso</div>
+    <span class="cfg-hdr-arrow">▼</span>
+  </div>
+  <div class="cfg-section-body">
+    <div class="form-group-light">
+      <label>Link do cardápio (slug)</label>
+      <input type="text" class="input-light" id="cfg-slug" placeholder="meu-estabelecimento" oninput="atualizarCfgLink(this.value)">
+      <div class="link-preview-light" id="cfg-link-preview" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">pediway.vercel.app/</div>
+    </div>
+    <div class="form-group-light">
+      <label style="display:flex;align-items:center;gap:6px;">
+        🍽️ Link das Comandas <span style="background:#f0e9e0;padding:1px 7px;border-radius:50px;font-size:.6rem;font-weight:700;color:#888">GARÇOM</span>
+      </label>
+      <div style="display:flex;align-items:center;gap:8px;overflow:hidden;min-width:0;">
+        <div class="link-preview-light" id="cfg-link-garcom" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">pediway.vercel.app/comandas/</div>
+        <button onclick="copiarLinkGarcom()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer;white-space:nowrap;flex-shrink:0">Copiar</button>
+      </div>
+      <div style="font-size:.65rem;color:#aaa;margin-top:4px">Compartilhe com seus garçons. Todos usam o mesmo link.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 4. ENTREGA, PAGAMENTO E TAXA DE SERVIÇO ═══ -->
+<div class="cfg-section-wrap">
+  <div class="cfg-section-hdr" onclick="toggleCfgSection(this)">
+    <div class="cfg-hdr-title"><span class="cfg-hdr-icon">🛵</span> Entrega, Pagamento e Taxas</div>
+    <span class="cfg-hdr-arrow">▼</span>
+  </div>
+  <div class="cfg-section-body">
+    <!-- Entrega / Retirada -->
+    <div class="form-group-light">
+      <label>Opções de entrega</label>
+      <div style="background:#faf6f1;border:1px solid var(--border);border-radius:10px;padding:4px;">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label-text">Faz entrega</span>
+            <span class="toggle-desc">Clientes podem pedir entrega</span>
           </div>
-          <div style="font-size:.65rem;color:#aaa;margin-top:4px">Compartilhe este link com seus garçons. Todos usam o mesmo link para acessar as comandas digitais.</div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg-entrega" checked onchange="toggleTaxaEntrega(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
         </div>
-
-        <!-- WhatsApp -->
-        <div class="form-group-light">
-          <label>WhatsApp</label>
-          <input type="text" class="input-light" id="cfg-whats" placeholder="(11) 99999-9999" maxlength="15" oninput="mascaraWhatsInput(this)">
-        </div>
-
-        <!-- Telefone de contato -->
-        <div class="form-group-light">
-          <label>Telefone de contato</label>
-          <input type="text" class="input-light" id="cfg-telefone" placeholder="(11) 3333-4444">
-        </div>
-
-        <!-- CNPJ/CPF para nota fiscal -->
-        <div class="form-group-light">
-          <label>CNPJ do estabelecimento <span style="font-size:.65rem;color:#aaa;font-weight:400">(aparece na nota fiscal)</span></label>
-          <input type="text" class="input-light" id="cfg-cnpj" placeholder="00.000.000/0001-00" maxlength="18" oninput="mascaraDoc(this)">
-        </div>
-
-        <!-- Redes sociais -->
-        <div style="border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;background:#faf8f5">
-          <div style="font-size:.78rem;font-weight:800;color:#555;margin-bottom:12px">📱 Redes Sociais</div>
-          <div class="form-group-light">
-            <label>Instagram</label>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="color:#aaa;font-size:.85rem">@</span>
-              <input type="text" class="input-light" id="cfg-instagram" placeholder="seurestaurante" style="flex:1">
+        <div id="taxa-entrega-wrap" style="padding:10px 12px 6px;border-top:1px solid var(--border)">
+          <span style="font-size:0.78rem;font-weight:700;color:#555;display:block;margin-bottom:8px">Taxa de entrega</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="position:relative;flex:1">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:#888;font-size:0.88rem">R$</span>
+              <input type="number" class="input-light" id="cfg-taxa" placeholder="0,00" min="0" step="0.50" style="padding-left:38px">
             </div>
-          </div>
-          <div class="form-group-light">
-            <label>TikTok</label>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="color:#aaa;font-size:.85rem">@</span>
-              <input type="text" class="input-light" id="cfg-tiktok" placeholder="seurestaurante" style="flex:1">
-            </div>
-          </div>
-          <div class="form-group-light" style="margin-bottom:0">
-            <label>Site / Link externo</label>
-            <input type="url" class="input-light" id="cfg-site" placeholder="https://www.seusite.com.br">
-          </div>
-        </div>
-
-        <!-- Mensagem de agradecimento na nota -->
-        <div class="form-group-light">
-          <label>Mensagem na nota fiscal <span style="font-size:.65rem;color:#aaa;font-weight:400">(rodapé da nota)</span></label>
-          <input type="text" class="input-light" id="cfg-msg-nota" placeholder="Obrigado pela preferência! Volte sempre 😊">
-        </div>
-
-        <!-- Entrega / Retirada -->
-        <div class="form-group-light">
-          <label>Opções de entrega</label>
-          <div style="background:#faf6f1;border:1px solid var(--border);border-radius:10px;padding:4px;">
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <span class="toggle-label-text">Faz entrega</span>
-                <span class="toggle-desc">Clientes podem pedir entrega</span>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="cfg-entrega" checked onchange="toggleTaxaEntrega(this.checked)">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-            <!-- Taxa de entrega — aparece ao ativar Faz entrega -->
-            <div id="taxa-entrega-wrap" style="padding:10px 12px 6px;border-top:1px solid var(--border)">
-              <span style="font-size:0.78rem;font-weight:700;color:#555;display:block;margin-bottom:8px">Taxa de entrega</span>
-              <div style="display:flex;align-items:center;gap:10px">
-                <div style="position:relative;flex:1">
-                  <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:#888;font-size:0.88rem">R$</span>
-                  <input type="number" class="input-light" id="cfg-taxa" placeholder="0,00" min="0" step="0.50" style="padding-left:38px">
-                </div>
-                <span style="font-size:0.72rem;color:#aaa;white-space:nowrap">0 = grátis</span>
-              </div>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <span class="toggle-label-text">Aceita retirada</span>
-                <span class="toggle-desc">Clientes podem retirar no local</span>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="cfg-retirada" checked>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <!-- Formas de pagamento -->
-        <div class="form-group-light">
-          <label>Formas de pagamento aceitas</label>
-          <div style="background:#faf6f1;border:1px solid var(--border);border-radius:10px;padding:4px;">
-            <div class="toggle-row">
-              <div class="toggle-info"><span class="toggle-label-text">💳 PIX</span></div>
-              <label class="toggle-switch"><input type="checkbox" id="cfg-pix" checked><span class="toggle-slider"></span></label>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-info"><span class="toggle-label-text">💳 Cartão</span></div>
-              <label class="toggle-switch"><input type="checkbox" id="cfg-cartao" checked><span class="toggle-slider"></span></label>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-info"><span class="toggle-label-text">💵 Dinheiro</span></div>
-              <label class="toggle-switch"><input type="checkbox" id="cfg-dinheiro" checked><span class="toggle-slider"></span></label>
-            </div>
-          </div>
-        </div>
-
-        <!-- Cor primaria -->
-        <div class="form-group-light">
-          <label>Cor do estabelecimento</label>
-          <div class="cores-grid" id="cores-grid"></div>
-        </div>
-
-        <!-- Plano atual + upgrade -->
-        <div style="background:#faf8f5;border:1.5px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px">
-          <!-- Status do plano -->
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-            <div>
-              <div style="font-size:.7rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em">Plano atual</div>
-              <div style="font-size:1.1rem;font-weight:800;color:var(--red);margin-top:2px" id="cfg-plano-atual">--</div>
-              <div style="font-size:.72rem;color:#aaa;margin-top:2px" id="cfg-venc-atual"></div>
-            </div>
-            <a onclick="irCheckout('pro')" style="font-size:.75rem;font-weight:700;color:var(--red);cursor:pointer;text-decoration:underline">Ver todos os planos →</a>
-          </div>
-
-          <!-- Cards lado a lado -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <!-- Pro -->
-            <div onclick="irCheckout('pro')" style="border:2px solid var(--red);background:#fff;border-radius:12px;padding:14px;cursor:pointer;transition:all .15s"
-                 onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background='#fff'">
-              <div style="font-size:.6rem;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">⭐ Pro</div>
-              <div style="font-size:1.2rem;font-weight:800;margin-bottom:3px">R$<span id="dash-preco-pro">49</span><span style="font-size:.72rem;font-weight:500;color:#888">/mês</span></div>
-              <div style="font-size:.68rem;color:#888;line-height:1.5">Cardápio · Pedidos<br>Fresquinho · Suporte</div>
-              <div style="margin-top:10px;background:var(--red);color:#fff;border-radius:7px;padding:7px;text-align:center;font-size:.72rem;font-weight:700">Assinar Pro</div>
-            </div>
-            <!-- Premium -->
-            <div onclick="irCheckout('premium')" style="border:2px solid #1a1a1a;background:#1a1a1a;border-radius:12px;padding:14px;cursor:pointer;transition:opacity .15s;color:#fff"
-                 onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
-              <div style="font-size:.6rem;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">🏆 Premium</div>
-              <div style="font-size:1.2rem;font-weight:800;margin-bottom:3px">R$<span id="dash-preco-prem">99</span><span style="font-size:.72rem;font-weight:500;opacity:.5">/mês</span></div>
-              <div style="font-size:.68rem;opacity:.6;line-height:1.5">Pro + Financeiro<br>Relatórios · SLA</div>
-              <div style="margin-top:10px;background:#f59e0b;color:#1a1a1a;border-radius:7px;padding:7px;text-align:center;font-size:.72rem;font-weight:800">Assinar Premium</div>
-            </div>
+            <span style="font-size:0.72rem;color:#aaa;white-space:nowrap">0 = grátis</span>
           </div>
         </div>
-
-        <!-- Cancelar plano -->
-        <div id="cancelar-plano-wrap" style="display:none;margin-bottom:14px">
-          <button onclick="abrirCancelarPlano()" style="width:100%;background:none;border:1.5px solid #ddd;border-radius:12px;padding:12px;font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:600;color:#aaa;cursor:pointer;transition:all .15s"
-            onmouseover="this.style.borderColor='#C0392B';this.style.color='#C0392B'"
-            onmouseout="this.style.borderColor='#ddd';this.style.color='#aaa'">
-            Cancelar assinatura
-          </button>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label-text">Aceita retirada</span>
+            <span class="toggle-desc">Clientes podem retirar no local</span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg-retirada" checked>
+            <span class="toggle-slider"></span>
+          </label>
         </div>
-        <button class="btn-primary" onclick="salvarConfig()">Salvar configurações</button>
-        <a id="link-me-ajuda" href="#"
-           target="_blank"
-           style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;
-                  background:#25d366;color:#fff;border-radius:12px;padding:14px 24px;
-                  font-family:'Poppins',sans-serif;font-weight:700;font-size:0.9rem;
-                  text-decoration:none;box-shadow:0 4px 14px rgba(37,211,102,0.3)">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.554 4.118 1.523 5.85L0 24l6.335-1.509A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.65-.49-5.188-1.346l-.372-.216-3.76.896.944-3.663-.237-.388A9.937 9.937 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-          ME AJUDA PEDIWAY 💬
-        </a>
+      </div>
+    </div>
+    <!-- Formas de pagamento -->
+    <div class="form-group-light">
+      <label>Formas de pagamento aceitas</label>
+      <div style="background:#faf6f1;border:1px solid var(--border);border-radius:10px;padding:4px;">
+        <div class="toggle-row">
+          <div class="toggle-info"><span class="toggle-label-text">💠 PIX</span></div>
+          <label class="toggle-switch"><input type="checkbox" id="cfg-pix" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info"><span class="toggle-label-text">💳 Cartão</span></div>
+          <label class="toggle-switch"><input type="checkbox" id="cfg-cartao" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info"><span class="toggle-label-text">💵 Dinheiro</span></div>
+          <label class="toggle-switch"><input type="checkbox" id="cfg-dinheiro" checked><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    </div>
+    <!-- ── TAXA DE SERVIÇO / GARÇOM ── -->
+    <div class="form-group-light">
+      <label style="display:flex;align-items:center;gap:6px;">
+        👨‍🍳 Taxa de serviço (garçom)
+        <span style="background:rgba(192,57,43,.1);color:var(--red);padding:1px 7px;border-radius:50px;font-size:.6rem;font-weight:700">MESAS</span>
+      </label>
+      <div style="background:#faf6f1;border:1px solid var(--border);border-radius:10px;padding:4px;">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label-text">Cobrar taxa de serviço</span>
+            <span class="toggle-desc">Adicionada automaticamente nas comandas</span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg-taxa-servico" onchange="toggleTaxaServico(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <!-- Percentuais — aparece ao ativar -->
+        <div id="taxa-servico-wrap" style="display:none;padding:12px 12px 10px;border-top:1px solid var(--border);">
+          <div style="font-size:.78rem;font-weight:700;color:#555;margin-bottom:10px;">Percentual da taxa</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+            <button class="taxa-pct-btn" data-pct="5"  onclick="selecionarTaxaPct(5)"  style="padding:7px 14px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:700;color:#555;cursor:pointer;">5%</button>
+            <button class="taxa-pct-btn ativo" data-pct="10" onclick="selecionarTaxaPct(10)" style="padding:7px 14px;border-radius:8px;border:1.5px solid var(--red);background:var(--red);font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:700;color:#fff;cursor:pointer;">10%</button>
+            <button class="taxa-pct-btn" data-pct="12" onclick="selecionarTaxaPct(12)" style="padding:7px 14px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:700;color:#555;cursor:pointer;">12%</button>
+            <button class="taxa-pct-btn" data-pct="15" onclick="selecionarTaxaPct(15)" style="padding:7px 14px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:700;color:#555;cursor:pointer;">15%</button>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input type="number" id="taxa-servico-custom" min="1" max="50" placeholder="Outro" 
+                style="width:70px;padding:7px 10px;border-radius:8px;border:1.5px solid var(--border);font-family:'Poppins',sans-serif;font-size:.8rem;outline:none;"
+                oninput="selecionarTaxaPct(parseInt(this.value)||0)">
+              <span style="font-size:.8rem;color:#888;font-weight:600;">%</span>
+            </div>
+          </div>
+          <input type="hidden" id="cfg-taxa-servico-pct" value="10">
+          <div style="background:#fff3ee;border:1px solid rgba(192,57,43,.15);border-radius:8px;padding:10px 12px;font-size:.75rem;color:#555;line-height:1.6;">
+            💡 A taxa de <strong id="taxa-pct-preview">10%</strong> será adicionada automaticamente ao fechar a comanda. O cliente pode solicitar a remoção — basta clicar em "Remover taxa" antes de fechar.
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- MODAL: Adicionar Item -->
-<!-- MODAL COMANDA — MODO GARÇOM -->
-<div id="modal-comanda">
-  <div id="comanda-sheet">
-
-    <!-- Header -->
-    <div class="comanda-hdr">
-      <!-- Número da mesa bem grande -->
-      <div style="display:flex;align-items:center;gap:14px;flex:1;min-width:0">
-        <div style="background:#1a1a1a;color:#fff;border-radius:14px;width:56px;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">
-          <div style="font-size:.5rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.1em;line-height:1">Mesa</div>
-          <div style="font-size:1.6rem;font-weight:900;line-height:1" id="comanda-num-mesa">--</div>
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:.62rem;color:#aaa;margin-bottom:4px;font-weight:600">Cliente / Nome</div>
-          <input id="comanda-nome-cliente" placeholder="Nome do cliente (opcional)"
-            oninput="salvarNomeComanda(this.value)"
-            style="width:100%;border:1.5px solid #f0e9e0;border-radius:8px;padding:7px 10px;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none;background:#faf8f5;color:#1a1a1a;transition:border-color .2s">
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;margin-left:8px">
-        <button class="comanda-x" onclick="fecharComanda()">✕</button>
-        <div style="text-align:right">
-          <div style="font-size:.58rem;color:#aaa;text-transform:uppercase;font-weight:700;letter-spacing:.06em">Total</div>
-          <div style="font-size:1rem;font-weight:800;color:var(--red)" id="comanda-total-geral">R$ 0,00</div>
-        </div>
+<!-- ═══ 5. REDES SOCIAIS ═══ -->
+<div class="cfg-section-wrap">
+  <div class="cfg-section-hdr" onclick="toggleCfgSection(this)">
+    <div class="cfg-hdr-title"><span class="cfg-hdr-icon">📱</span> Redes Sociais</div>
+    <span class="cfg-hdr-arrow">▼</span>
+  </div>
+  <div class="cfg-section-body">
+    <div class="form-group-light">
+      <label>Instagram</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="color:#aaa;font-size:.85rem">@</span>
+        <input type="text" class="input-light" id="cfg-instagram" placeholder="seurestaurante" style="flex:1">
       </div>
     </div>
-
-    <!-- Tabs: Novo Pedido / Histórico -->
-    <div class="comanda-tabs">
-      <button class="ctab ativo" id="ctab-pedido"  onclick="switchComandaTab('pedido')">➕ Novo pedido</button>
-      <button class="ctab"        id="ctab-hist"   onclick="switchComandaTab('hist')">📋 Comanda</button>
-    </div>
-
-    <!-- Painel Novo Pedido -->
-    <div id="cpanel-pedido" class="comanda-panel">
-      <div style="display:flex;flex-direction:column;height:100%">
-
-        <!-- Cardápio -->
-        <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px" id="comanda-cardapio"></div>
-
-        <!-- Separador + Carrinho -->
-        <div style="border-top:2px dashed #f0e9e0;background:#faf8f5">
-          <div style="padding:8px 14px;display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:.72rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em">Itens selecionados</span>
-            <span style="font-size:.88rem;font-weight:800;color:var(--red)" id="comanda-carr-total">R$ 0,00</span>
-          </div>
-          <div id="comanda-carrinho" style="max-height:180px;overflow-y:auto;padding:0 14px 4px"></div>
-        </div>
-
-        <!-- Botões de ação -->
-        <div style="padding:10px 14px 16px;display:flex;flex-direction:column;gap:8px;flex-shrink:0">
-          <button id="btn-enviar-comanda" onclick="enviarPedidoComanda()" disabled
-            style="width:100%;background:var(--red);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.92rem;cursor:pointer">
-            Enviar para cozinha 🍳
-          </button>
-          <button onclick="confirmarFecharComanda()"
-            style="width:100%;background:#1a1a1a;color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer">
-            Fechar comanda ✅
-          </button>
-        </div>
+    <div class="form-group-light">
+      <label>TikTok</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="color:#aaa;font-size:.85rem">@</span>
+        <input type="text" class="input-light" id="cfg-tiktok" placeholder="seurestaurante" style="flex:1">
       </div>
     </div>
-
-    <!-- Painel Histórico -->
-    <div id="cpanel-hist" class="comanda-panel" style="display:none">
-      <div style="padding:10px 14px;border-bottom:1px solid #f0e9e0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;background:#faf8f5">
-        <span style="font-size:.72rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em">Resumo da comanda</span>
-        <button onclick="imprimirComanda()" style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid #e0dbd5;border-radius:8px;padding:6px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer">
-          🖨️ Imprimir
-        </button>
-      </div>
-      <div style="overflow-y:auto;flex:1;padding:12px 14px;-webkit-overflow-scrolling:touch" id="comanda-historico"></div>
+    <div class="form-group-light" style="margin-bottom:0">
+      <label>Site / Link externo</label>
+      <input type="url" class="input-light" id="cfg-site" placeholder="https://www.seusite.com.br">
     </div>
-
   </div>
 </div>
 
+<!-- ═══ 6. NOTA FISCAL E MENSAGENS ═══ -->
+<div class="cfg-section-wrap">
+  <div class="cfg-section-hdr" onclick="toggleCfgSection(this)">
+    <div class="cfg-hdr-title"><span class="cfg-hdr-icon">🧾</span> Nota Fiscal e Mensagens</div>
+    <span class="cfg-hdr-arrow">▼</span>
+  </div>
+  <div class="cfg-section-body">
+    <div class="form-group-light">
+      <label>Mensagem na nota fiscal <span style="font-size:.65rem;color:#aaa;font-weight:400">(rodapé da nota)</span></label>
+      <input type="text" class="input-light" id="cfg-msg-nota" placeholder="Obrigado pela preferência! Volte sempre 😊">
+    </div>
+  </div>
+</div>
 
-<!-- MODAL ADICIONAIS DO PRODUTO (comanda garçom) -->
-<div id="modal-adicionais" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:750;display:none;align-items:flex-end;justify-content:center">
-  <div id="adicionais-sheet" style="background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:520px;display:flex;flex-direction:column;max-height:88vh;overflow:hidden">
-    <div style="padding:16px 16px 12px;border-bottom:1px solid #f0e9e0;display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0">
+<!-- ═══ 7. PLANO E ASSINATURA ═══ -->
+<div class="cfg-section-wrap">
+  <div class="cfg-section-hdr" onclick="toggleCfgSection(this)">
+    <div class="cfg-hdr-title"><span class="cfg-hdr-icon">⭐</span> Plano e Assinatura</div>
+    <span class="cfg-hdr-arrow">▼</span>
+  </div>
+  <div class="cfg-section-body">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <div>
-        <div style="font-size:.6rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Personalizar</div>
-        <div style="font-size:1rem;font-weight:800" id="adicionais-nome">Produto</div>
-        <div style="font-size:.88rem;font-weight:700;color:var(--red)" id="adicionais-preco-base">R$ 0,00</div>
+        <div style="font-size:.7rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em">Plano atual</div>
+        <div style="font-size:1.1rem;font-weight:800;color:var(--red);margin-top:2px" id="cfg-plano-atual">--</div>
+        <div style="font-size:.72rem;color:#aaa;margin-top:2px" id="cfg-venc-atual"></div>
       </div>
-      <button onclick="fecharAdicionais()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#aaa;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%">✕</button>
+      <a onclick="irCheckout('pro')" style="font-size:.75rem;font-weight:700;color:var(--red);cursor:pointer;text-decoration:underline">Ver todos os planos →</a>
     </div>
-    <div id="adicionais-grupos" style="flex:1;overflow-y:auto;padding:12px 16px"></div>
-    <div style="padding:12px 16px 20px;border-top:1px solid #f0e9e0;flex-shrink:0">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span style="font-size:.82rem;font-weight:600;color:#888">Total do item</span>
-        <span style="font-size:1.1rem;font-weight:800;color:var(--red)" id="adicionais-total">R$ 0,00</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div onclick="irCheckout('pro')" style="border:2px solid var(--red);background:#fff;border-radius:12px;padding:14px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background='#fff'">
+        <div style="font-size:.6rem;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">⭐ Pro</div>
+        <div style="font-size:1.2rem;font-weight:800;margin-bottom:3px">R$<span id="dash-preco-pro">49</span><span style="font-size:.72rem;font-weight:500;color:#888">/mês</span></div>
+        <div style="font-size:.68rem;color:#888;line-height:1.5">Cardápio · Pedidos<br>Fresquinho · Suporte</div>
+        <div style="margin-top:10px;background:var(--red);color:#fff;border-radius:7px;padding:7px;text-align:center;font-size:.72rem;font-weight:700">Assinar Pro</div>
       </div>
-      <button id="btn-confirmar-adicionais" onclick="confirmarAdicionais()"
-        style="width:100%;background:var(--red);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.92rem;cursor:pointer">
-        Adicionar ao pedido
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL GERENCIADOR DE GRUPOS DE ADICIONAIS -->
-<div id="modal-gerenciador-add" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:650;display:none;align-items:flex-end;justify-content:center">
-  <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:580px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
-
-    <!-- Header -->
-    <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-      <div>
-        <div style="font-size:.62rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Cardápio</div>
-        <div style="font-size:1.1rem;font-weight:800">🧩 Grupos de adicionais</div>
-      </div>
-      <button onclick="fecharGerenciadorAdicionais()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#aaa;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%">✕</button>
-    </div>
-
-    <!-- Lista de grupos -->
-    <div style="flex:1;overflow-y:auto;padding:16px 20px;-webkit-overflow-scrolling:touch" id="ger-add-lista">
-      <div style="text-align:center;padding:32px;color:#aaa;font-size:.85rem">Carregando grupos...</div>
-    </div>
-
-    <!-- Footer -->
-    <div style="padding:12px 20px 24px;border-top:1px solid var(--border);flex-shrink:0">
-      <button onclick="criarNovoGrupoAdicional()" class="btn-primary" style="width:100%;padding:14px">
-        + Criar novo grupo de adicionais
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL EDITAR GRUPO DE ADICIONAIS -->
-<div id="modal-editar-grupo-add" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;display:none;align-items:flex-end;justify-content:center">
-  <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:580px;max-height:96vh;display:flex;flex-direction:column;overflow:hidden">
-
-    <!-- Header -->
-    <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-      <div style="font-size:1rem;font-weight:800" id="eger-titulo">Novo grupo</div>
-      <button onclick="fecharEditarGrupoAdd()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#aaa;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%">✕</button>
-    </div>
-
-    <div style="flex:1;overflow-y:auto;padding:16px 20px;-webkit-overflow-scrolling:touch">
-      <!-- Nome do grupo -->
-      <div style="margin-bottom:14px">
-        <label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:5px">Nome do grupo *</label>
-        <input id="eger-nome" placeholder="Ex: Adicionais Açaí, Molhos, Borda da pizza..."
-          style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-family:'Poppins',sans-serif;font-size:.9rem;outline:none">
-      </div>
-
-      <!-- Min/Max -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-        <div>
-          <label style="font-size:.72rem;font-weight:700;color:#555;display:block;margin-bottom:5px">Mínimo de escolhas</label>
-          <input id="eger-min" type="number" value="0" min="0"
-            style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px;font-family:'Poppins',sans-serif;font-size:.9rem;outline:none;text-align:center">
-        </div>
-        <div>
-          <label style="font-size:.72rem;font-weight:700;color:#555;display:block;margin-bottom:5px">Máximo de escolhas</label>
-          <input id="eger-max" type="number" value="3" min="1"
-            style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px;font-family:'Poppins',sans-serif;font-size:.9rem;outline:none;text-align:center">
-        </div>
-      </div>
-
-      <!-- Opções -->
-      <div style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <label style="font-size:.75rem;font-weight:700;color:#555">Opções do grupo</label>
-          <button onclick="addOpcaoGrupo()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:5px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:var(--red);cursor:pointer">+ Opção</button>
-        </div>
-        <div id="eger-opcoes" style="display:flex;flex-direction:column;gap:8px"></div>
-      </div>
-
-      <!-- Vincular produtos -->
-      <div>
-        <div style="font-size:.75rem;font-weight:700;color:#555;margin-bottom:8px">Vincular a produtos</div>
-        <div style="font-size:.68rem;color:#aaa;margin-bottom:10px">Selecione quais produtos usarão este grupo de adicionais</div>
-        <div id="eger-produtos" style="display:flex;flex-direction:column;gap:6px">
-          <div style="color:#aaa;font-size:.8rem">Carregando produtos...</div>
-        </div>
+      <div onclick="irCheckout('premium')" style="border:2px solid #1a1a1a;background:#1a1a1a;border-radius:12px;padding:14px;cursor:pointer;transition:opacity .15s;color:#fff" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+        <div style="font-size:.6rem;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">🏆 Premium</div>
+        <div style="font-size:1.2rem;font-weight:800;margin-bottom:3px">R$<span id="dash-preco-prem">99</span><span style="font-size:.72rem;font-weight:500;opacity:.5">/mês</span></div>
+        <div style="font-size:.68rem;opacity:.6;line-height:1.5">Pro + Financeiro<br>Relatórios · SLA</div>
+        <div style="margin-top:10px;background:#f59e0b;color:#1a1a1a;border-radius:7px;padding:7px;text-align:center;font-size:.72rem;font-weight:800">Assinar Premium</div>
       </div>
     </div>
-
-    <!-- Footer -->
-    <div style="padding:12px 20px 24px;border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0">
-      <button onclick="fecharEditarGrupoAdd()" class="btn-cancelar" style="flex:1">Cancelar</button>
-      <button onclick="salvarGrupoAdicional()" class="btn-primary" style="flex:2" id="btn-salvar-grupo">Salvar grupo</button>
-    </div>
-  </div>
-</div>
-<!-- MODAL CANCELAR PLANO -->
-<div class="modal-overlay" id="modal-cancelar-plano">
-  <div class="modal-box" style="max-width:440px">
-    <!-- Header triste -->
-    <div style="text-align:center;padding:8px 0 20px">
-      <div style="font-size:2.5rem;margin-bottom:8px">😔</div>
-      <div style="font-size:1.05rem;font-weight:800;margin-bottom:4px">Que pena que você vai...</div>
-      <div style="font-size:0.82rem;color:#888;line-height:1.5">Nos ajude a melhorar. Conta pra gente o motivo do cancelamento?</div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
-      <label class="cancelar-motivo-opt">
-        <input type="radio" name="motivo-cancel" value="preco"> Preço não cabe no meu orçamento
-      </label>
-      <label class="cancelar-motivo-opt">
-        <input type="radio" name="motivo-cancel" value="funcionalidade"> Falta alguma funcionalidade
-      </label>
-      <label class="cancelar-motivo-opt">
-        <input type="radio" name="motivo-cancel" value="dificuldade"> Tive dificuldade em usar
-      </label>
-      <label class="cancelar-motivo-opt">
-        <input type="radio" name="motivo-cancel" value="parei"> Parei de usar temporariamente
-      </label>
-      <label class="cancelar-motivo-opt">
-        <input type="radio" name="motivo-cancel" value="outro"> Outro motivo
-      </label>
-    </div>
-
-    <div style="margin-bottom:16px">
-      <label style="font-size:.78rem;font-weight:700;color:#555;display:block;margin-bottom:6px">Quer deixar uma mensagem para a gente? (opcional)</label>
-      <textarea id="cancel-msg" rows="3" placeholder="Conte o que aconteceu ou o que podemos melhorar..."
-        style="width:100%;border:1.5px solid #e0dbd5;border-radius:10px;padding:11px 13px;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none;resize:none;background:#faf8f5"></textarea>
-    </div>
-
-    <div style="display:flex;gap:10px">
-      <button onclick="fecharCancelarPlano()" class="btn-cancelar" style="flex:1">Manter plano</button>
-      <button onclick="confirmarCancelamento()" style="flex:1;background:#C0392B;color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer">
+    <div id="cancelar-plano-wrap" style="display:none;">
+      <button onclick="abrirCancelarPlano()" style="width:100%;background:none;border:1.5px solid #ddd;border-radius:12px;padding:12px;font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:600;color:#aaa;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#C0392B';this.style.color='#C0392B'" onmouseout="this.style.borderColor='#ddd';this.style.color='#aaa'">
         Cancelar assinatura
       </button>
     </div>
   </div>
 </div>
 
-<!-- MODAL CROP DE FOTO DO PRODUTO -->
-<div class="modal-overlay" id="modal-crop-foto" style="z-index:5500;align-items:flex-end;justify-content:center;padding:0">
-  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:500px;overflow:hidden;max-height:95vh;display:flex;flex-direction:column">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#1a1a1a;flex-shrink:0">
-      <h3 style="color:#fff;font-size:.95rem;font-weight:800;margin:0">Ajustar foto</h3>
-      <div style="display:flex;align-items:center;gap:12px">
-        <span style="font-size:.68rem;color:#666">Arraste · Scroll para zoom</span>
-        <button onclick="fecharCropFoto()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888;line-height:1">&#10005;</button>
-      </div>
-    </div>
-    <div style="position:relative;width:100%;background:#111;flex:1;min-height:320px;touch-action:none" id="crop-foto-stage">
-      <canvas id="crop-foto-canvas" style="display:block;width:100%;touch-action:none"></canvas>
-      <div id="cfso" style="position:absolute;inset:0;pointer-events:none">
-        <div id="cfso-top"    style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.55)"></div>
-        <div id="cfso-bottom" style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55)"></div>
-        <div id="cfso-left"   style="position:absolute;background:rgba(0,0,0,.55)"></div>
-        <div id="cfso-right"  style="position:absolute;background:rgba(0,0,0,.55)"></div>
-        <div id="cfso-border" style="position:absolute;border:2.5px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5)"></div>
-        <div id="cfso-tl" style="position:absolute;width:16px;height:16px;border-top:3px solid #C0392B;border-left:3px solid #C0392B;border-radius:3px 0 0 0"></div>
-        <div id="cfso-tr" style="position:absolute;width:16px;height:16px;border-top:3px solid #C0392B;border-right:3px solid #C0392B;border-radius:0 3px 0 0"></div>
-        <div id="cfso-bl" style="position:absolute;width:16px;height:16px;border-bottom:3px solid #C0392B;border-left:3px solid #C0392B;border-radius:0 0 0 3px"></div>
-        <div id="cfso-br" style="position:absolute;width:16px;height:16px;border-bottom:3px solid #C0392B;border-right:3px solid #C0392B;border-radius:0 0 3px 0"></div>
-      </div>
-      <div style="position:absolute;bottom:10px;left:0;right:0;text-align:center;pointer-events:none">
-        <span style="background:rgba(0,0,0,.6);color:#fff;font-size:.65rem;font-weight:600;padding:4px 12px;border-radius:50px">&#9995; Arraste &#183; Scroll para zoom</span>
-      </div>
-    </div>
-    <div style="display:flex;gap:10px;padding:12px 16px;background:#fff;flex-shrink:0">
-      <button onclick="fecharCropFoto()" class="btn-crop-cancel" style="flex:1">Cancelar</button>
-      <button onclick="confirmarCropFoto()" class="btn-crop-ok" style="flex:2">&#10003; Usar esta foto</button>
-    </div>
-  </div>
+<!-- ── Botões finais ── -->
+<div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;">
+  <button class="btn-primary" onclick="salvarConfig()">Salvar configurações</button>
+  <a id="link-me-ajuda" href="#" target="_blank"
+     style="display:flex;align-items:center;justify-content:center;gap:10px;
+            background:#25d366;color:#fff;border-radius:12px;padding:14px 24px;
+            font-family:'Poppins',sans-serif;font-weight:700;font-size:0.9rem;
+            text-decoration:none;box-shadow:0 4px 14px rgba(37,211,102,0.3)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.554 4.118 1.523 5.85L0 24l6.335-1.509A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.65-.49-5.188-1.346l-.372-.216-3.76.896.944-3.663-.237-.388A9.937 9.937 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+    ME AJUDA PEDIWAY 💬
+  </a>
 </div>
 
+<!-- ── JS Accordion + Taxa de Serviço ── -->
+<script>
+window.toggleCfgSection = function(hdr) {
+  hdr.classList.toggle('open');
+  const body = hdr.nextElementSibling;
+  body.classList.toggle('open');
+};
+window.toggleTaxaServico = function(on) {
+  const wrap = document.getElementById('taxa-servico-wrap');
+  if(wrap) wrap.style.display = on ? 'block' : 'none';
+};
+window.selecionarTaxaPct = function(pct) {
+  document.querySelectorAll('.taxa-pct-btn').forEach(btn => {
+    const isThis = parseInt(btn.dataset.pct) === pct;
+    btn.style.background     = isThis ? 'var(--red)' : '#fff';
+    btn.style.color          = isThis ? '#fff'       : '#555';
+    btn.style.borderColor    = isThis ? 'var(--red)' : 'var(--border)';
+  });
+  const input = document.getElementById('cfg-taxa-servico-pct');
+  if(input) input.value = pct;
+  const preview = document.getElementById('taxa-pct-preview');
+  if(preview) preview.textContent = pct + '%';
+};
+</script>
 
-<!-- Modal de item (criar/editar produto) -->
-<div class="modal-overlay" id="modal-item">
-  <div class="modal-box" style="max-width:520px;max-height:90vh;overflow-y:auto">
-    <div style="position:sticky;top:0;z-index:10;background:#fff;display:flex;justify-content:flex-end;padding:10px 14px;border-bottom:1px solid var(--border)">
-      <button onclick="fecharModal()" style="width:32px;height:32px;border-radius:50%;border:1.5px solid #e0dbd5;background:#faf8f5;cursor:pointer;font-size:.9rem;color:#555;display:flex;align-items:center;justify-content:center;transition:all .15s" onmouseover="this.style.background='var(--red)';this.style.color='#fff';this.style.borderColor='var(--red)'" onmouseout="this.style.background='#faf8f5';this.style.color='#555';this.style.borderColor='#e0dbd5'">✕</button>
-    </div>
-    <div class="modal-body">
-      <!-- Fotos -->
-      <div style="margin-bottom:18px">
-        <div style="font-size:.78rem;font-weight:700;color:#555;margin-bottom:10px">📷 Fotos do produto</div>
-        <div id="fotos-grid" style="display:flex;flex-direction:column;gap:14px"></div>
-        <input type="file" id="foto-input" accept="image/*" multiple style="display:none" onchange="adicionarFotos(event)">
-      </div>
-      <!-- Emoji -->
-      <div class="form-group-light" style="margin-bottom:14px">
-        <label>Emoji do item</label>
-        <div id="emoji-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
-      </div>
-      <!-- Campos -->
-      <div class="form-group-light"><label>Nome *</label><input type="text" class="input-light" id="item-nome" placeholder="Ex: X-Burguer Especial"></div>
-      <div class="form-group-light"><label>Descrição</label><input type="text" class="input-light" id="item-desc" placeholder="Ingredientes, detalhes..."></div>
-      <div class="form-group-light"><label>Categoria</label><input type="text" class="input-light" id="item-cat" placeholder="Ex: LANCHES, BEBIDAS..."></div>
-      <div class="form-group-light">
-        <label>Preço *</label>
-        <input type="number" step="0.01" min="0" class="input-light" id="item-preco" placeholder="0,00">
-      </div>
-      <div class="form-group-light" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-        <input type="checkbox" id="item-promocao" onchange="togglePromo(this)" style="width:16px;height:16px;accent-color:var(--red)">
-        <label for="item-promocao" style="font-size:.82rem;font-weight:600;color:#555;cursor:pointer">Preço promocional</label>
-      </div>
-      <div id="preco-orig-group" style="display:none" class="form-group-light">
-        <label>Preço original (antes da promoção)</label>
-        <input type="number" step="0.01" min="0" class="input-light" id="item-preco-orig" placeholder="0,00">
-      </div>
-      <div class="form-group-light" style="margin-bottom:0">
-        <label>Grupo de adicionais</label>
-        <select class="input-light" id="item-grupo-adicional">
-          <option value="">Nenhum</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
-      <button class="btn-primary" onclick="salvarItem()">Salvar item</button>
-    </div>
-  </div>
 </div>
-
-<!-- Modal de grupos de adicionais -->
-<div class="modal-overlay" id="modal-grupos">
-  <div class="modal-box" style="max-width:520px;max-height:90vh;overflow-y:auto">
-    <div class="modal-hdr">
-      <span class="modal-title">🧩 Grupos de Adicionais</span>
-      <button class="modal-x" onclick="fecharAdicionais()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div id="grupos-lista" style="margin-bottom:16px"></div>
-      <div style="border:1.5px solid var(--border);border-radius:12px;padding:14px;background:#faf8f5">
-        <div style="font-size:.8rem;font-weight:700;color:#555;margin-bottom:10px">Novo grupo</div>
-        <div class="form-group-light"><label>Nome do grupo</label><input class="input-light" id="eger-nome" placeholder="Ex: Adicionais Açaí, Molhos, Borda da pizza..."></div>
-        <div style="display:flex;gap:10px;margin-bottom:10px">
-          <div class="form-group-light" style="flex:1;margin-bottom:0"><label>Mín.</label><input class="input-light" id="eger-min" type="number" min="0" value="0" placeholder="0"></div>
-          <div class="form-group-light" style="flex:1;margin-bottom:0"><label>Máx.</label><input class="input-light" id="eger-max" type="number" min="1" value="3" placeholder="3"></div>
-        </div>
-        <div id="eger-opcoes" style="margin-bottom:10px"></div>
-        <button onclick="adicionarOpcaoGrupo()" style="background:none;border:1.5px dashed var(--border);border-radius:8px;padding:7px 14px;font-family:'Poppins',sans-serif;font-size:.75rem;font-weight:600;color:#888;cursor:pointer;width:100%">+ Adicionar opção</button>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="btn-cancelar" onclick="fecharAdicionais()" style="flex:1">Cancelar</button>
-          <button class="btn-primary" onclick="salvarGrupo()" style="flex:2">Salvar grupo</button>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- MODAL DETALHE PEDIDO -->
