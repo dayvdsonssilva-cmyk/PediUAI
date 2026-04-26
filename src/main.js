@@ -4,17 +4,19 @@ import { getSupa } from './supabase.js';
 import { doLogin, doRegister } from './auth.js';
 import { initDashboard } from './dashboard.js';
 
-// Intercepta goTo para esconder footer no dashboard e corrigir overflow
+// Intercepta goTo para footer aparecer só na landing
 const _goToOriginal = goTo;
 window.goTo = function(screen, extra) {
   _goToOriginal(screen, extra);
   const footer = document.getElementById('site-footer');
-  const isLanding = screen === 's-landing';
-  if(footer) footer.style.display = isLanding ? '' : 'none';
-  // Reseta overflow no body ao navegar
-  document.body.style.overflowX = 'hidden';
-  document.documentElement.style.overflowX = 'hidden';
+  if(footer) footer.style.display = screen === 's-landing' ? '' : 'none';
 };
+// Esconde footer imediatamente ao carregar se não for landing
+document.addEventListener('DOMContentLoaded', () => {
+  const footer = document.getElementById('site-footer');
+  const screen = localStorage.getItem('pw-screen') || 's-landing';
+  if(footer) footer.style.display = screen === 's-landing' ? '' : 'none';
+});
 window.openDemo        = openDemo;
 window.openDemoCliente = openDemoCliente;
 window.showToast       = showToast;
