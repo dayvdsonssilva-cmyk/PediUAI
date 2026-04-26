@@ -4,7 +4,17 @@ import { getSupa } from './supabase.js';
 import { doLogin, doRegister } from './auth.js';
 import { initDashboard } from './dashboard.js';
 
-window.goTo            = goTo;
+// Intercepta goTo para esconder footer no dashboard e corrigir overflow
+const _goToOriginal = goTo;
+window.goTo = function(screen, extra) {
+  _goToOriginal(screen, extra);
+  const footer = document.getElementById('site-footer');
+  const isLanding = screen === 's-landing';
+  if(footer) footer.style.display = isLanding ? '' : 'none';
+  // Reseta overflow no body ao navegar
+  document.body.style.overflowX = 'hidden';
+  document.documentElement.style.overflowX = 'hidden';
+};
 window.openDemo        = openDemo;
 window.openDemoCliente = openDemoCliente;
 window.showToast       = showToast;
@@ -41,9 +51,7 @@ window.mascaraWhatsInput = function(input) {
 
 window.togglePromo = function(cb) {
   const g = document.getElementById('preco-orig-group');
-  const d = document.getElementById('desconto-group');
   if (g) g.style.display = cb.checked ? 'flex' : 'none';
-  if (d) d.style.display = cb.checked ? 'flex' : 'none';
 };
 
 window.atualizarCfgLink = function(val) {
