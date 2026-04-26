@@ -1111,21 +1111,29 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 .lp-logo span { color:var(--lp-red); }
 .lp-header-btns { display:flex;gap:10px;align-items:center; }
 .lp-btn-ghost {
-  padding:9px 20px; border-radius:10px; font-size:.85rem; font-weight:600;
+  padding:8px 16px; border-radius:10px; font-size:.82rem; font-weight:600;
   background:rgba(255,255,255,0.07); border:1.5px solid rgba(255,255,255,0.14);
   color:#fff; cursor:pointer; font-family:'Poppins',sans-serif;
-  transition:all .18s;
+  transition:all .18s; white-space:nowrap;
 }
 .lp-btn-ghost:hover { background:rgba(255,255,255,0.13); }
 .lp-btn-red {
-  padding:9px 22px; border-radius:10px; font-size:.85rem; font-weight:700;
+  padding:8px 16px; border-radius:10px; font-size:.82rem; font-weight:700;
   background:var(--lp-red); border:none; color:#fff; cursor:pointer;
   font-family:'Poppins',sans-serif;
   box-shadow:0 4px 14px rgba(224,90,58,0.35);
   transition:all .18s;
   animation:lp-pulse 2.5s 2s infinite;
+  white-space:nowrap;
 }
 .lp-btn-red:hover { background:var(--lp-red-dark); transform:translateY(-1px); }
+
+@media(max-width:480px) {
+  .lp-btn-ghost { padding:7px 12px; font-size:.78rem; }
+  .lp-btn-red   { padding:7px 12px; font-size:.78rem; }
+  .header-buttons { gap:6px; }
+  .header-dark { padding:10px 14px !important; }
+}
 
 /* ── BADGE ───────────────────────────────────────── */
 .lp-badge {
