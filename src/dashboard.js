@@ -127,11 +127,11 @@ function aplicarRestricaoPlano(estab) {
   if (banner) banner.style.display = (plano === 'basico' && !trialAtivo) ? 'flex' : 'none';
 }
 
-// ── Link ME AJUDA PEDIWAY — usa config do CEO ──────────────────────────────
+// ── Link ME AJUDA PEDIUAI — usa config do CEO ──────────────────────────────
 function atualizarLinkSuporte() {
   const cfg = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
   const wpp = cfg.wpp || '5500000000000';
-  const msg = encodeURIComponent(cfg.wppMsg || 'Olá! Preciso de ajuda com o PEDIWAY.');
+  const msg = encodeURIComponent(cfg.wppMsg || 'Olá! Preciso de ajuda com o PEDIUAI.');
   const link = document.getElementById('link-me-ajuda');
   if (link) link.href = `https://wa.me/${wpp}?text=${msg}`;
 }
@@ -252,25 +252,7 @@ function preencherConfig(estab) {
   set('cfg-slug',      estab.slug);
   set('cfg-whats',     estab.whatsapp || '');
   set('cfg-desc',      estab.descricao || '');
-  // Carrega estados IBGE para o select de cidade
-  if(typeof carregarEstadosDash === 'function') carregarEstadosDash().then(() => {
-    const estadoSel = document.getElementById('cfg-estado');
-    const cidadeSel = document.getElementById('cfg-cidade');
-    if(!estadoSel || !cidadeSel) return;
-    // Tenta identificar o estado da cidade salva
-    const cidadeSalva = estab.cidade || '';
-    const estadoSalvo = estab.estado || '';
-    if(estadoSalvo && estadoSel) {
-      estadoSel.value = estadoSalvo;
-      // Carrega cidades do estado e seleciona a cidade
-      carregarCidadesDash(estadoSalvo).then(() => {
-        if(cidadeSalva) cidadeSel.value = cidadeSalva;
-      });
-    } else if(cidadeSalva && cidadeSel) {
-      cidadeSel.innerHTML = `<option value="${cidadeSalva}" selected>${cidadeSalva}</option>`;
-      cidadeSel.disabled = false; cidadeSel.style.opacity = '1';
-    }
-  });
+  set('cfg-cidade',    estab.cidade || '');
   set('cfg-endereco',  estab.endereco || '');
   set('cfg-tempo',     estab.tempo_entrega || '30-45 min');
   set('cfg-telefone',  estab.telefone_contato || '');
@@ -280,9 +262,15 @@ function preencherConfig(estab) {
   set('cfg-site',      estab.site || '');
   set('cfg-msg-nota',  estab.msg_nota || '');
   const cfgLink = $('cfg-link-preview');
-  if (cfgLink) cfgLink.textContent = `${BASE_URL}/${estab.slug}`;
+  if (cfgLink) {
+    cfgLink.textContent = `${BASE_URL}/${estab.slug}`;
+    cfgLink.style.cssText += ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;max-width:100%;';
+  }
   const cfgLinkGarcom = $('cfg-link-garcom');
-  if (cfgLinkGarcom) cfgLinkGarcom.textContent = `${BASE_URL}/comandas/${estab.slug}`;
+  if (cfgLinkGarcom) {
+    cfgLinkGarcom.textContent = `${BASE_URL}/comandas/${estab.slug}`;
+    cfgLinkGarcom.style.cssText += ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;max-width:100%;';
+  }
   const ce = $('cfg-entrega');  if (ce) ce.checked = estab.faz_entrega  !== false;
   const cr = $('cfg-retirada'); if (cr) cr.checked = estab.faz_retirada !== false;
   const ct = $('cfg-taxa');     if (ct) ct.value   = estab.taxa_entrega || '';
@@ -540,8 +528,6 @@ export async function salvarConfig() {
   const whats    = $('cfg-whats')?.value.trim();
   const desc     = $('cfg-desc')?.value.trim();
   const cidade   = $('cfg-cidade')?.value.trim() || null;
-  const estadoEl = document.getElementById('cfg-estado');
-  const estado   = estadoEl?.value.trim() || null;
   const endereco = $('cfg-endereco')?.value.trim();
   const tempo    = $('cfg-tempo')?.value;
   const aberto   = $('cfg-aberto')?.checked;
@@ -583,7 +569,7 @@ export async function salvarConfig() {
     const aceita_dinheiro= $('cfg-dinheiro')?.checked !== false;
 
     const updates = {
-      nome, slug, whatsapp: whats, descricao: desc, cidade, estado, endereco,
+      nome, slug, whatsapp: whats, descricao: desc, cidade, endereco,
       tempo_entrega: tempo, aberto, faz_entrega: entrega, faz_retirada: retirada,
       cor_primaria, logo_url,
       capa_url: null, capa_tipo: 'cor',
@@ -642,7 +628,6 @@ async function renderCardapio() {
         ${p.foto_url
           ? `<img class="item-img" src="${p.foto_url}" alt="${p.nome}">`
           : `<div class="item-emoji-bg">${p.emoji || '🍔'}</div>`}
-        <span class="item-disponivel">${p.disponivel ? 'Disponível' : 'Indisponível'}</span>
         ${p.promocao ? `<span class="item-promo-badge">🔥 Promoção</span>` : ''}
 
       </div>
@@ -1591,7 +1576,7 @@ window.imprimirPedido = async function(id) {
 
 <!-- ====== CABEÇALHO ====== -->
 <div class="center">
-  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
+  <div class="logo">PEDI<span class="logo-red">UAI</span></div>
   <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
   <div class="info-sm">
     ${estab?.endereco ? `${estab.endereco}<br>` : ''}
@@ -1676,7 +1661,7 @@ ${(insta || ttok || estab?.site) ? `
 
 <hr class="sep-dash">
 <div class="msg-final">${msgFim}</div>
-<div class="rodape">PEDIWAY · Plataforma de delivery independente</div>
+<div class="rodape">PEDIUAI · Plataforma de delivery independente</div>
 
 </body></html>`;
 
@@ -2049,7 +2034,7 @@ function exportarPDF() {
     + '<table><thead><tr><th>Forma</th><th>Pedidos</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead><tbody>'+pagRows+'</tbody></table></div>'
     + '<div class="section"><div class="section-title">Histórico de pedidos</div>'
     + '<table><thead><tr><th>#</th><th>Cliente</th><th>Endereço</th><th>Pagamento</th><th style="text-align:right">Total</th><th>Data</th></tr></thead><tbody>'+pedRows+'</tbody></table></div>'
-    + '<div class="footer">Relatório gerado pelo PEDIWAY — '+agora+'</div>'
+    + '<div class="footer">Relatório gerado pelo PEDIUAI — '+agora+'</div>'
     + '</body></html>';
 
   const w = window.open('','_blank');
@@ -2324,7 +2309,7 @@ window.imprimirComanda = function() {
 
 <!-- CABEÇALHO -->
 <div class="center">
-  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
+  <div class="logo">PEDI<span class="logo-red">UAI</span></div>
   <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
   <div class="info-sm">
     ${estab?.endereco ? estab.endereco + '<br>' : ''}
@@ -2376,7 +2361,7 @@ ${estab?.site ? `<div class="social">${estab.site}</div>` : ''}
 
 <hr class="sep-dash">
 <div class="msg-final">${msgFim}</div>
-<div class="rodape">PEDIWAY · Plataforma de delivery independente</div>
+<div class="rodape">PEDIUAI · Plataforma de delivery independente</div>
 
 </body></html>`;
 
@@ -2919,7 +2904,7 @@ window.imprimirCozinha = function(pedidoId) {
 
 <!-- CABEÇALHO -->
 <div class="center">
-  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
+  <div class="logo">PEDI<span class="logo-red">UAI</span></div>
   <div class="empresa">${loja}</div>
   <div class="tag">Ticket de Cozinha</div>
 </div>
@@ -2963,7 +2948,7 @@ ${p.observacao ? `
 </div>` : ''}
 
 <hr class="sep-dash">
-<div class="rodape">PEDIWAY &mdash; Sistema de Gestao</div>
+<div class="rodape">PEDIUAI &mdash; Sistema de Gestao</div>
 
 </body></html>`;
 
