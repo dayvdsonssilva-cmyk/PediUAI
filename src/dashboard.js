@@ -127,11 +127,11 @@ function aplicarRestricaoPlano(estab) {
   if (banner) banner.style.display = (plano === 'basico' && !trialAtivo) ? 'flex' : 'none';
 }
 
-// ── Link ME AJUDA PEDIUAI — usa config do CEO ──────────────────────────────
+// ── Link ME AJUDA PEDIWAY — usa config do CEO ──────────────────────────────
 function atualizarLinkSuporte() {
   const cfg = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
   const wpp = cfg.wpp || '5500000000000';
-  const msg = encodeURIComponent(cfg.wppMsg || 'Olá! Preciso de ajuda com o PEDIUAI.');
+  const msg = encodeURIComponent(cfg.wppMsg || 'Olá! Preciso de ajuda com o PEDIWAY.');
   const link = document.getElementById('link-me-ajuda');
   if (link) link.href = `https://wa.me/${wpp}?text=${msg}`;
 }
@@ -1591,7 +1591,7 @@ window.imprimirPedido = async function(id) {
 
 <!-- ====== CABEÇALHO ====== -->
 <div class="center">
-  <div class="logo">PEDI<span class="logo-red">UAI</span></div>
+  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
   <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
   <div class="info-sm">
     ${estab?.endereco ? `${estab.endereco}<br>` : ''}
@@ -1676,7 +1676,7 @@ ${(insta || ttok || estab?.site) ? `
 
 <hr class="sep-dash">
 <div class="msg-final">${msgFim}</div>
-<div class="rodape">PEDIUAI · Plataforma de delivery independente</div>
+<div class="rodape">PEDIWAY · Plataforma de delivery independente</div>
 
 </body></html>`;
 
@@ -2049,7 +2049,7 @@ function exportarPDF() {
     + '<table><thead><tr><th>Forma</th><th>Pedidos</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead><tbody>'+pagRows+'</tbody></table></div>'
     + '<div class="section"><div class="section-title">Histórico de pedidos</div>'
     + '<table><thead><tr><th>#</th><th>Cliente</th><th>Endereço</th><th>Pagamento</th><th style="text-align:right">Total</th><th>Data</th></tr></thead><tbody>'+pedRows+'</tbody></table></div>'
-    + '<div class="footer">Relatório gerado pelo PEDIUAI — '+agora+'</div>'
+    + '<div class="footer">Relatório gerado pelo PEDIWAY — '+agora+'</div>'
     + '</body></html>';
 
   const w = window.open('','_blank');
@@ -2324,7 +2324,7 @@ window.imprimirComanda = function() {
 
 <!-- CABEÇALHO -->
 <div class="center">
-  <div class="logo">PEDI<span class="logo-red">UAI</span></div>
+  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
   <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
   <div class="info-sm">
     ${estab?.endereco ? estab.endereco + '<br>' : ''}
@@ -2376,7 +2376,7 @@ ${estab?.site ? `<div class="social">${estab.site}</div>` : ''}
 
 <hr class="sep-dash">
 <div class="msg-final">${msgFim}</div>
-<div class="rodape">PEDIUAI · Plataforma de delivery independente</div>
+<div class="rodape">PEDIWAY · Plataforma de delivery independente</div>
 
 </body></html>`;
 
@@ -2919,7 +2919,7 @@ window.imprimirCozinha = function(pedidoId) {
 
 <!-- CABEÇALHO -->
 <div class="center">
-  <div class="logo">PEDI<span class="logo-red">UAI</span></div>
+  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
   <div class="empresa">${loja}</div>
   <div class="tag">Ticket de Cozinha</div>
 </div>
@@ -2963,7 +2963,7 @@ ${p.observacao ? `
 </div>` : ''}
 
 <hr class="sep-dash">
-<div class="rodape">PEDIUAI &mdash; Sistema de Gestao</div>
+<div class="rodape">PEDIWAY &mdash; Sistema de Gestao</div>
 
 </body></html>`;
 
