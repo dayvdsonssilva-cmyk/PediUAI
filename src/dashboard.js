@@ -252,7 +252,25 @@ function preencherConfig(estab) {
   set('cfg-slug',      estab.slug);
   set('cfg-whats',     estab.whatsapp || '');
   set('cfg-desc',      estab.descricao || '');
-  set('cfg-cidade',    estab.cidade || '');
+  // Carrega estados IBGE para o select de cidade
+  if(typeof carregarEstadosDash === 'function') carregarEstadosDash().then(() => {
+    const estadoSel = document.getElementById('cfg-estado');
+    const cidadeSel = document.getElementById('cfg-cidade');
+    if(!estadoSel || !cidadeSel) return;
+    // Tenta identificar o estado da cidade salva
+    const cidadeSalva = estab.cidade || '';
+    const estadoSalvo = estab.estado || '';
+    if(estadoSalvo && estadoSel) {
+      estadoSel.value = estadoSalvo;
+      // Carrega cidades do estado e seleciona a cidade
+      carregarCidadesDash(estadoSalvo).then(() => {
+        if(cidadeSalva) cidadeSel.value = cidadeSalva;
+      });
+    } else if(cidadeSalva && cidadeSel) {
+      cidadeSel.innerHTML = `<option value="${cidadeSalva}" selected>${cidadeSalva}</option>`;
+      cidadeSel.disabled = false; cidadeSel.style.opacity = '1';
+    }
+  });
   set('cfg-endereco',  estab.endereco || '');
   set('cfg-tempo',     estab.tempo_entrega || '30-45 min');
   set('cfg-telefone',  estab.telefone_contato || '');
@@ -522,6 +540,8 @@ export async function salvarConfig() {
   const whats    = $('cfg-whats')?.value.trim();
   const desc     = $('cfg-desc')?.value.trim();
   const cidade   = $('cfg-cidade')?.value.trim() || null;
+  const estadoEl = document.getElementById('cfg-estado');
+  const estado   = estadoEl?.value.trim() || null;
   const endereco = $('cfg-endereco')?.value.trim();
   const tempo    = $('cfg-tempo')?.value;
   const aberto   = $('cfg-aberto')?.checked;
@@ -563,7 +583,7 @@ export async function salvarConfig() {
     const aceita_dinheiro= $('cfg-dinheiro')?.checked !== false;
 
     const updates = {
-      nome, slug, whatsapp: whats, descricao: desc, cidade, endereco,
+      nome, slug, whatsapp: whats, descricao: desc, cidade, estado, endereco,
       tempo_entrega: tempo, aberto, faz_entrega: entrega, faz_retirada: retirada,
       cor_primaria, logo_url,
       capa_url: null, capa_tipo: 'cor',
