@@ -2317,8 +2317,8 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
           <input type="text" class="input-light" id="cfg-nome" placeholder="Burguer do Ze">
         </div>
         <div class="form-group-light">
-          <label>Descrição</label>
-          <input type="text" class="input-light" id="cfg-desc" placeholder="Os melhores burguers da cidade!">
+          <label>Descrição <span id="cfg-desc-count" style="font-size:.7rem;color:#aaa;font-weight:400;">0/80</span></label>
+          <input type="text" class="input-light" id="cfg-desc" placeholder="Os melhores burguers da cidade!" maxlength="80" oninput="document.getElementById('cfg-desc-count').textContent=this.value.length+'/80'">
         </div>
         <div class="form-group-light">
           <label>Cidade</label>
@@ -2363,8 +2363,8 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
           <label style="display:flex;align-items:center;gap:6px">
             🍽️ Link das Comandas <span style="background:#f0e9e0;padding:1px 7px;border-radius:50px;font-size:.6rem;font-weight:700;color:#888">GARÇOM</span>
           </label>
-          <div style="display:flex;align-items:center;gap:8px;overflow:hidden;">
-            <div class="link-preview-light" id="cfg-link-garcom" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">pediway.vercel.app/comandas/</div>
+          <div style="display:flex;align-items:center;gap:8px;overflow:hidden;min-width:0;">
+            <div class="link-preview-light" id="cfg-link-garcom" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">pediway.vercel.app/comandas/</div>
             <button onclick="copiarLinkGarcom()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer;white-space:nowrap;flex-shrink:0">Copiar</button>
           </div>
           <div style="font-size:.65rem;color:#aaa;margin-top:4px">Compartilhe este link com seus garçons. Todos usam o mesmo link para acessar as comandas digitais.</div>
