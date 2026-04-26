@@ -2159,6 +2159,29 @@ function toast(msg) {
 }
 
 // ═══════════════════════════════════════════════════════
+// BLOQUEIO DE ZOOM (pinch Safari, touchmove 2 dedos, double-tap)
+// ═══════════════════════════════════════════════════════
+(function(){
+  // Pinch Safari iOS (gesturestart/change/end)
+  document.addEventListener('gesturestart',  function(e){ e.preventDefault(); }, { passive: false });
+  document.addEventListener('gesturechange', function(e){ e.preventDefault(); }, { passive: false });
+  document.addEventListener('gestureend',    function(e){ e.preventDefault(); }, { passive: false });
+
+  // Pinch universal via touchmove com 2+ dedos
+  document.addEventListener('touchmove', function(e){
+    if(e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+
+  // Double-tap zoom
+  var _lastTap = 0;
+  document.addEventListener('touchend', function(e){
+    var now = Date.now();
+    if(now - _lastTap < 300) e.preventDefault();
+    _lastTap = now;
+  }, { passive: false });
+})();
+
+// ═══════════════════════════════════════════════════════
 // START
 // ═══════════════════════════════════════════════════════
 init();
