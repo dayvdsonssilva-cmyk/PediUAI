@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>PEDIUAI - Seu delivery, do seu jeito</title>
+  <title>PEDIWAY - Seu delivery, do seu jeito</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -1319,7 +1319,7 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 
 <!-- Header -->
 <header class="lp-header" id="lp-header">
-  <div class="lp-logo" translate="no">PEDI<span>UAI</span></div>
+  <div class="lp-logo" translate="no">PEDI<span>WAY</span></div>
   <div class="lp-header-btns">
     <button class="lp-btn-ghost" onclick="goTo('s-login')">Entrar</button>
     <button class="lp-btn-red"   onclick="goTo('s-register')">Começar grátis</button>
@@ -1358,7 +1358,7 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
     </h1>
 
     <p style="font-size:.98rem;color:var(--lp-muted);line-height:1.8;max-width:500px;margin-bottom:34px;animation:lp-fadeUp .7s .5s both;">
-      Crie sua loja online em minutos, receba pedidos e gerencie tudo pela plataforma PEDIUAI. Sem comissão por venda, 100% do lucro é seu.
+      Crie sua loja online em minutos, receba pedidos e gerencie tudo pela plataforma PEDIWAY. Sem comissão por venda, 100% do lucro é seu.
     </p>
 
     <!-- CTAs -->
@@ -1543,7 +1543,7 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
       <div class="lp-reveal">
         <div class="lp-label">Sem taxas surpresa</div>
         <div class="lp-sec-title">R$0 de comissão.<br>Para sempre.</div>
-        <p class="lp-sec-sub" style="margin:14px 0 28px;max-width:420px;">Diferente do iFood, o PEDIUAI não cobra comissão por pedido. Você paga apenas a mensalidade e fica com 100% do que vende.</p>
+        <p class="lp-sec-sub" style="margin:14px 0 28px;max-width:420px;">Diferente do iFood, o PEDIWAY não cobra comissão por pedido. Você paga apenas a mensalidade e fica com 100% do que vende.</p>
         <div>
           <div class="lp-check">
             <div class="lp-check-ico"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><polyline points="2 6 5 9 10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -1587,7 +1587,7 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 <section class="lp-sec" style="background:#0F0F0F;border-top:1px solid var(--lp-border);">
   <div class="lp-inner" style="text-align:center;">
     <div class="lp-reveal">
-      <div class="lp-label">Para quem é o PEDIUAI</div>
+      <div class="lp-label">Para quem é o PEDIWAY</div>
       <div class="lp-sec-title">Feito para o seu negócio</div>
     </div>
     <div class="lp-grid4" style="margin-top:40px;">
@@ -1692,39 +1692,6 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 
   document.querySelectorAll('.lp-reveal, .lp-reveal-scale').forEach(el => io.observe(el));
 })();
-
-// ── IBGE para dashboard (cfg-cidade) ─────────────────────────────────────────
-let _dashEstadosOk = false;
-window.carregarEstadosDash = async function() {
-  if(_dashEstadosOk) return;
-  const sel = document.getElementById('cfg-estado');
-  if(!sel || sel.options.length > 1) { _dashEstadosOk=true; return; }
-  try {
-    const r = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
-    const estados = await r.json();
-    estados.forEach(e => {
-      const opt = document.createElement('option');
-      opt.value = e.sigla; opt.textContent = e.nome; opt.dataset.nome = e.nome;
-      sel.appendChild(opt);
-    });
-    _dashEstadosOk = true;
-  } catch(e) { console.warn('IBGE estados dash:', e); }
-};
-
-window.carregarCidadesDash = async function(uf) {
-  const cidSel = document.getElementById('cfg-cidade');
-  if(!cidSel) return;
-  if(!uf) { cidSel.innerHTML='<option value="">Selecione o estado primeiro</option>'; cidSel.disabled=true; cidSel.style.opacity='.5'; return; }
-  cidSel.disabled=true; cidSel.style.opacity='.5';
-  cidSel.innerHTML='<option>Carregando cidades...</option>';
-  try {
-    const r = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
-    const cidades = await r.json();
-    cidSel.innerHTML='<option value="">Selecione a cidade...</option>';
-    cidades.forEach(c => { const opt=document.createElement('option'); opt.value=c.nome; opt.textContent=c.nome; cidSel.appendChild(opt); });
-    cidSel.disabled=false; cidSel.style.opacity='1';
-  } catch(e) { cidSel.innerHTML='<option value="">Erro ao carregar</option>'; cidSel.disabled=false; cidSel.style.opacity='1'; }
-};
 </script>
 
 </div>
@@ -1735,7 +1702,7 @@ window.carregarCidadesDash = async function(uf) {
 <!-- LOGIN -->
 <div data-screen="s-login" class="screen">
   <header class="header-dark">
-    <div class="logo-dark" onclick="goTo('s-landing')" style="cursor:pointer" translate="no">PEDI<span>UAI</span></div>
+    <div class="logo-dark" onclick="goTo('s-landing')" style="cursor:pointer" translate="no">PEDI<span>WAY</span></div>
   </header>
   <div class="auth-container">
     <div class="auth-card">
@@ -1761,7 +1728,7 @@ window.carregarCidadesDash = async function(uf) {
 <!-- REGISTER -->
 <div data-screen="s-register" class="screen">
   <header class="header-dark">
-    <div class="logo-dark" onclick="goTo('s-landing')" style="cursor:pointer" translate="no">PEDI<span>UAI</span></div>
+    <div class="logo-dark" onclick="goTo('s-landing')" style="cursor:pointer" translate="no">PEDI<span>WAY</span></div>
     <button onclick="goTo('s-landing')" style="background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.2);color:#fff;width:36px;height:36px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
   </header>
   <div class="auth-container">
@@ -1790,7 +1757,7 @@ window.carregarCidadesDash = async function(uf) {
 <!-- RECUPERAR SENHA — tema escuro -->
 <div data-screen="s-recuperar" class="screen" style="background:#0f0f0f;min-height:100vh">
   <header class="header-dark" style="background:#0f0f0f;border-bottom:1px solid #1e1e1e">
-    <div class="logo-dark" onclick="goTo('s-login')" style="cursor:pointer" translate="no">PEDI<span>UAI</span></div>
+    <div class="logo-dark" onclick="goTo('s-login')" style="cursor:pointer" translate="no">PEDI<span>WAY</span></div>
   </header>
   <div class="auth-container" style="padding:32px 16px">
     <div class="auth-card" style="background:#1a1a1a;border:1px solid #2a2a2a;max-width:420px">
@@ -1813,7 +1780,7 @@ window.carregarCidadesDash = async function(uf) {
 
       <!-- PASSO 1: E-mail -->
       <div id="rec-passo1">
-        <p style="color:#888;font-size:.78rem;margin-bottom:14px">Informe o e-mail da sua conta PEDIUAI.</p>
+        <p style="color:#888;font-size:.78rem;margin-bottom:14px">Informe o e-mail da sua conta PEDIWAY.</p>
         <div class="form-group" style="margin-bottom:16px">
           <label style="color:#aaa;font-size:.78rem;font-weight:600">E-mail cadastrado</label>
           <input type="email" id="rec-email" placeholder="seu@email.com"
@@ -1883,7 +1850,7 @@ window.carregarCidadesDash = async function(uf) {
 
 <!-- SUCESSO -->
 <div data-screen="s-sucesso" class="screen">
-  <header class="header-dark"><div class="logo-dark" translate="no">PEDI<span>UAI</span></div></header>
+  <header class="header-dark"><div class="logo-dark" translate="no">PEDI<span>WAY</span></div></header>
   <div class="auth-container">
     <div class="auth-card" style="text-align:center">
       <div style="font-size:3.5rem;margin-bottom:16px">🎉</div>
@@ -1914,12 +1881,12 @@ window.carregarCidadesDash = async function(uf) {
   <div id="banner-upgrade" style="display:none;background:linear-gradient(135deg,#C0392B,#922B21);color:#fff;padding:11px 20px;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
     <div>
       <strong style="font-size:.83rem">🔒 Seu trial de 15 dias expirou</strong>
-      <div style="font-size:.7rem;opacity:.85;margin-top:1px">Escolha um plano para continuar usando o PEDIUAI</div>
+      <div style="font-size:.7rem;opacity:.85;margin-top:1px">Escolha um plano para continuar usando o PEDIWAY</div>
     </div>
     <button onclick="irCheckout('pro')" style="background:#fff;color:#C0392B;border:none;border-radius:8px;padding:7px 16px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.75rem;cursor:pointer">Ver planos</button>
   </div>
   <header class="header-light">
-    <div class="logo-light" translate="no">PEDI<span>UAI</span></div>
+    <div class="logo-light" translate="no">PEDI<span>WAY</span></div>
     <div class="header-right">
       <span class="dash-store-name" id="dash-store-name">Meu Estabelecimento</span>
       <button class="btn-sair" onclick="localStorage.removeItem('pw_estab');window._estab=null;goTo('s-landing')">Sair</button>
@@ -2293,13 +2260,13 @@ window.carregarCidadesDash = async function(uf) {
         <div class="form-group-light">
           <label>Cidade</label>
           <div style="position:relative;margin-bottom:8px;">
-            <select id="cfg-estado" class="input-light" onchange="carregarCidadesDash(this.value)" style="width:100%;appearance:none;-webkit-appearance:none;padding-right:32px;cursor:pointer;background-color:#fff;">
+            <select id="cfg-estado" class="input-light" onchange="carregarCidadesDash(this.value)" style="width:100%;appearance:none;-webkit-appearance:none;padding-right:32px;cursor:pointer;">
               <option value="">Selecione o estado...</option>
             </select>
             <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div style="position:relative;">
-            <select id="cfg-cidade" class="input-light" disabled style="width:100%;appearance:none;-webkit-appearance:none;padding-right:32px;cursor:pointer;opacity:.5;background-color:#fff;">
+            <select id="cfg-cidade" class="input-light" disabled style="width:100%;appearance:none;-webkit-appearance:none;padding-right:32px;cursor:pointer;opacity:.5;">
               <option value="">Selecione o estado primeiro</option>
             </select>
             <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -2499,7 +2466,7 @@ window.carregarCidadesDash = async function(uf) {
                   font-family:'Poppins',sans-serif;font-weight:700;font-size:0.9rem;
                   text-decoration:none;box-shadow:0 4px 14px rgba(37,211,102,0.3)">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.554 4.118 1.523 5.85L0 24l6.335-1.509A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.65-.49-5.188-1.346l-.372-.216-3.76.896.944-3.663-.237-.388A9.937 9.937 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-          ME AJUDA PEDIUAI 💬
+          ME AJUDA PEDIWAY 💬
         </a>
       </div>
     </div>
@@ -3004,5 +2971,76 @@ window.carregarCidadesDash = async function(uf) {
 })();
 </script>
 <script type="module" src="/src/main.js"></script>
+<!-- ══ RODAPÉ ══ -->
+<footer style="background:#0f0f0f;border-top:1px solid #1e1e1e;padding:32px 6% 24px;margin-top:0;">
+  <div style="max-width:900px;margin:0 auto;">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:24px;">
+      <!-- Logo + descrição -->
+      <div>
+        <div style="font-size:20px;font-weight:900;color:#fff;margin-bottom:6px;">PEDI<span style="color:#E05A3A;">WAY</span></div>
+        <div style="font-size:12px;color:rgba(255,255,255,.45);line-height:1.7;max-width:260px;">
+          Plataforma de delivery independente.<br>Sem comissão. Direto do restaurante para você.
+        </div>
+      </div>
+      <!-- Dados legais -->
+      <div>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Informações legais</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:2;">
+          <div><span style="color:rgba(255,255,255,.3);">Titular:</span> Dayvdson da Silva Silva</div>
+          <div><span style="color:rgba(255,255,255,.3);">CNPJ:</span> 57.125.573/0001-69</div>
+          <div><span style="color:rgba(255,255,255,.3);">E-mail:</span> <a href="mailto:dayvdson@pediway.com.br" style="color:#E05A3A;text-decoration:none;">dayvdson@pediway.com.br</a></div>
+        </div>
+      </div>
+      <!-- Links -->
+      <div>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Plataforma</div>
+        <div style="font-size:12px;line-height:2.2;">
+          <a href="#" onclick="goTo('s-login')" style="display:block;color:rgba(255,255,255,.5);text-decoration:none;">Entrar no painel</a>
+          <a href="#" onclick="goTo('s-register')" style="display:block;color:rgba(255,255,255,.5);text-decoration:none;">Criar conta grátis</a>
+          <a href="mailto:dayvdson@pediway.com.br" style="display:block;color:rgba(255,255,255,.5);text-decoration:none;">Suporte</a>
+        </div>
+      </div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:16px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;">
+      <div style="font-size:11px;color:rgba(255,255,255,.28);">© 2026 PEDIWAY · Todos os direitos reservados</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.2);">Plataforma protegida pela LGPD · Lei nº 13.709/2018</div>
+    </div>
+  </div>
+</footer>
+
+<!-- IBGE dashboard -->
+<script>
+let _dashEstadosOk = false;
+window.carregarEstadosDash = async function() {
+  if(_dashEstadosOk) return;
+  const sel = document.getElementById('cfg-estado');
+  if(!sel || sel.options.length > 1) { _dashEstadosOk=true; return; }
+  try {
+    const r = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
+    const estados = await r.json();
+    estados.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.sigla; opt.textContent = e.nome; opt.dataset.nome = e.nome;
+      sel.appendChild(opt);
+    });
+    _dashEstadosOk = true;
+  } catch(e) {}
+};
+window.carregarCidadesDash = async function(uf) {
+  const cidSel = document.getElementById('cfg-cidade');
+  if(!cidSel) return;
+  if(!uf) { cidSel.innerHTML='<option value="">Selecione o estado primeiro</option>'; cidSel.disabled=true; cidSel.style.opacity='.5'; return; }
+  cidSel.disabled=true; cidSel.style.opacity='.5';
+  cidSel.innerHTML='<option>Carregando...</option>';
+  try {
+    const r = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
+    const cidades = await r.json();
+    cidSel.innerHTML='<option value="">Selecione a cidade...</option>';
+    cidades.forEach(c => { const opt=document.createElement('option'); opt.value=c.nome; opt.textContent=c.nome; cidSel.appendChild(opt); });
+    cidSel.disabled=false; cidSel.style.opacity='1';
+  } catch(e) { cidSel.innerHTML='<option value="">Erro ao carregar</option>'; cidSel.disabled=false; cidSel.style.opacity='1'; }
+};
+</script>
+
 </body>
 </html>
