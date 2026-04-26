@@ -251,7 +251,9 @@ function preencherConfig(estab) {
   set('cfg-nome',      estab.nome);
   set('cfg-slug',      estab.slug);
   set('cfg-whats',     estab.whatsapp || '');
-  set('cfg-desc',      estab.descricao || '');
+  set('cfg-desc', estab.descricao || '');
+  const descCount = document.getElementById('cfg-desc-count');
+  if(descCount) descCount.textContent = (estab.descricao||'').length + '/80';
   set('cfg-cidade',    estab.cidade || '');
   set('cfg-endereco',  estab.endereco || '');
   set('cfg-tempo',     estab.tempo_entrega || '30-45 min');
@@ -262,15 +264,9 @@ function preencherConfig(estab) {
   set('cfg-site',      estab.site || '');
   set('cfg-msg-nota',  estab.msg_nota || '');
   const cfgLink = $('cfg-link-preview');
-  if (cfgLink) {
-    cfgLink.textContent = `${BASE_URL}/${estab.slug}`;
-    cfgLink.style.cssText += ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;max-width:100%;';
-  }
+  if (cfgLink) { cfgLink.textContent = `${BASE_URL}/${estab.slug}`; Object.assign(cfgLink.style,{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',display:'block',maxWidth:'100%'}); }
   const cfgLinkGarcom = $('cfg-link-garcom');
-  if (cfgLinkGarcom) {
-    cfgLinkGarcom.textContent = `${BASE_URL}/comandas/${estab.slug}`;
-    cfgLinkGarcom.style.cssText += ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;max-width:100%;';
-  }
+  if (cfgLinkGarcom) { cfgLinkGarcom.textContent = `${BASE_URL}/comandas/${estab.slug}`; Object.assign(cfgLinkGarcom.style,{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',display:'block',maxWidth:'100%',flex:'1',minWidth:'0'}); }
   const ce = $('cfg-entrega');  if (ce) ce.checked = estab.faz_entrega  !== false;
   const cr = $('cfg-retirada'); if (cr) cr.checked = estab.faz_retirada !== false;
   const ct = $('cfg-taxa');     if (ct) ct.value   = estab.taxa_entrega || '';
@@ -588,7 +584,8 @@ export async function salvarConfig() {
     const sn = $('dash-store-name'); if (sn) sn.textContent = nome;
     const lu  = $('link-url');        if (lu)  lu.textContent  = `${BASE_URL}/${slug}`;
     const lug = $('link-url-garcom'); if (lug) lug.textContent = `${BASE_URL}/comandas/${slug}`;
-    const cl  = $('cfg-link-preview');if (cl)  cl.textContent  = `${BASE_URL}/${slug}`;
+    const cl  = $('cfg-link-preview');
+  if (cl) { cl.textContent = `${BASE_URL}/${slug}`; Object.assign(cl.style,{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',display:'block',maxWidth:'100%'}); }
     const clg = $('cfg-link-garcom'); if (clg) clg.textContent = `${BASE_URL}/comandas/${slug}`;
     atualizarBadgeLoja(aberto);
     aplicarCorDash(cor_primaria);
@@ -628,6 +625,7 @@ async function renderCardapio() {
         ${p.foto_url
           ? `<img class="item-img" src="${p.foto_url}" alt="${p.nome}">`
           : `<div class="item-emoji-bg">${p.emoji || '🍔'}</div>`}
+        <span class="item-disponivel">${p.disponivel ? 'Disponível' : 'Indisponível'}</span>
         ${p.promocao ? `<span class="item-promo-badge">🔥 Promoção</span>` : ''}
 
       </div>
