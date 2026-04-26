@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0f0f0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>PEDIUAI</title>
+<title>PEDIWAY</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -303,7 +303,7 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
   <div id="screen-home" class="screen active" style="flex-direction:column;">
     <div class="top-header">
       <div>
-        <div class="logo-text">PEDI<span class="way">UAI</span></div>
+        <div class="logo-text">PEDI<span class="way">WAY</span></div>
         <div id="home-cidade" onclick="abrirPerfil()" style="font-size:11px;color:var(--gray);margin-top:1px;display:none;cursor:pointer;display:flex;align-items:center;gap:3px;"></div>
       </div>
       <div style="display:flex;gap:8px;">
@@ -336,7 +336,7 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
   <div id="screen-search" class="screen" style="flex-direction:column;">
     <div class="top-header" style="flex-direction:column;align-items:stretch;gap:10px;">
       <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div class="logo-text">PEDI<span class="way">UAI</span></div>
+        <div class="logo-text">PEDI<span class="way">WAY</span></div>
         <button class="avatar-btn" onclick="abrirPerfil()" id="search-avatar">?</button>
       </div>
       <div class="search-box">
@@ -401,7 +401,7 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
   <!-- PEDIDOS -->
   <div id="screen-orders" class="screen" style="flex-direction:column;">
     <div class="top-header">
-      <div class="logo-text">PEDI<span class="way">UAI</span></div>
+      <div class="logo-text">PEDI<span class="way">WAY</span></div>
     </div>
     <div style="flex:1;overflow-y:auto;padding:14px 18px 100px;" id="orders-content">
       <div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Nenhum pedido ainda</div><div class="empty-desc">Faça seu primeiro pedido!</div></div>
@@ -647,9 +647,9 @@ function filtrarLojas() {
   return _lojas.filter(l => {
     const lojaCidade = (l.cidade||'').trim().toLowerCase();
     const userCidade = (_cidade||'').trim().toLowerCase();
-    // Filtra por cidade: se usuário tem cidade definida, só mostra lojas dessa cidade
-    // Lojas sem cidade cadastrada ficam visíveis para todos
-    const mc = !userCidade || !lojaCidade || lojaCidade === userCidade;
+    // Se usuário tem cidade: mostra só lojas DESSA cidade
+    // Se usuário não tem cidade: mostra todas
+    const mc = !userCidade || lojaCidade === userCidade;
     const mb = !_busca  || (l.nome||'').toLowerCase().includes(_busca.toLowerCase());
     if(_catAtiva==='promo') {
       // Usa promoções reais dos produtos OU campo promocao_ativa do estabelecimento
