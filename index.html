@@ -283,7 +283,7 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .input-light { width:100%; background:#faf6f1; border:1px solid #e0d8d0; border-radius:8px; padding:11px 14px; color:#1a1a1a; font-family:'Poppins',sans-serif; font-size:0.93rem; font-weight:500; outline:none; transition:border-color 0.2s; resize:vertical; }
 .input-light:focus { border-color:var(--red); }
 .input-light::placeholder { color:#bbb; }
-.link-preview-light { background:#faf6f1; border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-size:0.88rem; font-weight:600; color:var(--red); margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; max-width:100%; }
+.link-preview-light { background:#faf6f1; border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-size:0.88rem; font-weight:600; color:var(--red); margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; max-width:100%; box-sizing:border-box; }
 
 /* TOGGLE */
 .toggle-row { display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--border); }
@@ -2355,7 +2355,7 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
         <div class="form-group-light">
           <label>Link do cardápio</label>
           <input type="text" class="input-light" id="cfg-slug" placeholder="meu-estabelecimento" oninput="atualizarCfgLink(this.value)">
-          <div class="link-preview-light" id="cfg-link-preview">pediway.vercel.app/</div>
+          <div class="link-preview-light" id="cfg-link-preview" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">pediway.vercel.app/</div>
         </div>
 
         <!-- Link do garçom -->
@@ -2363,8 +2363,8 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
           <label style="display:flex;align-items:center;gap:6px">
             🍽️ Link das Comandas <span style="background:#f0e9e0;padding:1px 7px;border-radius:50px;font-size:.6rem;font-weight:700;color:#888">GARÇOM</span>
           </label>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="link-preview-light" id="cfg-link-garcom" style="flex:1">pediway.vercel.app/comandas/</div>
+          <div style="display:flex;align-items:center;gap:8px;overflow:hidden;">
+            <div class="link-preview-light" id="cfg-link-garcom" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">pediway.vercel.app/comandas/</div>
             <button onclick="copiarLinkGarcom()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer;white-space:nowrap;flex-shrink:0">Copiar</button>
           </div>
           <div style="font-size:.65rem;color:#aaa;margin-top:4px">Compartilhe este link com seus garçons. Todos usam o mesmo link para acessar as comandas digitais.</div>
