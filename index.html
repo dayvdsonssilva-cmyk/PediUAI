@@ -1032,12 +1032,36 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 
 
 /* ═══ ANTI-ZOOM UNIVERSAL ═══ */
-html, body { touch-action:manipulation !important; }
+
 input, select, textarea { font-size:16px !important; touch-action:manipulation; }
 * { -webkit-text-size-adjust:100%; }
+
+/* ═══ ANTI-ZOOM GLOBAL ═══ */
+html, body {
+  overflow-x: hidden !important;
+  touch-action: pan-y !important;
+  overscroll-behavior-x: none !important;
+  -webkit-overflow-scrolling: touch;
+}
+* { touch-action: pan-y !important; -webkit-text-size-adjust: 100%; }
+canvas, [data-touch="free"] { touch-action: none !important; }
 </style>
 </head>
 <body>
+<script id="anti-zoom-global">
+(function(){
+  // Bloqueia pinch-zoom e gestos iOS
+  ['gesturestart','gesturechange','gestureend'].forEach(function(ev){
+    document.addEventListener(ev, function(e){ e.preventDefault(); }, { passive:false });
+  });
+  document.addEventListener('touchmove', function(e){
+    if(e.touches.length > 1 || (e.scale !== undefined && e.scale !== 1)){
+      e.preventDefault();
+    }
+  }, { passive:false });
+})();
+</script>
+
 
 <!-- LANDING -->
 <div data-screen="s-landing" class="screen active">
