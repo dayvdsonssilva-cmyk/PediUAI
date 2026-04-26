@@ -304,7 +304,7 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
     <div class="top-header">
       <div>
         <div class="logo-text">PEDI<span class="way">UAI</span></div>
-        <div id="home-cidade" style="font-size:11px;color:var(--gray);margin-top:1px;display:none;"></div>
+        <div id="home-cidade" onclick="abrirPerfil()" style="font-size:11px;color:var(--gray);margin-top:1px;display:none;cursor:pointer;display:flex;align-items:center;gap:3px;"></div>
       </div>
       <div style="display:flex;gap:8px;">
         <button class="cart-btn" id="home-cart-btn" onclick="showScreen('cart')" style="display:none;">
@@ -645,9 +645,11 @@ function filtrarLojas() {
   const lojasComPromo = new Set(_promoItems.map(p=>p.estabelecimento_id));
 
   return _lojas.filter(l => {
-    // Mostra loja se: sem cidade definida pelo user, OU cidades batem, OU loja não tem cidade cadastrada
-    const lojaCidade = (l.cidade||'').trim();
-    const mc = !_cidade || !lojaCidade || lojaCidade === _cidade;
+    const lojaCidade = (l.cidade||'').trim().toLowerCase();
+    const userCidade = (_cidade||'').trim().toLowerCase();
+    // Filtra por cidade: se usuário tem cidade definida, só mostra lojas dessa cidade
+    // Lojas sem cidade cadastrada ficam visíveis para todos
+    const mc = !userCidade || !lojaCidade || lojaCidade === userCidade;
     const mb = !_busca  || (l.nome||'').toLowerCase().includes(_busca.toLowerCase());
     if(_catAtiva==='promo') {
       // Usa promoções reais dos produtos OU campo promocao_ativa do estabelecimento
@@ -2079,13 +2081,18 @@ async function salvarPerfil() {
   $('search-avatar').textContent=nome[0].toUpperCase();
 
   // Aplica cidade
-  _cidade=cidade;
-  $('home-cidade').textContent='📍 '+cidade;
-  $('home-cidade').style.display='block';
+  _cidade = cidade;
+  $('home-cidade').textContent = '📍 ' + cidade;
+  $('home-cidade').style.display = 'block';
 
   fecharPerfil();
+  // Volta para home e re-renderiza com nova cidade
+  showScreen('home');
   renderHome();
-  toast('✅ Bem-vindo, '+nome.split(' ')[0]+'!');
+  // Reseta categoria para "Todos" ao mudar cidade
+  _catAtiva = 'all';
+  renderHome();
+  toast('✅ ' + cidade + ' selecionada!');
 }
 
 function sair() {
