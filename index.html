@@ -16,7 +16,7 @@ body { font-family:'Poppins',sans-serif; font-weight:500; line-height:1.6; min-h
 input, select, textarea { max-width:100%; box-sizing:border-box; }
 .cfg-section { overflow:hidden; }
 /* Bloqueia zoom em toda a plataforma */
-html, body { touch-action:manipulation; }
+
 /* Dashboard mobile */
 @media(max-width:600px) {
   .dash-container { padding:14px 12px !important; }
@@ -170,9 +170,9 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .dash-container { max-width:1000px; margin:0 auto; padding:24px 4%; box-sizing:border-box; }
 
 /* LINK BOX */
-.link-box { background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px 24px; display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; gap:16px; }
+.link-box { background:#fff; border:1px solid var(--border); border-radius:12px; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; gap:12px; overflow:hidden; min-width:0; }
 .link-label { font-size:0.72rem; font-weight:700; color:var(--red); letter-spacing:0.06em; margin-bottom:4px; }
-.link-url { font-size:0.95rem; font-weight:600; color:#333; }
+.link-url { font-size:0.88rem; font-weight:600; color:#333; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; display:block; }
 .btn-copiar { background:var(--red); color:white; border:none; padding:10px 22px; border-radius:8px; font-family:'Poppins',sans-serif; font-size:0.9rem; font-weight:600; cursor:pointer; white-space:nowrap; }
 .btn-copiar:hover { background:var(--red-dark); }
 
@@ -905,7 +905,7 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 }
 
 /* ── SEM ZOOM NO MOBILE ── */
-html { touch-action: manipulation; } /* bloqueia zoom, permite scroll */
+
 input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se font>=16px */
 
 /* ── SEÇÕES DO FINANCEIRO ─────────────────────────────────── */
@@ -1030,6 +1030,11 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
 .ped-status-pronto   { border-left: 3px solid #22c55e !important; }
 .ped-status-recusado { border-left: 3px solid #ef4444 !important; opacity: .7; }
 
+
+/* ═══ ANTI-ZOOM UNIVERSAL ═══ */
+html, body { touch-action:manipulation !important; }
+input, select, textarea { font-size:16px !important; touch-action:manipulation; }
+* { -webkit-text-size-adjust:100%; }
 </style>
 </head>
 <body>
@@ -1975,7 +1980,7 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
         <!-- Link clientes -->
         <div class="link-box" style="margin-bottom:0">
-          <div>
+          <div style="flex:1;min-width:0;overflow:hidden;">
             <div class="link-label">🛵 LINK DO CARDÁPIO</div>
             <div class="link-url" id="link-url">pediway.vercel.app/meu-estabelecimento</div>
           </div>
@@ -1983,9 +1988,9 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
         </div>
         <!-- Link garçons -->
         <div class="link-box" style="margin-bottom:0;background:#faf5f0;border:1.5px dashed #d4a574">
-          <div>
+          <div style="flex:1;min-width:0;overflow:hidden;">
             <div class="link-label" style="color:#b07040">🍽️ COMANDAS DIGITAIS <span style="background:#f0e0d0;padding:1px 7px;border-radius:50px;font-size:.58rem;margin-left:4px;color:#b07040">GARÇOM</span></div>
-            <div class="link-url" id="link-url-garcom" style="color:#6b4c30">pediway.vercel.app/comandas/...</div>
+            <div class="link-url" id="link-url-garcom" style="color:#6b4c30;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;display:block;">pediway.vercel.app/comandas/...</div>
           </div>
           <button class="btn-copiar" onclick="copiarLinkGarcom()" style="background:#b07040;border:none">Copiar</button>
         </div>
@@ -2363,8 +2368,8 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
           <label style="display:flex;align-items:center;gap:6px">
             🍽️ Link das Comandas <span style="background:#f0e9e0;padding:1px 7px;border-radius:50px;font-size:.6rem;font-weight:700;color:#888">GARÇOM</span>
           </label>
-          <div style="display:flex;align-items:center;gap:8px;overflow:hidden;min-width:0;">
-            <div class="link-preview-light" id="cfg-link-garcom" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">pediway.vercel.app/comandas/</div>
+          <div style="display:flex;align-items:center;gap:8px;overflow:hidden;min-width:0;max-width:100%;width:100%;">
+            <div class="link-preview-light" id="cfg-link-garcom" style="flex:1;min-width:0;max-width:calc(100% - 80px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;word-break:break-all;">pediway.vercel.app/comandas/</div>
             <button onclick="copiarLinkGarcom()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer;white-space:nowrap;flex-shrink:0">Copiar</button>
           </div>
           <div style="font-size:.65rem;color:#aaa;margin-top:4px">Compartilhe este link com seus garçons. Todos usam o mesmo link para acessar as comandas digitais.</div>
