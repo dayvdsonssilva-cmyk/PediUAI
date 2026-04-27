@@ -131,7 +131,11 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .form-group { margin-bottom:16px; }
 .form-group label { display:block; font-size:0.82rem; font-weight:600; color:rgba(255,255,255,0.6); margin-bottom:6px; }
 .form-group input { width:100%; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:12px 14px; color:#fff; font-family:'Poppins',sans-serif; font-size:0.95rem; font-weight:500; outline:none; transition:border-color 0.2s; }
+.form-group select { width:100%; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:12px 14px; color:#fff; font-family:'Poppins',sans-serif; font-size:0.95rem; font-weight:500; outline:none; transition:border-color 0.2s; appearance:none; -webkit-appearance:none; cursor:pointer; }
+.form-group select option { background:#1e1e1e; color:#fff; }
+.form-group select:disabled { opacity:.4; cursor:not-allowed; }
 .form-group input:focus { border-color:var(--red); }
+.form-group select:focus { border-color:var(--red); }
 .form-group input::placeholder { color:rgba(255,255,255,0.25); }
 .auth-footer { text-align:center; margin-top:20px; font-size:0.86rem; color:rgba(255,255,255,0.4); }
 .auth-footer a { color:var(--red); cursor:pointer; font-weight:600; }
@@ -1848,19 +1852,19 @@ canvas, [data-touch="free"] { touch-action: none !important; }
       <div class="form-group">
         <label>Estado</label>
         <div style="position:relative">
-          <select id="restado" class="form-control" onchange="carregarCidadesCadastro(this.value)" style="width:100%;appearance:none;-webkit-appearance:none;padding-right:32px;cursor:pointer;">
+          <select id="restado" onchange="carregarCidadesCadastro(this.value)">
             <option value="">Carregando estados...</option>
           </select>
-          <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
       <div class="form-group">
         <label>Cidade</label>
         <div style="position:relative">
-          <select id="rcidade" class="form-control" disabled style="width:100%;appearance:none;-webkit-appearance:none;padding-right:32px;cursor:pointer;opacity:.5;">
+          <select id="rcidade" disabled>
             <option value="">Selecione o estado primeiro</option>
           </select>
-          <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
       <div class="form-group"><label>CPF ou CNPJ</label><input type="text" id="rdoc" placeholder="000.000.000-00" maxlength="18" oninput="mascaraDoc(this)"></div>
