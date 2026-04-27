@@ -127,11 +127,11 @@ function aplicarRestricaoPlano(estab) {
   if (banner) banner.style.display = (plano === 'basico' && !trialAtivo) ? 'flex' : 'none';
 }
 
-// ── Link ME AJUDA PEDIUAI — usa config do CEO ──────────────────────────────
+// ── Link ME AJUDA PEDIWAY — usa config do CEO ──────────────────────────────
 function atualizarLinkSuporte() {
   const cfg = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
   const wpp = cfg.wpp || '5500000000000';
-  const msg = encodeURIComponent(cfg.wppMsg || 'Olá! Preciso de ajuda com o PEDIUAI.');
+  const msg = encodeURIComponent(cfg.wppMsg || 'Olá! Preciso de ajuda com o PEDIWAY.');
   const link = document.getElementById('link-me-ajuda');
   if (link) link.href = `https://wa.me/${wpp}?text=${msg}`;
 }
@@ -272,6 +272,13 @@ function preencherConfig(estab) {
   const cp = $('cfg-pix');      if (cp) cp.checked = estab.aceita_pix      !== false;
   const cc = $('cfg-cartao');   if (cc) cc.checked = estab.aceita_cartao   !== false;
   const cd = $('cfg-dinheiro'); if (cd) cd.checked = estab.aceita_dinheiro !== false;
+  // Taxa de serviço
+  const ctsToggle = $('cfg-taxa-servico');
+  const ctsWrap   = document.getElementById('cfg-taxa-servico-wrap');
+  const ctsPerc   = $('cfg-perc-servico');
+  if (ctsToggle) ctsToggle.checked = estab.taxa_servico === true;
+  if (ctsWrap)   ctsWrap.style.display = estab.taxa_servico ? 'block' : 'none';
+  if (ctsPerc)   ctsPerc.value = estab.perc_servico || 10;
   // Carrega estados e restaura estado + cidade salvos
   if (typeof window.carregarEstadosDash === 'function') {
     window.carregarEstadosDash({ estado: estab.estado || null, cidade: estab.cidade || null });
@@ -567,6 +574,8 @@ export async function salvarConfig() {
     const aceita_pix     = $('cfg-pix')?.checked      !== false;
     const aceita_cartao  = $('cfg-cartao')?.checked   !== false;
     const aceita_dinheiro= $('cfg-dinheiro')?.checked !== false;
+    const taxa_servico   = $('cfg-taxa-servico')?.checked === true;
+    const perc_servico   = parseInt($('cfg-perc-servico')?.value) || 10;
 
     const updates = {
       nome, slug, whatsapp: whats, descricao: desc, estado, cidade, endereco,
@@ -574,6 +583,7 @@ export async function salvarConfig() {
       cor_primaria, logo_url,
       capa_url: null, capa_tipo: 'cor',
       taxa_entrega, aceita_pix, aceita_cartao, aceita_dinheiro,
+      taxa_servico, perc_servico,
       telefone_contato, cnpj, instagram, tiktok, site, msg_nota,
     };
 
@@ -1663,7 +1673,7 @@ ${(insta || ttok || estab?.site) ? `
 
 <hr class="sep-dash">
 <div class="msg-final">${msgFim}</div>
-<div class="rodape">PEDIUAI · Plataforma de delivery independente</div>
+<div class="rodape">PEDIWAY · Plataforma de delivery independente</div>
 
 </body></html>`;
 
@@ -2036,7 +2046,7 @@ function exportarPDF() {
     + '<table><thead><tr><th>Forma</th><th>Pedidos</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead><tbody>'+pagRows+'</tbody></table></div>'
     + '<div class="section"><div class="section-title">Histórico de pedidos</div>'
     + '<table><thead><tr><th>#</th><th>Cliente</th><th>Endereço</th><th>Pagamento</th><th style="text-align:right">Total</th><th>Data</th></tr></thead><tbody>'+pedRows+'</tbody></table></div>'
-    + '<div class="footer">Relatório gerado pelo PEDIUAI — '+agora+'</div>'
+    + '<div class="footer">Relatório gerado pelo PEDIWAY — '+agora+'</div>'
     + '</body></html>';
 
   const w = window.open('','_blank');
@@ -2363,7 +2373,7 @@ ${estab?.site ? `<div class="social">${estab.site}</div>` : ''}
 
 <hr class="sep-dash">
 <div class="msg-final">${msgFim}</div>
-<div class="rodape">PEDIUAI · Plataforma de delivery independente</div>
+<div class="rodape">PEDIWAY · Plataforma de delivery independente</div>
 
 </body></html>`;
 
@@ -2950,7 +2960,7 @@ ${p.observacao ? `
 </div>` : ''}
 
 <hr class="sep-dash">
-<div class="rodape">PEDIUAI &mdash; Sistema de Gestao</div>
+<div class="rodape">PEDIWAY &mdash; Sistema de Gestao</div>
 
 </body></html>`;
 
@@ -2998,6 +3008,7 @@ let _cardapioCache    = null;   // cache dos produtos para seleção rápida
 let _carrinhoComanda  = {};     // { "Mesa 3": [{nome, preco, qtd, emoji}] }
 let _nomeComanda      = {};     // { "Mesa 3": "João" }
 let _pagamentoComanda = null;   // pagamento selecionado ao fechar comanda
+let _taxaServicoRemovida = false; // true se o garçom removeu a taxa no fechamento
 
 function getNumMesas() {
   const estab = getEstab();
@@ -3386,6 +3397,7 @@ async function confirmarFecharComanda() {
 
   // Reseta seleção de pagamento e abre modal
   _pagamentoComanda = null;
+  _taxaServicoRemovida = false;
   ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
     const btn = document.getElementById('pgto-btn-' + m);
     if (btn) { btn.style.borderColor='#e0dbd5'; btn.style.background='#fff'; btn.style.color='#555'; }
@@ -3397,8 +3409,35 @@ async function confirmarFecharComanda() {
   const totEl  = document.getElementById('fechar-comanda-total');
   const infEl  = document.getElementById('fechar-comanda-info');
   if (mesaEl) mesaEl.textContent = _mesaAtual;
-  if (totEl)  totEl.textContent  = fmt(totalMesa);
   if (infEl)  infEl.textContent  = peds.length + ' pedido(s)';
+
+  // Taxa de serviço
+  const estab = getEstab();
+  const taxaAtiva = estab?.taxa_servico === true;
+  const percServico = Number(estab?.perc_servico || 10);
+  const taxaWrap = document.getElementById('fechar-taxa-wrap');
+  const btnRemover = document.getElementById('btn-remover-taxa');
+
+  if (taxaAtiva) {
+    const valorTaxa = totalMesa * (percServico / 100);
+    const totalFinal = totalMesa + valorTaxa;
+    // Mostra breakdown
+    if (totEl) totEl.textContent = fmt(totalFinal);
+    const subEl = document.getElementById('fechar-subtotal');
+    const labEl = document.getElementById('fechar-taxa-label');
+    const taxaEl = document.getElementById('fechar-taxa-valor');
+    const finalEl = document.getElementById('fechar-total-final');
+    if (subEl)   subEl.textContent  = fmt(totalMesa);
+    if (labEl)   labEl.textContent  = `Taxa de serviço (${percServico}%)`;
+    if (taxaEl)  taxaEl.textContent = fmt(valorTaxa);
+    if (finalEl) finalEl.textContent = fmt(totalFinal);
+    if (taxaWrap) taxaWrap.style.display = 'block';
+    if (btnRemover) btnRemover.style.display = 'inline-flex';
+  } else {
+    if (totEl) totEl.textContent = fmt(totalMesa);
+    if (taxaWrap) taxaWrap.style.display = 'none';
+  }
+
   const modal = document.getElementById('modal-fechar-comanda');
   if (modal) modal.style.display = 'flex';
 }
@@ -3407,6 +3446,30 @@ window.cancelarFecharComanda = function() {
   const modal = document.getElementById('modal-fechar-comanda');
   if (modal) modal.style.display = 'none';
   _pagamentoComanda = null;
+  _taxaServicoRemovida = false;
+};
+
+// Remove a taxa de serviço a pedido do cliente
+window.removerTaxaServico = function() {
+  _taxaServicoRemovida = true;
+  const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  // Esconde a linha da taxa e atualiza os totais
+  const taxaLinha = document.getElementById('fechar-taxa-linha');
+  if (taxaLinha) taxaLinha.style.display = 'none';
+  // Subtotal vira o total
+  const subEl   = document.getElementById('fechar-subtotal');
+  const finalEl = document.getElementById('fechar-total-final');
+  const totEl   = document.getElementById('fechar-comanda-total');
+  const subtotal = subEl?.textContent || '';
+  if (finalEl) finalEl.textContent = subtotal;
+  if (totEl)   totEl.textContent   = subtotal;
+  // Muda label do bloco pra "Sem taxa de serviço"
+  const labEl = document.getElementById('fechar-taxa-label');
+  if (labEl) { labEl.textContent = 'Taxa de serviço removida'; labEl.style.textDecoration = 'line-through'; labEl.style.color = '#ccc'; }
+  const taxaEl = document.getElementById('fechar-taxa-valor');
+  if (taxaEl) { taxaEl.textContent = 'R$ 0,00'; taxaEl.style.color = '#ccc'; }
+  const btn = document.getElementById('btn-remover-taxa');
+  if (btn) btn.style.display = 'none';
 };
 
 window.selecionarPagamentoComanda = function(metodo) {
@@ -3443,7 +3506,14 @@ window.executarFecharComanda = async function() {
   const peds = _pedidosMesas[_mesaAtual] || [];
   const mesaFechando = _mesaAtual;
   const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  const totalMesa = peds.reduce((s,p)=>s+Number(p.total||0),0);
+  const subtotal = peds.reduce((s,p)=>s+Number(p.total||0),0);
+
+  // Calcula total final considerando taxa de serviço
+  const estab = getEstab();
+  const taxaAtiva = estab?.taxa_servico === true && !_taxaServicoRemovida;
+  const percServico = Number(estab?.perc_servico || 10);
+  const valorTaxa = taxaAtiva ? subtotal * (percServico / 100) : 0;
+  const totalMesa = subtotal + valorTaxa;
 
   // Salva pagamento + status nos pedidos da mesa
   const ids = peds.map(p=>p.id);
@@ -3460,6 +3530,7 @@ window.executarFecharComanda = async function() {
   setTimeout(()=>{ _mesasFechadas.delete(mesaFechando); renderMesas(); }, 5000);
 
   _pagamentoComanda = null;
+  _taxaServicoRemovida = false;
   window.fecharComanda();
   showToast('Comanda da ' + mesaFechando + ' fechada! ' + fmt(totalMesa));
   renderMesas();
@@ -3484,5 +3555,10 @@ window.switchComandaTab       = window.switchComandaTab;
 
 window.toggleTaxaEntrega = function(ativo) {
   const w = document.getElementById('taxa-entrega-wrap');
+  if (w) w.style.display = ativo ? 'block' : 'none';
+};
+
+window.toggleCfgTaxaServico = function(ativo) {
+  const w = document.getElementById('cfg-taxa-servico-wrap');
   if (w) w.style.display = ativo ? 'block' : 'none';
 };
