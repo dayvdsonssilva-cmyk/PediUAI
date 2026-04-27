@@ -3630,10 +3630,10 @@ window.selecionarPctQuente = function(pct) {
     btn.style.color          = p === pct ? '#fff'    : '#555';
   });
   atualizarPreviewQuente();
-  // Recalcula preços nos cards de produto
+  // Recalcula preços nos cards de produto usando o preço BASE (nunca o descontado)
   document.querySelectorAll('[data-preco-orig]').forEach(el => {
-    const orig = parseFloat(el.dataset.precoOrig);
-    const desc = orig * (1 - _quentePct / 100);
+    const base = parseFloat(el.dataset.precoOrig);
+    const desc = base * (1 - _quentePct / 100);
     el.textContent = 'R$ ' + desc.toFixed(2).replace('.', ',');
   });
 };
@@ -3662,10 +3662,13 @@ async function carregarProdutosQuente() {
 
   lista.innerHTML = prods.map(p => {
     const emPromo = p.em_promocao && p.desconto_percent > 0;
-    const precoDesc = parseFloat(p.preco) * (1 - _quentePct / 100);
+    // SEMPRE usa preco_original como base — nunca o preço já descontado
+    const precoBase = parseFloat(p.preco_original || p.preco);
+    const precoDesc = precoBase * (1 - _quentePct / 100);
     return `
     <label style="display:flex;align-items:center;gap:12px;background:${emPromo?'#fff8f5':'#faf8f5'};border:1.5px solid ${emPromo?'#e65e32':'#f0ebe4'};border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s">
-      <input type="checkbox" value="${p.id}" ${emPromo?'checked':''} data-preco="${p.preco}"
+      <input type="checkbox" value="${p.id}" ${emPromo?'checked':''}
+        data-preco-base="${precoBase}"
         style="width:18px;height:18px;accent-color:#e65e32;cursor:pointer;flex-shrink:0">
       ${p.foto_url?`<img src="${p.foto_url}" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`:
         `<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>`}
@@ -3674,8 +3677,8 @@ async function carregarProdutosQuente() {
         <div style="font-size:.72rem;color:#aaa">${p.categoria||''}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:.72rem;color:#bbb;text-decoration:line-through">R$ ${parseFloat(p.preco).toFixed(2).replace('.',',')}</div>
-        <div style="font-size:.9rem;font-weight:800;color:#e65e32" data-preco-orig="${p.preco}">R$ ${precoDesc.toFixed(2).replace('.',',')}</div>
+        <div style="font-size:.72rem;color:#bbb;text-decoration:line-through">R$ ${precoBase.toFixed(2).replace('.',',')}</div>
+        <div style="font-size:.9rem;font-weight:800;color:#e65e32" data-preco-orig="${precoBase}">R$ ${precoDesc.toFixed(2).replace('.',',')}</div>
       </div>
     </label>`;
   }).join('');
@@ -3700,24 +3703,26 @@ window.salvarQuente = async function() {
 
   // Salva produtos marcados com o percentual
   for (const cb of marcados) {
-    const precoOrig = parseFloat(cb.dataset.preco);
-    const precoDesc = parseFloat((precoOrig * (1 - pct/100)).toFixed(2));
+    // Usa SEMPRE o preço base (original) — nunca o já descontado
+    const precoBase = parseFloat(cb.dataset.precoBase);
+    const precoDesc = parseFloat((precoBase * (1 - pct/100)).toFixed(2));
     await getSupa().from('produtos').update({
-      em_promocao: true,
+      em_promocao:    true,
       desconto_percent: pct,
-      preco_original: precoOrig,
-      preco: precoDesc,
+      preco_original: precoBase,   // guarda o original
+      preco:          precoDesc,   // aplica desconto sobre o original
     }).eq('id', cb.value);
   }
 
-  // Remove promoção dos desmarcados
+  // Remove promoção dos desmarcados — restaura preço original
   for (const cb of desmarcados) {
-    const precoOrig = parseFloat(cb.dataset.preco);
-    const { data: prod } = await getSupa().from('produtos').select('preco_original').eq('id', cb.value).single();
+    // Busca o preco_original salvo no banco (mais seguro)
+    const { data: prod } = await getSupa().from('produtos').select('preco_original,preco').eq('id', cb.value).single();
+    const precoRestaurado = prod?.preco_original || parseFloat(cb.dataset.precoBase);
     await getSupa().from('produtos').update({
-      em_promocao: false,
+      em_promocao:    false,
       desconto_percent: 0,
-      preco: prod?.preco_original || precoOrig,
+      preco:          precoRestaurado,
       preco_original: null,
     }).eq('id', cb.value);
   }
