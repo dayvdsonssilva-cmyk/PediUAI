@@ -172,7 +172,7 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 /* LINK BOX */
 .link-box { background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px 24px; display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; gap:16px; }
 .link-label { font-size:0.72rem; font-weight:700; color:var(--red); letter-spacing:0.06em; margin-bottom:4px; }
-.link-url { font-size:0.95rem; font-weight:600; color:#333; }
+.link-url { font-size:0.88rem; font-weight:600; color:#333; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; display:block; }
 .btn-copiar { background:var(--red); color:white; border:none; padding:10px 22px; border-radius:8px; font-family:'Poppins',sans-serif; font-size:0.9rem; font-weight:600; cursor:pointer; white-space:nowrap; }
 .btn-copiar:hover { background:var(--red-dark); }
 
@@ -1975,7 +1975,7 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
         <!-- Link clientes -->
         <div class="link-box" style="margin-bottom:0">
-          <div>
+          <div style="flex:1;min-width:0;overflow:hidden">
             <div class="link-label">🛵 LINK DO CARDÁPIO</div>
             <div class="link-url" id="link-url">pediway.vercel.app/meu-estabelecimento</div>
           </div>
@@ -1983,7 +1983,7 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
         </div>
         <!-- Link garçons -->
         <div class="link-box" style="margin-bottom:0;background:#faf5f0;border:1.5px dashed #d4a574">
-          <div>
+          <div style="flex:1;min-width:0;overflow:hidden">
             <div class="link-label" style="color:#b07040">🍽️ COMANDAS DIGITAIS <span style="background:#f0e0d0;padding:1px 7px;border-radius:50px;font-size:.58rem;margin-left:4px;color:#b07040">GARÇOM</span></div>
             <div class="link-url" id="link-url-garcom" style="color:#6b4c30">pediway.vercel.app/comandas/...</div>
           </div>
@@ -2656,269 +2656,6 @@ window.selecionarTaxaPct = function(pct) {
 </script>
 
 </div>
-</div>
-
-<!-- MODAL ADICIONAIS DO PRODUTO (comanda garçom) -->
-<div id="modal-adicionais" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:750;display:none;align-items:flex-end;justify-content:center">
-  <div id="adicionais-sheet" style="background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:520px;display:flex;flex-direction:column;max-height:88vh;overflow:hidden">
-    <div style="padding:16px 16px 12px;border-bottom:1px solid #f0e9e0;display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0">
-      <div>
-        <div style="font-size:.6rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Personalizar</div>
-        <div style="font-size:1rem;font-weight:800" id="adicionais-nome">Produto</div>
-        <div style="font-size:.88rem;font-weight:700;color:var(--red)" id="adicionais-preco-base">R$ 0,00</div>
-      </div>
-      <button onclick="fecharAdicionais()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#aaa;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%">✕</button>
-    </div>
-    <div id="adicionais-grupos" style="flex:1;overflow-y:auto;padding:12px 16px"></div>
-    <div style="padding:12px 16px 20px;border-top:1px solid #f0e9e0;flex-shrink:0">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span style="font-size:.82rem;font-weight:600;color:#888">Total do item</span>
-        <span style="font-size:1.1rem;font-weight:800;color:var(--red)" id="adicionais-total">R$ 0,00</span>
-      </div>
-      <button id="btn-confirmar-adicionais" onclick="confirmarAdicionais()"
-        style="width:100%;background:var(--red);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.92rem;cursor:pointer">
-        Adicionar ao pedido
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL GERENCIADOR DE GRUPOS DE ADICIONAIS -->
-<div id="modal-gerenciador-add" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:650;display:none;align-items:flex-end;justify-content:center">
-  <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:580px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
-
-    <!-- Header -->
-    <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-      <div>
-        <div style="font-size:.62rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Cardápio</div>
-        <div style="font-size:1.1rem;font-weight:800">🧩 Grupos de adicionais</div>
-      </div>
-      <button onclick="fecharGerenciadorAdicionais()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#aaa;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%">✕</button>
-    </div>
-
-    <!-- Lista de grupos -->
-    <div style="flex:1;overflow-y:auto;padding:16px 20px;-webkit-overflow-scrolling:touch" id="ger-add-lista">
-      <div style="text-align:center;padding:32px;color:#aaa;font-size:.85rem">Carregando grupos...</div>
-    </div>
-
-    <!-- Footer -->
-    <div style="padding:12px 20px 24px;border-top:1px solid var(--border);flex-shrink:0">
-      <button onclick="criarNovoGrupoAdicional()" class="btn-primary" style="width:100%;padding:14px">
-        + Criar novo grupo de adicionais
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL EDITAR GRUPO DE ADICIONAIS -->
-<div id="modal-editar-grupo-add" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;display:none;align-items:flex-end;justify-content:center">
-  <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:580px;max-height:96vh;display:flex;flex-direction:column;overflow:hidden">
-
-    <!-- Header -->
-    <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-      <div style="font-size:1rem;font-weight:800" id="eger-titulo">Novo grupo</div>
-      <button onclick="fecharEditarGrupoAdd()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#aaa;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%">✕</button>
-    </div>
-
-    <div style="flex:1;overflow-y:auto;padding:16px 20px;-webkit-overflow-scrolling:touch">
-      <!-- Nome do grupo -->
-      <div style="margin-bottom:14px">
-        <label style="font-size:.75rem;font-weight:700;color:#555;display:block;margin-bottom:5px">Nome do grupo *</label>
-        <input id="eger-nome" placeholder="Ex: Adicionais Açaí, Molhos, Borda da pizza..."
-          style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-family:'Poppins',sans-serif;font-size:.9rem;outline:none">
-      </div>
-
-      <!-- Min/Max -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-        <div>
-          <label style="font-size:.72rem;font-weight:700;color:#555;display:block;margin-bottom:5px">Mínimo de escolhas</label>
-          <input id="eger-min" type="number" value="0" min="0"
-            style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px;font-family:'Poppins',sans-serif;font-size:.9rem;outline:none;text-align:center">
-        </div>
-        <div>
-          <label style="font-size:.72rem;font-weight:700;color:#555;display:block;margin-bottom:5px">Máximo de escolhas</label>
-          <input id="eger-max" type="number" value="3" min="1"
-            style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px;font-family:'Poppins',sans-serif;font-size:.9rem;outline:none;text-align:center">
-        </div>
-      </div>
-
-      <!-- Opções -->
-      <div style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <label style="font-size:.75rem;font-weight:700;color:#555">Opções do grupo</label>
-          <button onclick="addOpcaoGrupo()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:5px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:var(--red);cursor:pointer">+ Opção</button>
-        </div>
-        <div id="eger-opcoes" style="display:flex;flex-direction:column;gap:8px"></div>
-      </div>
-
-      <!-- Vincular produtos -->
-      <div>
-        <div style="font-size:.75rem;font-weight:700;color:#555;margin-bottom:8px">Vincular a produtos</div>
-        <div style="font-size:.68rem;color:#aaa;margin-bottom:10px">Selecione quais produtos usarão este grupo de adicionais</div>
-        <div id="eger-produtos" style="display:flex;flex-direction:column;gap:6px">
-          <div style="color:#aaa;font-size:.8rem">Carregando produtos...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div style="padding:12px 20px 24px;border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0">
-      <button onclick="fecharEditarGrupoAdd()" class="btn-cancelar" style="flex:1">Cancelar</button>
-      <button onclick="salvarGrupoAdicional()" class="btn-primary" style="flex:2" id="btn-salvar-grupo">Salvar grupo</button>
-    </div>
-  </div>
-</div>
-<!-- MODAL CANCELAR PLANO -->
-<div class="modal-overlay" id="modal-cancelar-plano">
-  <div class="modal-box" style="max-width:440px">
-    <!-- Header triste -->
-    <div style="text-align:center;padding:8px 0 20px">
-      <div style="font-size:2.5rem;margin-bottom:8px">😔</div>
-      <div style="font-size:1.05rem;font-weight:800;margin-bottom:4px">Que pena que você vai...</div>
-      <div style="font-size:0.82rem;color:#888;line-height:1.5">Nos ajude a melhorar. Conta pra gente o motivo do cancelamento?</div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
-      <label class="cancelar-motivo-opt">
-        <input type="radio" name="motivo-cancel" value="preco"> Preço não cabe no meu orçamento
-      </label>
-      <label class="cancelar-motivo-opt">
-        <input type="radio" name="motivo-cancel" value="funcionalidade"> Falta alguma funcionalidade
-      </label>
-      <label class="cancelar-motivo-opt">
-        <input type="radio" name="motivo-cancel" value="dificuldade"> Tive dificuldade em usar
-      </label>
-      <label class="cancelar-motivo-opt">
-        <input type="radio" name="motivo-cancel" value="parei"> Parei de usar temporariamente
-      </label>
-      <label class="cancelar-motivo-opt">
-        <input type="radio" name="motivo-cancel" value="outro"> Outro motivo
-      </label>
-    </div>
-
-    <div style="margin-bottom:16px">
-      <label style="font-size:.78rem;font-weight:700;color:#555;display:block;margin-bottom:6px">Quer deixar uma mensagem para a gente? (opcional)</label>
-      <textarea id="cancel-msg" rows="3" placeholder="Conte o que aconteceu ou o que podemos melhorar..."
-        style="width:100%;border:1.5px solid #e0dbd5;border-radius:10px;padding:11px 13px;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none;resize:none;background:#faf8f5"></textarea>
-    </div>
-
-    <div style="display:flex;gap:10px">
-      <button onclick="fecharCancelarPlano()" class="btn-cancelar" style="flex:1">Manter plano</button>
-      <button onclick="confirmarCancelamento()" style="flex:1;background:#C0392B;color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer">
-        Cancelar assinatura
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CROP DE FOTO DO PRODUTO -->
-<div class="modal-overlay" id="modal-crop-foto" style="z-index:5500;align-items:flex-end;justify-content:center;padding:0">
-  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:500px;overflow:hidden;max-height:95vh;display:flex;flex-direction:column">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#1a1a1a;flex-shrink:0">
-      <h3 style="color:#fff;font-size:.95rem;font-weight:800;margin:0">Ajustar foto</h3>
-      <div style="display:flex;align-items:center;gap:12px">
-        <span style="font-size:.68rem;color:#666">Arraste · Scroll para zoom</span>
-        <button onclick="fecharCropFoto()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888;line-height:1">&#10005;</button>
-      </div>
-    </div>
-    <div style="position:relative;width:100%;background:#111;flex:1;min-height:320px;touch-action:none" id="crop-foto-stage">
-      <canvas id="crop-foto-canvas" style="display:block;width:100%;touch-action:none"></canvas>
-      <div id="cfso" style="position:absolute;inset:0;pointer-events:none">
-        <div id="cfso-top"    style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.55)"></div>
-        <div id="cfso-bottom" style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55)"></div>
-        <div id="cfso-left"   style="position:absolute;background:rgba(0,0,0,.55)"></div>
-        <div id="cfso-right"  style="position:absolute;background:rgba(0,0,0,.55)"></div>
-        <div id="cfso-border" style="position:absolute;border:2.5px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5)"></div>
-        <div id="cfso-tl" style="position:absolute;width:16px;height:16px;border-top:3px solid #C0392B;border-left:3px solid #C0392B;border-radius:3px 0 0 0"></div>
-        <div id="cfso-tr" style="position:absolute;width:16px;height:16px;border-top:3px solid #C0392B;border-right:3px solid #C0392B;border-radius:0 3px 0 0"></div>
-        <div id="cfso-bl" style="position:absolute;width:16px;height:16px;border-bottom:3px solid #C0392B;border-left:3px solid #C0392B;border-radius:0 0 0 3px"></div>
-        <div id="cfso-br" style="position:absolute;width:16px;height:16px;border-bottom:3px solid #C0392B;border-right:3px solid #C0392B;border-radius:0 0 3px 0"></div>
-      </div>
-      <div style="position:absolute;bottom:10px;left:0;right:0;text-align:center;pointer-events:none">
-        <span style="background:rgba(0,0,0,.6);color:#fff;font-size:.65rem;font-weight:600;padding:4px 12px;border-radius:50px">&#9995; Arraste &#183; Scroll para zoom</span>
-      </div>
-    </div>
-    <div style="display:flex;gap:10px;padding:12px 16px;background:#fff;flex-shrink:0">
-      <button onclick="fecharCropFoto()" class="btn-crop-cancel" style="flex:1">Cancelar</button>
-      <button onclick="confirmarCropFoto()" class="btn-crop-ok" style="flex:2">&#10003; Usar esta foto</button>
-    </div>
-  </div>
-</div>
-
-
-<!-- Modal de item (criar/editar produto) -->
-<div class="modal-overlay" id="modal-item">
-  <div class="modal-box" style="max-width:520px;max-height:90vh;overflow-y:auto">
-    <div style="position:sticky;top:0;z-index:10;background:#fff;display:flex;justify-content:flex-end;padding:10px 14px;border-bottom:1px solid var(--border)">
-      <button onclick="fecharModal()" style="width:32px;height:32px;border-radius:50%;border:1.5px solid #e0dbd5;background:#faf8f5;cursor:pointer;font-size:.9rem;color:#555;display:flex;align-items:center;justify-content:center;transition:all .15s" onmouseover="this.style.background='var(--red)';this.style.color='#fff';this.style.borderColor='var(--red)'" onmouseout="this.style.background='#faf8f5';this.style.color='#555';this.style.borderColor='#e0dbd5'">✕</button>
-    </div>
-    <div class="modal-body">
-      <!-- Fotos -->
-      <div style="margin-bottom:18px">
-        <div style="font-size:.78rem;font-weight:700;color:#555;margin-bottom:10px">📷 Fotos do produto</div>
-        <div id="fotos-grid" style="display:flex;flex-direction:column;gap:14px"></div>
-        <input type="file" id="foto-input" accept="image/*" multiple style="display:none" onchange="adicionarFotos(event)">
-      </div>
-      <!-- Emoji -->
-      <div class="form-group-light" style="margin-bottom:14px">
-        <label>Emoji do item</label>
-        <div id="emoji-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
-      </div>
-      <!-- Campos -->
-      <div class="form-group-light"><label>Nome *</label><input type="text" class="input-light" id="item-nome" placeholder="Ex: X-Burguer Especial"></div>
-      <div class="form-group-light"><label>Descrição</label><input type="text" class="input-light" id="item-desc" placeholder="Ingredientes, detalhes..."></div>
-      <div class="form-group-light"><label>Categoria</label><input type="text" class="input-light" id="item-cat" placeholder="Ex: LANCHES, BEBIDAS..."></div>
-      <div class="form-group-light">
-        <label>Preço *</label>
-        <input type="number" step="0.01" min="0" class="input-light" id="item-preco" placeholder="0,00">
-      </div>
-      <div class="form-group-light" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-        <input type="checkbox" id="item-promocao" onchange="togglePromo(this)" style="width:16px;height:16px;accent-color:var(--red)">
-        <label for="item-promocao" style="font-size:.82rem;font-weight:600;color:#555;cursor:pointer">Preço promocional</label>
-      </div>
-      <div id="preco-orig-group" style="display:none" class="form-group-light">
-        <label>Preço original (antes da promoção)</label>
-        <input type="number" step="0.01" min="0" class="input-light" id="item-preco-orig" placeholder="0,00">
-      </div>
-      <div class="form-group-light" style="margin-bottom:0">
-        <label>Grupo de adicionais</label>
-        <select class="input-light" id="item-grupo-adicional">
-          <option value="">Nenhum</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
-      <button class="btn-primary" onclick="salvarItem()">Salvar item</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal de grupos de adicionais -->
-<div class="modal-overlay" id="modal-grupos">
-  <div class="modal-box" style="max-width:520px;max-height:90vh;overflow-y:auto">
-    <div class="modal-hdr">
-      <span class="modal-title">🧩 Grupos de Adicionais</span>
-      <button class="modal-x" onclick="fecharAdicionais()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div id="grupos-lista" style="margin-bottom:16px"></div>
-      <div style="border:1.5px solid var(--border);border-radius:12px;padding:14px;background:#faf8f5">
-        <div style="font-size:.8rem;font-weight:700;color:#555;margin-bottom:10px">Novo grupo</div>
-        <div class="form-group-light"><label>Nome do grupo</label><input class="input-light" id="eger-nome" placeholder="Ex: Adicionais Açaí, Molhos, Borda da pizza..."></div>
-        <div style="display:flex;gap:10px;margin-bottom:10px">
-          <div class="form-group-light" style="flex:1;margin-bottom:0"><label>Mín.</label><input class="input-light" id="eger-min" type="number" min="0" value="0" placeholder="0"></div>
-          <div class="form-group-light" style="flex:1;margin-bottom:0"><label>Máx.</label><input class="input-light" id="eger-max" type="number" min="1" value="3" placeholder="3"></div>
-        </div>
-        <div id="eger-opcoes" style="margin-bottom:10px"></div>
-        <button onclick="adicionarOpcaoGrupo()" style="background:none;border:1.5px dashed var(--border);border-radius:8px;padding:7px 14px;font-family:'Poppins',sans-serif;font-size:.75rem;font-weight:600;color:#888;cursor:pointer;width:100%">+ Adicionar opção</button>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="btn-cancelar" onclick="fecharAdicionais()" style="flex:1">Cancelar</button>
-          <button class="btn-primary" onclick="salvarGrupo()" style="flex:2">Salvar grupo</button>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- MODAL DETALHE PEDIDO -->
