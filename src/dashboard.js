@@ -3583,3 +3583,29 @@ window.toggleCfgTaxaServico = function(ativo) {
   const w = document.getElementById('cfg-taxa-servico-wrap');
   if (w) w.style.display = ativo ? 'block' : 'none';
 };
+
+// ── Accordion das configurações ───────────────────────────────────────────────
+window.initCfgAccordion = function() {
+  document.querySelectorAll('.cfg-topic-header').forEach(header => {
+    if (header.dataset.accordion) return;
+    header.dataset.accordion = '1';
+    header.addEventListener('click', function(e) {
+      if (e.target.closest('input,button,label,select,a')) return;
+      const card = this.closest('.cfg-topic-card');
+      const body = card?.querySelector('.cfg-topic-body');
+      if (!body) return;
+      const isOpen = body.classList.contains('open');
+      // Fecha todos
+      document.querySelectorAll('.cfg-topic-body.open').forEach(b => {
+        b.classList.remove('open');
+        b.closest('.cfg-topic-card')?.querySelector('.cfg-topic-header')?.classList.remove('open');
+      });
+      // Abre o clicado se estava fechado
+      if (!isOpen) {
+        body.classList.add('open');
+        this.classList.add('open');
+        setTimeout(() => card.scrollIntoView({ behavior:'smooth', block:'nearest' }), 60);
+      }
+    });
+  });
+};
