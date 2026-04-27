@@ -36,6 +36,7 @@
     { "source": "/cliente.html",     "destination": "/cliente.html" },
     { "source": "/lojas",            "destination": "/lojas.html" },
     { "source": "/comandas/:slug",   "destination": "/garcom.html" },
+    { "source": "/baixar",           "destination": "/download.html" },
     { "source": "/:slug",            "destination": "/cliente.html" }
   ]
 }
