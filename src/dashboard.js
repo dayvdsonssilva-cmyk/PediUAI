@@ -531,7 +531,7 @@ export async function salvarConfig() {
 
   const nome     = $('cfg-nome')?.value.trim();
   const slug     = $('cfg-slug')?.value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');
-  const whats    = $('cfg-whats')?.value.trim();
+  const whats    = ($('cfg-whats')?.value || '').replace(/\D/g,''); // salva só dígitos → evita bug na recuperação de senha
   const desc     = $('cfg-desc')?.value.trim();
   const estado   = $('cfg-estado')?.value || null;
   const cidade   = $('cfg-cidade')?.value.trim() || null;
