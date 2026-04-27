@@ -3,7 +3,7 @@
 //  Estratégia: Cache First para assets, Network First para dados
 // ═══════════════════════════════════════════════════════
 
-const SW_VERSION   = 'pediway-v1.0.0';
+const SW_VERSION   = 'pediway-v1.0.1';
 const CACHE_STATIC = SW_VERSION + '-static';
 const CACHE_FONTS  = SW_VERSION + '-fonts';
 
@@ -21,6 +21,14 @@ const NO_CACHE_PATTERNS = [
   /supabase\.co/,
   /googleapis\.com\/api/,
   /ibge\.gov\.br/,
+];
+
+// Rotas que o SW nunca deve interceptar — deixa o servidor responder
+const BYPASS_ROUTES = [
+  '/baixar',
+  '/admin',
+  '/checkout',
+  '/lojas',
 ];
 
 // ── INSTALL ──────────────────────────────────────────────────────────────────
@@ -67,6 +75,9 @@ self.addEventListener('fetch', event => {
 
   // Ignora extensões do Chrome e URLs de dados
   if (url.protocol === 'chrome-extension:' || url.protocol === 'data:') return;
+
+  // Rotas que o SW nunca deve interceptar — deixa o servidor decidir
+  if (BYPASS_ROUTES.includes(url.pathname)) return;
 
   // Nunca cacheia dados do Supabase ou APIs dinâmicas
   if (NO_CACHE_PATTERNS.some(p => p.test(url.href))) return;
