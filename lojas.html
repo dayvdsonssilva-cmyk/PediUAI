@@ -1141,6 +1141,7 @@ function renderStore(fresquinhos=[]) {
     <div class="store-tabs">
       <button class="store-tab active" id="tab-cardapio" onclick="storeTab('cardapio',this)">CARDÁPIO</button>
       <button class="store-tab" id="tab-promo" onclick="storeTab('promo',this)" style="display:flex;align-items:center;justify-content:center;gap:4px;">PROMOÇÃO<span class="tab-dot${temPromo?' show':''}"></span></button>
+      <button class="store-tab" id="tab-quente" onclick="storeTab('quente',this)" style="display:flex;align-items:center;justify-content:center;gap:5px;${temPromo?'':'opacity:.5'}">🔥 <span style="background:linear-gradient(135deg,#e65e32,#c94e24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900">QUENTE</span></button>
     </div>
 
     <!-- Fresquinho -->
@@ -1153,6 +1154,11 @@ function renderStore(fresquinhos=[]) {
     </div>
     <div id="tab-content-promo" class="tab-content" style="display:none;">
       <div id="store-promos" style="display:flex;flex-direction:column;gap:10px;padding:14px 14px 120px;"></div>
+    </div>
+    <div id="tab-content-quente" class="tab-content" style="display:none;">
+      <!-- Pills de percentual -->
+      <div style="padding:14px 14px 8px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none" id="quente-pct-pills"></div>
+      <div id="store-quente" style="display:flex;flex-direction:column;gap:10px;padding:4px 14px 120px;"></div>
     </div>
 
   `;
@@ -1171,6 +1177,7 @@ function storeTab(tab, btn) {
   document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
   $('tab-content-'+tab).style.display='';
   if(tab==='pedidos') renderStorePedidos();
+  if(tab==='quente')  renderStoreQuente();
 }
 
 function filtrarStore(cat, btn) {
@@ -1192,6 +1199,50 @@ function renderStorePromos() {
   const promos = _produtos.filter(p=>p.promocao||p.em_promocao);
   el.innerHTML = promos.length ? promos.map(p=>produtoCardHTML(p)).join('') :
     '<div class="empty-state"><div class="empty-icon">🔥</div><div class="empty-title">Sem promoções</div></div>';
+}
+
+function renderStoreQuente() {
+  const el    = $('store-quente');    if(!el) return;
+  const pills = $('quente-pct-pills'); if(!pills) return;
+
+  // Produtos com desconto desta loja
+  const promos = _produtos.filter(p => p.em_promocao && parseInt(p.desconto_percent||0) > 0);
+
+  if(!promos.length) {
+    pills.innerHTML = '';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔥</div><div class="empty-title">Sem promoções ativas</div></div>';
+    return;
+  }
+
+  // Percentuais disponíveis
+  const pcts = [...new Set(promos.map(p=>parseInt(p.desconto_percent)))].sort((a,b)=>b-a);
+  let pctAtivo = pcts[0];
+
+  function renderPills() {
+    pills.innerHTML = pcts.map(p=>`
+      <button onclick="_queTabPct(${p})" id="qtp-${p}"
+        style="padding:7px 16px;border-radius:100px;border:2px solid ${p===pctAtivo?'#e65e32':'rgba(255,255,255,.15)'};
+               background:${p===pctAtivo?'#e65e32':'rgba(255,255,255,.06)'};
+               color:${p===pctAtivo?'#fff':'rgba(255,255,255,.6)'};
+               font-family:'Poppins',sans-serif;font-weight:800;font-size:.78rem;
+               cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s">
+        🔥 ${p}% OFF
+      </button>`).join('');
+  }
+
+  function renderItens() {
+    const filtrados = promos.filter(p=>parseInt(p.desconto_percent)===pctAtivo);
+    el.innerHTML = filtrados.map(p=>produtoCardHTML(p)).join('');
+  }
+
+  window._queTabPct = function(pct) {
+    pctAtivo = pct;
+    renderPills();
+    renderItens();
+  };
+
+  renderPills();
+  renderItens();
 }
 
 function renderStorePedidos() {
