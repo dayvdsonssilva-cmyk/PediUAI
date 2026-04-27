@@ -3180,6 +3180,13 @@ canvas, [data-touch="free"] { touch-action: none !important; }
         </div>
       </div>
 
+      <!-- Imprimir nota ANTES de confirmar pagamento -->
+      <button onclick="imprimirComanda()"
+        style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:10px;border:1.5px solid #1a1a1a;background:#1a1a1a;color:#fff;font-family:'Poppins',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer;margin-bottom:16px;transition:opacity .15s"
+        onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        🖨️ Imprimir nota
+      </button>
+
       <!-- Forma de pagamento -->
       <div style="margin-bottom:16px">
         <div style="font-size:.75rem;font-weight:700;color:#555;margin-bottom:10px">💳 Forma de pagamento</div>
