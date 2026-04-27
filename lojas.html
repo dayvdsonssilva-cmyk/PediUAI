@@ -116,6 +116,11 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 .store-tabs{flex-shrink:0;display:flex;background:#fff;border-bottom:1.5px solid var(--accent2);}
 .store-tab{flex:1;padding:12px 4px;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:700;color:var(--gray);cursor:pointer;border:none;background:none;font-family:var(--font);border-bottom:2.5px solid transparent;transition:all .15s;}
 .store-tab.active{color:#e65e32;border-bottom-color:#e65e32;}
+/* Foguinho pulsante */
+@keyframes fire-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.88)}}
+@keyframes fire-off{0%,100%{opacity:.25;filter:grayscale(1)}}
+.fire-on{animation:fire-pulse 1.8s ease-in-out infinite;display:inline-block;}
+.fire-off{opacity:.25;filter:grayscale(1);display:inline-block;}
 .tab-dot{display:none;width:6px;height:6px;border-radius:50%;background:#e65e32;margin-left:4px;flex-shrink:0;}
 .tab-dot.show{display:inline-block;}
 
@@ -1087,8 +1092,10 @@ function renderStore(fresquinhos=[]) {
   const l = _loja;
   const ab = l.aberto!==false;
   const cats = ['Todos', ...new Set(_produtos.map(p=>p.categoria).filter(Boolean))];
-  const promos = _produtos.filter(p=>p.promocao);
-  const temPromo = promos.length>0;
+  const promos  = _produtos.filter(p=>p.promocao);                                    // PROMOÇÃO normal
+  const quentes = _produtos.filter(p=>p.em_promocao && parseInt(p.desconto_percent||0)>0); // QUENTE
+  const temPromo  = promos.length>0;
+  const temQuente = quentes.length>0;
   const temFresq = fresquinhos.length>0;
 
   // Fresquinho HTML
@@ -1140,8 +1147,11 @@ function renderStore(fresquinhos=[]) {
     <!-- Tabs -->
     <div class="store-tabs">
       <button class="store-tab active" id="tab-cardapio" onclick="storeTab('cardapio',this)">CARDÁPIO</button>
-      <button class="store-tab" id="tab-promo" onclick="storeTab('promo',this)" style="display:flex;align-items:center;justify-content:center;gap:4px;">PROMOÇÃO<span class="tab-dot${temPromo?' show':''}"></span></button>
-      <button class="store-tab" id="tab-quente" onclick="storeTab('quente',this)" style="display:flex;align-items:center;justify-content:center;gap:5px;${temPromo?'':'opacity:.5'}">🔥 <span style="background:linear-gradient(135deg,#e65e32,#c94e24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900">QUENTE</span></button>
+      <button class="store-tab" id="tab-quente" onclick="storeTab('quente',this)" style="gap:5px;">
+        <span class="${temQuente?'fire-on':'fire-off'}">🔥</span>
+        <span style="${temQuente?'color:#e65e32;font-weight:900':''}">QUENTE</span>
+      </button>
+      ${temPromo?`<button class="store-tab" id="tab-promo" onclick="storeTab('promo',this)" style="display:flex;align-items:center;justify-content:center;gap:4px;">PROMOÇÃO<span class="tab-dot show"></span></button>`:''}
     </div>
 
     <!-- Fresquinho -->
