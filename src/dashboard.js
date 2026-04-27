@@ -627,13 +627,22 @@ async function renderCardapio() {
 
   if (stat) stat.textContent = data?.length || 0;
 
-  if (!data?.length) {
-    grid.innerHTML = `<div class="empty-state-light" style="grid-column:1/-1">
-      <span>🍽️</span><p>Nenhum item ainda. Adicione seu primeiro produto!</p></div>`;
+  // Filtra por sub-aba
+  const filtrado = (_dashSubTab === 'quente')
+    ? (data||[]).filter(p => p.em_promocao && parseInt(p.desconto_percent||0) > 0)
+    : (data||[]);
+
+  // Atualiza foguinho
+  atualizarFireDash();
+
+  if (!filtrado?.length) {
+    grid.innerHTML = _dashSubTab === 'quente'
+      ? `<div class="empty-state-light" style="grid-column:1/-1"><span>🔥</span><p>Nenhum produto QUENTE ainda.<br><small>Use o botão 🔥 QUENTE para criar uma promoção</small></p></div>`
+      : `<div class="empty-state-light" style="grid-column:1/-1"><span>🍽️</span><p>Nenhum item ainda. Adicione seu primeiro produto!</p></div>`;
     return;
   }
 
-  grid.innerHTML = data.map(p => `
+  grid.innerHTML = filtrado.map(p => `
     <div class="item-card">
       <div class="item-card-img">
         ${p.foto_url
@@ -3725,7 +3734,48 @@ window.salvarQuente = async function() {
 window.fecharModalQuente = function() {
   const modal = document.getElementById('modal-quente');
   if (modal) modal.style.display = 'none';
+  const prev = document.getElementById('quente-preview');
+  if (prev) prev.style.display = 'none';
 };
+
+// ── Sub-abas do cardápio (Todos / 🔥 QUENTE) ─────────────────────────────────
+let _dashSubTab = 'todos';
+
+window.dashSubTab = async function(tab, btn) {
+  _dashSubTab = tab;
+  // Estilo dos botões
+  ['todos','quente'].forEach(t => {
+    const b = document.getElementById('dash-subtab-' + t);
+    if (!b) return;
+    const ativo = t === tab;
+    b.style.color       = ativo ? 'var(--red)' : '#aaa';
+    b.style.borderBottom= ativo ? '2.5px solid var(--red)' : '2.5px solid transparent';
+  });
+  await renderCardapio();
+};
+
+// Atualiza animação do foguinho no dashboard
+function atualizarFireDash() {
+  const ico = document.getElementById('dash-fire-ico');
+  if (!ico) return;
+  // Verifica se há produtos QUENTE
+  getSupa().from('produtos').select('id').eq('estabelecimento_id', getEstab()?.id).eq('em_promocao', true).limit(1)
+    .then(({ data }) => {
+      if (data?.length) {
+        ico.style.cssText = 'display:inline-block;animation:fire-pulse-dash 1.8s ease-in-out infinite';
+      } else {
+        ico.style.cssText = 'display:inline-block;opacity:.3;filter:grayscale(1)';
+      }
+    });
+}
+
+// Injeta keyframe no dash
+if (!document.getElementById('dash-fire-style')) {
+  const s = document.createElement('style');
+  s.id = 'dash-fire-style';
+  s.textContent = '@keyframes fire-pulse-dash{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}';
+  document.head.appendChild(s);
+}
 
 window.toggleCfgTaxaServico = function(ativo) {
   const w = document.getElementById('cfg-taxa-servico-wrap');
