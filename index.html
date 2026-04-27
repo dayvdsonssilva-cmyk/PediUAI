@@ -2611,6 +2611,33 @@ canvas, [data-touch="free"] { touch-action: none !important; }
               </div>
             </div>
 
+            <!-- Taxa de serviço (garçom) -->
+            <div class="form-group-light">
+              <label>Taxa de serviço</label>
+              <div style="background:#faf6f1;border:1px solid var(--border);border-radius:10px;padding:4px;">
+                <div class="toggle-row">
+                  <div class="toggle-info">
+                    <span class="toggle-label-text">👨‍🍳 Cobrar taxa de serviço</span>
+                    <span class="toggle-desc">Adicionada automaticamente ao fechar a mesa</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="cfg-taxa-servico" onchange="toggleCfgTaxaServico(this.checked)">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div id="cfg-taxa-servico-wrap" style="display:none;padding:10px 12px 10px;border-top:1px solid var(--border)">
+                  <span style="font-size:0.78rem;font-weight:700;color:#555;display:block;margin-bottom:8px">Percentual da taxa</span>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="position:relative;flex:1">
+                      <input type="number" class="input-light" id="cfg-perc-servico" placeholder="10" min="1" max="30" step="1" style="padding-right:38px">
+                      <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-weight:700;color:#888;font-size:0.88rem">%</span>
+                    </div>
+                    <span style="font-size:0.72rem;color:#aaa;white-space:nowrap">Padrão: 10%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -3127,6 +3154,30 @@ canvas, [data-touch="free"] { touch-action: none !important; }
         <div id="fechar-comanda-mesa" style="font-size:1.2rem;font-weight:900;color:#1a1a1a"></div>
         <div id="fechar-comanda-total" style="font-size:1.6rem;font-weight:900;color:#C0392B;margin-top:4px"></div>
         <div id="fechar-comanda-info" style="font-size:.75rem;color:#aaa;margin-top:4px"></div>
+      </div>
+
+      <!-- Taxa de serviço — aparece só se ativada nas config -->
+      <div id="fechar-taxa-wrap" style="display:none;border:1.5px solid #f0e9e0;border-radius:12px;overflow:hidden;margin-bottom:16px">
+        <div style="background:#faf8f5;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.04em">Subtotal</span>
+          <span id="fechar-subtotal" style="font-size:.92rem;font-weight:700;color:#555">R$ 0,00</span>
+        </div>
+        <div id="fechar-taxa-linha" style="background:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-top:1px dashed #f0e9e0">
+          <div>
+            <span id="fechar-taxa-label" style="font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.04em">Taxa de serviço (10%)</span>
+            <div id="fechar-taxa-valor" style="font-size:.92rem;font-weight:700;color:#555;margin-top:1px">R$ 0,00</div>
+          </div>
+          <button id="btn-remover-taxa" onclick="removerTaxaServico()"
+            style="background:none;border:1.5px solid #e0dbd5;border-radius:8px;padding:5px 12px;font-family:'Poppins',sans-serif;font-size:.7rem;font-weight:700;color:#aaa;cursor:pointer;transition:all .15s;white-space:nowrap"
+            onmouseover="this.style.borderColor='#C0392B';this.style.color='#C0392B'"
+            onmouseout="this.style.borderColor='#e0dbd5';this.style.color='#aaa'">
+            Remover
+          </button>
+        </div>
+        <div style="background:#faf8f5;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid #f0e9e0">
+          <span style="font-size:.78rem;font-weight:800;color:#1a1a1a">Total</span>
+          <span id="fechar-total-final" style="font-size:1.05rem;font-weight:900;color:#C0392B">R$ 0,00</span>
+        </div>
       </div>
 
       <!-- Forma de pagamento -->
