@@ -1845,7 +1845,24 @@ canvas, [data-touch="free"] { touch-action: none !important; }
       <div class="form-group"><label>Seu nome completo</label><input type="text" id="rnome" placeholder="João Silva"></div>
       <div class="form-group"><label>WhatsApp (com DDD)</label><input type="tel" id="rtel" placeholder="(99) 99999-9999" maxlength="15" oninput="mascaraTel(this)"></div>
       <div class="form-group"><label>Nome do estabelecimento</label><input type="text" id="rn" placeholder="Ex: Burguer do Ze"></div>
-      <div class="form-group"><label>Cidade</label><input type="text" id="rcidade" placeholder="Ex: São Paulo, Rio de Janeiro..."></div>
+      <div class="form-group">
+        <label>Estado</label>
+        <div style="position:relative">
+          <select id="restado" class="form-control" onchange="carregarCidadesCadastro(this.value)" style="width:100%;appearance:none;-webkit-appearance:none;padding-right:32px;cursor:pointer;">
+            <option value="">Carregando estados...</option>
+          </select>
+          <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Cidade</label>
+        <div style="position:relative">
+          <select id="rcidade" class="form-control" disabled style="width:100%;appearance:none;-webkit-appearance:none;padding-right:32px;cursor:pointer;opacity:.5;">
+            <option value="">Selecione o estado primeiro</option>
+          </select>
+          <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
       <div class="form-group"><label>CPF ou CNPJ</label><input type="text" id="rdoc" placeholder="000.000.000-00" maxlength="18" oninput="mascaraDoc(this)"></div>
       <div class="form-group"><label>E-mail</label><input type="email" id="re" placeholder="seu@email.com"></div>
       <div class="form-group">
@@ -2009,7 +2026,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
     <button class="tab-btn"        data-tab="cardapio"       onclick="showTab('cardapio',this)">Cardápio</button>
     <button class="tab-btn"        data-tab="fresquinho"     onclick="showTab('fresquinho',this)">Fresquinho</button>
     <button class="tab-btn"        data-tab="financeiro"     onclick="showTab('financeiro',this)">💰 Financeiro</button>
-    <button class="tab-btn"        data-tab="configuracoes"  onclick="showTab('configuracoes',this)">Configurações</button>
+    <button class="tab-btn"        data-tab="configuracoes"  onclick="showTab('configuracoes',this);carregarEstadosDash()">Configurações</button>
   </nav>
 
   <!-- Visao Geral -->
@@ -3197,30 +3214,149 @@ canvas, [data-touch="free"] { touch-action: none !important; }
 
 <script>
 let _dashEstadosOk = false;
-window.carregarEstadosDash = async function() {
-  if(_dashEstadosOk) return;
+
+// Carrega os estados via IBGE.
+// opcoes = { estado: 'SP', cidade: 'São Paulo' } → pré-seleciona após carregar.
+window.carregarEstadosDash = async function(opcoes) {
   const sel = document.getElementById('cfg-estado');
-  if(!sel || sel.options.length > 1) { _dashEstadosOk=true; return; }
+  if (!sel) return;
+
+  if (_dashEstadosOk) {
+    // Lista já carregada — só pré-seleciona se necessário
+    if (opcoes?.estado) {
+      sel.value = opcoes.estado;
+      if (opcoes?.cidade) await window.carregarCidadesDash(opcoes.estado, opcoes.cidade);
+    }
+    return;
+  }
+
   try {
     const r = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
+    if (!r.ok) throw new Error('IBGE indisponível');
     const estados = await r.json();
-    estados.forEach(e => { const opt=document.createElement('option'); opt.value=e.sigla; opt.textContent=e.nome; sel.appendChild(opt); });
+
+    // Limpa opções antigas (exceto placeholder) e repopula
+    while (sel.options.length > 1) sel.remove(1);
+    estados.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.sigla;
+      opt.textContent = e.nome;
+      sel.appendChild(opt);
+    });
+
     _dashEstadosOk = true;
-  } catch(e) {}
+
+    // Pré-seleciona estado e carrega cidades se veio dos dados salvos
+    if (opcoes?.estado) {
+      sel.value = opcoes.estado;
+      if (opcoes?.cidade) await window.carregarCidadesDash(opcoes.estado, opcoes.cidade);
+    }
+  } catch(e) {
+    console.warn('[PEDIWAY] Falha ao carregar estados IBGE:', e.message);
+  }
 };
-window.carregarCidadesDash = async function(uf) {
+
+// Carrega cidades do estado (uf).
+// cidadeParaSetar → pré-seleciona após carregar (usado ao restaurar config salva).
+window.carregarCidadesDash = async function(uf, cidadeParaSetar) {
   const cidSel = document.getElementById('cfg-cidade');
-  if(!cidSel) return;
-  if(!uf) { cidSel.innerHTML='<option value="">Selecione o estado primeiro</option>'; cidSel.disabled=true; cidSel.style.opacity='.5'; return; }
-  cidSel.disabled=true; cidSel.style.opacity='.5'; cidSel.innerHTML='<option>Carregando...</option>';
+  if (!cidSel) return;
+
+  if (!uf) {
+    cidSel.innerHTML = '<option value="">Selecione o estado primeiro</option>';
+    cidSel.disabled = true;
+    cidSel.style.opacity = '.5';
+    return;
+  }
+
+  cidSel.disabled = true;
+  cidSel.style.opacity = '.5';
+  cidSel.innerHTML = '<option>Carregando cidades...</option>';
+
   try {
-    const r = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/'+uf+'/municipios?orderBy=nome');
+    const r = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + uf + '/municipios?orderBy=nome');
+    if (!r.ok) throw new Error('IBGE indisponível');
     const cidades = await r.json();
-    cidSel.innerHTML='<option value="">Selecione a cidade...</option>';
-    cidades.forEach(c => { const opt=document.createElement('option'); opt.value=c.nome; opt.textContent=c.nome; cidSel.appendChild(opt); });
-    cidSel.disabled=false; cidSel.style.opacity='1';
-  } catch(e) { cidSel.innerHTML='<option value="">Erro ao carregar</option>'; cidSel.disabled=false; cidSel.style.opacity='1'; }
+
+    cidSel.innerHTML = '<option value="">Selecione a cidade...</option>';
+    cidades.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.nome;
+      opt.textContent = c.nome;
+      cidSel.appendChild(opt);
+    });
+
+    cidSel.disabled = false;
+    cidSel.style.opacity = '1';
+
+    // Restaura cidade salva, se informada
+    if (cidadeParaSetar) cidSel.value = cidadeParaSetar;
+
+  } catch(e) {
+    cidSel.innerHTML = '<option value="">Erro ao carregar cidades</option>';
+    cidSel.disabled = false;
+    cidSel.style.opacity = '1';
+    console.warn('[PEDIWAY] Falha ao carregar cidades IBGE:', e.message);
+  }
 };
+
+// ─── Estados/Cidades para o formulário de CADASTRO ───────────────────────────
+let _cadEstadosOk = false;
+
+window.carregarEstadosCadastro = async function() {
+  if (_cadEstadosOk) return;
+  const sel = document.getElementById('restado');
+  if (!sel) return;
+  try {
+    const r = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
+    if (!r.ok) throw new Error();
+    const estados = await r.json();
+    sel.innerHTML = '<option value="">Selecione o estado...</option>';
+    estados.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.sigla;
+      opt.textContent = e.nome;
+      sel.appendChild(opt);
+    });
+    _cadEstadosOk = true;
+  } catch(e) {
+    sel.innerHTML = '<option value="">Erro ao carregar estados</option>';
+    console.warn('[PEDIWAY] Falha ao carregar estados (cadastro):', e.message);
+  }
+};
+
+window.carregarCidadesCadastro = async function(uf) {
+  const cidSel = document.getElementById('rcidade');
+  if (!cidSel) return;
+  if (!uf) {
+    cidSel.innerHTML = '<option value="">Selecione o estado primeiro</option>';
+    cidSel.disabled = true; cidSel.style.opacity = '.5';
+    return;
+  }
+  cidSel.disabled = true; cidSel.style.opacity = '.5';
+  cidSel.innerHTML = '<option>Carregando cidades...</option>';
+  try {
+    const r = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + uf + '/municipios?orderBy=nome');
+    if (!r.ok) throw new Error();
+    const cidades = await r.json();
+    cidSel.innerHTML = '<option value="">Selecione a cidade...</option>';
+    cidades.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.nome; opt.textContent = c.nome;
+      cidSel.appendChild(opt);
+    });
+    cidSel.disabled = false; cidSel.style.opacity = '1';
+  } catch(e) {
+    cidSel.innerHTML = '<option value="">Erro ao carregar cidades</option>';
+    cidSel.disabled = false; cidSel.style.opacity = '1';
+    console.warn('[PEDIWAY] Falha ao carregar cidades (cadastro):', e.message);
+  }
+};
+
+// Pré-carrega os estados do formulário de cadastro ao abrir a página
+document.addEventListener('DOMContentLoaded', function() {
+  window.carregarEstadosCadastro();
+});
 </script>
 </body>
 </html>
