@@ -40,6 +40,13 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/baixar",
+      "destination": "/download.html",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/sounds/:path*",
@@ -92,10 +99,6 @@
     {
       "source": "/comandas/:slug",
       "destination": "/garcom.html"
-    },
-    {
-      "source": "/baixar",
-      "destination": "/download.html"
     },
     {
       "source": "/:slug",
