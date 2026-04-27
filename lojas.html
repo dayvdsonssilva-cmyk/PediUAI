@@ -87,7 +87,7 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
    STORE SCREEN — Cardápio
 ══════════════════════════════════════ */
 /* Capa do estabelecimento */
-.store-capa{flex-shrink:0;background:#e65e32;}
+.store-capa{flex-shrink:0;/* background definido via cor_primaria do estabelecimento */}
 .loja-capa-header{display:flex;align-items:center;gap:14px;padding:18px 16px 10px;}
 .loja-capa-logo{width:68px;height:68px;border-radius:16px;flex-shrink:0;background:rgba(255,255,255,.15);border:2.5px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.2);}
 .loja-capa-logo img{width:100%;height:100%;object-fit:cover;display:block;}
@@ -2019,7 +2019,51 @@ function iniciarRealtime() {
         if(_screen==='orders') renderOrders();
       })
       .subscribe();
-  } catch(e) { console.warn('Realtime:', e); }
+  } catch(e) { console.warn('Realtime pedidos:', e); }
+
+  // ── Realtime: cor e status dos estabelecimentos ─────────────────────────────
+  // Quando o dono muda a cor no painel, atualiza o fundo do cardápio em tempo real
+  try {
+    db.channel('pw-lojas-cor')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'estabelecimentos',
+        filter: undefined,   // escuta todas as lojas
+      }, payload => {
+        const novo = payload.new;
+        if (!novo?.id) return;
+
+        // Atualiza a loja em memória
+        const idx = _lojas.findIndex(l => l.id === novo.id);
+        if (idx >= 0) {
+          _lojas[idx] = {
+            ..._lojas[idx],
+            cor_primaria:  novo.cor_primaria  || _lojas[idx].cor_primaria,
+            aberto:        novo.aberto        !== undefined ? novo.aberto : _lojas[idx].aberto,
+            nome:          novo.nome          || _lojas[idx].nome,
+            descricao:     novo.descricao     ?? _lojas[idx].descricao,
+            logo_url:      novo.logo_url      ?? _lojas[idx].logo_url,
+            tempo_entrega: novo.tempo_entrega || _lojas[idx].tempo_entrega,
+            taxa_entrega:  novo.taxa_entrega  ?? _lojas[idx].taxa_entrega,
+            _bg:           novo.cor_primaria  || _lojas[idx]._bg,
+          };
+
+          // Se o cliente está vendo o cardápio dessa loja → atualiza o fundo imediatamente
+          if (_lojaAtual?.id === novo.id && novo.cor_primaria) {
+            const hex = normalizeHex(novo.cor_primaria);
+            _lojaAtual = { ..._lojaAtual, cor_primaria: hex, _bg: hex };
+            // Atualiza a capa do cardápio (wallpaper) sem recarregar a tela
+            const capaEl = document.querySelector('.store-capa');
+            if (capaEl) capaEl.style.background = hex;
+          }
+
+          // Redenriza a lista de lojas se estiver na home ou busca
+          if (_screen === 'home' || _screen === 'search') renderHome();
+        }
+      })
+      .subscribe();
+  } catch(e) { console.warn('Realtime lojas:', e); }
 }
 
 // ═══════════════════════════════════════════════════════
