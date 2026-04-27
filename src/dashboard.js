@@ -254,7 +254,6 @@ function preencherConfig(estab) {
   set('cfg-desc', estab.descricao || '');
   const descCount = document.getElementById('cfg-desc-count');
   if(descCount) descCount.textContent = (estab.descricao||'').length + '/80';
-  set('cfg-cidade',    estab.cidade || '');
   set('cfg-endereco',  estab.endereco || '');
   set('cfg-tempo',     estab.tempo_entrega || '30-45 min');
   set('cfg-telefone',  estab.telefone_contato || '');
@@ -273,6 +272,10 @@ function preencherConfig(estab) {
   const cp = $('cfg-pix');      if (cp) cp.checked = estab.aceita_pix      !== false;
   const cc = $('cfg-cartao');   if (cc) cc.checked = estab.aceita_cartao   !== false;
   const cd = $('cfg-dinheiro'); if (cd) cd.checked = estab.aceita_dinheiro !== false;
+  // Carrega estados e restaura estado + cidade salvos
+  if (typeof window.carregarEstadosDash === 'function') {
+    window.carregarEstadosDash({ estado: estab.estado || null, cidade: estab.cidade || null });
+  }
 }
 
 function aplicarCorDash(cor) {
@@ -523,6 +526,7 @@ export async function salvarConfig() {
   const slug     = $('cfg-slug')?.value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');
   const whats    = $('cfg-whats')?.value.trim();
   const desc     = $('cfg-desc')?.value.trim();
+  const estado   = $('cfg-estado')?.value || null;
   const cidade   = $('cfg-cidade')?.value.trim() || null;
   const endereco = $('cfg-endereco')?.value.trim();
   const tempo    = $('cfg-tempo')?.value;
@@ -565,7 +569,7 @@ export async function salvarConfig() {
     const aceita_dinheiro= $('cfg-dinheiro')?.checked !== false;
 
     const updates = {
-      nome, slug, whatsapp: whats, descricao: desc, cidade, endereco,
+      nome, slug, whatsapp: whats, descricao: desc, estado, cidade, endereco,
       tempo_entrega: tempo, aberto, faz_entrega: entrega, faz_retirada: retirada,
       cor_primaria, logo_url,
       capa_url: null, capa_tipo: 'cor',
