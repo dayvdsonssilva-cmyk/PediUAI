@@ -3427,10 +3427,45 @@ window.fecharTermos = function() {
   document.getElementById('modal-termos').style.display = 'none';
 };
 
-// Wrapper que valida o aceite dos termos antes de chamar o doRegister original
+// Wrapper que normaliza o WhatsApp antes de comparar (fix: máscara vs sem máscara)
 document.addEventListener('DOMContentLoaded', function() {
-  // Espera o auth.js carregar e sobrescreve doRegister com validação de termos
   setTimeout(function() {
+
+    // ── Fix recPasso2: normaliza ambos os lados antes de comparar ────────────
+    const _originalRecPasso2 = window.recPasso2;
+    window.recPasso2 = async function() {
+      // Normaliza o que o usuário digitou (remove tudo que não é dígito)
+      const inputEl = document.getElementById('rec-tel');
+      if (inputEl) {
+        const raw = inputEl.value.replace(/\D/g, '');
+        // Guarda o valor original e substitui temporariamente pelo normalizado
+        // para que o auth.js compare dígitos vs dígitos
+        const original = inputEl.value;
+        inputEl.value = raw;
+        // Também precisamos normalizar o estab.whatsapp antes da comparação.
+        // Como não temos acesso direto, vamos patch no supabase result via _recEstab
+        const _origGetEstab = window._recEstab;
+        if (window._recEstab?.whatsapp) {
+          window._recEstab = {
+            ...window._recEstab,
+            whatsapp: window._recEstab.whatsapp.replace(/\D/g, '')
+          };
+        }
+        try {
+          if (typeof _originalRecPasso2 === 'function') await _originalRecPasso2();
+        } finally {
+          // Restaura valor com máscara se a validação falhou (campo ainda visível)
+          if (document.getElementById('rec-passo2')?.style.display !== 'none') {
+            inputEl.value = original;
+          }
+          if (_origGetEstab !== undefined) window._recEstab = _origGetEstab;
+        }
+      } else {
+        if (typeof _originalRecPasso2 === 'function') await _originalRecPasso2();
+      }
+    };
+
+    // ── Validação de termos no registro ──────────────────────────────────────
     const _originalDoRegister = window.doRegister;
     window.doRegister = function() {
       const checkbox = document.getElementById('r-aceita-termos');
@@ -3458,7 +3493,12 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => { if(aviso) aviso.style.display = 'none'; }, 4000);
         return;
       }
-      if (typeof _originalDoRegister === 'function') _originalDoRegister();
+      if (typeof _originalDoRegister === 'function') {
+        // Normaliza rtel para só dígitos antes de salvar (consistência com cfg-whats)
+        const rtelEl = document.getElementById('rtel');
+        if (rtelEl) rtelEl.value = rtelEl.value.replace(/\D/g, '');
+        _originalDoRegister();
+      }
     };
   }, 800);
 });
