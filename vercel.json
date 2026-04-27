@@ -40,13 +40,6 @@
       ]
     }
   ],
-  "redirects": [
-    {
-      "source": "/baixar",
-      "destination": "/download.html",
-      "permanent": false
-    }
-  ],
   "rewrites": [
     {
       "source": "/sounds/:path*",
@@ -79,6 +72,10 @@
     {
       "source": "/sw.js",
       "destination": "/sw.js"
+    },
+    {
+      "source": "/baixar",
+      "destination": "/baixar.html"
     },
     {
       "source": "/admin",
