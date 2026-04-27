@@ -12,11 +12,11 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{
-  --red:#E05A3A;--red-d:#c0392b;--dark:#1A0A08;--mid:#5C3D35;--gray:#9B7B72;
-  --light:#FFFFFF;--cream:#FFF5F3;--card:#FFFFFF;--border:rgba(224,90,58,.12);
-  --accent:#FFF0EC;--accent2:#FFE4DE;
+  --red:#e65e32;--red-d:#c94e24;--dark:#1A0A08;--mid:#5C3D35;--gray:#9B7B72;
+  --light:#FFFFFF;--cream:#fff3ef;--card:#FFFFFF;--border:rgba(224,90,58,.12);
+  --accent:#ffede7;--accent2:#fde8e0;
   --font:'Poppins',sans-serif;
-  --st-red-unused:#C0392B;--st-red2:#a93226;
+  --st-red-unused:#c94e24;--st-red2:#a83d1e;
 }
 html,body{background:#FFFFFF;}
 html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font);touch-action:manipulation;}
@@ -75,7 +75,7 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 .status-dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
 
 /* ── SEARCH INPUT ── */
-.search-box{display:flex;align-items:center;gap:10px;background:#FFF5F3;border:1.5px solid var(--accent2);border-radius:14px;padding:11px 14px;}
+.search-box{display:flex;align-items:center;gap:10px;background:#fff3ef;border:1.5px solid var(--accent2);border-radius:14px;padding:11px 14px;}
 .search-box input{border:none;background:transparent;font-family:var(--font);font-size:13px;color:var(--dark);outline:none;width:100%;}
 .search-box input::placeholder{color:var(--gray);}
 
@@ -87,7 +87,7 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
    STORE SCREEN — Cardápio
 ══════════════════════════════════════ */
 /* Capa do estabelecimento */
-.store-capa{flex-shrink:0;background:#E05A3A;}
+.store-capa{flex-shrink:0;background:#e65e32;}
 .loja-capa-header{display:flex;align-items:center;gap:14px;padding:18px 16px 10px;}
 .loja-capa-logo{width:68px;height:68px;border-radius:16px;flex-shrink:0;background:rgba(255,255,255,.15);border:2.5px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.2);}
 .loja-capa-logo img{width:100%;height:100%;object-fit:cover;display:block;}
@@ -100,13 +100,13 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 /* Tabs */
 .store-tabs{flex-shrink:0;display:flex;background:#fff;border-bottom:1.5px solid var(--accent2);}
 .store-tab{flex:1;padding:12px 4px;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:700;color:var(--gray);cursor:pointer;border:none;background:none;font-family:var(--font);border-bottom:2.5px solid transparent;transition:all .15s;}
-.store-tab.active{color:#E05A3A;border-bottom-color:#E05A3A;}
-.tab-dot{display:none;width:6px;height:6px;border-radius:50%;background:#E05A3A;margin-left:4px;flex-shrink:0;}
+.store-tab.active{color:#e65e32;border-bottom-color:#e65e32;}
+.tab-dot{display:none;width:6px;height:6px;border-radius:50%;background:#e65e32;margin-left:4px;flex-shrink:0;}
 .tab-dot.show{display:inline-block;}
 
 /* Fresquinho */
 .fresquinho-wrap{flex-shrink:0;padding:12px 0 12px 14px;border-bottom:1px solid var(--border);background:var(--card);}
-.story-thumb{width:64px;height:64px;border-radius:16px;overflow:hidden;position:relative;flex-shrink:0;cursor:pointer;border:2.5px solid #E05A3A;}
+.story-thumb{width:64px;height:64px;border-radius:16px;overflow:hidden;position:relative;flex-shrink:0;cursor:pointer;border:2.5px solid #e65e32;}
 .story-thumb img,.story-thumb video{width:100%;height:100%;object-fit:cover;}
 .story-timer{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:8px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);}
 .story-viewer{display:none;position:fixed;inset:0;background:#000;z-index:9999;flex-direction:column;}
@@ -117,7 +117,7 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 
 /* Filtros categorias */
 .filtro-pill{display:inline-flex;align-items:center;padding:7px 16px;border-radius:50px;border:1.5px solid var(--accent2);background:#fff;font-family:var(--font);font-size:12px;font-weight:600;color:var(--mid);cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0;}
-.filtro-pill.ativo{background:#E05A3A;border-color:#E05A3A;color:#fff;}
+.filtro-pill.ativo{background:#e65e32;border-color:#e65e32;color:#fff;}
 
 /* Produto card */
 .produto-card{background:#fff;border-radius:14px;overflow:hidden;display:flex;align-items:stretch;box-shadow:0 1px 10px rgba(224,90,58,.07);border:1px solid var(--accent2);cursor:pointer;transition:transform .12s;}
@@ -131,17 +131,17 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 .produto-nome{font-size:13px;font-weight:800;color:var(--dark);line-height:1.3;margin-bottom:3px;}
 .produto-desc{font-size:11px;color:var(--gray);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .produto-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
-.produto-preco{font-size:15px;font-weight:800;color:#E05A3A;}
+.produto-preco{font-size:15px;font-weight:800;color:#e65e32;}
 .produto-preco-orig{font-size:11px;color:var(--gray);text-decoration:line-through;}
-.btn-mais{width:32px;height:32px;border-radius:10px;background:#E05A3A;color:#fff;border:none;font-size:1.3rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.btn-ver{padding:6px 12px;border-radius:8px;background:var(--cream);border:none;font-family:var(--font);font-size:11px;font-weight:700;color:#E05A3A;cursor:pointer;}
+.btn-mais{width:32px;height:32px;border-radius:10px;background:#e65e32;color:#fff;border:none;font-size:1.3rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.btn-ver{padding:6px 12px;border-radius:8px;background:var(--cream);border:none;font-family:var(--font);font-size:11px;font-weight:700;color:#e65e32;cursor:pointer;}
 
 /* Modal produto */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:800;align-items:flex-end;justify-content:center;}
 .modal-overlay.open{display:flex;}
 .modal-sheet{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease;display:flex;flex-direction:column;}
 .modal-body{flex:1;overflow-y:auto;padding:18px 18px 0;}
-.modal-footer{padding:12px 18px 20px;background:#fff;border-top:1px solid var(--accent2,#FFE4DE);}
+.modal-footer{padding:12px 18px 20px;background:#fff;border-top:1px solid var(--accent2,#fde8e0);}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .sheet-handle{width:36px;height:4px;background:rgba(26,10,8,.15);border-radius:2px;margin:12px auto 0;}
 .modal-img{width:100%;display:block;max-height:260px;object-fit:cover;}
@@ -150,7 +150,7 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 .modal-cat{font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;}
 .modal-nome{font-size:18px;font-weight:900;color:var(--dark);margin-bottom:6px;}
 .modal-desc{font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:14px;}
-.modal-preco{font-size:20px;font-weight:900;color:#E05A3A;margin-bottom:16px;}
+.modal-preco{font-size:20px;font-weight:900;color:#e65e32;margin-bottom:16px;}
 .qty-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
 .qty-btn{width:36px;height:36px;border-radius:10px;background:var(--cream);border:none;font-size:1.3rem;font-weight:800;cursor:pointer;color:var(--dark);}
 .qty-num{font-size:18px;font-weight:800;color:var(--dark);min-width:24px;text-align:center;}
@@ -159,8 +159,8 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 .adicional-sub{font-size:10px;color:var(--gray);margin-bottom:8px;}
 .adicional-opcao{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1.5px solid #e0dbd5;border-radius:10px;cursor:pointer;margin-bottom:6px;transition:all .15s;}
 .adicional-opcao .adic-check{width:20px;height:20px;border-radius:6px;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;transition:all .15s;}
-.btn-add-cart{width:100%;padding:14px;border-radius:14px;background:#E05A3A;color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;transition:background .15s;}
-.btn-add-cart:hover{background:#C0392B;}
+.btn-add-cart{width:100%;padding:14px;border-radius:14px;background:#e65e32;color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;transition:background .15s;}
+.btn-add-cart:hover{background:#c94e24;}
 
 /* FAB carrinho */
 .fab-bar{position:fixed;bottom:68px;left:50%;transform:translateX(-50%);max-width:460px;width:calc(100% - 16px);background:var(--dark);border-radius:16px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:500;display:none;cursor:pointer;}
@@ -172,19 +172,19 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 .cart-item{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--border);}
 .cart-item-nome{font-size:13px;font-weight:700;color:var(--dark);flex:1;}
 .cart-item-adic{font-size:10px;color:var(--gray);line-height:1.5;}
-.cart-item-preco{font-size:13px;font-weight:800;color:#E05A3A;white-space:nowrap;}
+.cart-item-preco{font-size:13px;font-weight:800;color:#e65e32;white-space:nowrap;}
 .qty-ctrl{display:flex;align-items:center;gap:6px;}
 .qty-ctrl button{width:26px;height:26px;border-radius:8px;background:var(--cream);border:none;font-size:1rem;font-weight:800;cursor:pointer;color:var(--dark);}
 .checkout-section{padding:16px 18px;border-top:1px solid var(--border);}
 .checkout-label{font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;}
-.checkout-input{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--accent2);background:#FFF5F3;font-family:var(--font);font-size:14px;color:var(--dark);outline:none;transition:border-color .2s;margin-bottom:8px;}
-.checkout-input:focus{border-color:#E05A3A;}
+.checkout-input{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--accent2);background:#fff3ef;font-family:var(--font);font-size:14px;color:var(--dark);outline:none;transition:border-color .2s;margin-bottom:8px;}
+.checkout-input:focus{border-color:#e65e32;}
 .pag-opt{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
 .pag-btn{padding:9px 16px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);font-family:var(--font);font-size:12px;font-weight:700;color:var(--mid);cursor:pointer;transition:all .15s;}
-.pag-btn.ativo{background:#E05A3A;border-color:#E05A3A;color:#fff;}
+.pag-btn.ativo{background:#e65e32;border-color:#e65e32;color:#fff;}
 .resumo-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mid);padding:4px 0;}
 .resumo-total{font-size:16px;font-weight:900;color:var(--dark);}
-.btn-finalizar{width:100%;padding:16px;border-radius:14px;background:#E05A3A;color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;margin-top:12px;}
+.btn-finalizar{width:100%;padding:16px;border-radius:14px;background:#e65e32;color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;margin-top:12px;}
 
 /* ── MEUS PEDIDOS ── */
 .pedido-card{background:#fff;border-radius:16px;padding:14px;margin-bottom:10px;border:1px solid var(--accent2);box-shadow:0 1px 8px rgba(224,90,58,.06);}
@@ -220,6 +220,12 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 .promo-slide::after{content:'';position:absolute;right:-20px;bottom:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06);}
 .carousel-dots{display:flex;gap:5px;justify-content:center;margin-top:8px;}
 .carousel-dot{height:4px;border-radius:2px;background:rgba(26,10,8,.18);transition:all .3s;cursor:pointer;}
+
+/* ── Banner skeleton ── */
+@keyframes sk-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.sk-pulse{background:linear-gradient(90deg,#2a1200 25%,#3d1e0a 50%,#2a1200 75%);background-size:200% 100%;animation:sk-shimmer 1.6s infinite;border-radius:8px;}
+.banner-skeleton{margin:10px 18px 0;border-radius:18px;overflow:hidden;background:linear-gradient(135deg,#e65e3222,#c94e2415);border:1.5px solid rgba(230,94,50,.15);padding:22px 20px 20px;min-height:138px;display:flex;flex-direction:column;gap:12px;}
+.banner-empty{margin:10px 18px 0;border-radius:18px;overflow:hidden;min-height:138px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;position:relative;padding:24px 20px;background:linear-gradient(135deg,#e65e32 0%,#c94e24 40%,#a83d1e 100%);box-shadow:0 8px 32px rgba(230,94,50,.35);}
 
 /* Empty */
 .empty-state{text-align:center;padding:60px 20px;}
@@ -323,7 +329,21 @@ input,select,textarea{font-size:16px !important;touch-action:manipulation;}
     <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
       <!-- BANNER CARROSSEL -->
       <div style="padding:10px 0 0;" id="banner-wrap">
-        <!-- preenchido por renderCarrossel() -->
+        <!-- Skeleton enquanto carrega ofertas -->
+        <div class="banner-skeleton">
+          <div class="sk-pulse" style="height:12px;width:38%;border-radius:6px;"></div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:4px">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="sk-pulse" style="height:38px;width:110px;border-radius:10px;"></div>
+              <div class="sk-pulse" style="height:10px;width:72px;border-radius:6px;"></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+              <div class="sk-pulse" style="height:10px;width:56px;border-radius:6px;"></div>
+              <div class="sk-pulse" style="height:12px;width:80px;border-radius:6px;"></div>
+            </div>
+          </div>
+          <div class="sk-pulse" style="height:10px;width:55%;border-radius:6px;margin-top:4px;"></div>
+        </div>
       </div>
       <!-- CATS -->
       <div class="scroll-x" id="home-cats"></div>
@@ -378,8 +398,8 @@ input,select,textarea{font-size:16px !important;touch-action:manipulation;}
 
   <!-- CARRINHO -->
   <div id="screen-cart" class="screen" style="flex-direction:column;background:#f8f4f2;">
-    <div style="background:#fff;padding:16px 18px 14px;display:flex;align-items:center;gap:12px;border-bottom:1.5px solid var(--accent2,#FFE4DE);">
-      <button class="back-btn" onclick="voltarDo('cart')" style="background:var(--accent,#FFF0EC);border:1.5px solid var(--accent2,#FFE4DE);">
+    <div style="background:#fff;padding:16px 18px 14px;display:flex;align-items:center;gap:12px;border-bottom:1.5px solid var(--accent2,#fde8e0);">
+      <button class="back-btn" onclick="voltarDo('cart')" style="background:var(--accent,#ffede7);border:1.5px solid var(--accent2,#fde8e0);">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--dark)" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
       <div style="flex:1;">
@@ -528,7 +548,7 @@ async function init() {
     _lojas = (data||[]).map(l => ({
       ...l,
       _emoji: lojaEmoji(l.nome),
-      _bg: l.cor_primaria||'#C0392B',
+      _bg: l.cor_primaria||'#c94e24',
     }));
     renderHome();
     renderBanner();
@@ -616,13 +636,13 @@ function abrirTelaPromos(pct, itens) {
 
   const html = itens.map(item => {
     const loja = _lojas.find(l => l.id === item.estabelecimento_id) || {};
-    const lojaHex = normalizeHex(loja.cor_primaria || '#C0392B');
+    const lojaHex = normalizeHex(loja.cor_primaria || '#c94e24');
     return `<div style="background:#fff;border-radius:16px;overflow:hidden;display:flex;align-items:stretch;box-shadow:0 2px 12px rgba(224,90,58,.08);border:1px solid rgba(224,90,58,.12);cursor:pointer;margin-bottom:10px;"
       onclick="abrirLoja('${loja.id || ''}')">
       <!-- Imagem do item -->
       <div style="width:100px;min-height:100px;flex-shrink:0;background:${lojaHex}18;display:flex;align-items:center;justify-content:center;font-size:36px;position:relative;overflow:hidden;">
         ${item.foto_url ? `<img src="${item.foto_url}" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;">` : `<span>${loja._emoji||'🍽️'}</span>`}
-        <div style="position:absolute;top:0;left:0;z-index:3;"><div style="background:#E05A3A;color:#fff;font-size:9px;font-weight:900;padding:4px 9px 4px 7px;border-radius:0 0 10px 0;display:flex;align-items:center;gap:3px;box-shadow:2px 2px 6px rgba(0,0,0,.2);">🔥 ${item.desconto}% OFF</div></div>
+        <div style="position:absolute;top:0;left:0;z-index:3;"><div style="background:#e65e32;color:#fff;font-size:9px;font-weight:900;padding:4px 9px 4px 7px;border-radius:0 0 10px 0;display:flex;align-items:center;gap:3px;box-shadow:2px 2px 6px rgba(0,0,0,.2);">🔥 ${item.desconto}% OFF</div></div>
       </div>
       <!-- Info -->
       <div style="flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;">
@@ -636,7 +656,7 @@ function abrirTelaPromos(pct, itens) {
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
           <span style="font-size:12px;color:#9B7B72;text-decoration:line-through;">${fmt(item.preco_cheio||item.preco_com_desc)}</span>
-          <span style="font-size:16px;font-weight:900;color:#E05A3A;">${fmt(item.preco_com_desc)}</span>
+          <span style="font-size:16px;font-weight:900;color:#e65e32;">${fmt(item.preco_com_desc)}</span>
         </div>
       </div>
     </div>`;
@@ -685,7 +705,7 @@ function storeCardHTML(l) {
   const promosDaLoja = _promoItems.filter(p=>p.estabelecimento_id===l.id).map(p=>p.desconto);
   const maxDesc = temPromo && promosDaLoja.length ? Math.max(...promosDaLoja, l.desconto_percent||0) : (l.desconto_percent||0);
   if(_cardStyle === 'B') return storeCardHTMLb(l, ab, temPromo);
-  const hex = normalizeHex(l.cor_primaria||'#C0392B');
+  const hex = normalizeHex(l.cor_primaria||'#c94e24');
   const logoContent = l.logo_url
     ? `<img class="store-hero-logo" src="${l.logo_url}" alt="${l.nome}" onerror="this.outerHTML='<div class=store-hero-emoji>${l._emoji}</div>'">`
     : `<div class="store-hero-emoji">${l._emoji}</div>`;
@@ -735,7 +755,7 @@ function storeCardHTMLb(l, ab, temPromo) {
       ${imgContent}
       ${!ab?`<div style="position:absolute;inset:0;background:rgba(0,0,0,.48);display:flex;align-items:center;justify-content:center;"><span style="color:#fff;font-size:11px;font-weight:700;background:rgba(0,0,0,.35);padding:4px 10px;border-radius:7px;">Fechado</span></div>`:''}
       ${temPromo?`<div style="position:absolute;top:0;left:0;z-index:3;">
-        <div style="background:#E05A3A;color:#fff;font-size:9px;font-weight:900;letter-spacing:.04em;padding:4px 10px 4px 8px;border-radius:0 0 12px 0;display:flex;align-items:center;gap:4px;box-shadow:2px 2px 8px rgba(224,90,58,.35);">
+        <div style="background:#e65e32;color:#fff;font-size:9px;font-weight:900;letter-spacing:.04em;padding:4px 10px 4px 8px;border-radius:0 0 12px 0;display:flex;align-items:center;gap:4px;box-shadow:2px 2px 8px rgba(224,90,58,.35);">
           🔥 <span>QUENTE</span>
         </div>
       </div>`:''}
@@ -801,14 +821,48 @@ async function renderBanner() {
   const percentuais = Object.keys(grupos).map(Number).sort((a,b)=>b-a);
 
   if(!percentuais.length) {
-    // Banner padrão sem promoções
-    $('banner-wrap').innerHTML = `<div style="margin:10px 18px 0;">
-      <div class="hero-banner" style="min-height:120px;padding:20px 22px;">
-        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Plataforma independente</div>
-        <div style="font-size:20px;font-weight:900;color:#fff;margin-bottom:4px;">Peça direto.</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.55);">Sem comissão, sem taxa extra.</div>
-      </div>
-    </div>`;
+    $('banner-wrap').innerHTML = `
+      <div class="banner-empty">
+        <!-- Bokeh circles decorativos -->
+        <div style="position:absolute;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.06);top:-30px;right:-20px;pointer-events:none"></div>
+        <div style="position:absolute;width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.05);bottom:-18px;left:10px;pointer-events:none"></div>
+        <div style="position:absolute;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.07);bottom:10px;right:40px;pointer-events:none"></div>
+        <!-- Hamburguer triste SVG -->
+        <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:8px">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 4px 12px rgba(0,0,0,.35))">
+            <!-- Pão de cima -->
+            <ellipse cx="32" cy="18" rx="22" ry="12" fill="#D4860A"/>
+            <ellipse cx="32" cy="14" rx="22" ry="10" fill="#F0A020"/>
+            <ellipse cx="32" cy="13" rx="20" ry="8" fill="#F5B830"/>
+            <!-- Gergelim -->
+            <ellipse cx="24" cy="10" rx="2.5" ry="1.2" fill="#D4860A" transform="rotate(-15 24 10)"/>
+            <ellipse cx="33" cy="8"  rx="2.5" ry="1.2" fill="#D4860A"/>
+            <ellipse cx="41" cy="11" rx="2.5" ry="1.2" fill="#D4860A" transform="rotate(10 41 11)"/>
+            <!-- Alface -->
+            <path d="M10 30 Q18 26 26 30 Q34 26 42 30 Q50 26 54 30 L54 33 Q46 29 38 33 Q30 29 22 33 Q14 29 10 33Z" fill="#4CAF50"/>
+            <!-- Queijo -->
+            <rect x="11" y="30" width="42" height="5" rx="2" fill="#FFD166"/>
+            <!-- Carne -->
+            <ellipse cx="32" cy="36" rx="21" ry="6" fill="#8B3A00"/>
+            <ellipse cx="32" cy="35" rx="20" ry="5" fill="#9E4500"/>
+            <!-- Pão de baixo -->
+            <ellipse cx="32" cy="48" rx="22" ry="7" fill="#D4860A"/>
+            <ellipse cx="32" cy="47" rx="21" ry="6" fill="#E89820"/>
+            <!-- Olhos tristes -->
+            <circle cx="25" cy="20" r="2.2" fill="#5C2800"/>
+            <circle cx="39" cy="20" r="2.2" fill="#5C2800"/>
+            <!-- Brilho nos olhos -->
+            <circle cx="26" cy="19" r=".7" fill="#fff" opacity=".7"/>
+            <circle cx="40" cy="19" r=".7" fill="#fff" opacity=".7"/>
+            <!-- Boca triste -->
+            <path d="M26 25 Q32 22 38 25" stroke="#5C2800" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+            <!-- Lágrima -->
+            <ellipse cx="23" cy="24" rx="1.2" ry="1.8" fill="#7dd3fc" opacity=".85"/>
+          </svg>
+          <div style="font-size:13px;font-weight:800;color:rgba(255,255,255,.85);letter-spacing:-.01em;">Nenhuma oferta hoje</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.45);line-height:1.55;text-align:center;max-width:180px">As promoções aparecem aqui quando os restaurantes ativarem 🤞</div>
+        </div>
+      </div>`;
     return;
   }
 
@@ -954,7 +1008,7 @@ async function abrirLoja(id) {
   _prodMap.clear();
   _tabAtiva = 'cardapio';
 
-  // Capa da loja usa cor do banco; botões/UI sempre usa cor da plataforma #E05A3A
+  // Capa da loja usa cor do banco; botões/UI sempre usa cor da plataforma #e65e32
 
   // Header — só nome, sem badge de promo
   $('store-header-nome').textContent = loja.nome;
@@ -1020,7 +1074,7 @@ function renderStore(fresquinhos=[]) {
 
   $('store-content').innerHTML = `
     <!-- Capa igual ao cliente.html -->
-    <div class="store-capa" style="background:${normalizeHex(l.cor_primaria||'#C0392B')};">
+    <div class="store-capa" style="background:${normalizeHex(l.cor_primaria||'#c94e24')};">
       <div class="loja-capa-header">
         <div class="loja-capa-logo">
           ${l.logo_url?`<img src="${l.logo_url}" alt="${l.nome}" onerror="this.style.display='none'">`:`${l._emoji}`}
@@ -1129,7 +1183,7 @@ function pedidoCardHTML(p) {
   // novo → preparo → pronto
   const ETAPAS = [
     { ids:['novo'],    label:'Aguardando', cor:'#F59E0B' },
-    { ids:['preparo'], label:'Preparando', cor:'#F97316' },
+    { ids:['preparo'], label:'Preparando', cor:'#e65e32' },
     { ids:['pronto'],  label: isRetirada?'Pronto':'Entregue', cor:'#16A34A' },
   ];
 
@@ -1158,17 +1212,17 @@ function pedidoCardHTML(p) {
   const itensHtml = p.itens && p.itens.length > 0 ? `
     <div style="font-size:12px;color:var(--gray);margin-bottom:8px;">${itensStr}</div>
     ${p.itens.length > 0 ? `<details style="font-size:11px;color:var(--gray);">
-      <summary style="cursor:pointer;color:#E05A3A;font-weight:600;list-style:none;display:flex;align-items:center;gap:4px;">
+      <summary style="cursor:pointer;color:#e65e32;font-weight:600;list-style:none;display:flex;align-items:center;gap:4px;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         Ver detalhes
       </summary>
-      <div style="margin-top:8px;padding:8px;background:var(--accent,#FFF0EC);border-radius:10px;">
+      <div style="margin-top:8px;padding:8px;background:var(--accent,#ffede7);border-radius:10px;">
         ${(p.itens||[]).map(i=>`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(224,90,58,.1);">
           <span>${i.qtd}x ${i.nome}</span>
           <span style="font-weight:700;">${fmt(i.preco*i.qtd)}</span>
         </div>`).join('')}
         <div style="display:flex;justify-content:space-between;padding:6px 0 0;font-weight:800;">
-          <span>Total</span><span style="color:#E05A3A;">${fmt(p.total)}</span>
+          <span>Total</span><span style="color:#e65e32;">${fmt(p.total)}</span>
         </div>
       </div>
     </details>` : ''}
@@ -1199,7 +1253,7 @@ function produtoCardHTML(p) {
         : `<div class="produto-emoji-bg">${p.emoji||'🍔'}</div>`}
       ${temPromo ? `<div style="position:absolute;top:0;left:0;z-index:3;">
         <div style="
-          background:#E05A3A;
+          background:#e65e32;
           color:#fff;
           font-size:9px;
           font-weight:900;
@@ -1267,7 +1321,7 @@ function renderAdicionaisModal(p) {
   el.innerHTML = `<div class="adicional-grupo">
     <div class="adicional-titulo">${g.grupo||g.nome||'Adicionais'}</div>
     <div class="adicional-sub">${min>0?'Obrigatório: ':'Opcional: '}escolha até ${max}</div>
-    <div id="aviso-adic" style="display:none;font-size:11px;color:#E05A3A;margin-bottom:6px;">Máximo de ${max} itens atingido</div>
+    <div id="aviso-adic" style="display:none;font-size:11px;color:#e65e32;margin-bottom:6px;">Máximo de ${max} itens atingido</div>
     ${opcoes.map((o,i)=>`<label class="adicional-opcao" id="adic-lbl-${i}" onclick="toggleAdic(${i},${max})">
       <div>
         <div style="font-size:13px;font-weight:600;color:var(--dark);">${o.nome}</div>
@@ -1287,8 +1341,8 @@ window.toggleAdic = function(i, max) {
   if(!cb.checked) {
     const total=document.querySelectorAll('[id^="adic-cb-"]:checked').length;
     if(total>=max){$('aviso-adic').style.display='block';setTimeout(()=>$('aviso-adic').style.display='none',2000);return;}
-    cb.checked=true;lbl.style.borderColor='#E05A3A';lbl.style.background='rgba(224,90,58,.05)';
-    chk.style.background='#E05A3A';chk.style.borderColor='#E05A3A';chk.style.color='#fff';chk.textContent='✓';
+    cb.checked=true;lbl.style.borderColor='#e65e32';lbl.style.background='rgba(224,90,58,.05)';
+    chk.style.background='#e65e32';chk.style.borderColor='#e65e32';chk.style.color='#fff';chk.textContent='✓';
   } else {
     cb.checked=false;lbl.style.borderColor='#e0dbd5';lbl.style.background='';
     chk.style.background='';chk.style.borderColor='#ddd';chk.style.color='';chk.textContent='　';
@@ -1450,14 +1504,14 @@ function renderCheckoutLoja(c) {
       <div style="display:flex;align-items:center;flex:1;">
         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
           <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;cursor:${done?'pointer':'default'};
-            background:${done?'#22C55E':active?'#E05A3A':'rgba(26,10,8,.08)'};
+            background:${done?'#22C55E':active?'#e65e32':'rgba(26,10,8,.08)'};
             color:${done||active?'#fff':'var(--gray)'};
             transition:all .2s;" ${done?`onclick="goStep('${lid}',${n})"`:''}>
             ${done?'✓':n}
           </div>
-          <div style="font-size:10px;font-weight:${active?'700':'500'};color:${active?'#E05A3A':'var(--gray)'};">${s}</div>
+          <div style="font-size:10px;font-weight:${active?'700':'500'};color:${active?'#e65e32':'var(--gray)'};">${s}</div>
         </div>
-        ${i<2?`<div style="height:2px;flex:0 0 20px;background:${step>n+1?'#22C55E':step===n+1?'#E05A3A':'rgba(26,10,8,.08)'};margin-bottom:14px;border-radius:1px;transition:background .3s;"></div>`:''}
+        ${i<2?`<div style="height:2px;flex:0 0 20px;background:${step>n+1?'#22C55E':step===n+1?'#e65e32':'rgba(26,10,8,.08)'};margin-bottom:14px;border-radius:1px;transition:background .3s;"></div>`:''}
       </div>`;
     }).join('')}
   </div>`;
@@ -1480,7 +1534,7 @@ function renderCheckoutLoja(c) {
             <span style="font-size:14px;font-weight:700;color:var(--dark);min-width:18px;text-align:center;">${item.qtd}</span>
             <button onclick="mudaCartItem('${lid}',${ii},1)" style="width:28px;height:28px;border-radius:8px;background:var(--cream);border:none;font-size:1rem;font-weight:800;cursor:pointer;color:var(--dark);display:flex;align-items:center;justify-content:center;">+</button>
           </div>
-          <span style="font-size:14px;font-weight:800;color:#E05A3A;min-width:60px;text-align:right;">${fmt(item.preco*item.qtd)}</span>
+          <span style="font-size:14px;font-weight:800;color:#e65e32;min-width:60px;text-align:right;">${fmt(item.preco*item.qtd)}</span>
         </div>
       </div>`).join('')}
     </div>
@@ -1490,7 +1544,7 @@ function renderCheckoutLoja(c) {
       <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mid);"><span>Entrega</span><span>${taxa>0?fmt(taxa):'A calcular'}</span></div>
     </div>
 
-    <button onclick="nextStep('${lid}')" style="width:100%;padding:15px;border-radius:14px;background:#E05A3A;color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;">
+    <button onclick="nextStep('${lid}')" style="width:100%;padding:15px;border-radius:14px;background:#e65e32;color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;">
       Continuar → Entrega
     </button>`;
   }
@@ -1541,7 +1595,7 @@ function renderCheckoutLoja(c) {
 
     <div style="display:flex;gap:8px;margin-top:4px;">
       <button onclick="prevStep('${lid}')" style="padding:12px 16px;border-radius:12px;background:var(--cream);border:1.5px solid var(--border);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;color:var(--mid);">← Voltar</button>
-      <button onclick="validarEntrega('${lid}')" style="flex:1;padding:12px;border-radius:12px;background:#E05A3A;color:#fff;border:none;font-family:var(--font);font-size:13px;font-weight:800;cursor:pointer;">Continuar → Pagamento</button>
+      <button onclick="validarEntrega('${lid}')" style="flex:1;padding:12px;border-radius:12px;background:#e65e32;color:#fff;border:none;font-family:var(--font);font-size:13px;font-weight:800;cursor:pointer;">Continuar → Pagamento</button>
     </div>`;
   }
 
@@ -1589,7 +1643,7 @@ function renderCheckoutLoja(c) {
 
     <div style="display:flex;gap:10px;">
       <button onclick="saveStepData('${lid}');prevStep('${lid}')" style="padding:15px 20px;border-radius:14px;background:var(--cream);border:1.5px solid var(--border);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;color:var(--mid);">← Voltar</button>
-      <button onclick="finalizarPedido('${lid}')" style="flex:1;padding:15px;border-radius:14px;background:#E05A3A;color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;" id="btn-fin-${lid}">
+      <button onclick="finalizarPedido('${lid}')" style="flex:1;padding:15px;border-radius:14px;background:#e65e32;color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;" id="btn-fin-${lid}">
         Mandar o pedido! 🚀
       </button>
     </div>`;
@@ -1597,8 +1651,8 @@ function renderCheckoutLoja(c) {
 
   return `<div style="margin:12px 12px 0;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 2px 16px rgba(224,90,58,.08);border:1px solid rgba(224,90,58,.12);">
     <!-- Header da loja -->
-    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:linear-gradient(135deg,${normalizeHex(l.cor_primaria||'#C0392B')}18,transparent);border-bottom:1px solid rgba(224,90,58,.1);">
-      ${l.logo_url?`<img src="${l.logo_url}" style="width:40px;height:40px;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,.6);" onerror="this.style.display='none'">`:`<div style="width:40px;height:40px;border-radius:12px;background:${normalizeHex(l.cor_primaria||'#C0392B')}30;display:flex;align-items:center;justify-content:center;font-size:20px;">${l._emoji}</div>`}
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:linear-gradient(135deg,${normalizeHex(l.cor_primaria||'#c94e24')}18,transparent);border-bottom:1px solid rgba(224,90,58,.1);">
+      ${l.logo_url?`<img src="${l.logo_url}" style="width:40px;height:40px;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,.6);" onerror="this.style.display='none'">`:`<div style="width:40px;height:40px;border-radius:12px;background:${normalizeHex(l.cor_primaria||'#c94e24')}30;display:flex;align-items:center;justify-content:center;font-size:20px;">${l._emoji}</div>`}
       <div style="flex:1;">
         <div style="font-size:14px;font-weight:800;color:var(--dark);">${l.nome}</div>
         <div style="font-size:11px;color:var(--gray);">${c.itens.reduce((s,i)=>s+i.qtd,0)} ${c.itens.reduce((s,i)=>s+i.qtd,0)===1?'item':'itens'} na sacola</div>
@@ -2116,10 +2170,10 @@ function sair() {
 // HELPERS
 // ═══════════════════════════════════════════════════════
 function normalizeHex(cor) {
-  if(!cor) return '#C0392B';
+  if(!cor) return '#c94e24';
   if(cor.startsWith('#')) return cor;
   const m=cor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-  return m?'#'+[m[1],m[2],m[3]].map(n=>(+n).toString(16).padStart(2,'0')).join(''):'#C0392B';
+  return m?'#'+[m[1],m[2],m[3]].map(n=>(+n).toString(16).padStart(2,'0')).join(''):'#c94e24';
 }
 
 function darken(hex,amt) {
