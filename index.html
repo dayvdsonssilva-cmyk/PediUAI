@@ -1876,6 +1876,15 @@ canvas, [data-touch="free"] { touch-action: none !important; }
           <button type="button" onclick="toggleSenha('rp','olho-rp')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aaa;font-size:1rem;padding:0;line-height:1" id="olho-rp">&#128065;</button>
         </div>
       </div>
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-top:4px">
+        <input type="checkbox" id="r-aceita-termos"
+          style="width:18px;height:18px;min-width:18px;margin-top:2px;accent-color:var(--red);cursor:pointer;">
+        <label for="r-aceita-termos" style="font-size:.78rem;color:#aaa;line-height:1.5;cursor:pointer">
+          Li e aceito os
+          <span onclick="abrirTermos()" style="color:var(--red);font-weight:700;text-decoration:underline;cursor:pointer">Termos de Serviço</span>
+          da PEDIWAY
+        </label>
+      </div>
       <button class="btn-primary full" onclick="doRegister()">Criar conta grátis</button>
       <div class="auth-footer">Já tem conta? <a onclick="goTo('s-login')">Entrar</a></div>
     </div>
@@ -3275,94 +3284,101 @@ canvas, [data-touch="free"] { touch-action: none !important; }
 <script type="module" src="/src/main.js"></script>
 
 <script>
+// ─── Mapa sigla → ID numérico do IBGE (evita problema com endpoint por sigla) ─
+const IBGE_ESTADOS_URL  = 'https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome';
+const IBGE_CIDADES_URL  = id => `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${id}/municipios?orderBy=nome`;
+
+let _ibgeMapaSiglaId = {};   // { 'SP': 35, 'DF': 53, ... }
+let _ibgeEstadosCache = [];  // lista completa de estados
+
+async function _ibgeCarregarEstados() {
+  if (_ibgeEstadosCache.length) return _ibgeEstadosCache;
+  const r = await fetch(IBGE_ESTADOS_URL);
+  if (!r.ok) throw new Error('IBGE estados indisponível (' + r.status + ')');
+  const lista = await r.json();
+  _ibgeEstadosCache = lista;
+  lista.forEach(e => { _ibgeMapaSiglaId[e.sigla] = e.id; });
+  return lista;
+}
+
+async function _ibgeCarregarCidades(sigla) {
+  // Garante que o mapa sigla→id está carregado
+  if (!_ibgeMapaSiglaId[sigla]) await _ibgeCarregarEstados();
+  const id = _ibgeMapaSiglaId[sigla];
+  if (!id) throw new Error('Estado não encontrado: ' + sigla);
+  const r = await fetch(IBGE_CIDADES_URL(id));
+  if (!r.ok) throw new Error('IBGE cidades indisponível (' + r.status + ')');
+  return r.json();
+}
+
+function _ibgePopularSelect(sel, estados, valorSelecionado) {
+  sel.innerHTML = '<option value="">Selecione o estado...</option>';
+  estados.forEach(e => {
+    const opt = document.createElement('option');
+    opt.value = e.sigla;
+    opt.textContent = e.nome;
+    sel.appendChild(opt);
+  });
+  if (valorSelecionado) sel.value = valorSelecionado;
+}
+
+function _ibgePopularCidades(cidSel, cidades, cidadeSelecionada) {
+  cidSel.innerHTML = '<option value="">Selecione a cidade...</option>';
+  cidades.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.nome; opt.textContent = c.nome;
+    cidSel.appendChild(opt);
+  });
+  cidSel.disabled = false;
+  cidSel.style.opacity = '1';
+  if (cidadeSelecionada) cidSel.value = cidadeSelecionada;
+}
+
+// ─── PAINEL (Configurações) ───────────────────────────────────────────────────
 let _dashEstadosOk = false;
 
-// Carrega os estados via IBGE.
-// opcoes = { estado: 'SP', cidade: 'São Paulo' } → pré-seleciona após carregar.
 window.carregarEstadosDash = async function(opcoes) {
   const sel = document.getElementById('cfg-estado');
   if (!sel) return;
 
-  if (_dashEstadosOk) {
-    // Lista já carregada — só pré-seleciona se necessário
-    if (opcoes?.estado) {
-      sel.value = opcoes.estado;
-      if (opcoes?.cidade) await window.carregarCidadesDash(opcoes.estado, opcoes.cidade);
-    }
-    return;
-  }
-
   try {
-    const r = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
-    if (!r.ok) throw new Error('IBGE indisponível');
-    const estados = await r.json();
-
-    // Limpa opções antigas (exceto placeholder) e repopula
-    while (sel.options.length > 1) sel.remove(1);
-    estados.forEach(e => {
-      const opt = document.createElement('option');
-      opt.value = e.sigla;
-      opt.textContent = e.nome;
-      sel.appendChild(opt);
-    });
-
-    _dashEstadosOk = true;
-
-    // Pré-seleciona estado e carrega cidades se veio dos dados salvos
-    if (opcoes?.estado) {
+    const estados = await _ibgeCarregarEstados();
+    if (!_dashEstadosOk) {
+      while (sel.options.length > 1) sel.remove(1);
+      _ibgePopularSelect(sel, estados, opcoes?.estado || null);
+      _dashEstadosOk = true;
+    } else if (opcoes?.estado) {
       sel.value = opcoes.estado;
-      if (opcoes?.cidade) await window.carregarCidadesDash(opcoes.estado, opcoes.cidade);
+    }
+    if (opcoes?.estado && opcoes?.cidade) {
+      await window.carregarCidadesDash(opcoes.estado, opcoes.cidade);
     }
   } catch(e) {
-    console.warn('[PEDIWAY] Falha ao carregar estados IBGE:', e.message);
+    console.warn('[PEDIWAY] carregarEstadosDash:', e.message);
   }
 };
 
-// Carrega cidades do estado (uf).
-// cidadeParaSetar → pré-seleciona após carregar (usado ao restaurar config salva).
 window.carregarCidadesDash = async function(uf, cidadeParaSetar) {
   const cidSel = document.getElementById('cfg-cidade');
   if (!cidSel) return;
-
   if (!uf) {
     cidSel.innerHTML = '<option value="">Selecione o estado primeiro</option>';
-    cidSel.disabled = true;
-    cidSel.style.opacity = '.5';
+    cidSel.disabled = true; cidSel.style.opacity = '.5';
     return;
   }
-
-  cidSel.disabled = true;
-  cidSel.style.opacity = '.5';
+  cidSel.disabled = true; cidSel.style.opacity = '.5';
   cidSel.innerHTML = '<option>Carregando cidades...</option>';
-
   try {
-    const r = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + uf + '/municipios?orderBy=nome');
-    if (!r.ok) throw new Error('IBGE indisponível');
-    const cidades = await r.json();
-
-    cidSel.innerHTML = '<option value="">Selecione a cidade...</option>';
-    cidades.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.nome;
-      opt.textContent = c.nome;
-      cidSel.appendChild(opt);
-    });
-
-    cidSel.disabled = false;
-    cidSel.style.opacity = '1';
-
-    // Restaura cidade salva, se informada
-    if (cidadeParaSetar) cidSel.value = cidadeParaSetar;
-
+    const cidades = await _ibgeCarregarCidades(uf);
+    _ibgePopularCidades(cidSel, cidades, cidadeParaSetar || null);
   } catch(e) {
     cidSel.innerHTML = '<option value="">Erro ao carregar cidades</option>';
-    cidSel.disabled = false;
-    cidSel.style.opacity = '1';
-    console.warn('[PEDIWAY] Falha ao carregar cidades IBGE:', e.message);
+    cidSel.disabled = false; cidSel.style.opacity = '1';
+    console.warn('[PEDIWAY] carregarCidadesDash:', e.message);
   }
 };
 
-// ─── Estados/Cidades para o formulário de CADASTRO ───────────────────────────
+// ─── CADASTRO ────────────────────────────────────────────────────────────────
 let _cadEstadosOk = false;
 
 window.carregarEstadosCadastro = async function() {
@@ -3370,20 +3386,12 @@ window.carregarEstadosCadastro = async function() {
   const sel = document.getElementById('restado');
   if (!sel) return;
   try {
-    const r = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
-    if (!r.ok) throw new Error();
-    const estados = await r.json();
-    sel.innerHTML = '<option value="">Selecione o estado...</option>';
-    estados.forEach(e => {
-      const opt = document.createElement('option');
-      opt.value = e.sigla;
-      opt.textContent = e.nome;
-      sel.appendChild(opt);
-    });
+    const estados = await _ibgeCarregarEstados();
+    _ibgePopularSelect(sel, estados, null);
     _cadEstadosOk = true;
   } catch(e) {
     sel.innerHTML = '<option value="">Erro ao carregar estados</option>';
-    console.warn('[PEDIWAY] Falha ao carregar estados (cadastro):', e.message);
+    console.warn('[PEDIWAY] carregarEstadosCadastro:', e.message);
   }
 };
 
@@ -3398,27 +3406,106 @@ window.carregarCidadesCadastro = async function(uf) {
   cidSel.disabled = true; cidSel.style.opacity = '.5';
   cidSel.innerHTML = '<option>Carregando cidades...</option>';
   try {
-    const r = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + uf + '/municipios?orderBy=nome');
-    if (!r.ok) throw new Error();
-    const cidades = await r.json();
-    cidSel.innerHTML = '<option value="">Selecione a cidade...</option>';
-    cidades.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.nome; opt.textContent = c.nome;
-      cidSel.appendChild(opt);
-    });
-    cidSel.disabled = false; cidSel.style.opacity = '1';
+    const cidades = await _ibgeCarregarCidades(uf);
+    _ibgePopularCidades(cidSel, cidades, null);
   } catch(e) {
     cidSel.innerHTML = '<option value="">Erro ao carregar cidades</option>';
     cidSel.disabled = false; cidSel.style.opacity = '1';
-    console.warn('[PEDIWAY] Falha ao carregar cidades (cadastro):', e.message);
+    console.warn('[PEDIWAY] carregarCidadesCadastro:', e.message);
   }
 };
 
-// Pré-carrega os estados do formulário de cadastro ao abrir a página
 document.addEventListener('DOMContentLoaded', function() {
   window.carregarEstadosCadastro();
 });
+
+// ─── Modal de Termos de Serviço ───────────────────────────────────────────────
+window.abrirTermos = function() {
+  document.getElementById('modal-termos').style.display = 'flex';
+};
+window.fecharTermos = function() {
+  document.getElementById('modal-termos').style.display = 'none';
+};
+
+// Wrapper que valida o aceite dos termos antes de chamar o doRegister original
+document.addEventListener('DOMContentLoaded', function() {
+  // Espera o auth.js carregar e sobrescreve doRegister com validação de termos
+  setTimeout(function() {
+    const _originalDoRegister = window.doRegister;
+    window.doRegister = function() {
+      const checkbox = document.getElementById('r-aceita-termos');
+      if (!checkbox?.checked) {
+        // Pulsa o checkbox pra chamar atenção
+        const label = checkbox?.closest('div') || checkbox?.parentElement;
+        if (label) {
+          label.style.transition = 'opacity .15s';
+          label.style.opacity = '.4';
+          setTimeout(() => { label.style.opacity = '1'; }, 150);
+          setTimeout(() => { label.style.opacity = '.4'; }, 300);
+          setTimeout(() => { label.style.opacity = '1'; }, 450);
+        }
+        // Mostra aviso inline
+        let aviso = document.getElementById('aviso-termos');
+        if (!aviso) {
+          aviso = document.createElement('div');
+          aviso.id = 'aviso-termos';
+          aviso.style.cssText = 'font-size:.75rem;color:#C0392B;font-weight:600;margin-top:-8px;margin-bottom:4px';
+          aviso.textContent = '⚠️ Você precisa aceitar os Termos de Serviço para continuar.';
+          const btn = document.querySelector('#r-aceita-termos')?.closest('div')?.parentElement;
+          if (btn) btn.insertBefore(aviso, btn.querySelector('button'));
+        }
+        aviso.style.display = 'block';
+        setTimeout(() => { if(aviso) aviso.style.display = 'none'; }, 4000);
+        return;
+      }
+      if (typeof _originalDoRegister === 'function') _originalDoRegister();
+    };
+  }, 800);
+});
 </script>
+
+<!-- MODAL TERMOS DE SERVIÇO -->
+<div id="modal-termos" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#1a1a1a;border:1px solid rgba(255,255,255,.12);border-radius:18px;width:100%;max-width:520px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:20px 24px 16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:1rem;font-weight:900;color:#fff">📄 Termos de Serviço</div>
+        <div style="font-size:.72rem;color:#888;margin-top:2px">PEDIWAY — Plataforma de Delivery Independente</div>
+      </div>
+      <button onclick="fecharTermos()" style="background:rgba(255,255,255,.08);border:none;border-radius:8px;width:32px;height:32px;color:#aaa;font-size:1.1rem;cursor:pointer">×</button>
+    </div>
+    <div style="overflow-y:auto;padding:20px 24px;flex:1;font-size:.82rem;color:#ccc;line-height:1.8">
+
+      <p style="color:#aaa;margin-bottom:16px">Ao criar uma conta na PEDIWAY, você concorda com os termos abaixo. Leia com atenção.</p>
+
+      <div style="font-weight:800;color:#fff;margin-bottom:6px">1. Serviço prestado</div>
+      <p style="margin-bottom:14px">A PEDIWAY oferece uma plataforma de gestão de pedidos, cardápio digital e delivery para estabelecimentos comerciais. O acesso é mediante assinatura mensal após o período de teste gratuito de 14 dias.</p>
+
+      <div style="font-weight:800;color:#fff;margin-bottom:6px">2. Responsabilidades do estabelecimento</div>
+      <p style="margin-bottom:14px">O estabelecimento é responsável pela veracidade das informações cadastradas, pela gestão dos pedidos recebidos, pelo atendimento ao cliente final e pelo cumprimento das legislações aplicáveis ao seu negócio.</p>
+
+      <div style="font-weight:800;color:#fff;margin-bottom:6px">3. Dados e privacidade</div>
+      <p style="margin-bottom:14px">Os dados cadastrados são utilizados exclusivamente para operação da plataforma. A PEDIWAY não compartilha informações com terceiros sem consentimento, exceto quando exigido por lei.</p>
+
+      <div style="font-weight:800;color:#fff;margin-bottom:6px">4. Pagamento e cancelamento</div>
+      <p style="margin-bottom:14px">O plano gratuito tem duração de 14 dias. Após esse período, é necessário assinar um plano pago para continuar usando. O cancelamento pode ser feito a qualquer momento dentro do painel.</p>
+
+      <div style="font-weight:800;color:#fff;margin-bottom:6px">5. Disponibilidade</div>
+      <p style="margin-bottom:14px">A PEDIWAY se compromete a manter o serviço disponível, mas não garante disponibilidade ininterrupta. Manutenções programadas serão comunicadas com antecedência.</p>
+
+      <div style="font-weight:800;color:#fff;margin-bottom:6px">6. Uso aceitável</div>
+      <p style="margin-bottom:14px">É proibido utilizar a plataforma para fins ilegais, divulgar conteúdo ofensivo ou tentar comprometer a segurança do sistema. O descumprimento pode resultar no cancelamento da conta.</p>
+
+      <div style="font-weight:800;color:#fff;margin-bottom:6px">7. Alterações nos termos</div>
+      <p>A PEDIWAY pode atualizar estes termos a qualquer momento. Os usuários serão notificados por e-mail em caso de mudanças relevantes.</p>
+
+    </div>
+    <div style="padding:16px 24px;border-top:1px solid rgba(255,255,255,.08)">
+      <button onclick="fecharTermos()" style="width:100%;background:var(--red);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer">
+        Entendi ✓
+      </button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
