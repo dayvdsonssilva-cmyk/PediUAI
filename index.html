@@ -286,11 +286,17 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 /* Configurações — layout por tópicos */
 .cfg-topics-wrap { display:flex; flex-direction:column; gap:16px; margin-top:20px; max-width:640px; }
 .cfg-topic-card { background:#fff; border:1px solid var(--border); border-radius:16px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.04); }
-.cfg-topic-header { display:flex; align-items:center; gap:14px; padding:16px 20px; background:#faf8f5; border-bottom:1px solid var(--border); }
+.cfg-topic-header { display:flex; align-items:center; gap:14px; padding:16px 20px; background:#faf8f5; cursor:pointer; user-select:none; transition:background .15s; }
+.cfg-topic-header:hover { background:#f0ebe4; }
+.cfg-topic-header.open { border-bottom:1px solid var(--border); }
 .cfg-topic-icon { width:38px; height:38px; border-radius:10px; background:#fff; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:1.15rem; flex-shrink:0; }
 .cfg-topic-title { font-size:.88rem; font-weight:800; color:#1a1a1a; line-height:1.2; }
 .cfg-topic-sub { font-size:.72rem; color:#aaa; font-weight:400; margin-top:2px; }
-.cfg-topic-body { padding:20px; display:flex; flex-direction:column; gap:16px; }
+.cfg-topic-arrow { margin-left:auto; width:22px; height:22px; border-radius:50%; background:rgba(0,0,0,.06); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:transform .25s cubic-bezier(.4,0,.2,1); }
+.cfg-topic-header.open .cfg-topic-arrow { transform:rotate(180deg); }
+.cfg-topic-body { padding:20px; display:none; flex-direction:column; gap:16px; }
+.cfg-topic-body.open { display:flex; animation:cfg-slide-down .22s cubic-bezier(.4,0,.2,1); }
+@keyframes cfg-slide-down { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:none} }
 .cfg-actions { max-width:640px; display:flex; flex-direction:column; gap:10px; margin-top:4px; }
 .form-group-light { display:flex; flex-direction:column; gap:6px; }
 .form-group-light label { font-size:0.82rem; font-weight:600; color:#555; }
@@ -2039,7 +2045,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
     <button class="tab-btn"        data-tab="cardapio"       onclick="showTab('cardapio',this)">Cardápio</button>
     <button class="tab-btn"        data-tab="fresquinho"     onclick="showTab('fresquinho',this)">Fresquinho</button>
     <button class="tab-btn"        data-tab="financeiro"     onclick="showTab('financeiro',this)">💰 Financeiro</button>
-    <button class="tab-btn"        data-tab="configuracoes"  onclick="showTab('configuracoes',this);carregarEstadosDash()">Configurações</button>
+    <button class="tab-btn"        data-tab="configuracoes"  onclick="showTab('configuracoes',this);carregarEstadosDash();setTimeout(initCfgAccordion,80)">Configurações</button>
   </nav>
 
   <!-- Visao Geral -->
@@ -2357,6 +2363,8 @@ canvas, [data-touch="free"] { touch-action: none !important; }
               <div class="cfg-topic-title">Identidade Visual</div>
               <div class="cfg-topic-sub">Logo, cores e aparência do seu cardápio</div>
             </div>
+          
+          <div class="cfg-topic-arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="#888" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           </div>
           <div class="cfg-topic-body">
 
@@ -2401,6 +2409,8 @@ canvas, [data-touch="free"] { touch-action: none !important; }
               <div class="cfg-topic-title">Informações do Estabelecimento</div>
               <div class="cfg-topic-sub">Dados que aparecem no cardápio e para os clientes</div>
             </div>
+          
+          <div class="cfg-topic-arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="#888" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           </div>
           <div class="cfg-topic-body">
 
@@ -2460,6 +2470,8 @@ canvas, [data-touch="free"] { touch-action: none !important; }
               <div class="cfg-topic-title">Links e Acesso</div>
               <div class="cfg-topic-sub">Status da loja, link do cardápio e link do garçom</div>
             </div>
+          
+          <div class="cfg-topic-arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="#888" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           </div>
           <div class="cfg-topic-body">
 
@@ -2512,6 +2524,8 @@ canvas, [data-touch="free"] { touch-action: none !important; }
               <div class="cfg-topic-title">Contato e Redes Sociais</div>
               <div class="cfg-topic-sub">WhatsApp, telefone, Instagram, TikTok e site</div>
             </div>
+          
+          <div class="cfg-topic-arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="#888" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           </div>
           <div class="cfg-topic-body">
 
@@ -2560,6 +2574,8 @@ canvas, [data-touch="free"] { touch-action: none !important; }
               <div class="cfg-topic-title">Entrega e Pagamento</div>
               <div class="cfg-topic-sub">Modalidades de entrega, taxa e formas de pagamento aceitas</div>
             </div>
+          
+          <div class="cfg-topic-arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="#888" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           </div>
           <div class="cfg-topic-body">
 
@@ -2660,6 +2676,8 @@ canvas, [data-touch="free"] { touch-action: none !important; }
               <div class="cfg-topic-title">Nota Fiscal</div>
               <div class="cfg-topic-sub">CNPJ e mensagem que aparecem na nota do pedido</div>
             </div>
+          
+          <div class="cfg-topic-arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="#888" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           </div>
           <div class="cfg-topic-body">
 
@@ -2686,6 +2704,8 @@ canvas, [data-touch="free"] { touch-action: none !important; }
               <div class="cfg-topic-title">Plano e Assinatura</div>
               <div class="cfg-topic-sub">Seu plano atual e opções de upgrade</div>
             </div>
+          
+          <div class="cfg-topic-arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="#888" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           </div>
           <div class="cfg-topic-body">
 
