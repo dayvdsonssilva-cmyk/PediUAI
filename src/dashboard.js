@@ -3264,20 +3264,26 @@ async function abrirComanda(num) {
   const numEl = document.getElementById('comanda-num-mesa');
   if (numEl) numEl.textContent = num;
 
-  // Carrega cardápio
-  const prods = await carregarCardapioComanda();
-  renderCardapioComanda(key, prods);
-  renderPedidosComanda(key);
-  renderCarrinhoComanda(key);
+  // Abre o modal ANTES de carregar dados — nunca fica preso por erro de rede
+  window.switchComandaTab?.('pedido');
+  if (modal) modal.classList.add('open');
 
   // Preenche nome salvo
   const nomeInput = document.getElementById('comanda-nome-cliente');
   if (nomeInput) nomeInput.value = _nomeComanda[key] || '';
 
-  // Sempre abre na tab "Novo pedido"
-  window.switchComandaTab('pedido');
+  // Carrega cardápio (com proteção de erro)
+  try {
+    const prods = await carregarCardapioComanda();
+    renderCardapioComanda(key, prods);
+  } catch(e) {
+    console.error('[comanda] erro ao carregar cardápio:', e);
+    const el = document.getElementById('comanda-cardapio');
+    if (el) el.innerHTML = '<div style="color:#aaa;font-size:.8rem;text-align:center;padding:24px">Erro ao carregar cardápio. Tente fechar e abrir novamente.</div>';
+  }
 
-  if (modal) modal.classList.add('open');
+  renderPedidosComanda(key);
+  renderCarrinhoComanda(key);
 }
 
 function renderCardapioComanda(mesaKey, prods) {
