@@ -172,7 +172,7 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 /* LINK BOX */
 .link-box { background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px 24px; display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; gap:16px; }
 .link-label { font-size:0.72rem; font-weight:700; color:var(--red); letter-spacing:0.06em; margin-bottom:4px; }
-.link-url { font-size:0.95rem; font-weight:600; color:#333; }
+.link-url { font-size:0.88rem; font-weight:600; color:#333; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; display:block; }
 .btn-copiar { background:var(--red); color:white; border:none; padding:10px 22px; border-radius:8px; font-family:'Poppins',sans-serif; font-size:0.9rem; font-weight:600; cursor:pointer; white-space:nowrap; }
 .btn-copiar:hover { background:var(--red-dark); }
 
@@ -1975,7 +1975,7 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
         <!-- Link clientes -->
         <div class="link-box" style="margin-bottom:0">
-          <div>
+          <div style="flex:1;min-width:0;overflow:hidden">
             <div class="link-label">🛵 LINK DO CARDÁPIO</div>
             <div class="link-url" id="link-url">pediway.vercel.app/meu-estabelecimento</div>
           </div>
@@ -1983,7 +1983,7 @@ input, select, textarea { font-size: 16px !important; } /* iOS não dá zoom se 
         </div>
         <!-- Link garçons -->
         <div class="link-box" style="margin-bottom:0;background:#faf5f0;border:1.5px dashed #d4a574">
-          <div>
+          <div style="flex:1;min-width:0;overflow:hidden">
             <div class="link-label" style="color:#b07040">🍽️ COMANDAS DIGITAIS <span style="background:#f0e0d0;padding:1px 7px;border-radius:50px;font-size:.58rem;margin-left:4px;color:#b07040">GARÇOM</span></div>
             <div class="link-url" id="link-url-garcom" style="color:#6b4c30">pediway.vercel.app/comandas/...</div>
           </div>
