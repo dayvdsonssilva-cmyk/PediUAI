@@ -2121,6 +2121,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn-primary" onclick="abrirModalItem()">+ Adicionar item</button>
           <button onclick="abrirGerenciadorAdicionais()" style="padding:11px 18px;border:1.5px solid var(--red);background:none;border-radius:12px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.82rem;color:var(--red);cursor:pointer;white-space:nowrap">🧩 Adicionais</button>
+          <button onclick="abrirModalQuente()" style="padding:11px 18px;border:none;background:linear-gradient(135deg,#e65e32,#c94e24);border-radius:12px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.82rem;color:#fff;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(230,94,50,.4)">🔥 QUENTE</button>
         </div>
       </div>
       <div class="cardapio-grid" id="cardapio-grid">
@@ -2771,6 +2772,55 @@ canvas, [data-touch="free"] { touch-action: none !important; }
   </div>
 </div>
 
+</div>
+
+<!-- MODAL: QUENTE — Promoção por percentual -->
+<div id="modal-quente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9100;align-items:flex-end;justify-content:center;padding:0">
+  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+    <!-- Header -->
+    <div style="padding:18px 20px 14px;border-bottom:1px solid #f0ebe4;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div>
+        <div style="font-size:1rem;font-weight:900;color:#1a1a1a;display:flex;align-items:center;gap:8px">🔥 Promoção QUENTE</div>
+        <div style="font-size:.72rem;color:#aaa;margin-top:2px">Defina o desconto e selecione os produtos</div>
+      </div>
+      <button onclick="fecharModalQuente()" style="background:rgba(0,0,0,.06);border:none;border-radius:50%;width:32px;height:32px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+
+    <div style="overflow-y:auto;padding:20px;flex:1;display:flex;flex-direction:column;gap:20px">
+
+      <!-- Percentual -->
+      <div>
+        <div style="font-size:.78rem;font-weight:800;color:#555;margin-bottom:10px">Percentual de desconto</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="quente-percentuais">
+          <!-- gerado via JS -->
+        </div>
+      </div>
+
+      <!-- Preview do desconto -->
+      <div id="quente-preview" style="display:none;background:linear-gradient(135deg,#e65e32,#c94e24);border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:.7rem;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.06em">Desconto ativo</div>
+          <div style="font-size:1.6rem;font-weight:900;color:#fff" id="quente-preview-pct">10% OFF</div>
+        </div>
+        <div style="font-size:2.5rem">🔥</div>
+      </div>
+
+      <!-- Produtos -->
+      <div>
+        <div style="font-size:.78rem;font-weight:800;color:#555;margin-bottom:10px">Selecione os produtos em promoção</div>
+        <div id="quente-lista-produtos" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto">
+          <div style="text-align:center;color:#aaa;font-size:.82rem;padding:20px">Carregando produtos...</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:14px 20px 24px;border-top:1px solid #f0ebe4;flex-shrink:0;display:flex;gap:10px">
+      <button onclick="fecharModalQuente()" style="flex:1;background:none;border:1.5px solid #ddd;border-radius:12px;padding:13px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;color:#888;cursor:pointer">Cancelar</button>
+      <button onclick="salvarQuente()" style="flex:2;background:linear-gradient(135deg,#e65e32,#c94e24);border:none;border-radius:12px;padding:13px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.9rem;color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(230,94,50,.4)">🔥 Salvar promoção</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL: Adicionar Item -->
