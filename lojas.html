@@ -3,9 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#0f0f0f">
+<meta name="theme-color" content="#e65e32">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PEDIWAY">
+<meta name="description" content="Peça direto dos restaurantes. Sem comissão, sem taxa extra.">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="/manifest.json">
+
+<!-- Apple Touch Icons -->
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png">
+
+<!-- Splash screen iOS -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
 <title>PEDIWAY</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -456,6 +471,32 @@ input,select,textarea{font-size:16px !important;touch-action:manipulation;}
   </nav>
 
 </div><!-- #app -->
+
+<!-- PWA Install Banner -->
+<div id="pwa-install-banner" style="
+  position:fixed;bottom:0;left:0;right:0;z-index:99999;
+  background:linear-gradient(135deg,#1a0a08,#2a1200);
+  border-top:2px solid #e65e32;
+  border-radius:20px 20px 0 0;
+  padding:18px 20px 30px;
+  display:flex;align-items:center;gap:14px;
+  box-shadow:0 -8px 32px rgba(0,0,0,.5);
+  transform:translateY(120%);
+  opacity:0;
+  transition:transform .45s cubic-bezier(.25,.46,.45,.94), opacity .35s ease;
+">
+  <img src="/icons/icon-96.png" width="52" height="52"
+    style="border-radius:14px;flex-shrink:0;box-shadow:0 4px 12px rgba(230,94,50,.4)"
+    onerror="this.style.display=\'none\'">
+  <div style="flex:1;min-width:0">
+    <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:2px">Instalar PEDIWAY</div>
+    <div style="font-size:11px;color:rgba(255,255,255,.55);line-height:1.4">Adicione na tela inicial e acesse como app, sem precisar da Play Store</div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0">
+    <button onclick="pwaBtnInstalar()" style="background:#e65e32;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-family:\'Poppins\',sans-serif;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(230,94,50,.45)">Instalar</button>
+    <button onclick="pwaBtnDismiss()" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:7px 16px;font-family:\'Poppins\',sans-serif;font-weight:600;font-size:11px;cursor:pointer">Agora não</button>
+  </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════════════════
@@ -2283,6 +2324,58 @@ function toast(msg) {
 // START
 // ═══════════════════════════════════════════════════════
 init();
+
+// ── PWA: Registro do Service Worker ──────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        console.log('[PWA] Service Worker registrado:', reg.scope);
+        setInterval(() => reg.update(), 30 * 60 * 1000);
+      })
+      .catch(err => console.warn('[PWA] Falha ao registrar SW:', err));
+  });
+}
+
+// ── PWA: Banner "Instalar app" no Android ────────────────────────────────────
+let _installPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPrompt = e;
+  const jaInstalou = localStorage.getItem('pw_pwa_instalado');
+  if (!jaInstalou) {
+    setTimeout(() => {
+      const b = document.getElementById('pwa-install-banner');
+      if (b) { b.style.transform = 'translateY(0)'; b.style.opacity = '1'; }
+    }, 3000);
+  }
+});
+
+window.pwaBtnInstalar = async function() {
+  if (!_installPrompt) return;
+  _installPrompt.prompt();
+  const { outcome } = await _installPrompt.userChoice;
+  if (outcome === 'accepted') {
+    localStorage.setItem('pw_pwa_instalado', '1');
+    toast('✅ PEDIWAY instalado no seu celular!');
+  }
+  const b = document.getElementById('pwa-install-banner');
+  if (b) b.style.transform = 'translateY(120%)';
+  _installPrompt = null;
+};
+
+window.pwaBtnDismiss = function() {
+  const b = document.getElementById('pwa-install-banner');
+  if (b) b.style.transform = 'translateY(120%)';
+  localStorage.setItem('pw_pwa_instalado', '1');
+};
+
+window.addEventListener('appinstalled', () => {
+  const b = document.getElementById('pwa-install-banner');
+  if (b) b.style.transform = 'translateY(120%)';
+  localStorage.setItem('pw_pwa_instalado', '1');
+});
 </script>
 </body>
 </html>
