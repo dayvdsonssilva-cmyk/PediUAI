@@ -441,6 +441,13 @@
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+// ── ROTAS RESERVADAS — redireciona antes de qualquer coisa ────────────────────
+const _slug_raw = location.pathname.replace(/^\//, '').split('/')[0] || '';
+const _reservados = ['baixar','admin','checkout','lojas','comandas','sw.js','manifest.json','icons','src','assets','sounds'];
+if (_reservados.includes(_slug_raw.toLowerCase())) {
+  window.location.replace('/' + _slug_raw);
+}
+
 // ── SUPABASE ──────────────────────────────────────────────────────────────────
 const SUPA_URL = 'https://nmttkjmfazcipefeakkx.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdHRram1mYXpjaXBlZmVha2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTM3NjQsImV4cCI6MjA5MDI4OTc2NH0.MMTX_6iQJk7Uv3HPSk0m32_BihvqsWhHJ_qiRkw0WYo';
