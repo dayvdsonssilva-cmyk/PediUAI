@@ -2227,12 +2227,184 @@ window.imprimirComanda = function() {
   const estab = getEstab();
   const peds  = _pedidosMesas[_mesaAtual] || [];
   const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  const total = peds.reduce((s,p) => s + Number(p.total||0), 0);
+  const subtotal = peds.reduce((s,p) => s + Number(p.total||0), 0);
   const agora = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const cnpjRaw = (estab?.cnpj || '').replace(/\D/g,'');
   const cnpjFmt = cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
   const insta   = estab?.instagram ? '@' + estab.instagram : '';
   const msgFim  = estab?.msg_nota || 'Obrigado pela preferencia!';
+
+  // Taxa de serviço — respeita se o garçom removeu
+  const taxaAtiva = estab?.taxa_servico === true && !_taxaServicoRemovida;
+  const percServico = Number(estab?.perc_servico || 10);
+  const valorTaxa = taxaAtiva ? subtotal * (percServico / 100) : 0;
+  const total = subtotal + valorTaxa;
+
+  // Agrupa por nome
+  const grupos = {};
+  peds.forEach(p => {
+    const nm = p.cliente_nome || _mesaAtual;
+    if (!grupos[nm]) grupos[nm] = [];
+    grupos[nm].push(p);
+  });
+
+  const linhaTaxa = taxaAtiva ? `
+  <div class="taxa-row">
+    <span>Subtotal</span><span>${fmtR(subtotal)}</span>
+  </div>
+  <div class="taxa-row">
+    <span>Taxa de serviço (${percServico}%)</span><span>${fmtR(valorTaxa)}</span>
+  </div>` : '';
+
+  const html = `<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<title>Comanda ${_mesaAtual}</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: #000;
+    background: #fff;
+    width: 300px;
+    max-width: 300px;
+    margin: 0 auto;
+    padding: 14px 10px;
+  }
+  * { max-width: 100%; word-break: break-word; }
+  .center  { text-align: center; }
+  .logo    { font-size: 18px; font-weight: 900; letter-spacing: .06em; }
+  .logo-red { color: #C0392B; }
+  .empresa { font-size: 13px; font-weight: 700; margin-top: 2px; }
+  .info-sm { font-size: 10px; font-weight: 400; color: #444; line-height: 1.6; margin-top: 3px; }
+  .sep-dash  { border: none; border-top: 1px dashed #888; margin: 8px 0; }
+  .sep-thick { border: none; border-top: 3px solid #000; margin: 8px 0; }
+  .mesa-bloco {
+    background: #000; color: #fff;
+    border-radius: 6px; padding: 10px 8px 8px;
+    text-align: center; margin: 6px 0;
+  }
+  .mesa-lbl { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #aaa; }
+  .mesa-num { font-size: 38px; font-weight: 900; line-height: 1.1; }
+  .hora     { font-size: 11px; font-weight: 400; color: #888; text-align: center; }
+  .pessoa-bloco { margin-bottom: 10px; }
+  .pessoa-nome {
+    display: flex; align-items: center; gap: 8px;
+    background: #f5f5f5; border-radius: 4px;
+    padding: 5px 8px; margin-bottom: 4px;
+  }
+  .pessoa-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #C0392B; color: #fff;
+    font-size: 12px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .pessoa-label { font-size: 13px; font-weight: 700; }
+  .item {
+    display: flex; justify-content: space-between;
+    align-items: flex-start; gap: 6px;
+    font-size: 12px; font-weight: 400;
+    padding: 2px 4px;
+  }
+  .item-nome { flex: 1; }
+  .item-val  { flex-shrink: 0; font-weight: 700; }
+  .pessoa-sub {
+    display: flex; justify-content: flex-end;
+    font-size: 12px; font-weight: 700;
+    color: #C0392B; border-top: 1px dashed #ccc;
+    padding-top: 3px; margin-top: 2px;
+  }
+  .taxa-row {
+    display: flex; justify-content: space-between;
+    font-size: 12px; font-weight: 500;
+    padding: 3px 0; color: #444;
+  }
+  .total-row {
+    display: flex; justify-content: space-between;
+    font-size: 16px; font-weight: 900;
+    border-top: 3px solid #000; border-bottom: 2px solid #000;
+    padding: 6px 0; margin: 4px 0;
+  }
+  .total-val { color: #C0392B; }
+  .social { font-size: 10px; font-weight: 400; text-align: center; line-height: 1.8; color: #444; }
+  .msg-final { font-size: 12px; font-weight: 700; text-align: center; margin: 5px 0 2px; }
+  .rodape { font-size: 9px; font-weight: 400; color: #bbb; text-align: center; letter-spacing: .04em; }
+  @media print {
+    body { padding: 4px 6px; }
+    @page { margin: 0; size: 80mm auto; }
+  }
+</style></head><body>
+
+<!-- CABEÇALHO -->
+<div class="center">
+  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
+  <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
+  <div class="info-sm">
+    ${estab?.endereco ? estab.endereco + '<br>' : ''}
+    ${estab?.telefone_contato ? 'Tel: ' + estab.telefone_contato + '<br>' : ''}
+    ${cnpjFmt ? 'CNPJ: ' + cnpjFmt : ''}
+  </div>
+</div>
+
+<hr class="sep-thick">
+
+<div class="mesa-bloco">
+  <div class="mesa-lbl">Mesa</div>
+  <div class="mesa-num">${_mesaAtual.replace('Mesa ','')}</div>
+</div>
+<div class="hora">${agora}</div>
+
+<hr class="sep-dash">
+
+<!-- PEDIDOS POR PESSOA -->
+${Object.entries(grupos).map(([nm, gpeds]) => {
+  const sub = gpeds.reduce((s,p) => s + Number(p.total||0), 0);
+  const inicial = nm.charAt(0).toUpperCase();
+  const itensRows = gpeds.map(p => {
+    const itens = Array.isArray(p.itens) ? p.itens : [];
+    return itens.map(i =>
+      `<div class="item">
+        <span class="item-nome">${i.qtd||1}x ${i.nome}</span>
+        <span class="item-val">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span>
+      </div>`
+    ).join('');
+  }).join('');
+  return `<div class="pessoa-bloco">
+    <div class="pessoa-nome">
+      <div class="pessoa-avatar">${inicial}</div>
+      <span class="pessoa-label">${nm}</span>
+    </div>
+    ${itensRows}
+    <div class="pessoa-sub">${fmtR(sub)}</div>
+  </div>`;
+}).join('')}
+
+${linhaTaxa}
+
+<div class="total-row">
+  <span>TOTAL</span>
+  <span class="total-val">${fmtR(total)}</span>
+</div>
+
+${insta ? `<hr class="sep-dash"><div class="social">Instagram: <b>${insta}</b></div>` : ''}
+${estab?.site ? `<div class="social">${estab.site}</div>` : ''}
+
+<hr class="sep-dash">
+<div class="msg-final">${msgFim}</div>
+<div class="rodape">PEDIWAY · Plataforma de delivery independente</div>
+
+</body></html>`;
+
+  const w = window.open('','_blank','width=340,height=750');
+  if (!w) { alert('Permita pop-ups para imprimir.'); return; }
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 600);
+};
 
   // Agrupa por nome
   const grupos = {};
