@@ -3588,28 +3588,32 @@ window.toggleTaxaEntrega = function(ativo) {
   if (w) w.style.display = ativo ? 'block' : 'none';
 };
 
-// ═══════════════════════════════════════════════════════════
-// 🔥 MODAL QUENTE — Promoção por percentual (VERSÃO FINAL CORRIGIDA)
-// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔥 MODAL QUENTE — Promoção por percentual
+// ═══════════════════════════════════════════════════════════════════════════════
 let _quentePct = 10;
 
 window.abrirModalQuente = async function() {
   const modal = document.getElementById('modal-quente');
   if (!modal) return;
 
-  // Percentuais
+  // Gera pills de percentual (5 a 50, step 5)
   const pctWrap = document.getElementById('quente-percentuais');
   if (pctWrap) {
     pctWrap.innerHTML = [5,10,15,20,25,30,35,40,45,50].map(p => `
       <button onclick="selecionarPctQuente(${p})" id="qpct-${p}"
         style="padding:8px 16px;border-radius:100px;border:2px solid ${p===_quentePct?'#e65e32':'#e0dbd5'};
-               background:${p===_quentePct?'#e65e32':'#fff'}; color:${p===_quentePct?'#fff':'#555'}; 
-               font-weight:800;font-size:.82rem;cursor:pointer;">
+               background:${p===_quentePct?'#e65e32':'#fff'};
+               color:${p===_quentePct?'#fff':'#555'};
+               font-family:'Poppins',sans-serif;font-weight:800;font-size:.82rem;cursor:pointer;transition:all .15s">
         ${p}% OFF
       </button>`).join('');
   }
 
+  // Mostra preview
   atualizarPreviewQuente();
+
+  // Carrega produtos da loja
   await carregarProdutosQuente();
 
   modal.style.display = 'flex';
@@ -3617,159 +3621,126 @@ window.abrirModalQuente = async function() {
 
 window.selecionarPctQuente = function(pct) {
   _quentePct = pct;
+  // Atualiza visual dos botões
   [5,10,15,20,25,30,35,40,45,50].forEach(p => {
     const btn = document.getElementById('qpct-'+p);
-    if (btn) {
-      btn.style.background  = p === pct ? '#e65e32' : '#fff';
-      btn.style.borderColor = p === pct ? '#e65e32' : '#e0dbd5';
-      btn.style.color       = p === pct ? '#fff'    : '#555';
-    }
+    if (!btn) return;
+    btn.style.background     = p === pct ? '#e65e32' : '#fff';
+    btn.style.borderColor    = p === pct ? '#e65e32' : '#e0dbd5';
+    btn.style.color          = p === pct ? '#fff'    : '#555';
   });
   atualizarPreviewQuente();
+  // Recalcula preços nos cards de produto usando o preço BASE (nunca o descontado)
+  document.querySelectorAll('[data-preco-orig]').forEach(el => {
+    const base = parseFloat(el.dataset.precoOrig);
+    const desc = base * (1 - _quentePct / 100);
+    el.textContent = 'R$ ' + desc.toFixed(2).replace('.', ',');
+  });
 };
 
 function atualizarPreviewQuente() {
   const prev = document.getElementById('quente-preview');
   const lbl  = document.getElementById('quente-preview-pct');
   if (prev) prev.style.display = 'flex';
-  if (lbl) lbl.textContent = _quentePct + '% OFF';
+  if (lbl)  lbl.textContent   = _quentePct + '% OFF';
 }
 
 async function carregarProdutosQuente() {
   const lista = document.getElementById('quente-lista-produtos');
   if (!lista) return;
-
-  lista.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;">Carregando produtos...</div>';
+  lista.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:.82rem">Carregando...</div>';
 
   const estab = getEstab();
-  if (!estab?.id) return;
+  if (!estab?.id) { lista.innerHTML = '<div style="color:#aaa;font-size:.82rem;padding:20px;text-align:center">Nenhum produto encontrado</div>'; return; }
 
-  const { data: prods } = await getSupa()
-    .from('produtos')
-    .select('id, nome, preco, preco_original, em_promocao, desconto_percent, foto_url, categoria')
-    .eq('estabelecimento_id', estab.id)
-    .eq('disponivel', true)
-    .order('nome');
+  const { data: prods } = await getSupa().from('produtos').select('id,nome,preco,preco_original,em_promocao,desconto_percent,foto_url,categoria').eq('estabelecimento_id', estab.id).eq('disponivel', true).order('nome');
 
   if (!prods?.length) {
-    lista.innerHTML = '<div style="color:#aaa;padding:30px;text-align:center">Nenhum produto disponível</div>';
+    lista.innerHTML = '<div style="color:#aaa;font-size:.82rem;padding:20px;text-align:center">Nenhum produto cadastrado</div>';
     return;
   }
 
   lista.innerHTML = prods.map(p => {
-    const precoBase = parseFloat(p.preco_original || p.preco || 0);
-    const precoAtualComDesconto = precoBase * (1 - _quentePct / 100);
-
-    const estaEmPromo = p.em_promocao === true && p.desconto_percent > 0;
-
+    const emPromo = p.em_promocao && p.desconto_percent > 0;
+    // SEMPRE usa preco_original como base — nunca o preço já descontado
+    const precoBase = parseFloat(p.preco_original || p.preco);
+    const precoDesc = precoBase * (1 - _quentePct / 100);
     return `
-    <label style="display:flex;align-items:center;gap:12px;background:${estaEmPromo?'#fff8f5':'#faf8f5'};border:1.5px solid ${estaEmPromo?'#e65e32':'#f0ebe4'};border-radius:12px;padding:12px 14px;cursor:pointer;">
-      <input type="checkbox" value="${p.id}" ${estaEmPromo ? 'checked' : ''}
+    <label style="display:flex;align-items:center;gap:12px;background:${emPromo?'#fff8f5':'#faf8f5'};border:1.5px solid ${emPromo?'#e65e32':'#f0ebe4'};border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s">
+      <input type="checkbox" value="${p.id}" ${emPromo?'checked':''}
         data-preco-base="${precoBase}"
-        style="width:18px;height:18px;accent-color:#e65e32;">
-      
-      ${p.foto_url ? `<img src="${p.foto_url}" style="width:42px;height:42px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">` : 
-        `<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🍽️</div>`}
-      
-      <div style="flex:1;">
-        <div style="font-weight:700;">${p.nome}</div>
-        <div style="font-size:0.75rem;color:#666;">${p.categoria || ''}</div>
+        style="width:18px;height:18px;accent-color:#e65e32;cursor:pointer;flex-shrink:0">
+      ${p.foto_url?`<img src="${p.foto_url}" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`:
+        `<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.85rem;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nome}</div>
+        <div style="font-size:.72rem;color:#aaa">${p.categoria||''}</div>
       </div>
-      
-      <div style="text-align:right;">
-        <div style="font-size:0.75rem;color:#999;text-decoration:line-through;">R$ ${precoBase.toFixed(2).replace('.',',')}</div>
-        <div style="font-weight:800;color:#e65e32;">R$ ${precoAtualComDesconto.toFixed(2).replace('.',',')}</div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:.72rem;color:#bbb;text-decoration:line-through">R$ ${precoBase.toFixed(2).replace('.',',')}</div>
+        <div style="font-size:.9rem;font-weight:800;color:#e65e32" data-preco-orig="${precoBase}">R$ ${precoDesc.toFixed(2).replace('.',',')}</div>
       </div>
     </label>`;
   }).join('');
-};
+}
 
-// ====================== SALVAR PROMOÇÃO (VERSÃO CORRETA) ======================
 window.salvarQuente = async function() {
-  const checkboxes = document.querySelectorAll('#quente-lista-produtos input[type="checkbox"]');
-  const marcados   = Array.from(checkboxes).filter(c => c.checked);
-  const desmarcados = Array.from(checkboxes).filter(c => !c.checked);
+  const checkboxes = document.querySelectorAll('#quente-lista-produtos input[type=checkbox]');
+  const marcados   = [...checkboxes].filter(c => c.checked);
+  const desmarcados= [...checkboxes].filter(c => !c.checked);
   const pct        = _quentePct;
 
-  // Caso nenhum produto esteja marcado → remove promoção de todos
   if (!marcados.length) {
-    const todosIds = Array.from(checkboxes).map(c => c.value);
+    // Remove promoção de todos
+    const todosIds = [...checkboxes].map(c => c.value);
     if (todosIds.length) {
-      await getSupa().from('produtos').update({
-        em_promocao: false,
-        desconto_percent: 0,
-        preco: null,                    // opcional
-        preco_original: null
-      }).in('id', todosIds);
+      await getSupa().from('produtos').update({ em_promocao:false, desconto_percent:0, preco_original:null }).in('id', todosIds);
     }
     fecharModalQuente();
-    showToast('Promoção removida de todos os produtos!');
-    await renderCardapio();
+    showToast('Promoção removida!');
     return;
   }
 
-  // === 1. Aplica promoção nos produtos marcados ===
+  // Salva produtos marcados com o percentual
   for (const cb of marcados) {
-    const id = cb.value;
-
-    // Busca o preço original real do banco
-    const { data: prod } = await getSupa()
-      .from('produtos')
-      .select('preco_original, preco')
-      .eq('id', id)
-      .single();
-
-    // Prioridade: preco_original > preco atual (caso nunca tenha tido promoção)
-    let precoBase = parseFloat(prod?.preco_original) || parseFloat(prod?.preco) || parseFloat(cb.dataset.precoBase);
-
-    if (!precoBase || isNaN(precoBase)) continue;
-
-    const precoComDesconto = parseFloat((precoBase * (1 - pct / 100)).toFixed(2));
-
+    // Usa SEMPRE o preço base (original) — nunca o já descontado
+    const precoBase = parseFloat(cb.dataset.precoBase);
+    const precoDesc = parseFloat((precoBase * (1 - pct/100)).toFixed(2));
     await getSupa().from('produtos').update({
-      em_promocao: true,
+      em_promocao:    true,
       desconto_percent: pct,
-      preco_original: precoBase,      // guarda o preço verdadeiro
-      preco: precoComDesconto          // preço que aparece para o cliente
-    }).eq('id', id);
+      preco_original: precoBase,   // guarda o original
+      preco:          precoDesc,   // aplica desconto sobre o original
+    }).eq('id', cb.value);
   }
 
-  // === 2. Remove promoção dos produtos desmarcados e RESTAURA preço original ===
+  // Remove promoção dos desmarcados — restaura preço original
   for (const cb of desmarcados) {
-    const id = cb.value;
-
-    const { data: prod } = await getSupa()
-      .from('produtos')
-      .select('preco_original')
-      .eq('id', id)
-      .single();
-
-    const precoRestaurado = parseFloat(prod?.preco_original) || parseFloat(cb.dataset.precoBase);
-
+    // Busca o preco_original salvo no banco (mais seguro)
+    const { data: prod } = await getSupa().from('produtos').select('preco_original,preco').eq('id', cb.value).single();
+    const precoRestaurado = prod?.preco_original || parseFloat(cb.dataset.precoBase);
     await getSupa().from('produtos').update({
-      em_promocao: false,
+      em_promocao:    false,
       desconto_percent: 0,
-      preco: precoRestaurado || null,
-      preco_original: null
-    }).eq('id', id);
+      preco:          precoRestaurado,
+      preco_original: null,
+    }).eq('id', cb.value);
   }
 
-  // Atualiza status da loja
+  // Atualiza flag da loja
   const estab = getEstab();
-  await getSupa().from('estabelecimentos')
-    .update({ promocao_ativa: true, desconto_percent: pct })
-    .eq('id', estab.id);
+  await getSupa().from('estabelecimentos').update({ promocao_ativa: true, desconto_percent: pct }).eq('id', estab.id);
 
   fecharModalQuente();
-  showToast('✅ Promoção QUENTE salva com sucesso!');
-  
+  showToast('🔥 Promoção QUENTE salva!');
   await renderCardapio();
-  atualizarFireDash();
 };
 
 window.fecharModalQuente = function() {
   const modal = document.getElementById('modal-quente');
   if (modal) modal.style.display = 'none';
+  const prev = document.getElementById('quente-preview');
+  if (prev) prev.style.display = 'none';
 };
 
 // ── Sub-abas do cardápio (Todos / 🔥 QUENTE) ─────────────────────────────────
