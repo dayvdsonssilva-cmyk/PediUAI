@@ -915,7 +915,15 @@ async function renderBanner() {
   }
 
   // Um slide por percentual
-  _carouselSlides = percentuais.map(pct => ({ tipo:'grupo', pct, itens:grupos[pct] }));
+  // Pega o nome criativo do dia de cada loja (quente_nome) — usa o mais comum
+  const NOMES_CRIATIVOS = ['Domingo Delícia 🌞','Segundou com Sabor 🔥','Terça da Promo 🎯','Quartou com Gosto 🍔','Quintou Gostoso 🤤','Sextou QUENTE 🔥🔥','Sábado Irresistível 😋'];
+  const nomeCriativo = (() => {
+    // Busca nas lojas que têm quente_nome salvo
+    const nomes = _lojas.filter(l=>l.quente_nome).map(l=>l.quente_nome);
+    return nomes[0] || NOMES_CRIATIVOS[new Date().getDay()];
+  })();
+
+  _carouselSlides = percentuais.map(pct => ({ tipo:'grupo', pct, itens:grupos[pct], nomeCriativo }));
   _bannerIdx = 0;
   buildCarousel();
   iniciarTimer();
@@ -946,10 +954,11 @@ function buildCarousel() {
 
       <!-- Conteúdo -->
       <div style="position:relative;z-index:1;">
-        <!-- Badge de quantidade -->
-        <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.1);border-radius:20px;padding:3px 10px;margin-bottom:8px;">
+        <!-- Badge de quantidade + nome criativo do dia -->
+        <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.1);border-radius:20px;padding:3px 10px;margin-bottom:6px;">
           <span style="font-size:9px;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em;">${pal.emoji} ${qtdItens} ${qtdItens===1?'item':'itens'} · ${qtdLojas} ${qtdLojas===1?'loja':'lojas'}</span>
         </div>
+        <div style="font-size:11px;font-weight:900;color:rgba(255,255,255,.9);letter-spacing:.02em;margin-bottom:2px;text-shadow:0 1px 4px rgba(0,0,0,.2)">${s.nomeCriativo||''}</div>
 
         <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px;">
           <!-- Percentual -->
