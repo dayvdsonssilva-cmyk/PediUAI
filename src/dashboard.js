@@ -1696,9 +1696,25 @@ ${(insta || ttok || estab?.site) ? `
 
 window.buscarPedidos = function(termo) {
   const t = (termo||'').toLowerCase();
+  const de  = document.getElementById('ped-data-de')?.value;
+  const ate = document.getElementById('ped-data-ate')?.value;
   document.querySelectorAll('#todos-pedidos .pedido-card').forEach(c => {
-    c.style.display = (!t || c.textContent.toLowerCase().includes(t)) ? '' : 'none';
+    const textoOk = !t || c.textContent.toLowerCase().includes(t);
+    // Filtro de data via data-criado no card
+    let dataOk = true;
+    const dataCriado = c.dataset.criado;
+    if (dataCriado) {
+      const d = new Date(dataCriado);
+      if (de  && d < new Date(de  + 'T00:00:00')) dataOk = false;
+      if (ate && d > new Date(ate + 'T23:59:59')) dataOk = false;
+    }
+    c.style.display = (textoOk && dataOk) ? '' : 'none';
   });
+};
+
+window.filtrarPedidosData = function() {
+  const busca = document.querySelector('#tab-pedidos-tab input[type=text]');
+  window.buscarPedidos(busca?.value || '');
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1876,12 +1892,38 @@ async function carregarFinanceiro() {
 
 function filtroPedidosFin() {
   const now = new Date();
+  const busca = (document.getElementById('fin-busca')?.value || '').toLowerCase().trim();
+  const dataDeEl  = document.getElementById('fin-data-de');
+  const dataAteEl = document.getElementById('fin-data-ate');
+
+  // Mostra/esconde X da busca
+  const clr = document.getElementById('fin-busca-clear');
+  if (clr) clr.style.display = busca ? 'inline' : 'none';
+
   return _finPedidos.filter(p => {
     if (p.status === 'recusado') return false;
     const d = new Date(p.created_at);
-    if (_finPeriodo === 'hoje')   return d.toDateString() === now.toDateString();
-    if (_finPeriodo === 'semana') { const s=new Date(now); s.setDate(s.getDate()-7); return d>=s; }
-    if (_finPeriodo === 'mes')    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+
+    // Filtro de período
+    let passaPeriodo = true;
+    if (_finPeriodo === 'hoje')   passaPeriodo = d.toDateString() === now.toDateString();
+    else if (_finPeriodo === 'semana') { const s=new Date(now); s.setDate(s.getDate()-7); passaPeriodo = d>=s; }
+    else if (_finPeriodo === 'mes')    passaPeriodo = d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+    else if (_finPeriodo === 'custom') {
+      const de  = dataDeEl?.value  ? new Date(dataDeEl.value  + 'T00:00:00') : null;
+      const ate = dataAteEl?.value ? new Date(dataAteEl.value + 'T23:59:59') : null;
+      if (de  && d < de)  passaPeriodo = false;
+      if (ate && d > ate) passaPeriodo = false;
+    }
+    if (!passaPeriodo) return false;
+
+    // Filtro de busca por nome ou código
+    if (busca) {
+      const cod  = p.id?.slice(-4).toLowerCase() || '';
+      const nome = (p.cliente_nome || '').toLowerCase();
+      if (!cod.includes(busca) && !nome.includes(busca)) return false;
+    }
+
     return true;
   });
 }
@@ -1968,11 +2010,14 @@ function renderFinanceiro() {
 
 function setFinPeriodo(p, btn) {
   _finPeriodo = p;
-  ['fin-hoje','fin-semana','fin-mes','fin-tudo'].forEach(id => {
+  ['fin-hoje','fin-semana','fin-mes','fin-tudo','fin-custom'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('ativo');
   });
   if (btn) btn.classList.add('ativo');
+  // Mostra/esconde seletor de período personalizado
+  const cw = document.getElementById('fin-custom-wrap');
+  if (cw) cw.style.display = p === 'custom' ? 'block' : 'none';
   renderFinanceiro();
 }
 
@@ -3502,23 +3547,42 @@ window.removerTaxaServico = function() {
   if (btn) btn.style.display = 'none';
 };
 
+window.toggleCartaoSubMenu = function() {
+  const sub = document.getElementById('pgto-cartao-submenu');
+  const btn = document.getElementById('pgto-btn-CARTÃO');
+  if (!sub) return;
+  const isOpen = sub.style.display === 'grid';
+  sub.style.display = isOpen ? 'none' : 'grid';
+  if (!isOpen) {
+    if(btn){btn.style.borderColor='#e65e32';btn.style.background='#fff5f0';btn.style.color='#e65e32';}
+  } else {
+    if(btn){btn.style.borderColor='#e0dbd5';btn.style.background='#fff';btn.style.color='#555';}
+    _pagamentoComanda = null;
+  }
+};
+
 window.selecionarPagamentoComanda = function(metodo) {
   _pagamentoComanda = metodo;
-  ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
-    const btn = document.getElementById('pgto-btn-' + m);
-    if (!btn) return;
-    if (m === metodo) {
-      btn.style.borderColor = '#C0392B';
-      btn.style.background  = '#fff5f5';
-      btn.style.color       = '#C0392B';
-    } else {
-      btn.style.borderColor = '#e0dbd5';
-      btn.style.background  = '#fff';
-      btn.style.color       = '#555';
-    }
-  });
+  const sub = document.getElementById('pgto-cartao-submenu');
+  if (sub && metodo !== 'CRÉDITO' && metodo !== 'DÉBITO') sub.style.display = 'none';
   const aviso = document.getElementById('pgto-aviso');
   if (aviso) aviso.style.display = 'none';
+  // Reset todos
+  ['PIX','CARTÃO','DINHEIRO','CRÉDITO','DÉBITO'].forEach(m => {
+    const b = document.getElementById('pgto-btn-' + m);
+    if (!b) return;
+    b.style.borderColor = '#e0dbd5';
+    b.style.background  = '#fff';
+    b.style.color       = '#555';
+  });
+  // Destaca selecionado
+  const sel = document.getElementById('pgto-btn-' + metodo);
+  if (sel) { sel.style.borderColor='#e65e32'; sel.style.background='#fff5f0'; sel.style.color='#e65e32'; }
+  // Se crédito/débito também destaca Cartão
+  if (metodo === 'CRÉDITO' || metodo === 'DÉBITO') {
+    const cb = document.getElementById('pgto-btn-CARTÃO');
+    if (cb) { cb.style.borderColor='#e65e32'; cb.style.background='#fff5f0'; cb.style.color='#e65e32'; }
+  }
 };
 
 window.executarFecharComanda = async function() {
@@ -3597,6 +3661,38 @@ window.abrirModalQuente = async function() {
   const modal = document.getElementById('modal-quente');
   if (!modal) return;
 
+  // Dias da semana com nomes criativos
+  const DIAS = [
+    { idx:0, nome:'Domingo',   criativo:'Domingo Delícia 🌞' },
+    { idx:1, nome:'Segunda',   criativo:'Segundou com Sabor 🔥' },
+    { idx:2, nome:'Terça',     criativo:'Terça da Promo 🎯' },
+    { idx:3, nome:'Quarta',    criativo:'Quartou com Gosto 🍔' },
+    { idx:4, nome:'Quinta',    criativo:'Quintou Gostoso 🤤' },
+    { idx:5, nome:'Sexta',     criativo:'Sextou QUENTE 🔥🔥' },
+    { idx:6, nome:'Sábado',    criativo:'Sábado Irresistível 😋' },
+  ];
+  const hoje = new Date().getDay();
+  if (!window._quenteDia) window._quenteDia = hoje;
+
+  const diasWrap = document.getElementById('quente-dias');
+  if (diasWrap) {
+    diasWrap.innerHTML = DIAS.map(d => `
+      <button onclick="selecionarDiaQuente(${d.idx})" id="qdia-${d.idx}"
+        style="padding:7px 12px;border-radius:100px;border:2px solid ${d.idx===window._quenteDia?'#e65e32':'#e0dbd5'};
+               background:${d.idx===window._quenteDia?'#e65e32':'#fff'};
+               color:${d.idx===window._quenteDia?'#fff':'#555'};
+               font-family:'Poppins',sans-serif;font-weight:700;font-size:.75rem;cursor:pointer;transition:all .15s">
+        ${d.nome}${d.idx===hoje?' (hoje)':''}
+      </button>`).join('');
+    // Preview do nome criativo
+    const prev = document.getElementById('quente-nome-preview');
+    if (prev) {
+      const diaAtual = DIAS.find(d=>d.idx===window._quenteDia);
+      prev.textContent = '✨ ' + (diaAtual?.criativo || '');
+      prev.style.display = 'block';
+    }
+  }
+
   // Gera pills de percentual (5 a 50, step 5)
   const pctWrap = document.getElementById('quente-percentuais');
   if (pctWrap) {
@@ -3610,13 +3706,34 @@ window.abrirModalQuente = async function() {
       </button>`).join('');
   }
 
-  // Mostra preview
   atualizarPreviewQuente();
-
-  // Carrega produtos da loja
   await carregarProdutosQuente();
-
   modal.style.display = 'flex';
+};
+
+window.selecionarDiaQuente = function(idx) {
+  window._quenteDia = idx;
+  const DIAS = [
+    { idx:0, criativo:'Domingo Delícia 🌞' },
+    { idx:1, criativo:'Segundou com Sabor 🔥' },
+    { idx:2, criativo:'Terça da Promo 🎯' },
+    { idx:3, criativo:'Quartou com Gosto 🍔' },
+    { idx:4, criativo:'Quintou Gostoso 🤤' },
+    { idx:5, criativo:'Sextou QUENTE 🔥🔥' },
+    { idx:6, criativo:'Sábado Irresistível 😋' },
+  ];
+  [0,1,2,3,4,5,6].forEach(i => {
+    const b = document.getElementById('qdia-'+i);
+    if (!b) return;
+    b.style.background   = i===idx ? '#e65e32' : '#fff';
+    b.style.borderColor  = i===idx ? '#e65e32' : '#e0dbd5';
+    b.style.color        = i===idx ? '#fff'    : '#555';
+  });
+  const prev = document.getElementById('quente-nome-preview');
+  if (prev) {
+    const dia = DIAS.find(d=>d.idx===idx);
+    prev.textContent = '✨ ' + (dia?.criativo || '');
+  }
 };
 
 window.selecionarPctQuente = function(pct) {
@@ -3722,11 +3839,14 @@ window.salvarQuente = async function() {
     }).eq('id', cb.value);
   }
 
-  // Atualiza flag da loja
+  // Atualiza flag da loja com dia e nome criativo
+  const NOMES_CRIATIVOS = ['Domingo Delícia 🌞','Segundou com Sabor 🔥','Terça da Promo 🎯','Quartou com Gosto 🍔','Quintou Gostoso 🤤','Sextou QUENTE 🔥🔥','Sábado Irresistível 😋'];
   if (estab?.id) {
     await getSupa().from('estabelecimentos').update({
       promocao_ativa:   marcados.length > 0,
       desconto_percent: marcados.length > 0 ? pct : 0,
+      quente_dia:       window._quenteDia ?? new Date().getDay(),
+      quente_nome:      NOMES_CRIATIVOS[window._quenteDia ?? new Date().getDay()],
     }).eq('id', estab.id);
   }
 
@@ -3811,3 +3931,171 @@ window.initCfgAccordion = function() {
     });
   });
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🏦 CONTROLE DE CAIXA
+// ═══════════════════════════════════════════════════════════════════════════════
+let _caixaAberto = null; // { id, valor_abertura, created_at }
+
+// Carrega estado do caixa ao abrir a aba
+window.showTab = (function(_orig) {
+  return function(tab, btn) {
+    if (typeof _orig === 'function') _orig(tab, btn);
+    if (tab === 'caixa') setTimeout(carregarCaixa, 80);
+  };
+})(window.showTab);
+
+async function carregarCaixa() {
+  const estab = getEstab(); if (!estab?.id) return;
+  // Busca caixa aberto hoje
+  const hoje = new Date().toISOString().split('T')[0];
+  const { data } = await getSupa().from('controle_caixa')
+    .select('*')
+    .eq('estabelecimento_id', estab.id)
+    .eq('status', 'aberto')
+    .gte('created_at', hoje + 'T00:00:00')
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  _caixaAberto = data?.[0] || null;
+  renderCaixa();
+  await carregarHistoricoCaixa();
+}
+
+function renderCaixa() {
+  const abrirCard  = document.getElementById('caixa-abrir-card');
+  const fecharCard = document.getElementById('caixa-fechar-card');
+  const statusLbl  = document.getElementById('caixa-status-label');
+  const statusHora = document.getElementById('caixa-status-hora');
+  const statusCard = document.getElementById('caixa-status-card');
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+
+  if (_caixaAberto) {
+    const hora = new Date(_caixaAberto.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    if (statusLbl)  statusLbl.textContent  = '🔓 Aberto';
+    if (statusHora) statusHora.textContent = `Aberto às ${hora} · Fundo: ${fmtR(_caixaAberto.valor_abertura)}`;
+    if (statusCard) statusCard.style.background = 'linear-gradient(135deg,#166534,#15803d)';
+    if (abrirCard)  abrirCard.style.display  = 'none';
+    if (fecharCard) fecharCard.style.display = 'block';
+    // Preenche resumo de vendas do dia
+    const vendas = _finPedidos.filter(p => {
+      const d = new Date(p.created_at).toDateString();
+      return d === new Date().toDateString() && p.status !== 'recusado';
+    }).reduce((s,p) => s + Number(p.total||0), 0);
+    const esperado = (_caixaAberto.valor_abertura||0) + vendas;
+    const resAb  = document.getElementById('caixa-res-abertura');
+    const resVd  = document.getElementById('caixa-res-vendas');
+    const resEsp = document.getElementById('caixa-res-esperado');
+    if (resAb)  resAb.textContent  = fmtR(_caixaAberto.valor_abertura);
+    if (resVd)  resVd.textContent  = fmtR(vendas);
+    if (resEsp) resEsp.textContent = fmtR(esperado);
+    document.getElementById('caixa-fechar-card')._esperado = esperado;
+  } else {
+    if (statusLbl)  statusLbl.textContent  = '🔒 Fechado';
+    if (statusHora) statusHora.textContent = 'Nenhum caixa aberto hoje';
+    if (statusCard) statusCard.style.background = 'linear-gradient(135deg,#1a1a1a,#2a2a2a)';
+    if (abrirCard)  abrirCard.style.display  = 'block';
+    if (fecharCard) fecharCard.style.display = 'none';
+  }
+}
+
+window.calcularDiferenca = function() {
+  const vFechEl  = document.getElementById('caixa-valor-fechamento');
+  const difWrap  = document.getElementById('caixa-diferenca-wrap');
+  const fecharCard = document.getElementById('caixa-fechar-card');
+  if (!vFechEl || !difWrap) return;
+  const vFech    = parseFloat(vFechEl.value) || 0;
+  const esperado = fecharCard?._esperado || 0;
+  const dif      = vFech - esperado;
+  const fmtR     = v => 'R$ ' + Math.abs(v).toFixed(2).replace('.',',');
+  difWrap.style.display = vFechEl.value ? 'block' : 'none';
+  if (Math.abs(dif) < 0.01) {
+    difWrap.style.background = '#dcfce7'; difWrap.style.color = '#166534';
+    difWrap.textContent = '✅ Caixa conferido!';
+  } else if (dif < 0) {
+    difWrap.style.background = '#fef2f2'; difWrap.style.color = '#991b1b';
+    difWrap.textContent = `❌ Diferença negativa de ${fmtR(dif)} (falta ${fmtR(dif)} no caixa)`;
+  } else {
+    difWrap.style.background = '#fef9c3'; difWrap.style.color = '#854d0e';
+    difWrap.textContent = `⚠️ Sobra de ${fmtR(dif)} no caixa`;
+  }
+};
+
+window.abrirCaixa = async function() {
+  const estab = getEstab(); if (!estab?.id) return;
+  const valor = parseFloat(document.getElementById('caixa-valor-abertura')?.value) || 0;
+  const obs   = document.getElementById('caixa-obs-abertura')?.value || '';
+  const { data, error } = await getSupa().from('controle_caixa').insert({
+    estabelecimento_id: estab.id,
+    valor_abertura: valor,
+    status: 'aberto',
+    obs_abertura: obs,
+    created_at: new Date().toISOString(),
+  }).select().single();
+  if (error) return showToast('❌ Erro: ' + error.message, '#ef4444');
+  _caixaAberto = data;
+  showToast('✅ Caixa aberto!');
+  renderCaixa();
+  await carregarHistoricoCaixa();
+};
+
+window.fecharCaixa = async function() {
+  if (!_caixaAberto?.id) return;
+  const vFech = parseFloat(document.getElementById('caixa-valor-fechamento')?.value) || 0;
+  const obs   = document.getElementById('caixa-obs-fechamento')?.value || '';
+  const esperado = document.getElementById('caixa-fechar-card')?._esperado || 0;
+  const dif   = parseFloat((vFech - esperado).toFixed(2));
+  const { error } = await getSupa().from('controle_caixa').update({
+    valor_fechamento: vFech,
+    diferenca: dif,
+    obs_fechamento: obs,
+    status: 'fechado',
+    fechado_em: new Date().toISOString(),
+  }).eq('id', _caixaAberto.id);
+  if (error) return showToast('❌ Erro: ' + error.message, '#ef4444');
+  _caixaAberto = null;
+  showToast('🔒 Caixa fechado!');
+  renderCaixa();
+  await carregarHistoricoCaixa();
+};
+
+async function carregarHistoricoCaixa() {
+  const estab = getEstab(); if (!estab?.id) return;
+  const { data } = await getSupa().from('controle_caixa')
+    .select('*').eq('estabelecimento_id', estab.id)
+    .order('created_at', { ascending: false }).limit(20);
+  const el = document.getElementById('caixa-historico');
+  if (!el) return;
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  if (!data?.length) {
+    el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:.82rem;padding:24px">Nenhum registro ainda</div>';
+    return;
+  }
+  el.innerHTML = data.map(c => {
+    const dtAb  = new Date(c.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const dtFch = c.fechado_em ? new Date(c.fechado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    const dif   = c.diferenca || 0;
+    const difColor = dif < -0.01 ? '#ef4444' : dif > 0.01 ? '#f59e0b' : '#22c55e';
+    return `<div style="background:#faf8f5;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+        <div>
+          <span style="font-size:.7rem;font-weight:700;padding:2px 10px;border-radius:50px;background:${c.status==='aberto'?'#dcfce7':'#f0ebe4'};color:${c.status==='aberto'?'#166534':'#888'}">${c.status==='aberto'?'🔓 Aberto':'🔒 Fechado'}</span>
+          <span style="font-size:.7rem;color:#aaa;margin-left:8px">${dtAb}</span>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:.72rem;color:#888">Abertura: ${fmtR(c.valor_abertura)}</div>
+          ${c.valor_fechamento!=null?`<div style="font-size:.72rem;color:#888">Fechamento: ${fmtR(c.valor_fechamento)}</div>`:''}
+          ${c.diferenca!=null?`<div style="font-size:.78rem;font-weight:800;color:${difColor}">Diferença: ${dif>=0?'+':''}${fmtR(dif)}</div>`:''}
+        </div>
+      </div>
+      ${c.obs_abertura||c.obs_fechamento?`<div style="font-size:.72rem;color:#888;margin-top:6px">${[c.obs_abertura,c.obs_fechamento].filter(Boolean).join(' · ')}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// Exporta funções do caixa
+window.abrirCaixa     = window.abrirCaixa;
+window.fecharCaixa    = window.fecharCaixa;
+window.calcularDiferenca = window.calcularDiferenca;
+window.filtrarPedidosData = window.filtrarPedidosData;
+window.toggleCartaoSubMenu = window.toggleCartaoSubMenu;
