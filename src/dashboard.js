@@ -3689,50 +3689,49 @@ window.salvarQuente = async function() {
   const marcados   = [...checkboxes].filter(c => c.checked);
   const desmarcados= [...checkboxes].filter(c => !c.checked);
   const pct        = _quentePct;
+  const estab      = getEstab();
 
-  if (!marcados.length) {
-    // Remove promoção de todos
-    const todosIds = [...checkboxes].map(c => c.value);
-    if (todosIds.length) {
-      await getSupa().from('produtos').update({ em_promocao:false, desconto_percent:0, preco_original:null }).in('id', todosIds);
-    }
-    fecharModalQuente();
-    showToast('Promoção removida!');
-    return;
+  showToast('Salvando...', '#f59e0b');
+
+  // Remove promoção dos desmarcados — SEMPRE restaura preco ao preco_original
+  for (const cb of desmarcados) {
+    const precoBase = parseFloat(cb.dataset.precoBase); // original guardado no data attr
+    // Dupla segurança: busca preco_original do banco
+    const { data: prod } = await getSupa().from('produtos')
+      .select('preco_original,em_promocao').eq('id', cb.value).single();
+    // Só age em produtos que estavam em promoção
+    if (!prod?.em_promocao) continue;
+    const precoRestaurado = prod?.preco_original || precoBase;
+    await getSupa().from('produtos').update({
+      em_promocao:      false,
+      desconto_percent: 0,
+      preco:            precoRestaurado,  // ← restaura o preço original de verdade
+      preco_original:   null,
+    }).eq('id', cb.value);
   }
 
   // Salva produtos marcados com o percentual
   for (const cb of marcados) {
-    // Usa SEMPRE o preço base (original) — nunca o já descontado
-    const precoBase = parseFloat(cb.dataset.precoBase);
+    const precoBase = parseFloat(cb.dataset.precoBase); // sempre o original
     const precoDesc = parseFloat((precoBase * (1 - pct/100)).toFixed(2));
     await getSupa().from('produtos').update({
-      em_promocao:    true,
+      em_promocao:      true,
       desconto_percent: pct,
-      preco_original: precoBase,   // guarda o original
-      preco:          precoDesc,   // aplica desconto sobre o original
-    }).eq('id', cb.value);
-  }
-
-  // Remove promoção dos desmarcados — restaura preço original
-  for (const cb of desmarcados) {
-    // Busca o preco_original salvo no banco (mais seguro)
-    const { data: prod } = await getSupa().from('produtos').select('preco_original,preco').eq('id', cb.value).single();
-    const precoRestaurado = prod?.preco_original || parseFloat(cb.dataset.precoBase);
-    await getSupa().from('produtos').update({
-      em_promocao:    false,
-      desconto_percent: 0,
-      preco:          precoRestaurado,
-      preco_original: null,
+      preco_original:   precoBase,   // guarda o original
+      preco:            precoDesc,   // aplica desconto sobre o original
     }).eq('id', cb.value);
   }
 
   // Atualiza flag da loja
-  const estab = getEstab();
-  await getSupa().from('estabelecimentos').update({ promocao_ativa: true, desconto_percent: pct }).eq('id', estab.id);
+  if (estab?.id) {
+    await getSupa().from('estabelecimentos').update({
+      promocao_ativa:   marcados.length > 0,
+      desconto_percent: marcados.length > 0 ? pct : 0,
+    }).eq('id', estab.id);
+  }
 
   fecharModalQuente();
-  showToast('🔥 Promoção QUENTE salva!');
+  showToast(marcados.length > 0 ? '🔥 Promoção QUENTE salva!' : '✅ Promoção removida!');
   await renderCardapio();
 };
 
