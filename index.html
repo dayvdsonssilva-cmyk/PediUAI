@@ -2068,6 +2068,13 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
       <div class="form-group"><label>WhatsApp (com DDD)</label><input type="tel" id="rtel" placeholder="(99) 99999-9999" maxlength="15" oninput="mascaraTel(this)"></div>
       <div class="form-group"><label>Nome do estabelecimento</label><input type="text" id="rn" placeholder="Ex: Burguer do Ze"></div>
       <div class="form-group">
+        <label>Tipo do estabelecimento</label>
+        <div id="rtipo-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px">
+          <!-- gerado via JS abaixo -->
+        </div>
+        <input type="hidden" id="rtipo" value="">
+      </div>
+      <div class="form-group">
         <label>Estado</label>
         <div style="position:relative">
           <select id="restado" onchange="carregarCidadesCadastro(this.value)">
@@ -2270,7 +2277,7 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
         <div class="link-box" style="margin-bottom:0">
           <div style="flex:1;min-width:0;overflow:hidden;">
             <div class="link-label">🛵 LINK DO CARDÁPIO</div>
-            <div class="link-url" id="link-url">pediway.vercel.app/meu-estabelecimento</div>
+            <div class="link-url" id="link-url">pediway.com.br/meu-estabelecimento</div>
           </div>
           <button class="btn-copiar" onclick="copiarLink()">Copiar</button>
         </div>
@@ -2278,7 +2285,7 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
         <div class="link-box" style="margin-bottom:0;background:#FFF5F5;border:1.5px dashed rgba(232,0,28,0.25)">
           <div style="flex:1;min-width:0;overflow:hidden;">
             <div class="link-label" style="color:#E8001C">🍽️ COMANDAS DIGITAIS <span style="background:#f0e0d0;padding:1px 7px;border-radius:50px;font-size:.58rem;margin-left:4px;color:#E8001C">GARÇOM</span></div>
-            <div class="link-url" id="link-url-garcom" style="color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;display:block;">pediway.vercel.app/comandas/...</div>
+            <div class="link-url" id="link-url-garcom" style="color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;display:block;">pediway.com.br/comandas/...</div>
           </div>
           <button class="btn-copiar" onclick="copiarLinkGarcom()" style="background:#E8001C;border:none">Copiar</button>
         </div>
@@ -2765,7 +2772,7 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
             <div class="form-group-light">
               <label>Link do cardápio</label>
               <input type="text" class="input-light" id="cfg-slug" placeholder="meu-estabelecimento" oninput="atualizarCfgLink(this.value)">
-              <div class="link-preview-light" id="cfg-link-preview" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">pediway.vercel.app/</div>
+              <div class="link-preview-light" id="cfg-link-preview" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">pediway.com.br/</div>
             </div>
 
             <!-- Link do garçom -->
@@ -2774,7 +2781,7 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
                 🍽️ Link das Comandas <span style="background:#f0e9e0;padding:1px 7px;border-radius:50px;font-size:.6rem;font-weight:700;color:#888">GARÇOM</span>
               </label>
               <div style="display:flex;align-items:center;gap:8px;overflow:hidden;min-width:0;max-width:100%;width:100%;">
-                <div class="link-preview-light" id="cfg-link-garcom" style="flex:1;min-width:0;max-width:calc(100% - 80px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;word-break:break-all;">pediway.vercel.app/comandas/</div>
+                <div class="link-preview-light" id="cfg-link-garcom" style="flex:1;min-width:0;max-width:calc(100% - 80px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;word-break:break-all;">pediway.com.br/comandas/</div>
                 <button onclick="copiarLinkGarcom()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer;white-space:nowrap;flex-shrink:0">Copiar</button>
               </div>
               <div style="font-size:.65rem;color:#aaa;margin-top:4px">Compartilhe este link com seus garçons. Todos usam o mesmo link para acessar as comandas digitais.</div>
@@ -3871,7 +3878,49 @@ window.carregarCidadesCadastro = async function(uf) {
   }
 };
 
+// ─── Tipos de estabelecimento no cadastro ─────────────────────────────────────
+const TIPOS_ESTAB = [
+  { id:'burguer',    icon:'🍔', label:'Burguer' },
+  { id:'pizza',      icon:'🍕', label:'Pizzaria' },
+  { id:'acai',       icon:'🍇', label:'Açaí' },
+  { id:'restaurante',icon:'🍽️', label:'Restaurante' },
+  { id:'lanchonete', icon:'🥪', label:'Lanchonete' },
+  { id:'doceria',    icon:'🍰', label:'Doceria' },
+  { id:'sorvete',    icon:'🍦', label:'Sorveteria' },
+  { id:'churrasco',  icon:'🥩', label:'Churrasco' },
+  { id:'japones',    icon:'🍱', label:'Japonês' },
+  { id:'saudavel',   icon:'🥗', label:'Saudável' },
+  { id:'bar',        icon:'🍻', label:'Bar' },
+  { id:'outro',      icon:'🏪', label:'Outro' },
+];
+
+function renderTiposEstab() {
+  const grid = document.getElementById('rtipo-grid');
+  if (!grid) return;
+  grid.innerHTML = TIPOS_ESTAB.map(t => `
+    <button type="button" onclick="selecionarTipoEstab('${t.id}',this)" id="rtipo-btn-${t.id}"
+      style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;
+             border-radius:12px;border:2px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);
+             cursor:pointer;transition:all .15s;font-family:'Poppins',sans-serif">
+      <span style="font-size:1.5rem">${t.icon}</span>
+      <span style="font-size:.65rem;font-weight:700;color:rgba(255,255,255,.6)">${t.label}</span>
+    </button>`).join('');
+}
+
+window.selecionarTipoEstab = function(id, btn) {
+  document.getElementById('rtipo').value = id;
+  document.querySelectorAll('#rtipo-grid button').forEach(b => {
+    b.style.borderColor = 'rgba(255,255,255,.12)';
+    b.style.background  = 'rgba(255,255,255,.05)';
+    b.querySelector('span:last-child').style.color = 'rgba(255,255,255,.6)';
+  });
+  btn.style.borderColor = 'var(--red, #e65e32)';
+  btn.style.background  = 'rgba(230,94,50,.15)';
+  btn.querySelector('span:last-child').style.color = '#e65e32';
+};
+
 document.addEventListener('DOMContentLoaded', function() {
+  renderTiposEstab();
   window.carregarEstadosCadastro();
 });
 
@@ -3935,7 +3984,6 @@ document.addEventListener('DOMContentLoaded', function() {
           setTimeout(() => { label.style.opacity = '.4'; }, 300);
           setTimeout(() => { label.style.opacity = '1'; }, 450);
         }
-        // Mostra aviso inline
         let aviso = document.getElementById('aviso-termos');
         if (!aviso) {
           aviso = document.createElement('div');
@@ -3949,8 +3997,20 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => { if(aviso) aviso.style.display = 'none'; }, 4000);
         return;
       }
+      // Valida tipo de estabelecimento
+      const tipo = document.getElementById('rtipo')?.value;
+      if (!tipo) {
+        const grid = document.getElementById('rtipo-grid');
+        if (grid) {
+          grid.style.outline = '2px solid #e65e32';
+          grid.style.borderRadius = '12px';
+          setTimeout(() => { grid.style.outline = 'none'; }, 2000);
+        }
+        showToast?.('⚠️ Selecione o tipo do estabelecimento');
+        return;
+      }
       if (typeof _originalDoRegister === 'function') {
-        // Normaliza rtel para só dígitos antes de salvar (consistência com cfg-whats)
+        // Normaliza rtel para só dígitos antes de salvar
         const rtelEl = document.getElementById('rtel');
         if (rtelEl) rtelEl.value = rtelEl.value.replace(/\D/g, '');
         _originalDoRegister();
