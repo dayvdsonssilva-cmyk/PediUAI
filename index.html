@@ -1615,7 +1615,7 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
   .lp-hero-inner{grid-template-columns:1fr;gap:48px;}
-  .lp-phone-wrap{order:-1;}
+  .lp-phone-wrap{order:2;} /* phone DEPOIS do texto no mobile */
   .lp-steps{grid-template-columns:1fr;}
   .lp-feats{grid-template-columns:1fr;}
   .lp-biz-grid{grid-template-columns:1fr 1fr;}
@@ -1624,26 +1624,26 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
   .lp-split-section{grid-template-columns:1fr!important;gap:40px!important;}
 }
 @media(max-width:600px){
-  /* ── Hero ── */
+  /* ── Hero — texto primeiro, celular depois ── */
   .lp-hero{padding:84px 5% 52px;min-height:auto;}
-  .lp-hero-inner{text-align:center;gap:32px;}
-  .lp-hero-sub{margin:0 auto 24px;font-size:.9rem;}
+  .lp-hero-inner{text-align:center;gap:24px;display:flex;flex-direction:column;}
+  .lp-hero-inner > *:first-child{order:1;}  /* texto */
+  .lp-phone-wrap{order:2;display:flex;justify-content:center;} /* celular depois */
+  .lp-hero-sub{margin:0 auto 20px;font-size:.9rem;}
   .lp-hero-btns{justify-content:center;flex-direction:column;gap:10px;}
   .lp-hero-btns a,.lp-hero-btns button{width:100%;justify-content:center;text-align:center;}
   .lp-hero-trust{justify-content:center;flex-wrap:wrap;}
 
-  /* ── Header mobile: mostra Entrar + CTA ── */
-  .lp-btn-outline{
-    display:inline-flex!important;
-    padding:8px 14px!important;
-    font-size:.75rem!important;
-  }
+  /* ── Header mobile ── */
+  .lp-btn-outline{display:inline-flex!important;padding:8px 14px!important;font-size:.75rem!important;}
   .lp-btn-cta{padding:8px 14px;font-size:.78rem;}
   .lp-header-btns{gap:6px;}
 
-  /* ── Phone ── */
-  .lp-phone{width:200px;height:404px;}
-  .lp-phone-wrap{display:flex;justify-content:center;}
+  /* ── REMOVE barra fixo de baixo (já tem no header) ── */
+  #lp-mobile-bar{display:none!important;}
+
+  /* ── Phone menor ── */
+  .lp-phone{width:190px;height:384px;}
 
   /* ── Stats band ── */
   .lp-stats{gap:16px;flex-wrap:wrap;justify-content:center;}
