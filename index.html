@@ -1223,6 +1223,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
 
 /* ── PROGRESS BAR ── */
 .lp-progress-bar { position:fixed;top:0;left:0;height:3px;width:100%;z-index:999;background:var(--lp-red);transform-origin:left;transform:scaleX(0);transition:transform .1s; }
+body:not(:has([data-screen="s-landing"].active)) .lp-progress-bar { display:none !important; }
 
 /* ── HEADER ── */
 .lp-header {
@@ -1233,6 +1234,8 @@ canvas, [data-touch="free"] { touch-action: none !important; }
   border-bottom:1px solid transparent;
   transition:all .3s;
 }
+/* Esconde o header da landing quando outra tela está ativa */
+body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !important; }
 .lp-header.scrolled {
   background:rgba(255,255,255,0.97);
   border-bottom-color:var(--lp-border);
@@ -1615,6 +1618,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
   .lp-biz-grid{grid-template-columns:1fr 1fr;}
   .lp-band-inner{flex-direction:column;text-align:center;}
   .lp-band-nums{justify-content:center;}
+  .lp-split-section{grid-template-columns:1fr!important;gap:40px!important;}
 }
 @media(max-width:600px){
   .lp-hero{padding:90px 5% 60px;min-height:auto;}
@@ -1623,12 +1627,32 @@ canvas, [data-touch="free"] { touch-action: none !important; }
   .lp-biz-grid{grid-template-columns:1fr 1fr;}
   .lp-numgrid{grid-template-columns:1fr 1fr;}
   .lp-trust{gap:20px;}
-  .lp-sec{padding:60px 5%;}
+  .lp-sec{padding:50px 5%;}
   .lp-band-nums{gap:28px;}
   .lp-btn-outline{display:none;}
+  /* Hero mobile */
+  .lp-hero-inner{text-align:center;}
+  .lp-hero-sub{margin:0 auto 28px;}
+  .lp-hero-btns{justify-content:center;}
+  .lp-hero-trust{justify-content:center;}
+  /* Header mobile */
+  .lp-btn-outline{display:none!important;}
+  .lp-btn-cta{padding:9px 16px;font-size:.8rem;}
+  /* CTA section mobile */
+  .lp-cta-section{padding:60px 5%;}
+  /* Footer mobile */
+  .lp-footer-grid{grid-template-columns:1fr!important;gap:28px!important;}
+  .lp-footer-bottom{flex-direction:column;gap:6px;text-align:center;}
+  /* Planos mobile */
+  .lp-plan-wrap{grid-template-columns:1fr!important;}
+  /* Depoimentos mobile */
+  .lp-dep-grid{grid-template-columns:1fr!important;}
 }
 @media(max-width:480px){
   .lp-header-btns .lp-btn-outline{display:none;}
+  .lp-hero-h1{font-size:clamp(2rem,9vw,3rem)!important;}
+  .lp-hero{padding:80px 5% 50px;}
+  .lp-sec-title{font-size:clamp(1.5rem,6vw,2rem)!important;}
 }
 </style>
 
@@ -3713,6 +3737,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
 })();
 </script>
 <!-- main.js carregado pelo servidor em produção -->
+<script type="module" src="/src/main.js"></script>
 
 <script>
 // ─── Mapa sigla → ID numérico do IBGE (evita problema com endpoint por sigla) ─
