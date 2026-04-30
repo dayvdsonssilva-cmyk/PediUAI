@@ -5,7 +5,7 @@ import { showToast } from './utils.js';
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTES
 // ─────────────────────────────────────────────────────────────────────────────
-const BASE_URL = 'https://pediway.vercel.app';
+const BASE_URL = 'https://pediway.com.br';
 const CORES = [
   // Cores sólidas
   '#C0392B','#E74C3C','#E67E22','#F39C12','#F1C40F',
