@@ -202,6 +202,8 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 .pag-opt{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
 .pag-btn{padding:9px 16px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);font-family:var(--font);font-size:12px;font-weight:700;color:var(--mid);cursor:pointer;transition:all .15s;}
 .pag-btn.ativo{background:#E8001C;border-color:#E8001C;color:#fff;}
+.bandeira-btn-sm{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:9px;border:1.5px solid var(--border);background:var(--card);cursor:pointer;font-family:var(--font);transition:all .15s;font-size:10px;font-weight:800;color:var(--mid);}
+.bandeira-btn-sm.ativo{border-color:#E8001C;background:rgba(232,0,28,.05);color:#E8001C;}
 .resumo-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mid);padding:4px 0;}
 .resumo-total{font-size:16px;font-weight:900;color:var(--dark);}
 .btn-finalizar{width:100%;padding:16px;border-radius:14px;background:#E8001C;color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;margin-top:12px;}
@@ -1741,7 +1743,25 @@ function renderCheckoutLoja(c) {
       <div id="troco-wrap-${lid}" style="margin-top:10px;${pag==='dinheiro'?'':'display:none;'}">
         <input class="checkout-input" id="troco-val-${lid}" placeholder="Troco para quanto? (opcional)">
       </div>
-    </div>
+    </
+      <!-- Cartão: crédito/débito + bandeiras -->
+      <div id="cartao-wrap-${lid}" style="margin-top:10px;${pag==='cartao'?'':'display:none'}">
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <button id="pcred-${lid}" class="pag-btn ativo" onclick="setTipoCartao('${lid}','credito')" style="flex:1;">💳 Crédito</button>
+          <button id="pdeb-${lid}"  class="pag-btn"       onclick="setTipoCartao('${lid}','debito')"  style="flex:1;">💳 Débito</button>
+        </div>
+        <div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Bandeira</div>
+        <div id="bandeiras-${lid}" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+          <button class="bandeira-btn-sm ativo" onclick="setBandeira('${lid}','visa')"><span style="font-size:1.1rem">💙</span>Visa</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','master')"><span style="font-size:1.1rem">🔴</span>Master</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','elo')"><span style="font-size:1.1rem">⭐</span>Elo</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','hipercard')"><span style="font-size:1.1rem">🔶</span>Hiper</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','amex')"><span style="font-size:1.1rem">🔵</span>Amex</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','cabal')"><span style="font-size:1.1rem">🟢</span>Cabal</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','pix-cred')"><span style="font-size:1.1rem">💜</span>PIX C.</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','outro')"><span style="font-size:1.1rem">💳</span>Outro</button>
+        </div>
+      </div>div>
 
     <div style="display:flex;gap:10px;">
       <button onclick="saveStepData('${lid}');prevStep('${lid}')" style="padding:15px 20px;border-radius:14px;background:var(--cream);border:1.5px solid var(--border);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;color:var(--mid);">← Voltar</button>
@@ -1782,7 +1802,24 @@ window.setPagStep = function(lid, pag) {
   ['pix','cartao','dinheiro'].forEach(p=>{
     const b=$('p'+p+'-'+lid); if(b) b.classList.toggle('ativo',p===pag);
   });
-  const tw=$('troco-wrap-'+lid); if(tw) tw.style.display=pag==='dinheiro'?'':'none';
+  const tw=$('troco-wrap-'+lid);  if(tw)  tw.style.display  = pag==='dinheiro' ? '' : 'none';
+  const cw=$('cartao-wrap-'+lid); if(cw)  cw.style.display  = pag==='cartao'   ? '' : 'none';
+};
+
+window.setTipoCartao = function(lid, tipo) {
+  if(!_checkoutData[lid]) _checkoutData[lid]={};
+  _checkoutData[lid].tipoCartao = tipo;
+  const bc=$('pcred-'+lid); if(bc) bc.classList.toggle('ativo', tipo==='credito');
+  const bd=$('pdeb-'+lid);  if(bd) bd.classList.toggle('ativo', tipo==='debito');
+};
+
+window.setBandeira = function(lid, band) {
+  if(!_checkoutData[lid]) _checkoutData[lid]={};
+  _checkoutData[lid].bandeira = band;
+  const wrap = $('bandeiras-'+lid);
+  if(wrap) wrap.querySelectorAll('.bandeira-btn-sm').forEach(b => {
+    b.classList.toggle('ativo', b.getAttribute('onclick')?.includes("'"+band+"'"));
+  });
 };
 
 window.validarEntrega = function(lid) {
@@ -1857,7 +1894,9 @@ window.finalizarPedido = async function(lid) {
       itens, total,
       status: 'novo',
       endereco,
-      pagamento: d.pag||'pix',
+      pagamento: d.pag==='cartao'
+        ? `cartao-${d.tipoCartao||'credito'}-${d.bandeira||'visa'}`
+        : (d.pag||'pix'),
       taxa_entrega: taxa,
     }).select('id').single();
     if(error) throw error;
