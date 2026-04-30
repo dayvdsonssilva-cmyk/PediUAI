@@ -1906,9 +1906,14 @@ function filtroPedidosFin() {
 
     // Filtro de período
     let passaPeriodo = true;
-    if (_finPeriodo === 'hoje')   passaPeriodo = d.toDateString() === now.toDateString();
-    else if (_finPeriodo === 'semana') { const s=new Date(now); s.setDate(s.getDate()-7); passaPeriodo = d>=s; }
-    else if (_finPeriodo === 'mes')    passaPeriodo = d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+    if (_finPeriodo === 'hoje')
+      passaPeriodo = d.toDateString() === now.toDateString();
+    else if (_finPeriodo === 'semana') {
+      const s = new Date(now); s.setDate(s.getDate()-7);
+      passaPeriodo = d >= s;
+    }
+    else if (_finPeriodo === 'mes')
+      passaPeriodo = d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
     else if (_finPeriodo === 'custom') {
       const de  = dataDeEl?.value  ? new Date(dataDeEl.value  + 'T00:00:00') : null;
       const ate = dataAteEl?.value ? new Date(dataAteEl.value + 'T23:59:59') : null;
@@ -1919,13 +1924,30 @@ function filtroPedidosFin() {
 
     // Filtro de busca por nome ou código
     if (busca) {
-      const cod  = p.id?.slice(-4).toLowerCase() || '';
+      const cod  = (p.id?.slice(-4) || '').toLowerCase();
       const nome = (p.cliente_nome || '').toLowerCase();
       if (!cod.includes(busca) && !nome.includes(busca)) return false;
     }
-
     return true;
   });
+}
+
+// Label legível do período atual
+function getPeriodoLabel() {
+  const de  = document.getElementById('fin-data-de')?.value;
+  const ate = document.getElementById('fin-data-ate')?.value;
+  const fmt = v => new Date(v+'T00:00:00').toLocaleDateString('pt-BR');
+  if (_finPeriodo === 'hoje')   return 'Hoje';
+  if (_finPeriodo === 'semana') return 'Últimos 7 dias';
+  if (_finPeriodo === 'mes')    return 'Este mês';
+  if (_finPeriodo === 'tudo')   return 'Todo o período';
+  if (_finPeriodo === 'custom') {
+    if (de && ate) return `${fmt(de)} a ${fmt(ate)}`;
+    if (de)        return `A partir de ${fmt(de)}`;
+    if (ate)       return `Até ${fmt(ate)}`;
+    return 'Período personalizado';
+  }
+  return '';
 }
 
 function renderFinanceiro() {
@@ -2050,7 +2072,7 @@ function exportarPDF() {
   const fat   = peds.reduce((s,p)=>s+Number(p.total||0),0);
   const taxa  = peds.reduce((s,p)=>s+Number(p.taxa_entrega||0),0);
   const tick  = peds.length ? fat/peds.length : 0;
-  const periodoLabel = {hoje:'Hoje',semana:'Esta semana',mes:'Este mês',tudo:'Todo o período'}[_finPeriodo]||'';
+  const periodoLabel = getPeriodoLabel();
   const agora = new Date().toLocaleString('pt-BR');
 
   // Breakdown de pagamentos
@@ -2708,7 +2730,6 @@ window.copiarLinkGarcom = function() {
   navigator.clipboard.writeText(url).then(() => {
     showToast('Link copiado! ✅');
   }).catch(() => {
-    // fallback
     const el = document.createElement('input');
     el.value = url;
     document.body.appendChild(el);
@@ -2717,6 +2738,30 @@ window.copiarLinkGarcom = function() {
     document.body.removeChild(el);
     showToast('Link copiado! ✅');
   });
+};
+
+// Copia o link do cardápio com o domínio correto
+window.copiarLink = function() {
+  const estab = getEstab(); if (!estab) return;
+  const url = `${BASE_URL}/${estab.slug}`;
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('Link do cardápio copiado! ✅');
+  }).catch(() => {
+    const el = document.createElement('input');
+    el.value = url;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast('Link do cardápio copiado! ✅');
+  });
+};
+
+// Atualiza preview do link ao digitar o slug
+window.atualizarCfgLink = function(slug) {
+  const clean = (slug||'').toLowerCase().replace(/[^a-z0-9-]/g,'-');
+  const prev  = document.getElementById('cfg-link-preview');
+  if (prev) prev.textContent = `${BASE_URL}/${clean}`;
 };
 
 
@@ -3674,7 +3719,6 @@ window.abrirModalQuente = async function() {
   const modal = document.getElementById('modal-quente');
   if (!modal) return;
 
-  // Dias da semana com nomes criativos
   const DIAS = [
     { idx:0, nome:'Domingo',   criativo:'Domingo Delícia 🌞' },
     { idx:1, nome:'Segunda',   criativo:'Segundou com Sabor 🔥' },
@@ -3685,25 +3729,21 @@ window.abrirModalQuente = async function() {
     { idx:6, nome:'Sábado',    criativo:'Sábado Irresistível 😋' },
   ];
   const hoje = new Date().getDay();
-  if (!window._quenteDia) window._quenteDia = hoje;
+  window._quenteDia = hoje; // sempre usa o dia de hoje
+  const diaHoje = DIAS[hoje];
 
+  // Mostra apenas o dia de hoje — incentiva a promoção do dia
   const diasWrap = document.getElementById('quente-dias');
   if (diasWrap) {
-    diasWrap.innerHTML = DIAS.map(d => `
-      <button onclick="selecionarDiaQuente(${d.idx})" id="qdia-${d.idx}"
-        style="padding:7px 12px;border-radius:100px;border:2px solid ${d.idx===window._quenteDia?'#e65e32':'#e0dbd5'};
-               background:${d.idx===window._quenteDia?'#e65e32':'#fff'};
-               color:${d.idx===window._quenteDia?'#fff':'#555'};
-               font-family:'Poppins',sans-serif;font-weight:700;font-size:.75rem;cursor:pointer;transition:all .15s">
-        ${d.nome}${d.idx===hoje?' (hoje)':''}
-      </button>`).join('');
-    // Preview do nome criativo
-    const prev = document.getElementById('quente-nome-preview');
-    if (prev) {
-      const diaAtual = DIAS.find(d=>d.idx===window._quenteDia);
-      prev.textContent = '✨ ' + (diaAtual?.criativo || '');
-      prev.style.display = 'block';
-    }
+    diasWrap.innerHTML = `
+      <div style="width:100%;background:linear-gradient(135deg,#e65e32,#c94e24);border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:.68rem;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Promoção de hoje</div>
+          <div style="font-size:1.2rem;font-weight:900;color:#fff">${diaHoje.criativo}</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.65);margin-top:2px">Aparece no slide do app hoje</div>
+        </div>
+        <div style="font-size:2.5rem">🔥</div>
+      </div>`;
   }
 
   // Gera pills de percentual (5 a 50, step 5)
