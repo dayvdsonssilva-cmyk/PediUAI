@@ -1224,6 +1224,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
 /* ── PROGRESS BAR ── */
 .lp-progress-bar { position:fixed;top:0;left:0;height:3px;width:100%;z-index:999;background:var(--lp-red);transform-origin:left;transform:scaleX(0);transition:transform .1s; }
 body:not(:has([data-screen="s-landing"].active)) .lp-progress-bar { display:none !important; }
+body:not(:has([data-screen="s-landing"].active)) #lp-mobile-bar { display:none !important; }
 
 /* ── HEADER ── */
 .lp-header {
@@ -1621,43 +1622,94 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
   .lp-split-section{grid-template-columns:1fr!important;gap:40px!important;}
 }
 @media(max-width:600px){
-  .lp-hero{padding:90px 5% 60px;min-height:auto;}
-  .lp-phone{width:210px;height:424px;}
-  .lp-stats{gap:20px;flex-wrap:wrap;}
+  /* ── Hero ── */
+  .lp-hero{padding:84px 5% 52px;min-height:auto;}
+  .lp-hero-inner{text-align:center;gap:32px;}
+  .lp-hero-sub{margin:0 auto 24px;font-size:.9rem;}
+  .lp-hero-btns{justify-content:center;flex-direction:column;gap:10px;}
+  .lp-hero-btns a,.lp-hero-btns button{width:100%;justify-content:center;text-align:center;}
+  .lp-hero-trust{justify-content:center;flex-wrap:wrap;}
+
+  /* ── Header mobile: mostra Entrar + CTA ── */
+  .lp-btn-outline{
+    display:inline-flex!important;
+    padding:8px 14px!important;
+    font-size:.75rem!important;
+  }
+  .lp-btn-cta{padding:8px 14px;font-size:.78rem;}
+  .lp-header-btns{gap:6px;}
+
+  /* ── Phone ── */
+  .lp-phone{width:200px;height:404px;}
+  .lp-phone-wrap{display:flex;justify-content:center;}
+
+  /* ── Stats band ── */
+  .lp-stats{gap:16px;flex-wrap:wrap;justify-content:center;}
+  .lp-band-nums{gap:20px;flex-wrap:wrap;justify-content:center;}
+
+  /* ── Grids ── */
   .lp-biz-grid{grid-template-columns:1fr 1fr;}
   .lp-numgrid{grid-template-columns:1fr 1fr;}
-  .lp-trust{gap:20px;}
-  .lp-sec{padding:50px 5%;}
-  .lp-band-nums{gap:28px;}
-  .lp-btn-outline{display:none;}
-  /* Hero mobile */
-  .lp-hero-inner{text-align:center;}
-  .lp-hero-sub{margin:0 auto 28px;}
-  .lp-hero-btns{justify-content:center;}
-  .lp-hero-trust{justify-content:center;}
-  /* Header mobile */
-  .lp-btn-outline{display:none!important;}
-  .lp-btn-cta{padding:9px 16px;font-size:.8rem;}
-  /* CTA section mobile */
-  .lp-cta-section{padding:60px 5%;}
-  /* Footer mobile */
-  .lp-footer-grid{grid-template-columns:1fr!important;gap:28px!important;}
-  .lp-footer-bottom{flex-direction:column;gap:6px;text-align:center;}
-  /* Planos mobile */
-  .lp-plan-wrap{grid-template-columns:1fr!important;}
-  /* Depoimentos mobile */
+  .lp-steps{grid-template-columns:1fr!important;}
+  .lp-feats{grid-template-columns:1fr!important;}
   .lp-dep-grid{grid-template-columns:1fr!important;}
+  .lp-plan-wrap{grid-template-columns:1fr!important;}
+  .lp-split-section{grid-template-columns:1fr!important;gap:32px!important;}
+
+  /* ── Trust logos ── */
+  .lp-trust{gap:16px;flex-wrap:wrap;justify-content:center;}
+
+  /* ── Sections ── */
+  .lp-sec{padding:44px 5%;}
+  .lp-sec-title{font-size:clamp(1.5rem,6vw,2.2rem)!important;line-height:1.15!important;}
+  .lp-sec-sub{font-size:.88rem;}
+
+  /* ── CTA section ── */
+  .lp-cta-section{padding:52px 5%;}
+  .lp-cta-h2{font-size:1.8rem!important;}
+  .lp-cta-btns{flex-direction:column;gap:10px;}
+  .lp-cta-btns a,.lp-cta-btns button{width:100%;justify-content:center;}
+
+  /* ── Footer ── */
+  .lp-footer-grid{grid-template-columns:1fr!important;gap:24px!important;}
+  .lp-footer-bottom{flex-direction:column;gap:6px;text-align:center;}
+
+  /* ── Comparativo ── */
+  .lp-comp-grid{grid-template-columns:1fr!important;}
 }
 @media(max-width:480px){
-  .lp-header-btns .lp-btn-outline{display:none;}
-  .lp-hero-h1{font-size:clamp(2rem,9vw,3rem)!important;}
-  .lp-hero{padding:80px 5% 50px;}
-  .lp-sec-title{font-size:clamp(1.5rem,6vw,2rem)!important;}
+  .lp-hero-h1{font-size:clamp(1.9rem,8vw,2.8rem)!important;line-height:1.1!important;}
+  .lp-hero{padding:76px 5% 44px;}
+  .lp-sec-title{font-size:clamp(1.4rem,7vw,1.9rem)!important;}
+  .lp-logo{font-size:1.2rem;}
+  .lp-btn-outline{padding:7px 10px!important;font-size:.7rem!important;}
+  .lp-btn-cta{padding:7px 12px;font-size:.72rem;}
 }
 </style>
 
 <!-- PROGRESS BAR -->
 <div class="lp-progress-bar" id="lp-progress"></div>
+
+<!-- BARRA MOBILE STICKY (só no celular) -->
+<div id="lp-mobile-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;background:rgba(255,255,255,.97);backdrop-filter:blur(16px);border-top:1px solid #ede8e0;padding:12px 16px 20px;box-shadow:0 -4px 24px rgba(0,0,0,.1)">
+  <div style="display:flex;gap:8px;max-width:400px;margin:0 auto">
+    <button onclick="goTo('s-login')"
+      style="flex:1;padding:13px;border:2px solid #1a1a1a;background:#fff;border-radius:12px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.88rem;color:#1a1a1a;cursor:pointer">
+      Entrar
+    </button>
+    <button onclick="goTo('s-register')"
+      style="flex:2;padding:13px;border:none;background:#e65e32;border-radius:12px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.88rem;color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(230,94,50,.4)">
+      🚀 Começar grátis
+    </button>
+  </div>
+</div>
+<style>
+@media(max-width:600px){
+  #lp-mobile-bar{ display:block!important; }
+  /* Espaço para a barra não cobrir o footer */
+  body:has([data-screen="s-landing"].active) { padding-bottom: 80px; }
+}
+</style>
 
 <!-- HEADER -->
 <header class="lp-header" id="lp-header">
