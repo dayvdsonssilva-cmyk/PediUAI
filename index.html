@@ -391,6 +391,8 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .cfg-topic-body.open { display:flex; animation:cfg-slide-down .22s cubic-bezier(.4,0,.2,1); }
 @keyframes cfg-slide-down { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:none} }
 .cfg-actions { max-width:640px; display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+.pgto-band-btn { display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:9px;border:1.5px solid #e0dbd5;background:#fff;cursor:pointer;font-family:'Poppins',sans-serif;transition:all .15s; }
+.pgto-band-btn.ativo { border-color:#e65e32;background:#fff5f0; }
 .form-group-light { display:flex; flex-direction:column; gap:6px; }
 .form-group-light label { font-size:0.82rem; font-weight:600; color:#555; }
 .input-light { width:100%; background:#faf6f1; border:1px solid #e0d8d0; border-radius:8px; padding:11px 14px; color:#1a1a1a; font-family:'Poppins',sans-serif; font-size:0.93rem; font-weight:500; outline:none; transition:border-color 0.2s; resize:vertical; }
@@ -3723,16 +3725,32 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
             <span style="font-size:1.4rem">💵</span>Dinheiro
           </button>
         </div>
-        <!-- Sub-menu crédito/débito -->
-        <div id="pgto-cartao-submenu" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-          <button onclick="selecionarPagamentoComanda('CRÉDITO')" id="pgto-btn-CRÉDITO"
-            style="padding:10px 8px;border-radius:10px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s">
-            💳 Crédito
-          </button>
-          <button onclick="selecionarPagamentoComanda('DÉBITO')" id="pgto-btn-DÉBITO"
-            style="padding:10px 8px;border-radius:10px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s">
-            💳 Débito
-          </button>
+        <!-- Sub-menu crédito/débito + bandeira -->
+        <div id="pgto-cartao-submenu" style="display:none;flex-direction:column;gap:10px;margin-top:8px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button onclick="selecionarPagamentoComanda('CRÉDITO')" id="pgto-btn-CRÉDITO"
+              style="padding:10px 8px;border-radius:10px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s">
+              💳 Crédito
+            </button>
+            <button onclick="selecionarPagamentoComanda('DÉBITO')" id="pgto-btn-DÉBITO"
+              style="padding:10px 8px;border-radius:10px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s">
+              💳 Débito
+            </button>
+          </div>
+          <!-- Bandeiras -->
+          <div>
+            <div style="font-size:.65rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Bandeira</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px" id="pgto-bandeiras-grid">
+              <button class="pgto-band-btn ativo" onclick="selecionarBandeiraComanda('visa')"><span style="font-size:1rem">💙</span><span style="font-size:.6rem;font-weight:800">Visa</span></button>
+              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('master')"><span style="font-size:1rem">🔴</span><span style="font-size:.6rem;font-weight:800">Master</span></button>
+              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('elo')"><span style="font-size:1rem">⭐</span><span style="font-size:.6rem;font-weight:800">Elo</span></button>
+              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('hipercard')"><span style="font-size:1rem">🔶</span><span style="font-size:.6rem;font-weight:800">Hiper</span></button>
+              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('amex')"><span style="font-size:1rem">🔵</span><span style="font-size:.6rem;font-weight:800">Amex</span></button>
+              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('cabal')"><span style="font-size:1rem">🟢</span><span style="font-size:.6rem;font-weight:800">Cabal</span></button>
+              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('pix-cred')"><span style="font-size:1rem">💜</span><span style="font-size:.6rem;font-weight:800">PIX C.</span></button>
+              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('outro')"><span style="font-size:1rem">💳</span><span style="font-size:.6rem;font-weight:800">Outro</span></button>
+            </div>
+          </div>
         </div>
         </div>
         <div id="pgto-aviso" style="display:none;font-size:.72rem;color:#C0392B;margin-top:8px;text-align:center;font-weight:600">
