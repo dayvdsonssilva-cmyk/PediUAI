@@ -161,7 +161,26 @@
     .bandeira-btn:hover { border-color:#bbb; }
     #campos-entrega, #campos-retirada { display: none; }
     #campos-entrega.show, #campos-retirada.show { display: block; }
-    .btn-finalizar { width: 100%; padding: 15px; background: var(--red); color: #fff; border: none; border-radius: 14px; font-family: 'Poppins',sans-serif; font-size: 1rem; font-weight: 800; cursor: pointer; margin-top: 4px; }
+/* ── CARRINHO 3 PASSOS ── */
+.carr-steps { display:flex;align-items:center;justify-content:center;gap:0;padding:14px 20px;border-bottom:1px solid var(--border); }
+.carr-step-item { display:flex;flex-direction:column;align-items:center;gap:3px;flex:1; }
+.carr-step-circle { width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;border:2px solid var(--border);background:#fff;color:var(--muted);transition:all .3s; }
+.carr-step-circle.active { background:var(--red);border-color:var(--red);color:#fff; }
+.carr-step-circle.done { background:#22c55e;border-color:#22c55e;color:#fff; }
+.carr-step-label { font-size:.6rem;font-weight:700;color:var(--muted);transition:color .3s; }
+.carr-step-label.active { color:var(--red); }
+.carr-step-label.done { color:#22c55e; }
+.carr-step-line { flex:1;height:2px;background:var(--border);margin:0 4px;margin-bottom:14px;transition:background .3s;max-width:40px; }
+.carr-step-line.done { background:#22c55e; }
+.carr-passo { display:none; }
+.carr-passo.show { display:block; }
+.carr-nav { display:flex;gap:8px;padding:14px 16px 24px;border-top:1px solid var(--border);margin-top:8px; }
+.carr-btn-back { padding:13px 18px;border:1.5px solid var(--border);border-radius:12px;background:#fff;font-family:'Poppins',sans-serif;font-weight:700;font-size:.85rem;color:var(--muted);cursor:pointer;white-space:nowrap; }
+.carr-btn-next { flex:1;padding:13px;border:none;border-radius:12px;background:var(--red);color:#fff;font-family:'Poppins',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer; }
+.carr-section-title { font-size:.7rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;margin-top:4px; }
+.resumo-row { display:flex;justify-content:space-between;font-size:.85rem;padding:6px 0;border-bottom:1px solid var(--border); }
+.resumo-row:last-child { border:none; }
+.resumo-total { display:flex;justify-content:space-between;font-size:1rem;font-weight:900;padding:10px 0 0; }
 
     /* ── MEUS PEDIDOS ── */
     .pedidos-lista { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
@@ -357,114 +376,153 @@
   </div>
 </div>
 
-<!-- CARRINHO -->
-<div id="carr-bg" >
+<!-- CARRINHO 3 PASSOS -->
+<div id="carr-bg">
   <div id="carr-sheet">
+
+    <!-- Header com X e título do passo -->
     <div class="carr-header">
-      <div class="carr-title">🛒 Sua sacola</div>
+      <div class="carr-title" id="carr-passo-titulo">🛒 Sua sacola</div>
       <button class="carr-close" onclick="fecharCarrinho()">✕</button>
     </div>
-    <div id="carr-itens"></div>
-    <div class="carr-total-row" id="carr-subtotal-row" style="display:none"><span style="color:var(--muted);font-size:0.85rem">Subtotal</span><span style="color:var(--muted);font-size:0.85rem" id="carr-subtotal">R$ 0,00</span></div>
-    <div class="carr-total-row" id="carr-taxa-row" style="display:none"><span style="color:var(--muted);font-size:0.85rem">Taxa de entrega</span><span style="color:var(--muted);font-size:0.85rem" id="carr-taxa">R$ 0,00</span></div>
-    <div class="carr-total-row"><span>Total</span><span class="carr-total-val" id="carr-total">R$ 0,00</span></div>
-    <div class="carr-form">
-      <div>
-        <label>Seu nome *</label>
-        <input class="carr-input" id="cli-nome" placeholder="Como te chamamos?">
+
+    <!-- Indicador de passos -->
+    <div class="carr-steps">
+      <div class="carr-step-item">
+        <div class="carr-step-circle active" id="step-c-1">1</div>
+        <div class="carr-step-label active" id="step-l-1">Sacola</div>
       </div>
-      <div>
-        <label>Seu WhatsApp *</label>
-        <input class="carr-input" id="cli-whats" placeholder="(00) 9 0000-0000" oninput="mascaraWhats(this)">
+      <div class="carr-step-line" id="step-line-1"></div>
+      <div class="carr-step-item">
+        <div class="carr-step-circle" id="step-c-2">2</div>
+        <div class="carr-step-label" id="step-l-2">Entrega</div>
       </div>
-      <div>
-        <label>Como prefere receber?</label>
-        <div class="carr-opts">
-          <button class="carr-opt-btn ativo" id="btn-entrega"  onclick="selecionarOpcao('entrega')">🛵 Entrega</button>
-          <button class="carr-opt-btn"       id="btn-retirada" onclick="selecionarOpcao('retirada')">🏃 Retirada</button>
+      <div class="carr-step-line" id="step-line-2"></div>
+      <div class="carr-step-item">
+        <div class="carr-step-circle" id="step-c-3">3</div>
+        <div class="carr-step-label" id="step-l-3">Pagamento</div>
+      </div>
+    </div>
+
+    <!-- ══ PASSO 1: SACOLA ══ -->
+    <div class="carr-passo show" id="carr-passo-1" style="padding:0 0 8px">
+      <div id="carr-itens"></div>
+      <div style="padding:0 16px">
+        <div class="carr-total-row" id="carr-subtotal-row" style="display:none">
+          <span style="color:var(--muted);font-size:.85rem">Subtotal</span>
+          <span style="color:var(--muted);font-size:.85rem" id="carr-subtotal">R$ 0,00</span>
         </div>
+        <div class="carr-total-row" id="carr-taxa-row" style="display:none">
+          <span style="color:var(--muted);font-size:.85rem">Taxa de entrega</span>
+          <span style="color:var(--muted);font-size:.85rem" id="carr-taxa">R$ 0,00</span>
+        </div>
+        <div class="carr-total-row">
+          <span>Total</span>
+          <span class="carr-total-val" id="carr-total">R$ 0,00</span>
+        </div>
+        <div style="margin-top:6px">
+          <label>Observações</label>
+          <input class="carr-input" id="cli-obs" placeholder="Sem cebola, sem sal, etc...">
+        </div>
+      </div>
+      <div class="carr-nav">
+        <button class="carr-btn-next" onclick="irPasso(2)">Continuar → Entrega</button>
+      </div>
+    </div>
+
+    <!-- ══ PASSO 2: ENTREGA ══ -->
+    <div class="carr-passo" id="carr-passo-2" style="padding:16px 16px 0">
+      <div class="carr-section-title">Seus dados</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+        <input class="carr-input" id="cli-nome"  placeholder="Seu nome *">
+        <input class="carr-input" id="cli-whats" placeholder="WhatsApp (00) 9 0000-0000 *" oninput="mascaraWhats(this)">
+      </div>
+      <div class="carr-section-title">Como prefere receber?</div>
+      <div class="carr-opts" style="margin-bottom:14px">
+        <button class="carr-opt-btn ativo" id="btn-entrega"  onclick="selecionarOpcao('entrega')">🛵 Entrega</button>
+        <button class="carr-opt-btn"       id="btn-retirada" onclick="selecionarOpcao('retirada')">🏃 Retirada</button>
       </div>
       <div id="campos-entrega" class="show">
-        <label>Endereço de entrega *</label>
-        <input class="carr-input" id="cli-rua" placeholder="Rua / Avenida..." style="margin-bottom:8px">
-        <div style="display:flex;gap:8px">
-          <input class="carr-input" id="cli-numero" placeholder="Nº *" style="width:80px;flex-shrink:0">
-          <input class="carr-input" id="cli-complemento" placeholder="Bairro, complemento...">
+        <div class="carr-section-title">Endereço de entrega</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <input class="carr-input" id="cli-rua"         placeholder="Rua / Avenida *">
+          <div style="display:flex;gap:8px">
+            <input class="carr-input" id="cli-numero"      placeholder="Nº *" style="width:80px;flex-shrink:0">
+            <input class="carr-input" id="cli-complemento" placeholder="Bairro, complemento...">
+          </div>
         </div>
       </div>
-      <div id="campos-retirada">
-        <div style="font-size:0.82rem;color:var(--muted);padding:10px;background:#f5f0eb;border-radius:10px">
+      <div id="campos-retirada" style="display:none">
+        <div style="font-size:.82rem;color:var(--muted);padding:12px;background:#f5f0eb;border-radius:10px">
           📍 Endereço: <span id="estab-endereco-txt">Consulte a loja</span>
         </div>
       </div>
+      <div class="carr-nav">
+        <button class="carr-btn-back" onclick="irPasso(1)">← Voltar</button>
+        <button class="carr-btn-next" onclick="irPasso(3)">Continuar → Pagamento</button>
+      </div>
+    </div>
 
-      <div>
-        <label>Forma de pagamento *</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="carr-opt-btn ativo" id="pag-pix"      onclick="selecionarPag('pix')">💠 PIX</button>
-          <button class="carr-opt-btn"       id="pag-cartao"   onclick="selecionarPag('cartao')">💳 Cartão</button>
-          <button class="carr-opt-btn"       id="pag-dinheiro" onclick="selecionarPag('dinheiro')">💵 Dinheiro</button>
+    <!-- ══ PASSO 3: PAGAMENTO ══ -->
+    <div class="carr-passo" id="carr-passo-3" style="padding:16px 16px 0">
+
+      <!-- Resumo rápido -->
+      <div style="background:#f9f6f2;border-radius:12px;padding:12px 14px;margin-bottom:16px">
+        <div class="carr-section-title" style="margin-bottom:8px">Resumo do pedido</div>
+        <div id="resumo-passo3"></div>
+        <div class="resumo-total">
+          <span>Total</span>
+          <span style="color:var(--red)" id="resumo-total-p3">R$ 0,00</span>
         </div>
       </div>
 
-      <!-- Detalhes do cartão — crédito/débito + bandeira -->
-      <div id="campos-cartao" style="display:none;margin-top:4px">
-        <label style="font-size:.78rem;font-weight:700;color:#888;margin-bottom:8px;display:block">Tipo do cartão</label>
+      <div class="carr-section-title">Forma de pagamento</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="carr-opt-btn ativo" id="pag-pix"      onclick="selecionarPag('pix')">💠 PIX</button>
+        <button class="carr-opt-btn"       id="pag-cartao"   onclick="selecionarPag('cartao')">💳 Cartão</button>
+        <button class="carr-opt-btn"       id="pag-dinheiro" onclick="selecionarPag('dinheiro')">💵 Dinheiro</button>
+      </div>
+
+      <!-- Cartão: crédito/débito + bandeira -->
+      <div id="campos-cartao" style="display:none;margin-bottom:12px">
+        <div class="carr-section-title">Tipo do cartão</div>
         <div style="display:flex;gap:8px;margin-bottom:12px">
-          <button class="carr-opt-btn ativo" id="tipo-credito" onclick="selecionarTipoCartao('credito')"
-            style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px">
-            <span>💳</span> Crédito
-          </button>
-          <button class="carr-opt-btn" id="tipo-debito" onclick="selecionarTipoCartao('debito')"
-            style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px">
-            <span>💳</span> Débito
-          </button>
+          <button class="carr-opt-btn ativo" id="tipo-credito" onclick="selecionarTipoCartao('credito')" style="flex:1">💳 Crédito</button>
+          <button class="carr-opt-btn"       id="tipo-debito"  onclick="selecionarTipoCartao('debito')"  style="flex:1">💳 Débito</button>
         </div>
-        <label style="font-size:.78rem;font-weight:700;color:#888;margin-bottom:8px;display:block">Bandeira</label>
+        <div class="carr-section-title">Bandeira</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="bandeiras-grid">
-          <button class="bandeira-btn ativo" id="band-visa"       onclick="selecionarBandeira('visa')">
-            <span style="font-size:1.2rem">💙</span><span style="font-size:.65rem;font-weight:800">Visa</span>
-          </button>
-          <button class="bandeira-btn" id="band-master"     onclick="selecionarBandeira('master')">
-            <span style="font-size:1.2rem">🔴</span><span style="font-size:.65rem;font-weight:800">Master</span>
-          </button>
-          <button class="bandeira-btn" id="band-elo"        onclick="selecionarBandeira('elo')">
-            <span style="font-size:1.2rem">⭐</span><span style="font-size:.65rem;font-weight:800">Elo</span>
-          </button>
-          <button class="bandeira-btn" id="band-hipercard" onclick="selecionarBandeira('hipercard')">
-            <span style="font-size:1.2rem">🔶</span><span style="font-size:.65rem;font-weight:800">Hiper</span>
-          </button>
-          <button class="bandeira-btn" id="band-amex"       onclick="selecionarBandeira('amex')">
-            <span style="font-size:1.2rem">🔵</span><span style="font-size:.65rem;font-weight:800">Amex</span>
-          </button>
-          <button class="bandeira-btn" id="band-cabal"      onclick="selecionarBandeira('cabal')">
-            <span style="font-size:1.2rem">🟢</span><span style="font-size:.65rem;font-weight:800">Cabal</span>
-          </button>
-          <button class="bandeira-btn" id="band-pix-cred"   onclick="selecionarBandeira('pix-cred')">
-            <span style="font-size:1.2rem">💜</span><span style="font-size:.65rem;font-weight:800">PIX C.</span>
-          </button>
-          <button class="bandeira-btn" id="band-outro"      onclick="selecionarBandeira('outro')">
-            <span style="font-size:1.2rem">💳</span><span style="font-size:.65rem;font-weight:800">Outro</span>
-          </button>
+          <button class="bandeira-btn ativo" id="band-visa"      onclick="selecionarBandeira('visa')"><span style="font-size:1.2rem">💙</span><span style="font-size:.65rem;font-weight:800">Visa</span></button>
+          <button class="bandeira-btn"       id="band-master"    onclick="selecionarBandeira('master')"><span style="font-size:1.2rem">🔴</span><span style="font-size:.65rem;font-weight:800">Master</span></button>
+          <button class="bandeira-btn"       id="band-elo"       onclick="selecionarBandeira('elo')"><span style="font-size:1.2rem">⭐</span><span style="font-size:.65rem;font-weight:800">Elo</span></button>
+          <button class="bandeira-btn"       id="band-hipercard" onclick="selecionarBandeira('hipercard')"><span style="font-size:1.2rem">🔶</span><span style="font-size:.65rem;font-weight:800">Hiper</span></button>
+          <button class="bandeira-btn"       id="band-amex"      onclick="selecionarBandeira('amex')"><span style="font-size:1.2rem">🔵</span><span style="font-size:.65rem;font-weight:800">Amex</span></button>
+          <button class="bandeira-btn"       id="band-cabal"     onclick="selecionarBandeira('cabal')"><span style="font-size:1.2rem">🟢</span><span style="font-size:.65rem;font-weight:800">Cabal</span></button>
+          <button class="bandeira-btn"       id="band-pix-cred"  onclick="selecionarBandeira('pix-cred')"><span style="font-size:1.2rem">💜</span><span style="font-size:.65rem;font-weight:800">PIX C.</span></button>
+          <button class="bandeira-btn"       id="band-outro"     onclick="selecionarBandeira('outro')"><span style="font-size:1.2rem">💳</span><span style="font-size:.65rem;font-weight:800">Outro</span></button>
         </div>
       </div>
-      <div id="campos-troco" style="display:none">
-        <label>Precisa de troco?</label>
+
+      <!-- Troco -->
+      <div id="campos-troco" style="display:none;margin-bottom:12px">
+        <div class="carr-section-title">Precisa de troco?</div>
         <div style="display:flex;gap:8px;margin-bottom:8px">
           <button class="carr-opt-btn ativo" id="troco-nao" onclick="selecionarTroco(false)">Não</button>
           <button class="carr-opt-btn"       id="troco-sim" onclick="selecionarTroco(true)">Sim</button>
         </div>
         <div id="campo-troco-valor" style="display:none">
-          <label>Troco para quanto?</label>
-          <input class="carr-input" id="cli-troco" placeholder="Ex: R$ 50,00">
+          <input class="carr-input" id="cli-troco" placeholder="Troco para quanto?">
         </div>
       </div>
-      <div>
-        <label>Observações</label>
-        <input class="carr-input" id="cli-obs" placeholder="Sem cebola, etc...">
+
+      <div class="carr-nav">
+        <button class="carr-btn-back" onclick="irPasso(2)">← Voltar</button>
+        <button class="carr-btn-next" id="btn-finalizar" onclick="finalizarPedido()" style="background:linear-gradient(135deg,var(--red),var(--red2))">
+          🚀 Mandar o pedido!
+        </button>
       </div>
-      <button class="btn-finalizar" id="btn-finalizar" onclick="finalizarPedido()">Mandar o pedido! 🚀</button>
     </div>
+
   </div>
 </div>
 
@@ -1035,6 +1093,7 @@ function atualizarFab() {
 
 window.abrirCarrinho = function() {
   renderCarrinho();
+  irPasso(1);
   $('carr-bg').classList.add('open');
   document.body.style.overflow = 'hidden';
 };
@@ -1103,6 +1162,62 @@ let opcaoPag    = 'pix';
 let tipoCartao  = 'credito';
 let bandeira    = 'visa';
 let precisaTroco = false;
+let _passoAtual  = 1;
+
+// ── Navegação entre passos ────────────────────────────────────────────────────
+window.irPasso = function(passo) {
+  // Validações por passo
+  if (passo === 2) {
+    if (!carrinho.length) return mostrarToast('Adicione itens à sacola primeiro.', '#333');
+  }
+  if (passo === 3) {
+    const nome  = $('cli-nome')?.value.trim();
+    const whats = $('cli-whats')?.value.replace(/\D/g,'');
+    if (!nome)        return mostrarToast('Digite seu nome.', '#333');
+    if (whats.length < 10) return mostrarToast('WhatsApp inválido.', '#333');
+    const opcao = $('btn-entrega')?.classList.contains('ativo') ? 'entrega' : 'retirada';
+    if (opcao === 'entrega') {
+      if (!$('cli-rua')?.value.trim())    return mostrarToast('Digite a rua.', '#333');
+      if (!$('cli-numero')?.value.trim()) return mostrarToast('Digite o número.', '#333');
+    }
+    // Atualiza resumo no passo 3
+    const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+    const resumoEl = $('resumo-passo3');
+    if (resumoEl) {
+      resumoEl.innerHTML = carrinho.map(i =>
+        `<div class="resumo-row"><span>${i.qtd}× ${i.nome}</span><span>${fmtR(i.preco*i.qtd)}</span></div>`
+      ).join('');
+    }
+    const totalEl = $('resumo-total-p3');
+    if (totalEl) totalEl.textContent = $('carr-total')?.textContent || 'R$ 0,00';
+  }
+
+  _passoAtual = passo;
+
+  // Atualiza visibilidade dos passos
+  [1,2,3].forEach(p => {
+    $('carr-passo-'+p)?.classList.toggle('show', p === passo);
+  });
+
+  // Atualiza indicadores
+  const titulos = ['', '🛒 Sua sacola', '📍 Entrega', '💳 Pagamento'];
+  const tituloEl = $('carr-passo-titulo');
+  if (tituloEl) tituloEl.textContent = titulos[passo];
+
+  [1,2,3].forEach(p => {
+    const circle = $('step-c-'+p);
+    const label  = $('step-l-'+p);
+    const line   = $('step-line-'+p);
+    if (!circle) return;
+    circle.className = 'carr-step-circle ' + (p < passo ? 'done' : p === passo ? 'active' : '');
+    circle.textContent = p < passo ? '✓' : String(p);
+    if (label) label.className = 'carr-step-label ' + (p < passo ? 'done' : p === passo ? 'active' : '');
+    if (line)  line.className  = 'carr-step-line ' + (p < passo ? 'done' : '');
+  });
+
+  // Scroll topo
+  $('carr-sheet')?.scrollTo({ top:0, behavior:'smooth' });
+};
 
 window.selecionarPag = function(pag) {
   opcaoPag = pag;
