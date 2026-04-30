@@ -2089,7 +2089,7 @@ function exportarPDF() {
     + '@media print{body{padding:0}}'
     + '</style></head><body>'
     + '<div class="header"><div><div class="logo">PEDI<span>WAY</span></div><div style="font-size:13px;font-weight:700;margin-top:4px">'+(estab?.nome||'Estabelecimento')+'</div></div>'
-    + '<div class="meta"><strong style="display:block;font-size:13px;color:#1a1a1a">Relatório Financeiro</strong>Período: '+periodoLabel+'<br>Gerado em: '+agora+'</div></div>'
+    + '<div class="meta"><strong style="display:block;font-size:13px;color:#1a1a1a">Relatório de Vendas</strong>Período: '+periodoLabel+'<br>Gerado em: '+agora+'</div></div>'
     + '<div class="cards">'
     + '<div class="card"><div class="card-label">Faturamento</div><div class="card-val g">'+fmtR(fat)+'</div></div>'
     + '<div class="card"><div class="card-label">Pedidos</div><div class="card-val">'+peds.length+'</div></div>'
