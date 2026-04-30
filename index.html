@@ -2263,7 +2263,7 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
     <button class="tab-btn" data-tab="comandas" onclick="showTab('comandas',this)">🍽️ Comandas</button>
     <button class="tab-btn"        data-tab="cardapio"       onclick="showTab('cardapio',this)">Cardápio</button>
     <button class="tab-btn"        data-tab="fresquinho"     onclick="showTab('fresquinho',this)">Fresquinho</button>
-    <button class="tab-btn"        data-tab="financeiro"     onclick="showTab('financeiro',this)">💰 Financeiro</button>
+    <button class="tab-btn"        data-tab="financeiro"     onclick="showTab('financeiro',this)">📊 Relatório de Vendas</button>
     <button class="tab-btn"        data-tab="caixa"          onclick="showTab('caixa',this)">🏦 Caixa</button>
     <button class="tab-btn"        data-tab="configuracoes"  onclick="showTab('configuracoes',this);carregarEstadosDash();setTimeout(initCfgAccordion,80)">Configurações</button>
   </nav>
@@ -2330,13 +2330,17 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
             style="border:none;outline:none;font-family:'Poppins',sans-serif;font-size:0.88rem;font-weight:500;width:100%;color:#333;background:transparent">
         </div>
         <!-- Filtro por data -->
-        <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:7px 12px">
+        <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:7px 12px;flex-wrap:wrap">
           <span style="font-size:.78rem;color:#aaa;white-space:nowrap">📅 De</span>
-          <input type="date" id="ped-data-de" onchange="filtrarPedidosData()"
+          <input type="date" id="ped-data-de"
             style="border:none;outline:none;font-family:'Poppins',sans-serif;font-size:.78rem;color:#333;background:transparent;cursor:pointer">
           <span style="font-size:.78rem;color:#aaa">até</span>
-          <input type="date" id="ped-data-ate" onchange="filtrarPedidosData()"
+          <input type="date" id="ped-data-ate"
             style="border:none;outline:none;font-family:'Poppins',sans-serif;font-size:.78rem;color:#333;background:transparent;cursor:pointer">
+          <button onclick="filtrarPedidosData()"
+            style="background:var(--red);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.75rem;cursor:pointer;white-space:nowrap">
+            🔍 Buscar
+          </button>
           <button onclick="document.getElementById('ped-data-de').value='';document.getElementById('ped-data-ate').value='';filtrarPedidosData()"
             style="background:none;border:none;color:#ccc;cursor:pointer;font-size:.85rem;padding:0 2px">✕</button>
         </div>
@@ -2513,23 +2517,27 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
       </div>
 
       <!-- Seletor de período personalizado -->
-      <div id="fin-custom-wrap" style="display:none;background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:16px;display:none">
+      <div id="fin-custom-wrap" style="display:none;background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:16px">
         <div style="font-size:.78rem;font-weight:800;color:#555;margin-bottom:12px">📅 Selecionar período</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
           <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px">
             <label style="font-size:.7rem;font-weight:700;color:#aaa">De</label>
-            <input type="date" id="fin-data-de" class="input-light" style="padding:10px 12px"
-              onchange="renderFinanceiro()">
+            <input type="date" id="fin-data-de" class="input-light" style="padding:10px 12px">
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px">
             <label style="font-size:.7rem;font-weight:700;color:#aaa">Até</label>
-            <input type="date" id="fin-data-ate" class="input-light" style="padding:10px 12px"
-              onchange="renderFinanceiro()">
+            <input type="date" id="fin-data-ate" class="input-light" style="padding:10px 12px">
           </div>
-          <button onclick="setFinPeriodo('hoje',document.getElementById('fin-hoje'))"
-            style="padding:10px 16px;background:#f0ebe4;border:none;border-radius:10px;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#888;cursor:pointer;white-space:nowrap">
-            Limpar
-          </button>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button onclick="renderFinanceiro()"
+              style="padding:10px 20px;background:var(--red);color:#fff;border:none;border-radius:10px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.82rem;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(230,94,50,.3)">
+              🔍 Buscar
+            </button>
+            <button onclick="document.getElementById('fin-data-de').value='';document.getElementById('fin-data-ate').value='';renderFinanceiro()"
+              style="padding:10px 16px;background:#f0ebe4;border:none;border-radius:10px;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#888;cursor:pointer;white-space:nowrap">
+              Limpar
+            </button>
+          </div>
         </div>
       </div>
 
