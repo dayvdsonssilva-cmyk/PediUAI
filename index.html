@@ -2045,6 +2045,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
     <button class="tab-btn"        data-tab="cardapio"       onclick="showTab('cardapio',this)">Cardápio</button>
     <button class="tab-btn"        data-tab="fresquinho"     onclick="showTab('fresquinho',this)">Fresquinho</button>
     <button class="tab-btn"        data-tab="financeiro"     onclick="showTab('financeiro',this)">💰 Financeiro</button>
+    <button class="tab-btn"        data-tab="caixa"          onclick="showTab('caixa',this)">🏦 Caixa</button>
     <button class="tab-btn"        data-tab="configuracoes"  onclick="showTab('configuracoes',this);carregarEstadosDash();setTimeout(initCfgAccordion,80)">Configurações</button>
   </nav>
 
@@ -2100,13 +2101,25 @@ canvas, [data-touch="free"] { touch-action: none !important; }
           <div style="color:#bbb;font-size:0.82rem;margin:auto">Nenhum pedido novo no momento</div>
         </div>
       </div>
-      <!-- Historico -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap">
-        <h3>Histórico de pedidos</h3>
-        <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px 14px;flex:1;max-width:320px">
+      <!-- Filtros de busca -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+        <h3 style="flex:none">Histórico de pedidos</h3>
+        <!-- Busca por texto -->
+        <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px 14px;flex:1;min-width:200px;max-width:320px">
           <span style="color:#aaa">🔍</span>
-          <input type="text" placeholder="Buscar por código, nome..." oninput="buscarPedidos(this.value)"
+          <input type="text" placeholder="Código, nome..." oninput="buscarPedidos(this.value)"
             style="border:none;outline:none;font-family:'Poppins',sans-serif;font-size:0.88rem;font-weight:500;width:100%;color:#333;background:transparent">
+        </div>
+        <!-- Filtro por data -->
+        <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:7px 12px">
+          <span style="font-size:.78rem;color:#aaa;white-space:nowrap">📅 De</span>
+          <input type="date" id="ped-data-de" onchange="filtrarPedidosData()"
+            style="border:none;outline:none;font-family:'Poppins',sans-serif;font-size:.78rem;color:#333;background:transparent;cursor:pointer">
+          <span style="font-size:.78rem;color:#aaa">até</span>
+          <input type="date" id="ped-data-ate" onchange="filtrarPedidosData()"
+            style="border:none;outline:none;font-family:'Poppins',sans-serif;font-size:.78rem;color:#333;background:transparent;cursor:pointer">
+          <button onclick="document.getElementById('ped-data-de').value='';document.getElementById('ped-data-ate').value='';filtrarPedidosData()"
+            style="background:none;border:none;color:#ccc;cursor:pointer;font-size:.85rem;padding:0 2px">✕</button>
         </div>
       </div>
       <div id="todos-pedidos"><div class="empty-state-light"><span>📋</span><p>Nenhum pedido ainda.</p></div></div>
@@ -2265,6 +2278,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
           <button class="fin-seg-btn"       id="fin-semana" onclick="setFinPeriodo('semana',this)">Semana</button>
           <button class="fin-seg-btn"       id="fin-mes"    onclick="setFinPeriodo('mes',this)">Este mês</button>
           <button class="fin-seg-btn"       id="fin-tudo"   onclick="setFinPeriodo('tudo',this)">Tudo</button>
+          <button class="fin-seg-btn"       id="fin-custom" onclick="setFinPeriodo('custom',this)">📅 Período</button>
         </div>
         <!-- Exportações -->
         <div style="display:flex;gap:8px">
@@ -2277,6 +2291,37 @@ canvas, [data-touch="free"] { touch-action: none !important; }
             CSV
           </button>
         </div>
+      </div>
+
+      <!-- Seletor de período personalizado -->
+      <div id="fin-custom-wrap" style="display:none;background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:16px;display:none">
+        <div style="font-size:.78rem;font-weight:800;color:#555;margin-bottom:12px">📅 Selecionar período</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px">
+            <label style="font-size:.7rem;font-weight:700;color:#aaa">De</label>
+            <input type="date" id="fin-data-de" class="input-light" style="padding:10px 12px"
+              onchange="renderFinanceiro()">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px">
+            <label style="font-size:.7rem;font-weight:700;color:#aaa">Até</label>
+            <input type="date" id="fin-data-ate" class="input-light" style="padding:10px 12px"
+              onchange="renderFinanceiro()">
+          </div>
+          <button onclick="setFinPeriodo('hoje',document.getElementById('fin-hoje'))"
+            style="padding:10px 16px;background:#f0ebe4;border:none;border-radius:10px;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#888;cursor:pointer;white-space:nowrap">
+            Limpar
+          </button>
+        </div>
+      </div>
+
+      <!-- Busca por nome/código -->
+      <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:16px">
+        <span style="color:#aaa">🔍</span>
+        <input type="text" id="fin-busca" placeholder="Buscar por nome do cliente ou código #..." 
+          oninput="renderFinanceiro()"
+          style="border:none;outline:none;font-family:'Poppins',sans-serif;font-size:.88rem;font-weight:500;width:100%;color:#333;background:transparent">
+        <span id="fin-busca-clear" onclick="document.getElementById('fin-busca').value='';renderFinanceiro()" 
+          style="color:#ccc;cursor:pointer;font-size:.9rem;display:none">✕</span>
       </div>
 
       <!-- Cards resumo -->
@@ -2333,7 +2378,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
           <div class="fin-section-icon">📋</div>
           <div style="flex:1">
             <div class="fin-section-title">Histórico de Pedidos</div>
-            <div class="fin-section-sub">Últimos 100 pedidos do período</div>
+            <div class="fin-section-sub" id="fin-hist-sub">Últimos 100 pedidos do período</div>
           </div>
         </div>
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid var(--border);max-width:100%;">
@@ -2781,6 +2826,101 @@ canvas, [data-touch="free"] { touch-action: none !important; }
 
     </div>
   </div>
+
+  <!-- ══════ CAIXA ══════ -->
+  <div class="tab-content" id="tab-caixa">
+    <div class="dash-container">
+      <h3 style="margin-bottom:6px">🏦 Controle de Caixa</h3>
+      <p style="font-size:.78rem;color:#aaa;margin-bottom:20px">Abra e feche o caixa do dia com controle de valores</p>
+
+      <!-- Status do caixa -->
+      <div id="caixa-status-card" style="background:linear-gradient(135deg,#1a1a1a,#2a2a2a);border-radius:18px;padding:24px;margin-bottom:20px;color:#fff;text-align:center">
+        <div style="font-size:.72rem;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Status do caixa</div>
+        <div id="caixa-status-label" style="font-size:1.4rem;font-weight:900;margin-bottom:4px">— Fechado —</div>
+        <div id="caixa-status-hora" style="font-size:.75rem;color:rgba(255,255,255,.35)"></div>
+      </div>
+
+      <!-- Abrir caixa -->
+      <div id="caixa-abrir-card" class="fin-section-card" style="margin-bottom:16px">
+        <div class="fin-section-header" style="margin-bottom:14px">
+          <div class="fin-section-icon">🔓</div>
+          <div><div class="fin-section-title">Abrir Caixa</div><div class="fin-section-sub">Informe o valor inicial (fundo de troco)</div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="form-group-light">
+            <label>Valor de abertura (fundo de caixa)</label>
+            <div style="position:relative">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:#888">R$</span>
+              <input type="number" id="caixa-valor-abertura" class="input-light" placeholder="0,00" min="0" step="0.50"
+                style="padding-left:38px">
+            </div>
+          </div>
+          <div class="form-group-light">
+            <label>Observação (opcional)</label>
+            <input type="text" id="caixa-obs-abertura" class="input-light" placeholder="Ex: Caixa do turno da tarde">
+          </div>
+          <button onclick="abrirCaixa()" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 4px 14px rgba(34,197,94,.3)">
+            🔓 Abrir Caixa
+          </button>
+        </div>
+      </div>
+
+      <!-- Fechar caixa -->
+      <div id="caixa-fechar-card" class="fin-section-card" style="margin-bottom:16px;display:none">
+        <div class="fin-section-header" style="margin-bottom:14px">
+          <div class="fin-section-icon">🔒</div>
+          <div><div class="fin-section-title">Fechar Caixa</div><div class="fin-section-sub">Informe o valor em caixa ao fechar</div></div>
+        </div>
+        <!-- Resumo do dia -->
+        <div style="background:#faf8f5;border-radius:12px;padding:14px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;font-size:.82rem">
+            <span style="color:#888">Abertura com</span>
+            <span id="caixa-res-abertura" style="font-weight:700">R$ 0,00</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem">
+            <span style="color:#888">Vendas do período</span>
+            <span id="caixa-res-vendas" style="font-weight:700;color:var(--red)">R$ 0,00</span>
+          </div>
+          <div style="height:1px;background:var(--border)"></div>
+          <div style="display:flex;justify-content:space-between;font-size:.92rem">
+            <span style="font-weight:800">Total esperado</span>
+            <span id="caixa-res-esperado" style="font-weight:900;color:#22c55e">R$ 0,00</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="form-group-light">
+            <label>Valor em caixa ao fechar</label>
+            <div style="position:relative">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:#888">R$</span>
+              <input type="number" id="caixa-valor-fechamento" class="input-light" placeholder="0,00" min="0" step="0.50"
+                style="padding-left:38px" oninput="calcularDiferenca()">
+            </div>
+          </div>
+          <div id="caixa-diferenca-wrap" style="display:none;border-radius:10px;padding:10px 14px;text-align:center;font-size:.82rem;font-weight:700"></div>
+          <div class="form-group-light">
+            <label>Observação (opcional)</label>
+            <input type="text" id="caixa-obs-fechamento" class="input-light" placeholder="Ex: Quebra de caixa encontrada">
+          </div>
+          <button onclick="fecharCaixa()" style="background:linear-gradient(135deg,#e65e32,#c94e24);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 4px 14px rgba(230,94,50,.3)">
+            🔒 Fechar Caixa do Dia
+          </button>
+        </div>
+      </div>
+
+      <!-- Histórico de caixas -->
+      <div class="fin-section-card">
+        <div class="fin-section-header" style="margin-bottom:14px">
+          <div class="fin-section-icon">📋</div>
+          <div><div class="fin-section-title">Histórico de Caixas</div><div class="fin-section-sub">Registros dos últimos fechamentos</div></div>
+        </div>
+        <div id="caixa-historico">
+          <div style="text-align:center;color:#aaa;font-size:.82rem;padding:24px">Nenhum registro ainda</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </div>
 
 </div>
@@ -2798,6 +2938,16 @@ canvas, [data-touch="free"] { touch-action: none !important; }
     </div>
 
     <div style="overflow-y:auto;padding:20px;flex:1;display:flex;flex-direction:column;gap:20px">
+
+      <!-- Dia da semana do QUENTE -->
+      <div>
+        <div style="font-size:.78rem;font-weight:800;color:#555;margin-bottom:6px">Dia da semana</div>
+        <div style="font-size:.72rem;color:#aaa;margin-bottom:10px">O nome criativo aparece no slide do app</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="quente-dias">
+          <!-- gerado via JS -->
+        </div>
+        <div id="quente-nome-preview" style="margin-top:10px;font-size:.82rem;font-weight:700;color:#e65e32;display:none"></div>
+      </div>
 
       <!-- Percentual -->
       <div>
@@ -3285,7 +3435,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
             style="padding:12px 6px;border-radius:12px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .15s">
             <span style="font-size:1.4rem">📱</span>PIX
           </button>
-          <button id="pgto-btn-CARTÃO" onclick="selecionarPagamentoComanda('CARTÃO')"
+          <button id="pgto-btn-CARTÃO" onclick="toggleCartaoSubMenu()"
             style="padding:12px 6px;border-radius:12px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .15s">
             <span style="font-size:1.4rem">💳</span>Cartão
           </button>
@@ -3293,6 +3443,18 @@ canvas, [data-touch="free"] { touch-action: none !important; }
             style="padding:12px 6px;border-radius:12px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .15s">
             <span style="font-size:1.4rem">💵</span>Dinheiro
           </button>
+        </div>
+        <!-- Sub-menu crédito/débito -->
+        <div id="pgto-cartao-submenu" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <button onclick="selecionarPagamentoComanda('CRÉDITO')" id="pgto-btn-CRÉDITO"
+            style="padding:10px 8px;border-radius:10px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s">
+            💳 Crédito
+          </button>
+          <button onclick="selecionarPagamentoComanda('DÉBITO')" id="pgto-btn-DÉBITO"
+            style="padding:10px 8px;border-radius:10px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;color:#555;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s">
+            💳 Débito
+          </button>
+        </div>
         </div>
         <div id="pgto-aviso" style="display:none;font-size:.72rem;color:#C0392B;margin-top:8px;text-align:center;font-weight:600">
           ⚠️ Selecione uma forma de pagamento para continuar
