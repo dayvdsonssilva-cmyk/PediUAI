@@ -156,6 +156,9 @@
     .carr-opts { display: flex; gap: 10px; }
     .carr-opt-btn { flex: 1; padding: 11px; border: 2px solid var(--border); border-radius: 12px; font-family: 'Poppins',sans-serif; font-size: 0.8rem; font-weight: 700; cursor: pointer; background: none; color: #555; transition: all 0.15s; }
     .carr-opt-btn.ativo { border-color: var(--red); color: var(--red); background: rgba(192,57,43,0.06); }
+    .bandeira-btn { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px;border-radius:10px;border:2px solid var(--border);background:#fff;cursor:pointer;font-family:'Poppins',sans-serif;transition:all .15s; }
+    .bandeira-btn.ativo { border-color:var(--red);background:rgba(192,57,43,.05); }
+    .bandeira-btn:hover { border-color:#bbb; }
     #campos-entrega, #campos-retirada { display: none; }
     #campos-entrega.show, #campos-retirada.show { display: block; }
     .btn-finalizar { width: 100%; padding: 15px; background: var(--red); color: #fff; border: none; border-radius: 14px; font-family: 'Poppins',sans-serif; font-size: 1rem; font-weight: 800; cursor: pointer; margin-top: 4px; }
@@ -398,9 +401,51 @@
       <div>
         <label>Forma de pagamento *</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="carr-opt-btn ativo" id="pag-pix"    onclick="selecionarPag('pix')">💳 PIX</button>
-          <button class="carr-opt-btn"       id="pag-cartao" onclick="selecionarPag('cartao')">💳 Cartão</button>
+          <button class="carr-opt-btn ativo" id="pag-pix"      onclick="selecionarPag('pix')">💠 PIX</button>
+          <button class="carr-opt-btn"       id="pag-cartao"   onclick="selecionarPag('cartao')">💳 Cartão</button>
           <button class="carr-opt-btn"       id="pag-dinheiro" onclick="selecionarPag('dinheiro')">💵 Dinheiro</button>
+        </div>
+      </div>
+
+      <!-- Detalhes do cartão — crédito/débito + bandeira -->
+      <div id="campos-cartao" style="display:none;margin-top:4px">
+        <label style="font-size:.78rem;font-weight:700;color:#888;margin-bottom:8px;display:block">Tipo do cartão</label>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="carr-opt-btn ativo" id="tipo-credito" onclick="selecionarTipoCartao('credito')"
+            style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px">
+            <span>💳</span> Crédito
+          </button>
+          <button class="carr-opt-btn" id="tipo-debito" onclick="selecionarTipoCartao('debito')"
+            style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px">
+            <span>💳</span> Débito
+          </button>
+        </div>
+        <label style="font-size:.78rem;font-weight:700;color:#888;margin-bottom:8px;display:block">Bandeira</label>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="bandeiras-grid">
+          <button class="bandeira-btn ativo" id="band-visa"       onclick="selecionarBandeira('visa')">
+            <span style="font-size:1.2rem">💙</span><span style="font-size:.65rem;font-weight:800">Visa</span>
+          </button>
+          <button class="bandeira-btn" id="band-master"     onclick="selecionarBandeira('master')">
+            <span style="font-size:1.2rem">🔴</span><span style="font-size:.65rem;font-weight:800">Master</span>
+          </button>
+          <button class="bandeira-btn" id="band-elo"        onclick="selecionarBandeira('elo')">
+            <span style="font-size:1.2rem">⭐</span><span style="font-size:.65rem;font-weight:800">Elo</span>
+          </button>
+          <button class="bandeira-btn" id="band-hipercard" onclick="selecionarBandeira('hipercard')">
+            <span style="font-size:1.2rem">🔶</span><span style="font-size:.65rem;font-weight:800">Hiper</span>
+          </button>
+          <button class="bandeira-btn" id="band-amex"       onclick="selecionarBandeira('amex')">
+            <span style="font-size:1.2rem">🔵</span><span style="font-size:.65rem;font-weight:800">Amex</span>
+          </button>
+          <button class="bandeira-btn" id="band-cabal"      onclick="selecionarBandeira('cabal')">
+            <span style="font-size:1.2rem">🟢</span><span style="font-size:.65rem;font-weight:800">Cabal</span>
+          </button>
+          <button class="bandeira-btn" id="band-pix-cred"   onclick="selecionarBandeira('pix-cred')">
+            <span style="font-size:1.2rem">💜</span><span style="font-size:.65rem;font-weight:800">PIX C.</span>
+          </button>
+          <button class="bandeira-btn" id="band-outro"      onclick="selecionarBandeira('outro')">
+            <span style="font-size:1.2rem">💳</span><span style="font-size:.65rem;font-weight:800">Outro</span>
+          </button>
         </div>
       </div>
       <div id="campos-troco" style="display:none">
@@ -1054,7 +1099,9 @@ window.selecionarOpcao = function(op) {
   renderCarrinho();
 };
 
-let opcaoPag = 'pix';
+let opcaoPag    = 'pix';
+let tipoCartao  = 'credito';
+let bandeira    = 'visa';
 let precisaTroco = false;
 
 window.selecionarPag = function(pag) {
@@ -1063,7 +1110,23 @@ window.selecionarPag = function(pag) {
     const b = $('pag-' + p); if (b) b.classList.toggle('ativo', p === pag);
   });
   const ct = $('campos-troco');
-  if (ct) ct.style.display = pag === 'dinheiro' ? 'block' : 'none';
+  const cc = $('campos-cartao');
+  if (ct) ct.style.display  = pag === 'dinheiro' ? 'block' : 'none';
+  if (cc) cc.style.display  = pag === 'cartao'   ? 'block' : 'none';
+};
+
+window.selecionarTipoCartao = function(tipo) {
+  tipoCartao = tipo;
+  ['credito','debito'].forEach(t => {
+    const b = $('tipo-' + t); if (b) b.classList.toggle('ativo', t === tipo);
+  });
+};
+
+window.selecionarBandeira = function(band) {
+  bandeira = band;
+  document.querySelectorAll('.bandeira-btn').forEach(b => b.classList.remove('ativo'));
+  const sel = $('band-' + band);
+  if (sel) sel.classList.add('ativo');
 };
 
 window.selecionarTroco = function(sim) {
@@ -1101,7 +1164,9 @@ window.finalizarPedido = async function() {
     const subtotal    = carrinho.reduce((s, c) => s + c.preco * c.qtd, 0);
     const taxaEntrega = (opcaoEntrega === 'entrega' && estab?.taxa_entrega) ? Number(estab.taxa_entrega) : 0;
     const total       = subtotal + taxaEntrega;
-    const pagamento   = opcaoPag;
+    const pagamento = opcaoPag === 'cartao'
+      ? `cartao-${tipoCartao}-${bandeira}`   // ex: "cartao-credito-visa"
+      : opcaoPag;
     const troco       = (opcaoPag === 'dinheiro' && precisaTroco) ? ($('cli-troco')?.value.trim() || '') : '';
 
     const { error } = await supa.from('pedidos').insert({
