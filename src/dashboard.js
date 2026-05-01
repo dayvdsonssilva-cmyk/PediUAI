@@ -3592,9 +3592,26 @@ window.removerTaxaServico = function() {
   if (btn) btn.style.display = 'none';
 };
 
-let _bandeiraComanda = 'visa';
+window.mostrarBandeiras = function() {
+  const wrap = document.getElementById('pgto-bandeiras-wrap');
+  if (wrap) wrap.style.display = 'block';
+};
 
-window.selecionarBandeiraComanda = function(band) {
+window.toggleCartaoSubMenu = function() {
+  const sub = document.getElementById('pgto-cartao-submenu');
+  const btn = document.getElementById('pgto-btn-CARTÃO');
+  const bandWrap = document.getElementById('pgto-bandeiras-wrap');
+  if (!sub) return;
+  const isOpen = sub.style.display === 'flex';
+  sub.style.display = isOpen ? 'none' : 'flex';
+  if (bandWrap) bandWrap.style.display = 'none'; // reset bandeiras
+  if (!isOpen) {
+    if(btn){btn.style.borderColor='#e65e32';btn.style.background='#fff5f0';btn.style.color='#e65e32';}
+  } else {
+    if(btn){btn.style.borderColor='#e0dbd5';btn.style.background='#fff';btn.style.color='#555';}
+    _pagamentoComanda = null;
+  }
+};
   _bandeiraComanda = band;
   document.querySelectorAll('.pgto-band-btn').forEach(b => b.classList.remove('ativo'));
   // Find the clicked button by its onclick
@@ -4000,7 +4017,8 @@ window.showTab = (function(_orig) {
 
 async function carregarCaixa() {
   const estab = getEstab(); if (!estab?.id) return;
-  // Busca caixa aberto hoje
+
+  // Tenta buscar do banco primeiro
   const hoje = new Date().toISOString().split('T')[0];
   const { data } = await getSupa().from('controle_caixa')
     .select('*')
@@ -4011,6 +4029,21 @@ async function carregarCaixa() {
     .limit(1);
 
   _caixaAberto = data?.[0] || null;
+
+  // Salva referência no localStorage para sobreviver F5
+  if (_caixaAberto) {
+    localStorage.setItem('pw_caixa_id', _caixaAberto.id);
+  } else {
+    // Se não encontrou pelo filtro de hoje, tenta pelo id salvo
+    const savedId = localStorage.getItem('pw_caixa_id');
+    if (savedId) {
+      const { data: saved } = await getSupa().from('controle_caixa')
+        .select('*').eq('id', savedId).eq('status', 'aberto').single();
+      if (saved) _caixaAberto = saved;
+      else localStorage.removeItem('pw_caixa_id');
+    }
+  }
+
   renderCaixa();
   await carregarHistoricoCaixa();
 }
@@ -4087,6 +4120,7 @@ window.abrirCaixa = async function() {
   }).select().single();
   if (error) return showToast('❌ Erro: ' + error.message, '#ef4444');
   _caixaAberto = data;
+  localStorage.setItem('pw_caixa_id', data.id);
   showToast('✅ Caixa aberto!');
   renderCaixa();
   await carregarHistoricoCaixa();
@@ -4107,6 +4141,7 @@ window.fecharCaixa = async function() {
   }).eq('id', _caixaAberto.id);
   if (error) return showToast('❌ Erro: ' + error.message, '#ef4444');
   _caixaAberto = null;
+  localStorage.removeItem('pw_caixa_id');
   showToast('🔒 Caixa fechado!');
   renderCaixa();
   await carregarHistoricoCaixa();
