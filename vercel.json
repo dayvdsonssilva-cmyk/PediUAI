@@ -58,10 +58,6 @@
       "destination": "/assets/:path*"
     },
     {
-      "source": "/pwa192/:path*",
-      "destination": "/pwa192/:path*"
-    },
-    {
       "source": "/style.css",
       "destination": "/style.css"
     },
