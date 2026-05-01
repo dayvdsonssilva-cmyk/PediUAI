@@ -236,6 +236,8 @@ export async function initDashboard() {
     renderMesas();
     window.renderHistoricoMesas();
     renderEmojiGrid();
+    // Carrega estado do caixa na inicialização (persiste após F5)
+    setTimeout(carregarCaixa, 500);
   } else {
     renderCardapioDemo();
     renderPedidosDemo();
@@ -3997,29 +3999,28 @@ window.showTab = (function(_orig) {
 async function carregarCaixa() {
   const estab = getEstab(); if (!estab?.id) return;
 
-  // Tenta buscar do banco primeiro
-  const hoje = new Date().toISOString().split('T')[0];
+  // Busca qualquer caixa aberto do estabelecimento (sem filtro de data)
+  // Assim caixas abertos ontem à noite continuam visíveis após meia-noite
   const { data } = await getSupa().from('controle_caixa')
     .select('*')
     .eq('estabelecimento_id', estab.id)
     .eq('status', 'aberto')
-    .gte('created_at', hoje + 'T00:00:00')
     .order('created_at', { ascending: false })
     .limit(1);
 
-  _caixaAberto = data?.[0] || null;
-
-  // Salva referência no localStorage para sobreviver F5
-  if (_caixaAberto) {
-    localStorage.setItem('pw_caixa_id', _caixaAberto.id);
+  if (data?.[0]) {
+    _caixaAberto = data[0];
+    localStorage.setItem('pw_caixa_id_' + estab.id, _caixaAberto.id);
   } else {
-    // Se não encontrou pelo filtro de hoje, tenta pelo id salvo
-    const savedId = localStorage.getItem('pw_caixa_id');
+    // Fallback: tenta recuperar pelo ID salvo no localStorage
+    const savedId = localStorage.getItem('pw_caixa_id_' + estab.id);
     if (savedId) {
       const { data: saved } = await getSupa().from('controle_caixa')
-        .select('*').eq('id', savedId).eq('status', 'aberto').single();
-      if (saved) _caixaAberto = saved;
-      else localStorage.removeItem('pw_caixa_id');
+        .select('*').eq('id', savedId).eq('status', 'aberto').maybeSingle();
+      _caixaAberto = saved || null;
+      if (!saved) localStorage.removeItem('pw_caixa_id_' + estab.id);
+    } else {
+      _caixaAberto = null;
     }
   }
 
@@ -4099,7 +4100,7 @@ window.abrirCaixa = async function() {
   }).select().single();
   if (error) return showToast('❌ Erro: ' + error.message, '#ef4444');
   _caixaAberto = data;
-  localStorage.setItem('pw_caixa_id', data.id);
+  localStorage.setItem('pw_caixa_id_' + estab.id, data.id);
   showToast('✅ Caixa aberto!');
   renderCaixa();
   await carregarHistoricoCaixa();
@@ -4119,8 +4120,9 @@ window.fecharCaixa = async function() {
     fechado_em: new Date().toISOString(),
   }).eq('id', _caixaAberto.id);
   if (error) return showToast('❌ Erro: ' + error.message, '#ef4444');
+  const estabId = getEstab()?.id;
   _caixaAberto = null;
-  localStorage.removeItem('pw_caixa_id');
+  if (estabId) localStorage.removeItem('pw_caixa_id_' + estabId);
   showToast('🔒 Caixa fechado!');
   renderCaixa();
   await carregarHistoricoCaixa();
