@@ -3612,27 +3612,6 @@ window.toggleCartaoSubMenu = function() {
     _pagamentoComanda = null;
   }
 };
-  _bandeiraComanda = band;
-  document.querySelectorAll('.pgto-band-btn').forEach(b => b.classList.remove('ativo'));
-  // Find the clicked button by its onclick
-  document.querySelectorAll('.pgto-band-btn').forEach(b => {
-    if (b.getAttribute('onclick')?.includes("'"+band+"'")) b.classList.add('ativo');
-  });
-};
-
-window.toggleCartaoSubMenu = function() {
-  const sub = document.getElementById('pgto-cartao-submenu');
-  const btn = document.getElementById('pgto-btn-CARTÃO');
-  if (!sub) return;
-  const isOpen = sub.style.display === 'flex';
-  sub.style.display = isOpen ? 'none' : 'flex';
-  if (!isOpen) {
-    if(btn){btn.style.borderColor='#e65e32';btn.style.background='#fff5f0';btn.style.color='#e65e32';}
-  } else {
-    if(btn){btn.style.borderColor='#e0dbd5';btn.style.background='#fff';btn.style.color='#555';}
-    _pagamentoComanda = null;
-  }
-};
 
 window.selecionarPagamentoComanda = function(metodo) {
   _pagamentoComanda = metodo;
