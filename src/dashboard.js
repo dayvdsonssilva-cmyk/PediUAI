@@ -252,7 +252,7 @@ function preencherConfig(estab) {
   const set = (id, val) => { const el = $(id); if (el && val != null) el.value = val; };
   set('cfg-nome',      estab.nome);
   set('cfg-slug',      estab.slug);
-  set('cfg-whats',     estab.whatsapp || '');
+  set('cfg-whats', fmtFone(estab.whatsapp) || '');
   set('cfg-desc', estab.descricao || '');
   const descCount = document.getElementById('cfg-desc-count');
   if (descCount) descCount.textContent = (estab.descricao||'').length + '/80';
@@ -266,7 +266,7 @@ function preencherConfig(estab) {
   if(descCount) descCount.textContent = (estab.descricao||'').length + '/80';
   set('cfg-endereco',  estab.endereco || '');
   set('cfg-tempo',     estab.tempo_entrega || '30-45 min');
-  set('cfg-telefone',  estab.telefone_contato || '');
+  set('cfg-telefone', fmtFone(estab.telefone_contato) || '');
   set('cfg-cnpj',      estab.cnpj || '');
   set('cfg-instagram', estab.instagram || '');
   set('cfg-tiktok',    estab.tiktok || '');
@@ -4393,3 +4393,20 @@ window.imprimirComprovanteCaixa = window.imprimirComprovanteCaixa;
 window.reimprimirCaixa     = window.reimprimirCaixa;
 window.filtrarPedidosData  = window.filtrarPedidosData;
 window.toggleCartaoSubMenu = window.toggleCartaoSubMenu;
+
+// Formata número de telefone → (88) 98888-8888
+function fmtFone(num) {
+  if (!num) return '';
+  const d = String(num).replace(/\D/g,'');
+  if (d.length === 11) return '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7);
+  if (d.length === 10) return '(' + d.slice(0,2) + ') ' + d.slice(2,6) + '-' + d.slice(6);
+  if (d.length === 13) return '+' + d.slice(0,2) + ' (' + d.slice(2,4) + ') ' + d.slice(4,9) + '-' + d.slice(9);
+  return d;
+}
+function wppLink(num) {
+  const d = String(num||'').replace(/\D/g,'');
+  const n = d.length <= 11 ? '55' + d : d;
+  return 'https://wa.me/' + n;
+}
+window.fmtFone = fmtFone;
+window.wppLink = wppLink;
