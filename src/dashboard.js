@@ -630,9 +630,11 @@ async function renderCardapio() {
   if (stat) stat.textContent = data?.length || 0;
 
   // Filtra por sub-aba
+  // QUENTE: só produtos com promoção ativa
+  // TODOS: todos os produtos EXCETO os que estão no QUENTE
   const filtrado = (_dashSubTab === 'quente')
     ? (data||[]).filter(p => p.em_promocao && parseInt(p.desconto_percent||0) > 0)
-    : (data||[]);
+    : (data||[]).filter(p => !(p.em_promocao && parseInt(p.desconto_percent||0) > 0));
 
   // Atualiza foguinho
   atualizarFireDash();
@@ -662,11 +664,10 @@ async function renderCardapio() {
         <div class="item-footer">
           <div>
             ${p.em_promocao && p.desconto_percent > 0
-              ? `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">
-                  <span style="position:static;background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:3px;">🔥 ${p.desconto_percent}% OFF</span>
-                  <span class="item-preco-original">R$ ${Number(p.preco_original||p.preco).toFixed(2).replace('.',',')}</span>
-                </div>
-                <div class="item-preco" style="color:var(--red);">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`
+              ? `<div>
+                  <div style="font-size:.75rem;color:#aaa;text-decoration:line-through;margin-bottom:1px">R$ ${Number(p.preco_original||p.preco).toFixed(2).replace('.',',')}</div>
+                  <div class="item-preco" style="color:var(--red);">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>
+                </div>`
               : p.promocao && p.preco_original
                 ? `<div class="item-preco-original">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</div>
                    <div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`
@@ -3963,13 +3964,12 @@ let _dashSubTab = 'todos';
 
 window.dashSubTab = async function(tab, btn) {
   _dashSubTab = tab;
-  // Estilo dos botões
   ['todos','quente'].forEach(t => {
     const b = document.getElementById('dash-subtab-' + t);
     if (!b) return;
     const ativo = t === tab;
-    b.style.color       = ativo ? 'var(--red)' : '#aaa';
-    b.style.borderBottom= ativo ? '2.5px solid var(--red)' : '2.5px solid transparent';
+    b.style.color        = ativo ? 'var(--red)' : '#aaa';
+    b.style.borderBottom = ativo ? '2.5px solid var(--red)' : '2.5px solid transparent';
   });
   await renderCardapio();
 };
