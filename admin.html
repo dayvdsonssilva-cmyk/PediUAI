@@ -516,6 +516,22 @@ const CFG_KEY = 'pw_ceo_cfg_v2';
 let cfg = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
 const saveCfg = () => localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
 const $R = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+
+// Formata número de telefone/WhatsApp → (88) 98888-8888
+function fmtFone(num) {
+  if (!num) return '';
+  const d = String(num).replace(/\D/g,'');
+  if (d.length === 11) return '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7);
+  if (d.length === 10) return '(' + d.slice(0,2) + ') ' + d.slice(2,6) + '-' + d.slice(6);
+  if (d.length === 13) return '+' + d.slice(0,2) + ' (' + d.slice(2,4) + ') ' + d.slice(4,9) + '-' + d.slice(9);
+  return d; // retorna sem formatação se não reconhecer
+}
+function wppLink(num, msg) {
+  const d = String(num||'').replace(/\D/g,'');
+  const n = d.length <= 11 ? '55' + d : d;
+  const m = msg ? '?text=' + encodeURIComponent(msg) : '';
+  return 'https://wa.me/' + n + m;
+}
 const gel = id => document.getElementById(id);
 
 let lojas=[], peds=[], avaliacoes=[], finPeriodo='hoje';
@@ -895,7 +911,7 @@ function detLoja(id) {
   gel('loja-body').innerHTML = `
     <div class="drow"><span class="dlbl">Nome</span><span class="dval">${l.nome}</span></div>
     <div class="drow"><span class="dlbl">Slug</span><span class="dval"><a href="/${l.slug}" target="_blank" style="color:var(--red)">/${l.slug}</a></span></div>
-    <div class="drow"><span class="dlbl">WhatsApp</span><span class="dval">${l.whatsapp||'—'}</span></div>
+    <div class="drow"><span class="dlbl">WhatsApp</span><span class="dval">${l.whatsapp?`<a href="${wppLink(l.whatsapp)}" target="_blank" style="color:var(--red);text-decoration:none">${fmtFone(l.whatsapp)}</a>`:'—'}</span></div>
     <div class="drow"><span class="dlbl">Cidade</span><span class="dval">${l.cidade||'—'}</span></div>
     <div class="drow"><span class="dlbl">Tipo</span><span class="dval">${l.tipo_estab||'—'}</span></div>
     <div class="drow"><span class="dlbl">Plano</span><span class="dval">${{basico:'Trial',pro:'Pro',premium:'Premium'}[l.plano]||'Trial'} · ${l.pagamento_status||'pendente'}</span></div>
@@ -947,7 +963,7 @@ async function delLoja(id, nome) {
 // Mensagem para loja via WhatsApp
 function abrirMsg(id) {
   const l = lojas.find(x=>x.id===id); if(!l||!l.whatsapp) return toast('Loja sem WhatsApp cadastrado.','#f59e0b');
-  gel('msg-loja-info').textContent = `Para: ${l.nome} · ${l.whatsapp}`;
+  gel('msg-loja-info').textContent = `Para: ${l.nome} · ${fmtFone(l.whatsapp)}`;
   gel('btn-enviar-msg').onclick = () => {
     const msg = gel('msg-texto').value.trim();
     if (!msg) return;
@@ -1005,7 +1021,7 @@ function detPed(id) {
   gel('ped-body').innerHTML = `
     <div class="drow"><span class="dlbl">Loja</span><span class="dval">${p.estabelecimentos?.nome||'—'}</span></div>
     <div class="drow"><span class="dlbl">Cliente</span><span class="dval">${p.cliente_nome||'—'}</span></div>
-    <div class="drow"><span class="dlbl">WhatsApp</span><span class="dval">${p.cliente_whats?`<a href="https://wa.me/${p.cliente_whats.replace(/\D/g,'')}" target="_blank" style="color:var(--red)">${p.cliente_whats}</a>`:'—'}</span></div>
+    <div class="drow"><span class="dlbl">WhatsApp</span><span class="dval">${p.cliente_whats?`<a href="${wppLink(p.cliente_whats)}" target="_blank" style="color:var(--red);text-decoration:none">${fmtFone(p.cliente_whats)}</a>`:'—'}</span></div>
     <div class="drow"><span class="dlbl">Entrega</span><span class="dval">${p.endereco||'Retirada'}</span></div>
     <div class="drow"><span class="dlbl">Pagamento</span><span class="dval">${p.pagamento||'—'}${p.troco?' · Troco: '+p.troco:''}</span></div>
     <div class="drow"><span class="dlbl">Status</span><span class="dval"><span class="badge ${CLS[p.status]||'by'}">${LBL[p.status]||p.status}</span></span></div>
