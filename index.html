@@ -2906,7 +2906,7 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
 
             <div class="form-group-light">
               <label>Telefone de contato</label>
-              <input type="text" class="input-light" id="cfg-telefone" placeholder="(11) 3333-4444">
+              <input type="text" class="input-light" id="cfg-telefone" placeholder="(11) 3333-4444" maxlength="15" oninput="mascaraWhatsInput(this)">
             </div>
 
             <div style="border:1.5px solid var(--border);border-radius:12px;padding:16px;background:#faf8f5">
@@ -3906,6 +3906,33 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
 <script type="module" src="/src/main.js"></script>
 
 <script>
+// ── Máscara de telefone / WhatsApp ────────────────────────────────────────────
+window.mascaraTel = window.mascaraWhatsInput = function(input) {
+  let v = input.value.replace(/\D/g,'');
+  if (v.length > 11) v = v.slice(0,11);
+  if (v.length <= 10) {
+    v = v.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+  } else {
+    v = v.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
+  }
+  input.value = v;
+};
+
+window.fmtFone = function(num) {
+  if (!num) return '';
+  const d = String(num).replace(/\D/g,'');
+  if (d.length === 11) return '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7);
+  if (d.length === 10) return '(' + d.slice(0,2) + ') ' + d.slice(2,6) + '-' + d.slice(6);
+  if (d.length === 13) return '+' + d.slice(0,2) + ' (' + d.slice(2,4) + ') ' + d.slice(4,9) + '-' + d.slice(9);
+  return d;
+};
+
+window.wppLink = function(num) {
+  const d = String(num||'').replace(/\D/g,'');
+  const n = d.length <= 11 ? '55' + d : d;
+  return 'https://wa.me/' + n;
+};
+
 // ─── Mapa sigla → ID numérico do IBGE (evita problema com endpoint por sigla) ─
 const IBGE_ESTADOS_URL  = 'https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome';
 const IBGE_CIDADES_URL  = id => `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${id}/municipios?orderBy=nome`;
