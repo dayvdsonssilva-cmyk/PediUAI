@@ -4307,65 +4307,6 @@ ${obs?`<p style="font-size:10px;text-align:center">Obs: ${obs}</p>`:''}
   win.document.close();
   setTimeout(() => win.print(), 300);
 }
-  const t = fecharCard?._totais || {};
-  const esperado = fecharCard?._esperado || 0;
-  const vFech = parseFloat(document.getElementById('caixa-valor-fechamento')?.value) || 0;
-  const dif = vFech - esperado;
-  const agora = new Date().toLocaleString('pt-BR');
-  const horaAb = _caixaAberto?.created_at
-    ? new Date(_caixaAberto.created_at).toLocaleString('pt-BR') : '—';
-  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  const difTxt = Math.abs(dif) < 0.01 ? '✅ Conferido' :
-    dif < 0 ? `❌ Falta ${fmtR(Math.abs(dif))}` : `⚠️ Sobra ${fmtR(dif)}`;
-
-  const win = window.open('', '_blank', 'width=380,height=700');
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>Comprovante de Caixa</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Courier New',monospace;font-size:12px;padding:16px;color:#000;max-width:320px;margin:0 auto}
-  h2{font-size:14px;text-align:center;margin-bottom:2px}
-  .center{text-align:center}
-  .line{border-top:1px dashed #000;margin:8px 0}
-  .row{display:flex;justify-content:space-between;margin:3px 0}
-  .bold{font-weight:bold}
-  .total{font-size:13px;font-weight:bold}
-  .status{text-align:center;font-size:13px;font-weight:bold;margin:6px 0}
-</style>
-</head><body>
-<h2>PEDIWAY</h2>
-<p class="center" style="font-size:10px">${estab?.nome||''}</p>
-<p class="center" style="font-size:10px">${estab?.cidade||''}</p>
-<div class="line"></div>
-<p class="center bold" style="font-size:13px">COMPROVANTE DE FECHAMENTO</p>
-<div class="line"></div>
-<div class="row"><span>Abertura:</span><span>${horaAb}</span></div>
-<div class="row"><span>Fechamento:</span><span>${agora}</span></div>
-${_caixaAberto?.operador?`<div class="row"><span>Operador:</span><span>${_caixaAberto.operador}</span></div>`:''}
-<div class="line"></div>
-<p class="bold center">VENDAS POR FORMA DE PAGAMENTO</p>
-<div class="line"></div>
-<div class="row"><span>📱 PIX</span><span>${fmtR(t.totPix||0)}</span></div>
-<div class="row"><span>💳 Cartão Crédito</span><span>${fmtR(t.totCred||0)}</span></div>
-<div class="row"><span>💳 Cartão Débito</span><span>${fmtR(t.totDeb||0)}</span></div>
-<div class="row"><span>💵 Dinheiro</span><span>${fmtR(t.totDin||0)}</span></div>
-<div class="row"><span>🍽️ Comandas</span><span>${fmtR(t.totMesa||0)}</span></div>
-<div class="line"></div>
-<div class="row total"><span>TOTAL VENDAS</span><span>${fmtR(t.totVendas||0)}</span></div>
-<div class="row"><span>+ Fundo inicial</span><span>${fmtR(t.fundo||0)}</span></div>
-<div class="row bold"><span>TOTAL ESPERADO</span><span>${fmtR(esperado)}</span></div>
-<div class="line"></div>
-${vFech>0?`<div class="row bold"><span>VALOR CONTADO</span><span>${fmtR(vFech)}</span></div>`:''}
-<div class="status">${difTxt}</div>
-<div class="line"></div>
-${_caixaAberto?.obs_fechamento||document.getElementById('caixa-obs-fechamento')?.value?
-  `<p style="font-size:10px;text-align:center">Obs: ${_caixaAberto?.obs_fechamento||document.getElementById('caixa-obs-fechamento')?.value||''}</p>`:''}
-<p class="center" style="margin-top:8px;font-size:10px">Gerado em ${agora}</p>
-<p class="center" style="font-size:10px">PEDIWAY — Sistema de Delivery</p>
-</body></html>`);
-  win.document.close();
-  win.print();
-};
 
 async function carregarHistoricoCaixa() {
   const estab = getEstab(); if (!estab?.id) return;
