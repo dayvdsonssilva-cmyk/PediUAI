@@ -94,6 +94,10 @@
       "destination": "/garcom.html"
     },
     {
+      "source": "/splash.mp4",
+      "destination": "/splash.mp4"
+    },
+    {
       "source": "/:slug",
       "destination": "/cliente.html"
     }
