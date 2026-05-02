@@ -2780,6 +2780,13 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
             </div>
 
             <div class="form-group-light">
+              <label>Tipo do estabelecimento</label>
+              <div style="font-size:.72rem;color:#aaa;margin-bottom:10px">Altera sua posição nas categorias do app</div>
+              <div id="cfg-tipo-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div>
+              <input type="hidden" id="cfg-tipo-estab">
+            </div>
+
+            <div class="form-group-light">
               <label>Cidade</label>
               <div style="position:relative;margin-bottom:8px;">
                 <select id="cfg-estado" class="input-light" onchange="carregarCidadesDash(this.value)" style="width:100%;appearance:none;-webkit-appearance:none;padding-right:32px;cursor:pointer;">
@@ -4006,7 +4013,34 @@ function renderTiposEstab() {
     </button>`).join('');
 }
 
-window.selecionarTipoEstab = function(id, btn) {
+// ── Tipo do estabelecimento nas configurações ─────────────────────────────────
+function renderTipoCfgGrid(tipoAtual) {
+  const grid = document.getElementById('cfg-tipo-grid');
+  if (!grid) return;
+  grid.innerHTML = TIPOS_ESTAB.map(t => `
+    <button type="button" onclick="selecionarTipoCfg('${t.id}',this)" id="cfg-tipo-btn-${t.id}"
+      style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;
+             border-radius:12px;border:2px solid ${t.id===tipoAtual?'var(--red)':'#e0dbd5'};
+             background:${t.id===tipoAtual?'rgba(192,57,43,.06)':'#fff'};
+             cursor:pointer;transition:all .15s;font-family:'Poppins',sans-serif">
+      <span style="font-size:1.4rem">${t.icon}</span>
+      <span style="font-size:.6rem;font-weight:700;color:${t.id===tipoAtual?'var(--red)':'#888'};line-height:1.2;text-align:center">${t.label}</span>
+    </button>`).join('');
+}
+
+window.selecionarTipoCfg = function(id, btn) {
+  document.getElementById('cfg-tipo-estab').value = id;
+  document.querySelectorAll('#cfg-tipo-grid button').forEach(b => {
+    b.style.borderColor = '#e0dbd5';
+    b.style.background  = '#fff';
+    b.querySelector('span:last-child').style.color = '#888';
+  });
+  btn.style.borderColor = 'var(--red)';
+  btn.style.background  = 'rgba(192,57,43,.06)';
+  btn.querySelector('span:last-child').style.color = 'var(--red)';
+};
+
+window.renderTipoCfgGrid = renderTipoCfgGrid;
   document.getElementById('rtipo').value = id;
   document.querySelectorAll('#rtipo-grid button').forEach(b => {
     b.style.borderColor = 'rgba(255,255,255,.12)';
