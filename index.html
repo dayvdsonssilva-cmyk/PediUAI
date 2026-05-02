@@ -1302,7 +1302,7 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
 
 /* ── H1 ── */
 .lp-h1 {
-  font-size:clamp(2.8rem,5vw,5rem);font-weight:900;
+  font-size:clamp(2rem,8vw,5rem);font-weight:900;
   line-height:1.04;letter-spacing:-.04em;
   color:var(--lp-dark);margin-bottom:20px;
 }
@@ -1625,14 +1625,14 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
 }
 @media(max-width:600px){
   /* ── Hero — texto primeiro, celular depois ── */
-  .lp-hero{padding:84px 5% 52px;min-height:auto;}
-  .lp-hero-inner{text-align:center;gap:24px;display:flex;flex-direction:column;}
-  .lp-hero-inner > *:first-child{order:1;}  /* texto */
-  .lp-phone-wrap{order:2;display:flex;justify-content:center;} /* celular depois */
-  .lp-hero-sub{margin:0 auto 20px;font-size:.9rem;}
-  .lp-hero-btns{justify-content:center;flex-direction:column;gap:10px;}
+  .lp-hero{padding:80px 5% 40px;min-height:auto;}
+  .lp-hero-inner{text-align:left;gap:24px;display:flex;flex-direction:column;}
+  .lp-hero-inner > *:first-child{order:1;}
+  .lp-phone-wrap{order:2;display:flex;justify-content:center;}
+  .lp-hero-sub{margin:0 0 20px;font-size:.88rem;}
+  .lp-hero-btns{justify-content:flex-start;flex-direction:column;gap:10px;}
   .lp-hero-btns a,.lp-hero-btns button{width:100%;justify-content:center;text-align:center;}
-  .lp-hero-trust{justify-content:center;flex-wrap:wrap;}
+  .lp-hero-trust{justify-content:flex-start;flex-wrap:wrap;}
 
   /* ── Header mobile ── */
   .lp-btn-outline{display:inline-flex!important;padding:8px 14px!important;font-size:.75rem!important;}
@@ -1706,11 +1706,8 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
   </div>
 </div>
 <style>
-@media(max-width:600px){
-  #lp-mobile-bar{ display:block!important; }
-  /* Espaço para a barra não cobrir o footer */
-  body:has([data-screen="s-landing"].active) { padding-bottom: 80px; }
-}
+/* Barra mobile removida — botões já estão no header */
+#lp-mobile-bar { display:none!important; }
 </style>
 
 <!-- HEADER -->
