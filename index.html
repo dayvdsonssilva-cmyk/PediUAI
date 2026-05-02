@@ -248,6 +248,11 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .stat-ativo { font-size:.78rem; color:#16a34a; font-weight:700; }
 .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
 .section-header h3 { font-size:1rem; font-weight:800; color:#111; }
+@media(max-width:600px) {
+  .cardapio-btns-desktop { display:none!important; }
+  .cardapio-btns-mobile  { display:flex!important; }
+  .cardapio-header-wrap .section-header { margin-bottom:0; }
+}
 .btn-ver-todos {
   background:none; border:1.5px solid #EBEBEB; color:#666;
   padding:7px 16px; border-radius:8px;
@@ -2410,12 +2415,21 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
   <!-- Cardápio -->
   <div class="tab-content" id="tab-cardapio">
     <div class="dash-container">
-      <div style="margin-bottom:16px">
-        <h3 style="margin-bottom:12px">Seu cardápio</h3>
-        <div style="display:flex;gap:6px">
-          <button class="btn-primary" onclick="abrirModalItem()" style="flex:1;padding:10px 6px;font-size:.75rem;white-space:nowrap;min-width:0">+ Adicionar item</button>
-          <button onclick="abrirGerenciadorAdicionais()" style="flex:1;padding:10px 6px;border:1.5px solid var(--red);background:none;border-radius:12px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.75rem;color:var(--red);cursor:pointer;white-space:nowrap;min-width:0">🧩 Adicionais</button>
-          <button onclick="abrirModalQuente()" style="flex:1;padding:10px 6px;border:none;background:linear-gradient(135deg,#e65e32,#c94e24);border-radius:12px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.75rem;color:#fff;cursor:pointer;white-space:nowrap;min-width:0;box-shadow:0 3px 10px rgba(230,94,50,.3)">🔥 QUENTE</button>
+      <!-- Cabeçalho do cardápio — desktop: linha única, mobile: título + botões abaixo -->
+      <div class="cardapio-header-wrap">
+        <div class="section-header" style="margin-bottom:0">
+          <h3>Seu cardápio</h3>
+          <div class="cardapio-btns-desktop" style="display:flex;gap:8px">
+            <button class="btn-primary" onclick="abrirModalItem()">+ Adicionar item</button>
+            <button onclick="abrirGerenciadorAdicionais()" style="padding:11px 18px;border:1.5px solid var(--red);background:none;border-radius:12px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.82rem;color:var(--red);cursor:pointer;white-space:nowrap">🧩 Adicionais</button>
+            <button onclick="abrirModalQuente()" style="padding:11px 18px;border:none;background:linear-gradient(135deg,#e65e32,#c94e24);border-radius:12px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.82rem;color:#fff;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(230,94,50,.4)">🔥 QUENTE</button>
+          </div>
+        </div>
+        <!-- Mobile: botões em linha abaixo do título -->
+        <div class="cardapio-btns-mobile" style="display:none;gap:6px;margin-top:10px">
+          <button class="btn-primary" onclick="abrirModalItem()" style="flex:1;padding:10px 6px;font-size:.75rem">+ Adicionar item</button>
+          <button onclick="abrirGerenciadorAdicionais()" style="flex:1;padding:10px 6px;border:1.5px solid var(--red);background:none;border-radius:12px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.75rem;color:var(--red);cursor:pointer">🧩 Adicionais</button>
+          <button onclick="abrirModalQuente()" style="flex:1;padding:10px 6px;border:none;background:linear-gradient(135deg,#e65e32,#c94e24);border-radius:12px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.75rem;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(230,94,50,.3)">🔥 QUENTE</button>
         </div>
       </div>
       <!-- Sub-abas filtro -->
