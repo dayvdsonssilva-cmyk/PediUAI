@@ -4055,20 +4055,14 @@ window.showTab = (function(_orig) {
 async function carregarCaixa() {
   const estab = getEstab(); if (!estab?.id) return;
 
-  // Busca qualquer caixa aberto do estabelecimento (sem filtro de data)
-  // Assim caixas abertos ontem à noite continuam visíveis após meia-noite
   const { data } = await getSupa().from('controle_caixa')
-    .select('*')
-    .eq('estabelecimento_id', estab.id)
-    .eq('status', 'aberto')
-    .order('created_at', { ascending: false })
-    .limit(1);
+    .select('*').eq('estabelecimento_id', estab.id)
+    .eq('status', 'aberto').order('created_at', { ascending: false }).limit(1);
 
   if (data?.[0]) {
     _caixaAberto = data[0];
     localStorage.setItem('pw_caixa_id_' + estab.id, _caixaAberto.id);
   } else {
-    // Fallback: tenta recuperar pelo ID salvo no localStorage
     const savedId = localStorage.getItem('pw_caixa_id_' + estab.id);
     if (savedId) {
       const { data: saved } = await getSupa().from('controle_caixa')
@@ -4080,50 +4074,91 @@ async function carregarCaixa() {
     }
   }
 
-  renderCaixa();
+  await renderCaixa();
   await carregarHistoricoCaixa();
 }
 
-function renderCaixa() {
-  const abrirCard  = document.getElementById('caixa-abrir-card');
-  const fecharCard = document.getElementById('caixa-fechar-card');
-  const statusLbl  = document.getElementById('caixa-status-label');
-  const statusHora = document.getElementById('caixa-status-hora');
-  const statusCard = document.getElementById('caixa-status-card');
+async function renderCaixa() {
   const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const abrirCard   = document.getElementById('caixa-abrir-card');
+  const fecharCard  = document.getElementById('caixa-fechar-card');
+  const statusLbl   = document.getElementById('caixa-status-label');
+  const statusHora  = document.getElementById('caixa-status-hora');
+  const statusCard  = document.getElementById('caixa-status-card');
+  const statusIcon  = document.getElementById('caixa-status-icon');
 
   if (_caixaAberto) {
-    const hora = new Date(_caixaAberto.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    if (statusLbl)  statusLbl.textContent  = '🔓 Aberto';
-    if (statusHora) statusHora.textContent = `Aberto às ${hora} · Fundo: ${fmtR(_caixaAberto.valor_abertura)}`;
+    const horaAb = new Date(_caixaAberto.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const dataAb = new Date(_caixaAberto.created_at).toLocaleDateString('pt-BR');
+    if (statusLbl)  statusLbl.textContent  = '🔓 Caixa Aberto';
+    if (statusHora) statusHora.textContent = `Aberto em ${dataAb} às ${horaAb}`;
     if (statusCard) statusCard.style.background = 'linear-gradient(135deg,#166534,#15803d)';
+    if (statusIcon) statusIcon.textContent = '🔓';
     if (abrirCard)  abrirCard.style.display  = 'none';
     if (fecharCard) fecharCard.style.display = 'block';
-    // Preenche resumo de vendas do dia
-    const vendas = _finPedidos.filter(p => {
-      const d = new Date(p.created_at).toDateString();
-      return d === new Date().toDateString() && p.status !== 'recusado';
-    }).reduce((s,p) => s + Number(p.total||0), 0);
-    const esperado = (_caixaAberto.valor_abertura||0) + vendas;
-    const resAb  = document.getElementById('caixa-res-abertura');
-    const resVd  = document.getElementById('caixa-res-vendas');
-    const resEsp = document.getElementById('caixa-res-esperado');
-    if (resAb)  resAb.textContent  = fmtR(_caixaAberto.valor_abertura);
-    if (resVd)  resVd.textContent  = fmtR(vendas);
-    if (resEsp) resEsp.textContent = fmtR(esperado);
-    document.getElementById('caixa-fechar-card')._esperado = esperado;
+
+    // Operador
+    const opLabel = document.getElementById('caixa-operador-label');
+    if (opLabel) opLabel.textContent = _caixaAberto.operador ? `Operador: ${_caixaAberto.operador}` : 'Caixa em andamento';
+
+    // Busca pedidos do período do caixa
+    const estab = getEstab();
+    let pedsCaixa = [];
+    try {
+      const { data: pds } = await getSupa().from('pedidos')
+        .select('total,pagamento,status,created_at')
+        .eq('estabelecimento_id', estab.id)
+        .neq('status', 'recusado')
+        .gte('created_at', _caixaAberto.created_at);
+      pedsCaixa = pds || [];
+    } catch(e) {}
+
+    // Totais por forma de pagamento
+    let totPix=0, totCred=0, totDeb=0, totDin=0, totMesa=0, totVendas=0;
+    pedsCaixa.forEach(p => {
+      const v = Number(p.total||0);
+      const pg = (p.pagamento||'').toLowerCase();
+      if (pg.includes('pix'))      totPix   += v;
+      else if (pg.includes('cred')) totCred += v;
+      else if (pg.includes('deb'))  totDeb  += v;
+      else if (pg.includes('din'))  totDin  += v;
+      else if (pg.includes('mesa')) totMesa += v;
+      else totPix += v; // fallback
+      totVendas += v;
+    });
+
+    const fundo    = Number(_caixaAberto.valor_abertura||0);
+    const esperado = fundo + totVendas;
+
+    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+    set('caixa-total-pix',     fmtR(totPix));
+    set('caixa-total-credito', fmtR(totCred));
+    set('caixa-total-debito',  fmtR(totDeb));
+    set('caixa-total-dinheiro',fmtR(totDin));
+    set('caixa-total-mesa',    fmtR(totMesa));
+    set('caixa-total-vendas',  fmtR(totVendas));
+    set('caixa-fundo-display', fmtR(fundo));
+    set('caixa-res-esperado',  fmtR(esperado));
+    set('caixa-qtd-pedidos',   pedsCaixa.length);
+
+    // Guarda esperado para diferença
+    if (fecharCard) fecharCard._esperado = esperado;
+    if (fecharCard) fecharCard._pedsCaixa = pedsCaixa;
+    if (fecharCard) fecharCard._totais = { totPix, totCred, totDeb, totDin, totMesa, totVendas, fundo };
+
   } else {
-    if (statusLbl)  statusLbl.textContent  = '🔒 Fechado';
-    if (statusHora) statusHora.textContent = 'Nenhum caixa aberto hoje';
-    if (statusCard) statusCard.style.background = 'linear-gradient(135deg,#1a1a1a,#2a2a2a)';
+    if (statusLbl)  statusLbl.textContent  = '— Fechado —';
+    if (statusHora) statusHora.textContent = 'Nenhum caixa aberto';
+    if (statusCard) statusCard.style.background = 'linear-gradient(135deg,#1a1a1a,#333)';
+    if (statusIcon) statusIcon.textContent = '🔒';
     if (abrirCard)  abrirCard.style.display  = 'block';
     if (fecharCard) fecharCard.style.display = 'none';
   }
 }
 
 window.calcularDiferenca = function() {
-  const vFechEl  = document.getElementById('caixa-valor-fechamento');
-  const difWrap  = document.getElementById('caixa-diferenca-wrap');
+  const vFechEl   = document.getElementById('caixa-valor-fechamento');
+  const difWrap   = document.getElementById('caixa-diferenca-wrap');
   const fecharCard = document.getElementById('caixa-fechar-card');
   if (!vFechEl || !difWrap) return;
   const vFech    = parseFloat(vFechEl.value) || 0;
@@ -4132,56 +4167,134 @@ window.calcularDiferenca = function() {
   const fmtR     = v => 'R$ ' + Math.abs(v).toFixed(2).replace('.',',');
   difWrap.style.display = vFechEl.value ? 'block' : 'none';
   if (Math.abs(dif) < 0.01) {
-    difWrap.style.background = '#dcfce7'; difWrap.style.color = '#166534';
-    difWrap.textContent = '✅ Caixa conferido!';
+    difWrap.style.cssText += ';background:#dcfce7;color:#166534;border-radius:10px;padding:10px 14px;text-align:center;font-size:.85rem;font-weight:700';
+    difWrap.textContent = '✅ Caixa conferido! Tudo certo.';
   } else if (dif < 0) {
-    difWrap.style.background = '#fef2f2'; difWrap.style.color = '#991b1b';
-    difWrap.textContent = `❌ Diferença negativa de ${fmtR(dif)} (falta ${fmtR(dif)} no caixa)`;
+    difWrap.style.cssText += ';background:#fef2f2;color:#991b1b;border-radius:10px;padding:10px 14px;text-align:center;font-size:.85rem;font-weight:700';
+    difWrap.textContent = `❌ Faltam ${fmtR(dif)} no caixa`;
   } else {
-    difWrap.style.background = '#fef9c3'; difWrap.style.color = '#854d0e';
+    difWrap.style.cssText += ';background:#fef9c3;color:#854d0e;border-radius:10px;padding:10px 14px;text-align:center;font-size:.85rem;font-weight:700';
     difWrap.textContent = `⚠️ Sobra de ${fmtR(dif)} no caixa`;
   }
 };
 
 window.abrirCaixa = async function() {
   const estab = getEstab(); if (!estab?.id) return;
-  const valor = parseFloat(document.getElementById('caixa-valor-abertura')?.value) || 0;
-  const obs   = document.getElementById('caixa-obs-abertura')?.value || '';
+  const valor    = parseFloat(document.getElementById('caixa-valor-abertura')?.value) || 0;
+  const obs      = document.getElementById('caixa-obs-abertura')?.value.trim() || '';
+  const operador = document.getElementById('caixa-operador')?.value.trim() || '';
   const { data, error } = await getSupa().from('controle_caixa').insert({
     estabelecimento_id: estab.id,
     valor_abertura: valor,
     status: 'aberto',
     obs_abertura: obs,
+    operador,
     created_at: new Date().toISOString(),
   }).select().single();
   if (error) return showToast('❌ Erro: ' + error.message, '#ef4444');
   _caixaAberto = data;
   localStorage.setItem('pw_caixa_id_' + estab.id, data.id);
+  // Limpa campos
+  ['caixa-valor-abertura','caixa-obs-abertura','caixa-operador'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
   showToast('✅ Caixa aberto!');
-  renderCaixa();
+  await renderCaixa();
   await carregarHistoricoCaixa();
 };
 
 window.fecharCaixa = async function() {
   if (!_caixaAberto?.id) return;
-  const vFech = parseFloat(document.getElementById('caixa-valor-fechamento')?.value) || 0;
-  const obs   = document.getElementById('caixa-obs-fechamento')?.value || '';
-  const esperado = document.getElementById('caixa-fechar-card')?._esperado || 0;
-  const dif   = parseFloat((vFech - esperado).toFixed(2));
+  const vFech    = parseFloat(document.getElementById('caixa-valor-fechamento')?.value) || 0;
+  const obs      = document.getElementById('caixa-obs-fechamento')?.value.trim() || '';
+  const fecharCard = document.getElementById('caixa-fechar-card');
+  const esperado = fecharCard?._esperado || 0;
+  const totais   = fecharCard?._totais || {};
+  const dif      = parseFloat((vFech - esperado).toFixed(2));
+
   const { error } = await getSupa().from('controle_caixa').update({
     valor_fechamento: vFech,
     diferenca: dif,
     obs_fechamento: obs,
     status: 'fechado',
     fechado_em: new Date().toISOString(),
+    totais_pagamento: totais,
   }).eq('id', _caixaAberto.id);
+
   if (error) return showToast('❌ Erro: ' + error.message, '#ef4444');
+
+  // Imprime comprovante antes de fechar
+  imprimirComprovanteCaixa();
+
   const estabId = getEstab()?.id;
   _caixaAberto = null;
   if (estabId) localStorage.removeItem('pw_caixa_id_' + estabId);
   showToast('🔒 Caixa fechado!');
-  renderCaixa();
+  await renderCaixa();
   await carregarHistoricoCaixa();
+};
+
+window.imprimirComprovanteCaixa = function() {
+  const fecharCard = document.getElementById('caixa-fechar-card');
+  const estab = getEstab();
+  const t = fecharCard?._totais || {};
+  const esperado = fecharCard?._esperado || 0;
+  const vFech = parseFloat(document.getElementById('caixa-valor-fechamento')?.value) || 0;
+  const dif = vFech - esperado;
+  const agora = new Date().toLocaleString('pt-BR');
+  const horaAb = _caixaAberto?.created_at
+    ? new Date(_caixaAberto.created_at).toLocaleString('pt-BR') : '—';
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const difTxt = Math.abs(dif) < 0.01 ? '✅ Conferido' :
+    dif < 0 ? `❌ Falta ${fmtR(Math.abs(dif))}` : `⚠️ Sobra ${fmtR(dif)}`;
+
+  const win = window.open('', '_blank', 'width=380,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Comprovante de Caixa</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Courier New',monospace;font-size:12px;padding:16px;color:#000;max-width:320px;margin:0 auto}
+  h2{font-size:14px;text-align:center;margin-bottom:2px}
+  .center{text-align:center}
+  .line{border-top:1px dashed #000;margin:8px 0}
+  .row{display:flex;justify-content:space-between;margin:3px 0}
+  .bold{font-weight:bold}
+  .total{font-size:13px;font-weight:bold}
+  .status{text-align:center;font-size:13px;font-weight:bold;margin:6px 0}
+</style>
+</head><body>
+<h2>PEDIWAY</h2>
+<p class="center" style="font-size:10px">${estab?.nome||''}</p>
+<p class="center" style="font-size:10px">${estab?.cidade||''}</p>
+<div class="line"></div>
+<p class="center bold" style="font-size:13px">COMPROVANTE DE FECHAMENTO</p>
+<div class="line"></div>
+<div class="row"><span>Abertura:</span><span>${horaAb}</span></div>
+<div class="row"><span>Fechamento:</span><span>${agora}</span></div>
+${_caixaAberto?.operador?`<div class="row"><span>Operador:</span><span>${_caixaAberto.operador}</span></div>`:''}
+<div class="line"></div>
+<p class="bold center">VENDAS POR FORMA DE PAGAMENTO</p>
+<div class="line"></div>
+<div class="row"><span>📱 PIX</span><span>${fmtR(t.totPix||0)}</span></div>
+<div class="row"><span>💳 Cartão Crédito</span><span>${fmtR(t.totCred||0)}</span></div>
+<div class="row"><span>💳 Cartão Débito</span><span>${fmtR(t.totDeb||0)}</span></div>
+<div class="row"><span>💵 Dinheiro</span><span>${fmtR(t.totDin||0)}</span></div>
+<div class="row"><span>🍽️ Comandas</span><span>${fmtR(t.totMesa||0)}</span></div>
+<div class="line"></div>
+<div class="row total"><span>TOTAL VENDAS</span><span>${fmtR(t.totVendas||0)}</span></div>
+<div class="row"><span>+ Fundo inicial</span><span>${fmtR(t.fundo||0)}</span></div>
+<div class="row bold"><span>TOTAL ESPERADO</span><span>${fmtR(esperado)}</span></div>
+<div class="line"></div>
+${vFech>0?`<div class="row bold"><span>VALOR CONTADO</span><span>${fmtR(vFech)}</span></div>`:''}
+<div class="status">${difTxt}</div>
+<div class="line"></div>
+${_caixaAberto?.obs_fechamento||document.getElementById('caixa-obs-fechamento')?.value?
+  `<p style="font-size:10px;text-align:center">Obs: ${_caixaAberto?.obs_fechamento||document.getElementById('caixa-obs-fechamento')?.value||''}</p>`:''}
+<p class="center" style="margin-top:8px;font-size:10px">Gerado em ${agora}</p>
+<p class="center" style="font-size:10px">PEDIWAY — Sistema de Delivery</p>
+</body></html>`);
+  win.document.close();
+  win.print();
 };
 
 async function carregarHistoricoCaixa() {
@@ -4198,29 +4311,74 @@ async function carregarHistoricoCaixa() {
   }
   el.innerHTML = data.map(c => {
     const dtAb  = new Date(c.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
-    const dtFch = c.fechado_em ? new Date(c.fechado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    const dtFch = c.fechado_em ? new Date(c.fechado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
     const dif   = c.diferenca || 0;
     const difColor = dif < -0.01 ? '#ef4444' : dif > 0.01 ? '#f59e0b' : '#22c55e';
-    return `<div style="background:#faf8f5;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid var(--border)">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-        <div>
+    const totais = c.totais_pagamento || {};
+    return `<div style="background:#faf8f5;border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:.7rem;font-weight:700;padding:2px 10px;border-radius:50px;background:${c.status==='aberto'?'#dcfce7':'#f0ebe4'};color:${c.status==='aberto'?'#166534':'#888'}">${c.status==='aberto'?'🔓 Aberto':'🔒 Fechado'}</span>
-          <span style="font-size:.7rem;color:#aaa;margin-left:8px">${dtAb}</span>
+          <span style="font-size:.7rem;color:#aaa">${dtAb}${dtFch?' → '+dtFch:''}</span>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:.72rem;color:#888">Abertura: ${fmtR(c.valor_abertura)}</div>
-          ${c.valor_fechamento!=null?`<div style="font-size:.72rem;color:#888">Fechamento: ${fmtR(c.valor_fechamento)}</div>`:''}
-          ${c.diferenca!=null?`<div style="font-size:.78rem;font-weight:800;color:${difColor}">Diferença: ${dif>=0?'+':''}${fmtR(dif)}</div>`:''}
-        </div>
+        ${c.status==='fechado'?`<button onclick="reimprimirCaixa('${c.id}')" style="background:none;border:1px solid #ddd;border-radius:8px;padding:3px 10px;font-size:.68rem;font-weight:700;cursor:pointer;color:#555">🖨️</button>`:''}
       </div>
-      ${c.obs_abertura||c.obs_fechamento?`<div style="font-size:.72rem;color:#888;margin-top:6px">${[c.obs_abertura,c.obs_fechamento].filter(Boolean).join(' · ')}</div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.72rem">
+        <span style="color:#888">Fundo: <b>${fmtR(c.valor_abertura)}</b></span>
+        ${c.valor_fechamento!=null?`<span style="color:#888">Fechado: <b>${fmtR(c.valor_fechamento)}</b></span>`:'<span></span>'}
+        ${totais.totVendas!=null?`<span style="color:#888">Vendas: <b style="color:var(--red)">${fmtR(totais.totVendas)}</b></span>`:'<span></span>'}
+        ${c.diferenca!=null?`<span style="color:#888">Diferença: <b style="color:${difColor}">${dif>=0?'+':''}${fmtR(dif)}</b></span>`:'<span></span>'}
+      </div>
+      ${c.operador?`<div style="font-size:.68rem;color:#aaa;margin-top:4px">👤 ${c.operador}</div>`:''}
     </div>`;
   }).join('');
 }
 
-// Exporta funções do caixa
-window.abrirCaixa     = window.abrirCaixa;
-window.fecharCaixa    = window.fecharCaixa;
-window.calcularDiferenca = window.calcularDiferenca;
-window.filtrarPedidosData = window.filtrarPedidosData;
+window.reimprimirCaixa = async function(caixaId) {
+  const { data } = await getSupa().from('controle_caixa').select('*').eq('id', caixaId).single();
+  if (!data) return;
+  const estab = getEstab();
+  const t = data.totais_pagamento || {};
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const horaAb = new Date(data.created_at).toLocaleString('pt-BR');
+  const horaFch = data.fechado_em ? new Date(data.fechado_em).toLocaleString('pt-BR') : '—';
+  const esperado = (data.valor_abertura||0) + (t.totVendas||0);
+  const dif = (data.valor_fechamento||0) - esperado;
+  const difTxt = Math.abs(dif) < 0.01 ? '✅ Conferido' :
+    dif < 0 ? `❌ Falta ${fmtR(Math.abs(dif))}` : `⚠️ Sobra ${fmtR(dif)}`;
+  const win = window.open('','_blank','width=380,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comprovante</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;font-size:12px;padding:16px;max-width:320px;margin:0 auto}.center{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.row{display:flex;justify-content:space-between;margin:3px 0}.bold{font-weight:bold}</style>
+</head><body>
+<h2 class="center">PEDIWAY</h2>
+<p class="center" style="font-size:10px">${estab?.nome||''} — ${estab?.cidade||''}</p>
+<div class="line"></div>
+<p class="center bold">2ª VIA — FECHAMENTO DE CAIXA</p>
+<div class="line"></div>
+<div class="row"><span>Abertura:</span><span>${horaAb}</span></div>
+<div class="row"><span>Fechamento:</span><span>${horaFch}</span></div>
+${data.operador?`<div class="row"><span>Operador:</span><span>${data.operador}</span></div>`:''}
+<div class="line"></div>
+<div class="row"><span>📱 PIX</span><span>${fmtR(t.totPix||0)}</span></div>
+<div class="row"><span>💳 Crédito</span><span>${fmtR(t.totCred||0)}</span></div>
+<div class="row"><span>💳 Débito</span><span>${fmtR(t.totDeb||0)}</span></div>
+<div class="row"><span>💵 Dinheiro</span><span>${fmtR(t.totDin||0)}</span></div>
+<div class="row"><span>🍽️ Comandas</span><span>${fmtR(t.totMesa||0)}</span></div>
+<div class="line"></div>
+<div class="row bold"><span>TOTAL VENDAS</span><span>${fmtR(t.totVendas||0)}</span></div>
+<div class="row bold"><span>TOTAL ESPERADO</span><span>${fmtR(esperado)}</span></div>
+${data.valor_fechamento!=null?`<div class="row bold"><span>VALOR CONTADO</span><span>${fmtR(data.valor_fechamento)}</span></div>`:''}
+<p class="center bold" style="margin:8px 0">${difTxt}</p>
+<div class="line"></div>
+<p class="center" style="font-size:10px">PEDIWAY — ${new Date().toLocaleString('pt-BR')}</p>
+</body></html>`);
+  win.document.close(); win.print();
+};
+
+window.abrirCaixa          = window.abrirCaixa;
+window.fecharCaixa         = window.fecharCaixa;
+window.calcularDiferenca   = window.calcularDiferenca;
+window.imprimirComprovanteCaixa = window.imprimirComprovanteCaixa;
+window.reimprimirCaixa     = window.reimprimirCaixa;
+window.filtrarPedidosData  = window.filtrarPedidosData;
 window.toggleCartaoSubMenu = window.toggleCartaoSubMenu;
