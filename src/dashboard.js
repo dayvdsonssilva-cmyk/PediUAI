@@ -1715,8 +1715,43 @@ window.buscarPedidos = function(termo) {
 };
 
 window.filtrarPedidosData = function() {
-  const busca = document.querySelector('#tab-pedidos-tab input[type=text]');
-  window.buscarPedidos(busca?.value || '');
+  const de  = document.getElementById('ped-data-de')?.value;
+  const ate = document.getElementById('ped-data-ate')?.value;
+  const busca = document.querySelector('#tab-pedidos-tab input[type=text]')?.value || '';
+  const t = busca.toLowerCase();
+
+  let visiveis = 0;
+  document.querySelectorAll('#todos-pedidos .pedido-card').forEach(c => {
+    const textoOk = !t || c.textContent.toLowerCase().includes(t);
+    let dataOk = true;
+    const dataCriado = c.dataset.criado;
+    if (dataCriado) {
+      const d = new Date(dataCriado);
+      if (de  && d < new Date(de  + 'T00:00:00')) dataOk = false;
+      if (ate && d > new Date(ate + 'T23:59:59')) dataOk = false;
+    }
+    const vis = textoOk && dataOk;
+    c.style.display = vis ? '' : 'none';
+    if (vis) visiveis++;
+  });
+
+  // Feedback visual
+  const cont = document.getElementById('todos-pedidos');
+  let aviso = document.getElementById('ped-filtro-aviso');
+  if (!aviso) {
+    aviso = document.createElement('div');
+    aviso.id = 'ped-filtro-aviso';
+    aviso.style.cssText = 'font-size:.78rem;color:#888;padding:10px 0;text-align:center';
+    cont?.prepend(aviso);
+  }
+  if (de || ate || t) {
+    const label = de && ate ? `${new Date(de+'T00:00:00').toLocaleDateString('pt-BR')} → ${new Date(ate+'T00:00:00').toLocaleDateString('pt-BR')}`
+                 : de ? `A partir de ${new Date(de+'T00:00:00').toLocaleDateString('pt-BR')}`
+                 : ate ? `Até ${new Date(ate+'T00:00:00').toLocaleDateString('pt-BR')}` : '';
+    aviso.textContent = `${visiveis} pedido(s) encontrado(s)${label ? ' — ' + label : ''}`;
+  } else {
+    aviso.textContent = '';
+  }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
