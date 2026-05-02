@@ -1336,11 +1336,12 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
 .lp-cta-ghost:hover{background:#EFEFEF;border-color:#DDD;}
 
 /* ── Stats ── */
-.lp-stats { display:flex;gap:32px;margin-top:40px;padding-top:32px;border-top:1px solid var(--lp-border); }
-.lp-stat strong { font-size:1.7rem;font-weight:900;color:var(--lp-dark);display:block;line-height:1.1;letter-spacing:-.03em; }
+.lp-stats { display:flex;gap:16px;margin-top:32px;padding-top:24px;border-top:1px solid var(--lp-border);align-items:center;flex-wrap:nowrap; }
+.lp-stat { flex:1;min-width:0; }
+.lp-stat strong { font-size:clamp(1rem,4vw,1.7rem);font-weight:900;color:var(--lp-dark);display:block;line-height:1.1;letter-spacing:-.03em;white-space:nowrap; }
 .lp-stat strong.red { color:var(--lp-red); }
 .lp-stat strong.black { color:var(--lp-dark); }
-.lp-stat span { font-size:.72rem;color:var(--lp-gray);font-weight:500; }
+.lp-stat span { font-size:clamp(.55rem,2vw,.72rem);color:var(--lp-gray);font-weight:500;display:block; }
 
 /* ── PHONE MOCKUP ── */
 .lp-phone-wrap {
@@ -1646,7 +1647,6 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
   .lp-phone{width:190px;height:384px;}
 
   /* ── Stats band ── */
-  .lp-stats{gap:16px;flex-wrap:wrap;justify-content:center;}
   .lp-band-nums{gap:20px;flex-wrap:wrap;justify-content:center;}
 
   /* ── Grids ── */
@@ -1757,12 +1757,12 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
           <strong class="red">R$0</strong>
           <span>comissão por pedido</span>
         </div>
-        <div style="width:1px;background:var(--lp-border);"></div>
+        <div style="width:1px;height:32px;background:var(--lp-border);flex-shrink:0"></div>
         <div class="lp-stat">
           <strong class="black">5 min</strong>
           <span>para montar o cardápio</span>
         </div>
-        <div style="width:1px;background:var(--lp-border);"></div>
+        <div style="width:1px;height:32px;background:var(--lp-border);flex-shrink:0"></div>
         <div class="lp-stat">
           <strong class="black">100%</strong>
           <span>do lucro é seu</span>
