@@ -1,3 +1,33 @@
+<!-- MODAL: AVALIAÇÃO -->
+<div id="modal-avaliacao" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:flex-end;justify-content:center">
+  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 20px 36px;text-align:center">
+    <div style="font-size:2rem;margin-bottom:6px">🎉</div>
+    <div style="font-size:1rem;font-weight:900;color:#1a1a1a;margin-bottom:4px" id="aval-loja-nome">Pedido entregue!</div>
+    <div style="font-size:.82rem;color:#888;margin-bottom:20px">Como foi sua experiência?</div>
+    <!-- Estrelas -->
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:16px" id="aval-estrelas">
+      <span onclick="selecionarEstrela(1)" id="estrela-1" style="font-size:2.4rem;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.4">⭐</span>
+      <span onclick="selecionarEstrela(2)" id="estrela-2" style="font-size:2.4rem;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.4">⭐</span>
+      <span onclick="selecionarEstrela(3)" id="estrela-3" style="font-size:2.4rem;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.4">⭐</span>
+      <span onclick="selecionarEstrela(4)" id="estrela-4" style="font-size:2.4rem;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.4">⭐</span>
+      <span onclick="selecionarEstrela(5)" id="estrela-5" style="font-size:2.4rem;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.4">⭐</span>
+    </div>
+    <div id="aval-label" style="font-size:.82rem;font-weight:700;color:#e65e32;margin-bottom:14px;min-height:20px"></div>
+    <textarea id="aval-comentario" placeholder="Comentário opcional..." rows="2"
+      style="width:100%;border:1px solid #e0dbd5;border-radius:10px;padding:10px 12px;font-family:'Poppins',sans-serif;font-size:.82rem;resize:none;outline:none;margin-bottom:14px;box-sizing:border-box"></textarea>
+    <div style="display:flex;gap:8px">
+      <button onclick="fecharModalAvaliacao()"
+        style="flex:1;padding:12px;border:1.5px solid #e0dbd5;border-radius:12px;background:#fff;font-family:'Poppins',sans-serif;font-weight:700;font-size:.82rem;color:#888;cursor:pointer">
+        Pular
+      </button>
+      <button onclick="enviarAvaliacao()"
+        style="flex:2;padding:12px;border:none;border-radius:12px;background:#E8001C;color:#fff;font-family:'Poppins',sans-serif;font-weight:800;font-size:.88rem;cursor:pointer">
+        ⭐ Enviar avaliação
+      </button>
+    </div>
+  </div>
+</div>
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -768,24 +798,50 @@ function abrirTelaPromos(pct, itens) {
 }
 
 function filtrarLojas() {
-  // IDs das lojas que têm itens em promoção real (em_promocao=true no banco)
   const lojasComPromo = new Set(_promoItems.map(p=>p.estabelecimento_id));
 
   return _lojas.filter(l => {
     const lojaCidade = (l.cidade||'').trim().toLowerCase();
     const userCidade = (_cidade||'').trim().toLowerCase();
-    // Se usuário tem cidade: mostra só lojas DESSA cidade
-    // Se usuário não tem cidade: mostra todas
     const mc = !userCidade || lojaCidade === userCidade;
     const mb = !_busca  || (l.nome||'').toLowerCase().includes(_busca.toLowerCase());
+
     if(_catAtiva==='promo') {
-      // Usa promoções reais dos produtos OU campo promocao_ativa do estabelecimento
       return mc && mb && (lojasComPromo.has(l.id) || l.promocao_ativa);
     }
     if(_catAtiva==='all') return mc && mb;
+
+    // Mapa categoria → tipo_estab values
+    const catMap = {
+      burger:     ['burguer','burger'],
+      pizza:      ['pizza'],
+      acai:       ['acai'],
+      restaurante:['restaurante'],
+      lanche:     ['lanchonete'],
+      japones:    ['japones'],
+      churrasco:  ['churrasco'],
+      saudavel:   ['saudavel'],
+      sorvete:    ['sorvete'],
+      doceria:    ['doceria'],
+      bar:        ['bar'],
+    };
+
+    const tipos = catMap[_catAtiva] || [];
+    const tipoLoja = (l.tipo_estab||'').toLowerCase();
+
+    // Primeiro tenta tipo_estab (campo correto)
+    if (tipoLoja && tipos.includes(tipoLoja)) return mc && mb;
+
+    // Fallback: busca por nome (para lojas antigas sem tipo_estab)
     const n = (l.nome||'').toLowerCase();
-    const m = {burger:['burger','hamburguer','smash'],pizza:['pizza','pizzaria'],acai:['açaí','acai'],restaurante:['restaurante','marmita'],lanche:['lanche','sanduíche','tapioca']};
-    return mc && mb && (m[_catAtiva]||[]).some(k=>n.includes(k));
+    const nomeMap = {
+      burger:['burger','hamburguer','smash','burguer'],
+      pizza:['pizza','pizzaria'],
+      acai:['açaí','acai'],
+      restaurante:['restaurante','marmita'],
+      lanche:['lanche','sanduíche','tapioca'],
+    };
+    return mc && mb && (nomeMap[_catAtiva]||[]).some(k=>n.includes(k));
   });
 }
 
@@ -2141,6 +2197,88 @@ async function carregarStatusIniciais() {
   } catch(e) {}
 }
 
+// ══ SISTEMA DE AVALIAÇÃO ══════════════════════════════════════════════════════
+let _avalPedidoId    = null;
+let _avalEstabId     = null;
+let _avalNota        = 0;
+const _avalLabels    = ['','Péssimo 😞','Ruim 😕','Regular 😐','Bom 😊','Excelente! 🤩'];
+
+window.abrirModalAvaliacao = function(pedidoId, estabId, nomeLoja) {
+  // Não abre se já avaliou esse pedido
+  const jaAvaliou = localStorage.getItem('aval_' + pedidoId);
+  if (jaAvaliou) return;
+
+  _avalPedidoId = pedidoId;
+  _avalEstabId  = estabId;
+  _avalNota     = 0;
+
+  const el = document.getElementById('aval-loja-nome');
+  if (el) el.textContent = nomeLoja;
+
+  // Reset estrelas
+  [1,2,3,4,5].forEach(i => {
+    const s = document.getElementById('estrela-' + i);
+    if (s) { s.style.filter = 'grayscale(1)'; s.style.opacity = '.4'; s.style.transform = 'scale(1)'; }
+  });
+  const lbl = document.getElementById('aval-label');
+  if (lbl) lbl.textContent = '';
+  const txt = document.getElementById('aval-comentario');
+  if (txt) txt.value = '';
+
+  const modal = document.getElementById('modal-avaliacao');
+  if (modal) modal.style.display = 'flex';
+};
+
+window.selecionarEstrela = function(nota) {
+  _avalNota = nota;
+  [1,2,3,4,5].forEach(i => {
+    const s = document.getElementById('estrela-' + i);
+    if (!s) return;
+    if (i <= nota) {
+      s.style.filter    = 'none';
+      s.style.opacity   = '1';
+      s.style.transform = 'scale(1.2)';
+    } else {
+      s.style.filter    = 'grayscale(1)';
+      s.style.opacity   = '.4';
+      s.style.transform = 'scale(1)';
+    }
+  });
+  const lbl = document.getElementById('aval-label');
+  if (lbl) lbl.textContent = _avalLabels[nota] || '';
+};
+
+window.enviarAvaliacao = async function() {
+  if (!_avalNota) {
+    const lbl = document.getElementById('aval-label');
+    if (lbl) { lbl.textContent = 'Selecione uma nota ⭐'; lbl.style.color = '#E8001C'; }
+    return;
+  }
+  const comentario = document.getElementById('aval-comentario')?.value.trim() || '';
+  try {
+    await db.from('avaliacoes').insert({
+      pedido_id:         _avalPedidoId,
+      estabelecimento_id: _avalEstabId,
+      nota:              _avalNota,
+      comentario:        comentario || null,
+      cliente_nome:      _user?.nome || null,
+      created_at:        new Date().toISOString(),
+    });
+    // Marca como avaliado para não pedir de novo
+    localStorage.setItem('aval_' + _avalPedidoId, '1');
+  } catch(e) {
+    console.warn('Erro ao salvar avaliação:', e);
+  }
+  fecharModalAvaliacao();
+};
+
+window.fecharModalAvaliacao = function() {
+  const modal = document.getElementById('modal-avaliacao');
+  if (modal) modal.style.display = 'none';
+  if (_avalPedidoId) localStorage.setItem('aval_' + _avalPedidoId, 'skip');
+};
+// ══ FIM AVALIAÇÃO ═════════════════════════════════════════════════════════════
+
 async function pollarPedidos() {
   // Pega whats de qualquer fonte disponível
   const whats = ((_user?.tel||'').replace(/\D/g,''))
@@ -2168,6 +2306,10 @@ async function pollarPedidos() {
         const local = _pedidosLocais.find(pl=>pl.id===p.id);
         const isRet = (local?.endereco||'').toLowerCase().includes('retirada');
         notificarStatus(loja?.nome||'Loja', p.status, isRet);
+        // Abre avaliação quando pedido fica pronto/entregue
+        if(p.status === 'pronto') {
+          setTimeout(() => abrirModalAvaliacao(p.id, p.estabelecimento_id, loja?.nome||'Loja'), 2000);
+        }
       }
       _statusAnt[p.id] = p.status;
       // Atualiza _pedidosLocais
