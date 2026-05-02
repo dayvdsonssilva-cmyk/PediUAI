@@ -3143,34 +3143,41 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
   <!-- ══════ CAIXA ══════ -->
   <div class="tab-content" id="tab-caixa">
     <div class="dash-container">
-      <h3 style="margin-bottom:6px">🏦 Controle de Caixa</h3>
-      <p style="font-size:.78rem;color:#aaa;margin-bottom:20px">Abra e feche o caixa do dia com controle de valores</p>
 
-      <!-- Status do caixa -->
-      <div id="caixa-status-card" style="background:linear-gradient(135deg,#1a1a1a,#2a2a2a);border-radius:18px;padding:24px;margin-bottom:20px;color:#fff;text-align:center">
-        <div style="font-size:.72rem;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Status do caixa</div>
-        <div id="caixa-status-label" style="font-size:1.4rem;font-weight:900;margin-bottom:4px">— Fechado —</div>
-        <div id="caixa-status-hora" style="font-size:.75rem;color:rgba(255,255,255,.35)"></div>
+      <!-- Status card -->
+      <div id="caixa-status-card" style="border-radius:18px;padding:22px 20px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(135deg,#1a1a1a,#333)">
+        <div>
+          <div style="font-size:.65rem;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px">CAIXA</div>
+          <div id="caixa-status-label" style="font-size:1.5rem;font-weight:900;line-height:1">— Fechado —</div>
+          <div id="caixa-status-hora" style="font-size:.72rem;color:rgba(255,255,255,.4);margin-top:4px"></div>
+        </div>
+        <div id="caixa-status-icon" style="font-size:2.5rem">🔒</div>
       </div>
 
       <!-- Abrir caixa -->
       <div id="caixa-abrir-card" class="fin-section-card" style="margin-bottom:16px">
-        <div class="fin-section-header" style="margin-bottom:14px">
+        <div class="fin-section-header" style="margin-bottom:16px">
           <div class="fin-section-icon">🔓</div>
-          <div><div class="fin-section-title">Abrir Caixa</div><div class="fin-section-sub">Informe o valor inicial (fundo de troco)</div></div>
+          <div>
+            <div class="fin-section-title">Abrir Caixa</div>
+            <div class="fin-section-sub">Informe o fundo inicial de troco</div>
+          </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:12px">
           <div class="form-group-light">
-            <label>Valor de abertura (fundo de caixa)</label>
+            <label>Fundo de caixa (troco inicial)</label>
             <div style="position:relative">
               <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:#888">R$</span>
-              <input type="number" id="caixa-valor-abertura" class="input-light" placeholder="0,00" min="0" step="0.50"
-                style="padding-left:38px">
+              <input type="number" id="caixa-valor-abertura" class="input-light" placeholder="0,00" min="0" step="0.50" style="padding-left:38px">
             </div>
           </div>
           <div class="form-group-light">
+            <label>Operador responsável</label>
+            <input type="text" id="caixa-operador" class="input-light" placeholder="Nome do caixa">
+          </div>
+          <div class="form-group-light">
             <label>Observação (opcional)</label>
-            <input type="text" id="caixa-obs-abertura" class="input-light" placeholder="Ex: Caixa do turno da tarde">
+            <input type="text" id="caixa-obs-abertura" class="input-light" placeholder="Ex: Turno da manhã">
           </div>
           <button onclick="abrirCaixa()" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 4px 14px rgba(34,197,94,.3)">
             🔓 Abrir Caixa
@@ -3178,53 +3185,91 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
         </div>
       </div>
 
-      <!-- Fechar caixa -->
-      <div id="caixa-fechar-card" class="fin-section-card" style="margin-bottom:16px;display:none">
-        <div class="fin-section-header" style="margin-bottom:14px">
-          <div class="fin-section-icon">🔒</div>
-          <div><div class="fin-section-title">Fechar Caixa</div><div class="fin-section-sub">Informe o valor em caixa ao fechar</div></div>
-        </div>
-        <!-- Resumo do dia -->
-        <div style="background:#faf8f5;border-radius:12px;padding:14px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;justify-content:space-between;font-size:.82rem">
-            <span style="color:#888">Abertura com</span>
-            <span id="caixa-res-abertura" style="font-weight:700">R$ 0,00</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:.82rem">
-            <span style="color:#888">Vendas do período</span>
-            <span id="caixa-res-vendas" style="font-weight:700;color:var(--red)">R$ 0,00</span>
-          </div>
-          <div style="height:1px;background:var(--border)"></div>
-          <div style="display:flex;justify-content:space-between;font-size:.92rem">
-            <span style="font-weight:800">Total esperado</span>
-            <span id="caixa-res-esperado" style="font-weight:900;color:#22c55e">R$ 0,00</span>
+      <!-- Caixa aberto — resumo em tempo real -->
+      <div id="caixa-fechar-card" class="fin-section-card" style="display:none;margin-bottom:16px">
+        <div class="fin-section-header" style="margin-bottom:16px">
+          <div class="fin-section-icon">💰</div>
+          <div style="flex:1">
+            <div class="fin-section-title">Caixa Aberto</div>
+            <div class="fin-section-sub" id="caixa-operador-label"></div>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <div class="form-group-light">
-            <label>Valor em caixa ao fechar</label>
-            <div style="position:relative">
-              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:#888">R$</span>
-              <input type="number" id="caixa-valor-fechamento" class="input-light" placeholder="0,00" min="0" step="0.50"
-                style="padding-left:38px" oninput="calcularDiferenca()">
+
+        <!-- Totais por forma de pagamento -->
+        <div style="background:#faf8f5;border-radius:12px;padding:14px;margin-bottom:14px">
+          <div style="font-size:.68rem;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Vendas do período</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;justify-content:space-between;font-size:.85rem">
+              <span style="color:#555">📱 PIX</span>
+              <span id="caixa-total-pix" style="font-weight:700">R$ 0,00</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.85rem">
+              <span style="color:#555">💳 Cartão Crédito</span>
+              <span id="caixa-total-credito" style="font-weight:700">R$ 0,00</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.85rem">
+              <span style="color:#555">💳 Cartão Débito</span>
+              <span id="caixa-total-debito" style="font-weight:700">R$ 0,00</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.85rem">
+              <span style="color:#555">💵 Dinheiro</span>
+              <span id="caixa-total-dinheiro" style="font-weight:700">R$ 0,00</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.85rem">
+              <span style="color:#555">🍽️ Comandas (mesa)</span>
+              <span id="caixa-total-mesa" style="font-weight:700">R$ 0,00</span>
+            </div>
+            <div style="height:1px;background:var(--border);margin:4px 0"></div>
+            <div style="display:flex;justify-content:space-between;font-size:.95rem">
+              <span style="font-weight:900">Total em vendas</span>
+              <span id="caixa-total-vendas" style="font-weight:900;color:var(--red)">R$ 0,00</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.85rem">
+              <span style="color:#555">+ Fundo inicial</span>
+              <span id="caixa-fundo-display" style="font-weight:700">R$ 0,00</span>
+            </div>
+            <div style="height:1px;background:var(--border);margin:4px 0"></div>
+            <div style="display:flex;justify-content:space-between;font-size:1rem">
+              <span style="font-weight:900">Total esperado em caixa</span>
+              <span id="caixa-res-esperado" style="font-weight:900;color:#22c55e">R$ 0,00</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.82rem">
+              <span style="color:#555">Pedidos no período</span>
+              <span id="caixa-qtd-pedidos" style="font-weight:700">0</span>
             </div>
           </div>
-          <div id="caixa-diferenca-wrap" style="display:none;border-radius:10px;padding:10px 14px;text-align:center;font-size:.82rem;font-weight:700"></div>
+        </div>
+
+        <!-- Fechar caixa -->
+        <div style="display:flex;flex-direction:column;gap:12px">
           <div class="form-group-light">
-            <label>Observação (opcional)</label>
-            <input type="text" id="caixa-obs-fechamento" class="input-light" placeholder="Ex: Quebra de caixa encontrada">
+            <label>Valor físico contado no caixa</label>
+            <div style="position:relative">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:#888">R$</span>
+              <input type="number" id="caixa-valor-fechamento" class="input-light" placeholder="0,00" min="0" step="0.50" style="padding-left:38px" oninput="calcularDiferenca()">
+            </div>
           </div>
-          <button onclick="fecharCaixa()" style="background:linear-gradient(135deg,#e65e32,#c94e24);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 4px 14px rgba(230,94,50,.3)">
-            🔒 Fechar Caixa do Dia
-          </button>
+          <div id="caixa-diferenca-wrap" style="display:none;border-radius:10px;padding:10px 14px;text-align:center;font-size:.85rem;font-weight:700"></div>
+          <div class="form-group-light">
+            <label>Observação de fechamento</label>
+            <input type="text" id="caixa-obs-fechamento" class="input-light" placeholder="Ex: Quebra de R$ 0,50">
+          </div>
+          <div style="display:flex;gap:10px">
+            <button onclick="imprimirComprovanteCaixa()" style="flex:1;background:#f0f0f0;color:#333;border:none;border-radius:12px;padding:13px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer">
+              🖨️ Comprovante
+            </button>
+            <button onclick="fecharCaixa()" style="flex:2;background:linear-gradient(135deg,#e65e32,#c94e24);color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.88rem;cursor:pointer;box-shadow:0 4px 14px rgba(230,94,50,.3)">
+              🔒 Fechar Caixa
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Histórico de caixas -->
+      <!-- Histórico -->
       <div class="fin-section-card">
         <div class="fin-section-header" style="margin-bottom:14px">
           <div class="fin-section-icon">📋</div>
-          <div><div class="fin-section-title">Histórico de Caixas</div><div class="fin-section-sub">Registros dos últimos fechamentos</div></div>
+          <div><div class="fin-section-title">Histórico de Caixas</div><div class="fin-section-sub">Últimos 20 fechamentos</div></div>
         </div>
         <div id="caixa-historico">
           <div style="text-align:center;color:#aaa;font-size:.82rem;padding:24px">Nenhum registro ainda</div>
