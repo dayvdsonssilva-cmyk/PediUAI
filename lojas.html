@@ -1306,7 +1306,7 @@ function renderStore(fresquinhos=[]) {
         ${l.taxa_entrega>0?`<span class="loja-capa-badge">🛵 ${fmt(l.taxa_entrega)}</span>`:`<span class="loja-capa-badge" style="color:#4ade80;">🛵 Entrega grátis</span>`}
         ${l._media?`<span class="loja-capa-badge" style="color:#fbbf24;font-weight:700;">⭐ ${l._media} <span style="opacity:.7;font-weight:400;">(${l._totalAvals} aval.)</span></span>`:''}
         ${l.cidade?`<span class="loja-capa-badge">📍 ${l.cidade}</span>`:''}
-        ${l.whatsapp?`<a href="${wppLink(l.whatsapp)}" target="_blank" class="loja-capa-badge" style="text-decoration:none;color:inherit;">📲 ${fmtFone(l.whatsapp)}</a>`:''}
+        ${l.whatsapp?`<a href="${wppLink(l.whatsapp)}" target="_blank" class="loja-capa-badge" style="text-decoration:none;color:#fff;">📞 Contato</a>`:''}
       </div>
     </div>
 
