@@ -255,6 +255,12 @@ function preencherConfig(estab) {
   set('cfg-whats',     estab.whatsapp || '');
   set('cfg-desc', estab.descricao || '');
   const descCount = document.getElementById('cfg-desc-count');
+  if (descCount) descCount.textContent = (estab.descricao||'').length + '/80';
+  // Tipo do estabelecimento
+  if (document.getElementById('cfg-tipo-estab')) {
+    document.getElementById('cfg-tipo-estab').value = estab.tipo_estab || '';
+    setTimeout(() => window.renderTipoCfgGrid?.(estab.tipo_estab || ''), 100);
+  }
   if(descCount) descCount.textContent = (estab.descricao||'').length + '/80';
   set('cfg-endereco',  estab.endereco || '');
   set('cfg-tempo',     estab.tempo_entrega || '30-45 min');
@@ -549,6 +555,7 @@ export async function salvarConfig() {
   const tiktok           = ($('cfg-tiktok')?.value || '').trim().replace('@','') || null;
   const site             = $('cfg-site')?.value.trim() || null;
   const msg_nota         = $('cfg-msg-nota')?.value.trim() || null;
+  const tipo_estab       = $('cfg-tipo-estab')?.value || null;
 
   if (!nome || !slug) return showToast('Preencha nome e link.', 'error');
 
@@ -587,6 +594,7 @@ export async function salvarConfig() {
       taxa_entrega, aceita_pix, aceita_cartao, aceita_dinheiro,
       taxa_servico, perc_servico,
       telefone_contato, cnpj, instagram, tiktok, site, msg_nota,
+      tipo_estab,
     };
 
     const { error } = await getSupa().from('estabelecimentos').update(updates).eq('id', estab.id);
