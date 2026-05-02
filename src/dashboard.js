@@ -261,6 +261,8 @@ function preencherConfig(estab) {
     document.getElementById('cfg-tipo-estab').value = estab.tipo_estab || '';
     setTimeout(() => window.renderTipoCfgGrid?.(estab.tipo_estab || ''), 100);
   }
+  // Horários de funcionamento
+  setTimeout(() => window.renderHorariosCfg?.(estab.horarios || {}), 120);
   if(descCount) descCount.textContent = (estab.descricao||'').length + '/80';
   set('cfg-endereco',  estab.endereco || '');
   set('cfg-tempo',     estab.tempo_entrega || '30-45 min');
@@ -595,6 +597,7 @@ export async function salvarConfig() {
       taxa_servico, perc_servico,
       telefone_contato, cnpj, instagram, tiktok, site, msg_nota,
       tipo_estab,
+      horarios: window.getHorariosFromForm?.() || null,
     };
 
     const { error } = await getSupa().from('estabelecimentos').update(updates).eq('id', estab.id);
