@@ -4041,6 +4041,8 @@ window.selecionarTipoCfg = function(id, btn) {
 };
 
 window.renderTipoCfgGrid = renderTipoCfgGrid;
+
+window.selecionarTipoEstab = function(id, btn) {
   document.getElementById('rtipo').value = id;
   document.querySelectorAll('#rtipo-grid button').forEach(b => {
     b.style.borderColor = 'rgba(255,255,255,.12)';
