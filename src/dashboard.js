@@ -651,7 +651,8 @@ async function renderCardapio() {
           ? `<img class="item-img" src="${p.foto_url}" alt="${p.nome}">`
           : `<div class="item-emoji-bg">${p.emoji || '🍔'}</div>`}
         <span class="item-disponivel">${p.disponivel ? 'Disponível' : 'Indisponível'}</span>
-        ${p.promocao ? `<span class="item-promo-badge">🔥 Promoção</span>` : ''}
+        ${p.promocao ? `<span class="item-promo-badge">🏷️ Promoção</span>` : ''}
+        ${p.em_promocao && p.desconto_percent > 0 ? `<span class="item-promo-badge" style="background:linear-gradient(135deg,#e65e32,#c94e24);">🔥 ${p.desconto_percent}% OFF</span>` : ''}
 
       </div>
       <div class="item-body">
@@ -2076,8 +2077,17 @@ function setFinPeriodo(p, btn) {
   if (btn) btn.classList.add('ativo');
   // Mostra/esconde seletor de período personalizado
   const cw = document.getElementById('fin-custom-wrap');
-  if (cw) cw.style.display = p === 'custom' ? 'block' : 'none';
-  renderFinanceiro();
+  if (cw) {
+    if (p === 'custom') {
+      cw.style.display = 'block';
+      setTimeout(() => document.getElementById('fin-data-de')?.showPicker?.(), 150);
+    } else {
+      cw.style.display = 'none';
+      renderFinanceiro();
+    }
+  } else {
+    renderFinanceiro();
+  }
 }
 
 function exportarCSV() {
