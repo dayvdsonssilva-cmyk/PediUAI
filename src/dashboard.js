@@ -661,8 +661,8 @@ async function renderCardapio() {
         <div class="item-footer">
           <div>
             ${p.em_promocao && p.desconto_percent > 0
-              ? `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                  <span class="item-promo-badge" style="background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;">🔥 ${p.desconto_percent}% OFF</span>
+              ? `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">
+                  <span style="position:static;background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:3px;">🔥 ${p.desconto_percent}% OFF</span>
                   <span class="item-preco-original">R$ ${Number(p.preco_original||p.preco).toFixed(2).replace('.',',')}</span>
                 </div>
                 <div class="item-preco" style="color:var(--red);">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`
