@@ -1215,7 +1215,7 @@ function renderStore(fresquinhos=[]) {
         <span class="${temQuente?'fire-on':'fire-off'}">🔥</span>
         <span style="${temQuente?'color:#E8001C;font-weight:900':''}">QUENTE</span>
       </button>
-      ${temPromo?`<button class="store-tab" id="tab-promo" onclick="storeTab('promo',this)" style="display:flex;align-items:center;justify-content:center;gap:4px;">PROMOÇÃO<span class="tab-dot show"></span></button>`:''}
+      <!-- PROMOÇÃO tab removido -->
     </div>
 
     <!-- Fresquinho -->
@@ -1263,7 +1263,9 @@ window.filtrarStore = filtrarStore;
 
 function renderStoreProdutos(cat) {
   const el = $('store-produtos'); if(!el) return;
-  const filtrados = cat==='Todos' ? _produtos : _produtos.filter(p=>p.categoria===cat);
+  // Exclui produtos QUENTE do cardápio normal
+  const base = _produtos.filter(p => !(p.em_promocao && parseInt(p.desconto_percent||0) > 0));
+  const filtrados = cat==='Todos' ? base : base.filter(p=>p.categoria===cat);
   el.innerHTML = filtrados.length ? filtrados.map(p=>produtoCardHTML(p)).join('') :
     '<div class="empty-state"><div class="empty-icon">🍽️</div><div class="empty-title">Sem itens</div></div>';
 }
