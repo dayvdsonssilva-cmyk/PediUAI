@@ -630,6 +630,7 @@ let _stories = [], _storyIdx = 0, _storyTimer = null;
 // Polling pedidos
 let _pollingId = null;
 let _statusAnt = {};
+let _avaliacoesMostradas = new Set();
 
 const CATS = [
   {id:'all',    label:'Todos',      emoji:'🍽️'},
@@ -2319,6 +2320,17 @@ async function pollarPedidos() {
 
     // SEMPRE atualiza a tela de pedidos — não espera mudança
     if(_screen==='orders') renderOrders();
+
+    // Verifica pedidos prontos não avaliados (inclui casos onde status já era pronto ao abrir)
+    data.forEach(p => {
+      if(p.status === 'pronto'
+        && !localStorage.getItem('aval_' + p.id)
+        && !_avaliacoesMostradas.has(p.id)) {
+        _avaliacoesMostradas.add(p.id);
+        const loja = _lojas.find(l=>l.id===p.estabelecimento_id);
+        setTimeout(() => abrirModalAvaliacao(p.id, p.estabelecimento_id, loja?.nome||'Loja'), 1500);
+      }
+    });
 
   } catch(e){ console.warn('poll err:', e); }
 }
