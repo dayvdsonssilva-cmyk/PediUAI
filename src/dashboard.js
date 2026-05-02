@@ -4055,23 +4055,22 @@ window.showTab = (function(_orig) {
 async function carregarCaixa() {
   const estab = getEstab(); if (!estab?.id) return;
 
+  // BANCO é a única fonte de verdade — localStorage é só cache de ID
   const { data } = await getSupa().from('controle_caixa')
-    .select('*').eq('estabelecimento_id', estab.id)
-    .eq('status', 'aberto').order('created_at', { ascending: false }).limit(1);
+    .select('*')
+    .eq('estabelecimento_id', estab.id)
+    .eq('status', 'aberto')
+    .order('created_at', { ascending: false })
+    .limit(1);
 
   if (data?.[0]) {
+    // Tem caixa aberto no banco → abre
     _caixaAberto = data[0];
     localStorage.setItem('pw_caixa_id_' + estab.id, _caixaAberto.id);
   } else {
-    const savedId = localStorage.getItem('pw_caixa_id_' + estab.id);
-    if (savedId) {
-      const { data: saved } = await getSupa().from('controle_caixa')
-        .select('*').eq('id', savedId).eq('status', 'aberto').maybeSingle();
-      _caixaAberto = saved || null;
-      if (!saved) localStorage.removeItem('pw_caixa_id_' + estab.id);
-    } else {
-      _caixaAberto = null;
-    }
+    // Não tem caixa aberto no banco → fecha SEMPRE, independente do localStorage
+    _caixaAberto = null;
+    localStorage.removeItem('pw_caixa_id_' + estab.id);
   }
 
   await renderCaixa();
@@ -4212,6 +4211,8 @@ window.fecharCaixa = async function() {
   const totais   = fecharCard?._totais || {};
   const dif      = parseFloat((vFech - esperado).toFixed(2));
 
+  showToast('Fechando caixa...', '#f59e0b');
+
   const { error } = await getSupa().from('controle_caixa').update({
     valor_fechamento: vFech,
     diferenca: dif,
@@ -4219,24 +4220,93 @@ window.fecharCaixa = async function() {
     status: 'fechado',
     fechado_em: new Date().toISOString(),
     totais_pagamento: totais,
-  }).eq('id', _caixaAberto.id);
+  }).eq('id', _caixaAberto.id).eq('status', 'aberto'); // só fecha se ainda estiver aberto
 
   if (error) return showToast('❌ Erro: ' + error.message, '#ef4444');
 
-  // Imprime comprovante antes de fechar
-  imprimirComprovanteCaixa();
+  // Salva dados para o comprovante ANTES de limpar
+  const caixaParaImprimir = { ..._caixaAberto, totais, esperado, vFech, dif, obs };
 
+  // Limpa estado local
   const estabId = getEstab()?.id;
   _caixaAberto = null;
   if (estabId) localStorage.removeItem('pw_caixa_id_' + estabId);
+
+  // Imprime comprovante
+  imprimirComprovanteComDados(caixaParaImprimir);
+
   showToast('🔒 Caixa fechado!');
   await renderCaixa();
   await carregarHistoricoCaixa();
 };
 
+window.imprimirComprovanteComDados = function(c) {
+  const estab = getEstab();
+  const t = c.totais || {};
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const horaAb = c.created_at ? new Date(c.created_at).toLocaleString('pt-BR') : '—';
+  const agora  = new Date().toLocaleString('pt-BR');
+  const dif = c.dif ?? 0;
+  const difTxt = Math.abs(dif) < 0.01 ? '✅ Conferido' :
+    dif < 0 ? `❌ Falta ${fmtR(Math.abs(dif))}` : `⚠️ Sobra ${fmtR(dif)}`;
+  _abrirJanelaComprovante(estab, t, c.operador||'', horaAb, agora, c.esperado||0, c.vFech||0, difTxt, c.obs||'');
+};
+
 window.imprimirComprovanteCaixa = function() {
   const fecharCard = document.getElementById('caixa-fechar-card');
   const estab = getEstab();
+  const t = fecharCard?._totais || {};
+  const esperado = fecharCard?._esperado || 0;
+  const vFech = parseFloat(document.getElementById('caixa-valor-fechamento')?.value) || 0;
+  const dif = vFech - esperado;
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const difTxt = Math.abs(dif) < 0.01 ? '✅ Conferido' :
+    dif < 0 ? `❌ Falta ${fmtR(Math.abs(dif))}` : `⚠️ Sobra ${fmtR(dif)}`;
+  const horaAb = _caixaAberto?.created_at ? new Date(_caixaAberto.created_at).toLocaleString('pt-BR') : '—';
+  const agora  = new Date().toLocaleString('pt-BR');
+  const obs    = document.getElementById('caixa-obs-fechamento')?.value || '';
+  _abrirJanelaComprovante(estab, t, _caixaAberto?.operador||'', horaAb, agora, esperado, vFech, difTxt, obs);
+};
+
+function _abrirJanelaComprovante(estab, t, operador, horaAb, agora, esperado, vFech, difTxt, obs) {
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const win = window.open('', '_blank', 'width=380,height=700');
+  if (!win) { showToast('⚠️ Permita pop-ups para imprimir'); return; }
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comprovante de Caixa</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;font-size:12px;padding:16px;color:#000;max-width:320px;margin:0 auto}h2{font-size:14px;text-align:center;margin-bottom:2px}.center{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.row{display:flex;justify-content:space-between;margin:3px 0}.bold{font-weight:bold}.status{text-align:center;font-size:13px;font-weight:bold;margin:6px 0}</style>
+</head><body>
+<h2>PEDIWAY</h2>
+<p class="center" style="font-size:10px">${estab?.nome||''}</p>
+<p class="center" style="font-size:10px">${estab?.cidade||''}</p>
+<div class="line"></div>
+<p class="center bold" style="font-size:13px">COMPROVANTE DE FECHAMENTO DE CAIXA</p>
+<div class="line"></div>
+<div class="row"><span>Abertura:</span><span>${horaAb}</span></div>
+<div class="row"><span>Fechamento:</span><span>${agora}</span></div>
+${operador?`<div class="row"><span>Operador:</span><span>${operador}</span></div>`:''}
+<div class="line"></div>
+<p class="bold center">VENDAS POR FORMA DE PAGAMENTO</p>
+<div class="line"></div>
+<div class="row"><span>📱 PIX</span><span>${fmtR(t.totPix||0)}</span></div>
+<div class="row"><span>💳 Cartão Crédito</span><span>${fmtR(t.totCred||0)}</span></div>
+<div class="row"><span>💳 Cartão Débito</span><span>${fmtR(t.totDeb||0)}</span></div>
+<div class="row"><span>💵 Dinheiro</span><span>${fmtR(t.totDin||0)}</span></div>
+<div class="row"><span>🍽️ Comandas</span><span>${fmtR(t.totMesa||0)}</span></div>
+<div class="line"></div>
+<div class="row bold"><span>TOTAL VENDAS</span><span>${fmtR(t.totVendas||0)}</span></div>
+<div class="row"><span>+ Fundo inicial</span><span>${fmtR(t.fundo||0)}</span></div>
+<div class="row bold"><span>TOTAL ESPERADO</span><span>${fmtR(esperado)}</span></div>
+${vFech>0?`<div class="row bold"><span>VALOR CONTADO</span><span>${fmtR(vFech)}</span></div>`:''}
+<div class="line"></div>
+<div class="status">${difTxt}</div>
+<div class="line"></div>
+${obs?`<p style="font-size:10px;text-align:center">Obs: ${obs}</p>`:''}
+<p class="center" style="margin-top:8px;font-size:10px">Gerado em ${agora}</p>
+<p class="center" style="font-size:10px">PEDIWAY — Sistema de Delivery</p>
+</body></html>`);
+  win.document.close();
+  setTimeout(() => win.print(), 300);
+}
   const t = fecharCard?._totais || {};
   const esperado = fecharCard?._esperado || 0;
   const vFech = parseFloat(document.getElementById('caixa-valor-fechamento')?.value) || 0;
