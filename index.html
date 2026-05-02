@@ -2775,8 +2775,8 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
             </div>
 
             <div class="form-group-light">
-              <label>Descrição <span id="cfg-desc-count" style="font-size:.7rem;color:#aaa;font-weight:400;">0/80</span></label>
-              <input type="text" class="input-light" id="cfg-desc" placeholder="Os melhores burguers da cidade!" maxlength="80" oninput="document.getElementById('cfg-desc-count').textContent=this.value.length+'/80'">
+              <label>Descrição <span id="cfg-desc-count" style="font-size:.7rem;color:#aaa;font-weight:400;">0/40</span></label>
+              <input type="text" class="input-light" id="cfg-desc" placeholder="Os melhores burguers da cidade!" maxlength="40" oninput="document.getElementById('cfg-desc-count').textContent=this.value.length+'/40'">
             </div>
 
             <div class="form-group-light">
@@ -4099,6 +4099,8 @@ function getHorariosFromForm() {
 
 window.getHorariosFromForm = getHorariosFromForm;
 window.renderHorariosCfg  = renderHorariosCfg;
+
+window.selecionarTipoEstab = function(id, btn) {
   document.getElementById('rtipo').value = id;
   document.querySelectorAll('#rtipo-grid button').forEach(b => {
     b.style.borderColor = 'rgba(255,255,255,.12)';
@@ -4108,6 +4110,7 @@ window.renderHorariosCfg  = renderHorariosCfg;
   btn.style.borderColor = 'var(--red, #e65e32)';
   btn.style.background  = 'rgba(230,94,50,.15)';
   btn.querySelector('span:last-child').style.color = '#e65e32';
+};
 };
 
 document.addEventListener('DOMContentLoaded', function() {
