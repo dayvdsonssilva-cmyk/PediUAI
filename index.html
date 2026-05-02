@@ -2819,6 +2819,14 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
               </select>
             </div>
 
+            <div class="form-group-light">
+              <label>Horário de funcionamento</label>
+              <div style="display:flex;flex-direction:column;gap:8px" id="cfg-horarios-wrap">
+                <!-- gerado via JS -->
+              </div>
+              <div style="margin-top:8px;font-size:.72rem;color:#aaa">Deixe em branco os dias que não funciona</div>
+            </div>
+
           </div>
         </div>
 
@@ -4042,7 +4050,55 @@ window.selecionarTipoCfg = function(id, btn) {
 
 window.renderTipoCfgGrid = renderTipoCfgGrid;
 
-window.selecionarTipoEstab = function(id, btn) {
+// ── Horário de funcionamento ──────────────────────────────────────────────────
+const DIAS_SEMANA = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+
+function renderHorariosCfg(horariosObj) {
+  const wrap = document.getElementById('cfg-horarios-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = DIAS_SEMANA.map((dia, i) => {
+    const h = horariosObj?.[i] || {};
+    return `
+    <div style="display:flex;align-items:center;gap:8px;background:#faf8f5;border-radius:8px;padding:8px 10px">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;min-width:80px">
+        <input type="checkbox" id="cfg-dia-${i}" ${h.ativo ? 'checked' : ''}
+          onchange="toggleHorarioDia(${i})"
+          style="width:16px;height:16px;accent-color:var(--red);cursor:pointer">
+        <span style="font-size:.78rem;font-weight:700;color:#333">${dia}</span>
+      </label>
+      <div id="cfg-horario-campos-${i}" style="display:flex;align-items:center;gap:6px;flex:1;${h.ativo ? '' : 'opacity:.3;pointer-events:none'}">
+        <input type="time" id="cfg-abertura-${i}" value="${h.abertura||'08:00'}"
+          style="border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-family:'Poppins',sans-serif;font-size:.78rem;flex:1;background:#fff">
+        <span style="font-size:.72rem;color:#888">até</span>
+        <input type="time" id="cfg-fechamento-${i}" value="${h.fechamento||'22:00'}"
+          style="border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-family:'Poppins',sans-serif;font-size:.78rem;flex:1;background:#fff">
+      </div>
+      ${!h.ativo ? `<span style="font-size:.7rem;color:#bbb;font-style:italic">Fechado</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+window.toggleHorarioDia = function(i) {
+  const cb = document.getElementById('cfg-dia-' + i);
+  const campos = document.getElementById('cfg-horario-campos-' + i);
+  if (!campos) return;
+  campos.style.opacity = cb.checked ? '1' : '.3';
+  campos.style.pointerEvents = cb.checked ? '' : 'none';
+};
+
+function getHorariosFromForm() {
+  const obj = {};
+  DIAS_SEMANA.forEach((_, i) => {
+    const ativo = document.getElementById('cfg-dia-' + i)?.checked || false;
+    const abertura = document.getElementById('cfg-abertura-' + i)?.value || '08:00';
+    const fechamento = document.getElementById('cfg-fechamento-' + i)?.value || '22:00';
+    obj[i] = { ativo, abertura, fechamento };
+  });
+  return obj;
+}
+
+window.getHorariosFromForm = getHorariosFromForm;
+window.renderHorariosCfg  = renderHorariosCfg;
   document.getElementById('rtipo').value = id;
   document.querySelectorAll('#rtipo-grid button').forEach(b => {
     b.style.borderColor = 'rgba(255,255,255,.12)';
