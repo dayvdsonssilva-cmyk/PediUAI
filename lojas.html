@@ -33,7 +33,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#E8001C">
+<meta name="theme-color" content="#C0001A"><meta name="theme-color" content="#C0001A" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#C0001A" media="(prefers-color-scheme: dark)"><meta name="color-scheme" content="only light">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PEDIWAY">
@@ -57,6 +57,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{
+  color-scheme: only light;
   --red:#E8001C;--red-d:#C0001A;--dark:#111111;--mid:#444444;--gray:#888888;
   --light:#FFFFFF;--cream:#FFF5F5;--card:#FFFFFF;--border:rgba(232,0,28,.1);
   --accent:#FFF0F0;--accent2:#EBEBEB;
@@ -64,7 +65,12 @@
   --st-red-unused:#C0001A;--st-red2:#A00015;
 }
 html,body{background:#FFFFFF;}
-html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font);touch-action:manipulation;}
+html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font);touch-action:manipulation;color-scheme:only light;}
+/* Bloqueia modo noturno do Samsung e Android — força cores originais */
+* { forced-color-adjust: none; -webkit-forced-color-adjust: none; }
+@media (prefers-color-scheme: dark) {
+  html, body, * { color-scheme: only light !important; }
+}
 *{box-sizing:border-box;}
 #app{height:100%;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;overflow:hidden;background:#FFFFFF;}
 .screen{display:none;flex:1;flex-direction:column;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:#FFFFFF;}
@@ -172,7 +178,7 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 /* Produto card */
 .produto-card{background:#fff;border-radius:14px;overflow:hidden;display:flex;align-items:stretch;box-shadow:0 1px 10px rgba(232,0,28,.07);border:1px solid var(--accent2);cursor:pointer;transition:transform .12s;}
 .produto-card:active{transform:scale(.99);}
-.produto-img-wrap{width:110px;min-width:110px;max-width:110px;height:110px;overflow:hidden;background:var(--cream);flex-shrink:0;align-self:center;}
+.produto-img-wrap{width:110px;min-width:110px;max-width:110px;overflow:hidden;background:var(--cream);flex-shrink:0;align-self:stretch;}
 .produto-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
 .produto-emoji-bg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;}
 
@@ -298,7 +304,7 @@ input,select,textarea{font-size:16px !important;touch-action:manipulation;}
 <!-- ══ SPLASH SCREEN ══════════════════════════════════════════════════════════ -->
 <div id="splash-screen" style="
   position:fixed;inset:0;z-index:99999;
-  background:#e65e32;
+  background:#C0001A;
   display:flex;align-items:center;justify-content:center;
   transition:opacity .5s ease, transform .5s ease;
 ">
