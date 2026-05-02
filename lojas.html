@@ -674,7 +674,7 @@ async function init() {
 
   // Carrega lojas
   const {data, error} = await db.from('estabelecimentos')
-    .select('id,nome,slug,logo_url,cor_primaria,cidade,aberto,descricao,taxa_entrega,tempo_entrega,faz_entrega,faz_retirada,whatsapp,promocao_ativa,desconto_percent')
+    .select('id,nome,slug,logo_url,cor_primaria,cidade,aberto,descricao,taxa_entrega,tempo_entrega,faz_entrega,faz_retirada,whatsapp,promocao_ativa,desconto_percent,tipo_estab')
     .order('nome');
   if(!error) {
     _lojas = (data||[]).map(l => ({
@@ -682,6 +682,26 @@ async function init() {
       _emoji: lojaEmoji(l.nome),
       _bg: l.cor_primaria||'#C0001A',
     }));
+
+    // Busca médias de avaliação
+    try {
+      const {data: avals} = await db.from('avaliacoes').select('estabelecimento_id,nota');
+      if (avals?.length) {
+        const medias = {};
+        avals.forEach(a => {
+          if (!medias[a.estabelecimento_id]) medias[a.estabelecimento_id] = [];
+          medias[a.estabelecimento_id].push(a.nota);
+        });
+        _lojas = _lojas.map(l => ({
+          ...l,
+          _media: medias[l.id]?.length
+            ? (medias[l.id].reduce((s,n)=>s+n,0)/medias[l.id].length).toFixed(1)
+            : null,
+          _totalAvals: medias[l.id]?.length || 0,
+        }));
+      }
+    } catch(e) {}
+
     renderHome();
     renderBanner();
     renderSearchCats();
@@ -897,6 +917,7 @@ function storeCardHTML(l) {
         <div class="store-tag"><span class="status-dot" style="background:${ab?'#22C55E':'#EF4444'};"></span>${ab?'Aberto':'Fechado'}</div>
         ${l.tempo_entrega?`<div class="store-tag">⏱ ${l.tempo_entrega}</div>`:`<div class="store-tag">⏱ 25–40 min</div>`}
         ${l.taxa_entrega>0?`<div class="store-tag">🛵 ${fmt(l.taxa_entrega)}</div>`:`<div class="store-tag" style="color:#22A85A;font-weight:700;">🛵 Grátis</div>`}
+        ${l._media?`<div class="store-tag" style="color:#f59e0b;font-weight:700;">⭐ ${l._media} <span style="color:#aaa;font-weight:400;">(${l._totalAvals})</span></div>`:''}
         ${l.cidade?`<div class="store-tag">📍 ${l.cidade}</div>`:''}
       </div>
     </div>
@@ -930,6 +951,7 @@ function storeCardHTMLb(l, ab, temPromo) {
         </span>
         ${l.tempo_entrega?`<span class="store-card-b-tag">⏱ ${l.tempo_entrega}</span>`:`<span class="store-card-b-tag">⏱ 25–40 min</span>`}
         ${l.taxa_entrega>0?`<span class="store-card-b-tag">🛵 ${fmt(l.taxa_entrega)}</span>`:`<span class="store-card-b-tag" style="color:#16A34A;font-weight:700;">🛵 Grátis</span>`}
+        ${l._media?`<span class="store-card-b-tag" style="color:#f59e0b;font-weight:700;">⭐ ${l._media}</span>`:''}
       </div>
     </div>
   </div>`;
@@ -2206,7 +2228,7 @@ const _avalLabels    = ['','Péssimo 😞','Ruim 😕','Regular 😐','Bom 😊'
 
 window.abrirModalAvaliacao = function(pedidoId, estabId, nomeLoja) {
   // Não abre se já avaliou esse pedido
-  const jaAvaliou = localStorage.getItem('aval_' + pedidoId);
+  const jaAvaliou = localStorage.getItem('pw_aval_' + pedidoId);
   if (jaAvaliou) return;
 
   _avalPedidoId = pedidoId;
@@ -2266,7 +2288,7 @@ window.enviarAvaliacao = async function() {
       created_at:        new Date().toISOString(),
     });
     // Marca como avaliado para não pedir de novo
-    localStorage.setItem('aval_' + _avalPedidoId, '1');
+    localStorage.setItem('pw_aval_' + _avalPedidoId, 'rated');
   } catch(e) {
     console.warn('Erro ao salvar avaliação:', e);
   }
@@ -2276,7 +2298,7 @@ window.enviarAvaliacao = async function() {
 window.fecharModalAvaliacao = function() {
   const modal = document.getElementById('modal-avaliacao');
   if (modal) modal.style.display = 'none';
-  if (_avalPedidoId) localStorage.setItem('aval_' + _avalPedidoId, 'skip');
+  if (_avalPedidoId) localStorage.setItem('pw_aval_' + _avalPedidoId, 'skip');
 };
 // ══ FIM AVALIAÇÃO ═════════════════════════════════════════════════════════════
 
@@ -2308,7 +2330,7 @@ async function pollarPedidos() {
         const isRet = (local?.endereco||'').toLowerCase().includes('retirada');
         notificarStatus(loja?.nome||'Loja', p.status, isRet);
         // Abre avaliação quando pedido fica pronto/entregue
-        if(p.status === 'pronto') {
+        if(p.status === 'pronto' && !localStorage.getItem('pw_aval_' + p.id)) {
           setTimeout(() => abrirModalAvaliacao(p.id, p.estabelecimento_id, loja?.nome||'Loja'), 2000);
         }
       }
@@ -2321,10 +2343,14 @@ async function pollarPedidos() {
     // SEMPRE atualiza a tela de pedidos — não espera mudança
     if(_screen==='orders') renderOrders();
 
-    // Verifica pedidos prontos não avaliados (inclui casos onde status já era pronto ao abrir)
+    // Verifica pedidos prontos não avaliados — apenas dos últimos 7 dias
+    const seteDiasAtras = new Date(Date.now() - 7*24*60*60*1000).toISOString();
     data.forEach(p => {
+      const criado = _pedidosLocais.find(pl=>pl.id===p.id)?.created_at || '';
+      // Ignora pedidos mais antigos que 7 dias
+      if (criado && criado < seteDiasAtras) return;
       if(p.status === 'pronto'
-        && !localStorage.getItem('aval_' + p.id)
+        && !localStorage.getItem('pw_aval_' + p.id)
         && !_avaliacoesMostradas.has(p.id)) {
         _avaliacoesMostradas.add(p.id);
         const loja = _lojas.find(l=>l.id===p.estabelecimento_id);
