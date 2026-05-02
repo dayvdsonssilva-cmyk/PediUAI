@@ -651,6 +651,22 @@ const CATS = [
 const $ = id => document.getElementById(id);
 const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
 
+// Formata número de telefone/WhatsApp → (88) 98888-8888
+function fmtFone(num) {
+  if (!num) return '';
+  const d = String(num).replace(/\D/g,'');
+  if (d.length === 11) return '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7);
+  if (d.length === 10) return '(' + d.slice(0,2) + ') ' + d.slice(2,6) + '-' + d.slice(6);
+  if (d.length === 13) return '+' + d.slice(0,2) + ' (' + d.slice(2,4) + ') ' + d.slice(4,9) + '-' + d.slice(9);
+  return d;
+}
+function wppLink(num, msg) {
+  const d = String(num||'').replace(/\D/g,'');
+  const n = d.length <= 11 ? '55' + d : d;
+  const m = msg ? '?text=' + encodeURIComponent(msg) : '';
+  return 'https://wa.me/' + n + m;
+}
+
 // ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
@@ -1290,7 +1306,7 @@ function renderStore(fresquinhos=[]) {
         ${l.taxa_entrega>0?`<span class="loja-capa-badge">🛵 ${fmt(l.taxa_entrega)}</span>`:`<span class="loja-capa-badge" style="color:#4ade80;">🛵 Entrega grátis</span>`}
         ${l._media?`<span class="loja-capa-badge" style="color:#fbbf24;font-weight:700;">⭐ ${l._media} <span style="opacity:.7;font-weight:400;">(${l._totalAvals} aval.)</span></span>`:''}
         ${l.cidade?`<span class="loja-capa-badge">📍 ${l.cidade}</span>`:''}
-        ${l.whatsapp?`<span class="loja-capa-badge">📞 Contato</span>`:''}
+        ${l.whatsapp?`<a href="${wppLink(l.whatsapp)}" target="_blank" class="loja-capa-badge" style="text-decoration:none;color:inherit;">📲 ${fmtFone(l.whatsapp)}</a>`:''}
       </div>
     </div>
 
