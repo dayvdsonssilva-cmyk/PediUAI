@@ -3526,6 +3526,8 @@ window.toggleCmdCat = function(uid) {
   el.style.display = open ? 'none' : 'block';
   if (arr) arr.style.transform = open ? 'rotate(-90deg)' : '';
 };
+
+function renderPedidosComanda(mesaKey) {
   const el   = document.getElementById('comanda-historico');
   const peds = _pedidosMesas[mesaKey] || [];
   const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
