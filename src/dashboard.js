@@ -4117,10 +4117,43 @@ window.initCfgAccordion = function() {
 let _caixaAberto = null; // { id, valor_abertura, created_at }
 
 // Carrega estado do caixa ao abrir a aba
+// ── Auto-refresh Caixa e Financeiro a cada 5 segundos ───────────────────────
+let _autoRefreshTimer = null;
+
+function iniciarAutoRefresh(tab) {
+  pararAutoRefresh(); // limpa timer anterior
+  if (tab === 'caixa') {
+    _autoRefreshTimer = setInterval(async () => {
+      const aba = document.getElementById('tab-caixa');
+      if (aba && (aba.classList.contains('active') || aba.style.display !== 'none')) {
+        await renderCaixa(); // atualiza só os totais (não reload completo)
+      }
+    }, 5000);
+  } else if (tab === 'financeiro') {
+    _autoRefreshTimer = setInterval(() => {
+      const aba = document.getElementById('tab-financeiro');
+      if (aba && (aba.classList.contains('active') || aba.style.display !== 'none')) {
+        renderFinanceiro();
+      }
+    }, 5000);
+  }
+}
+
+function pararAutoRefresh() {
+  if (_autoRefreshTimer) { clearInterval(_autoRefreshTimer); _autoRefreshTimer = null; }
+}
+
 window.showTab = (function(_orig) {
   return function(tab, btn) {
     if (typeof _orig === 'function') _orig(tab, btn);
-    if (tab === 'caixa') setTimeout(carregarCaixa, 80);
+    if (tab === 'caixa') {
+      setTimeout(carregarCaixa, 80);
+      iniciarAutoRefresh('caixa');
+    } else if (tab === 'financeiro') {
+      iniciarAutoRefresh('financeiro');
+    } else {
+      pararAutoRefresh();
+    }
   };
 })(window.showTab);
 
