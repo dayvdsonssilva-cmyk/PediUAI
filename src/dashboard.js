@@ -1247,6 +1247,37 @@ window.abrirStoryDash = function(url, tipo) {
 // ─────────────────────────────────────────────────────────────────────────────
 // PEDIDOS
 // ─────────────────────────────────────────────────────────────────────────────
+async function renderPedidosFiltrados(peds, label) {
+  const container = document.getElementById('todos-pedidos');
+  if (!container) return;
+
+  let aviso = document.getElementById('ped-filtro-aviso');
+  if (!aviso) {
+    aviso = document.createElement('div');
+    aviso.id = 'ped-filtro-aviso';
+    aviso.style.cssText = 'font-size:.78rem;color:var(--red);font-weight:700;padding:8px 0;text-align:center';
+    container.prepend(aviso);
+  }
+  aviso.textContent = `${peds.length} pedido(s) encontrado(s) — ${label}`;
+
+  // Renderiza os cards filtrados
+  const cards = document.querySelectorAll('#todos-pedidos .pedido-card');
+  cards.forEach(c => c.style.display = 'none');
+
+  if (!peds.length) {
+    aviso.textContent = `Nenhum pedido encontrado no período: ${label}`;
+    return;
+  }
+
+  // Injeta os cards do resultado do banco
+  peds.forEach(p => {
+    const existing = container.querySelector(`[data-id="${p.id}"]`);
+    if (existing) {
+      existing.style.display = '';
+    }
+  });
+}
+
 async function renderPedidos() {
   const estab = getEstab(); if (!estab) return;
   const { data } = await getSupa().from('pedidos').select('*')
@@ -1729,44 +1760,42 @@ window.buscarPedidos = function(termo) {
   });
 };
 
-window.filtrarPedidosData = function() {
-  const de  = document.getElementById('ped-data-de')?.value;
-  const ate = document.getElementById('ped-data-ate')?.value;
-  const busca = document.querySelector('#tab-pedidos-tab input[type=text]')?.value || '';
-  const t = busca.toLowerCase();
+window.filtrarPedidosData = async function() {
+  const de   = document.getElementById('ped-data-de')?.value;
+  const ate  = document.getElementById('ped-data-ate')?.value;
+  const deLabel  = document.getElementById('ped-de-label');
+  const ateLabel = document.getElementById('ped-ate-label');
 
-  let visiveis = 0;
-  document.querySelectorAll('#todos-pedidos .pedido-card').forEach(c => {
-    const textoOk = !t || c.textContent.toLowerCase().includes(t);
-    let dataOk = true;
-    const dataCriado = c.dataset.criado;
-    if (dataCriado) {
-      const d = new Date(dataCriado);
-      if (de  && d < new Date(de  + 'T00:00:00')) dataOk = false;
-      if (ate && d > new Date(ate + 'T23:59:59')) dataOk = false;
-    }
-    const vis = textoOk && dataOk;
-    c.style.display = vis ? '' : 'none';
-    if (vis) visiveis++;
-  });
+  if (!de && !ate) {
+    // Sem datas: mostra tudo
+    document.querySelectorAll('#todos-pedidos .pedido-card').forEach(c=>c.style.display='');
+    const aviso = document.getElementById('ped-filtro-aviso');
+    if (aviso) aviso.textContent = '';
+    return;
+  }
 
-  // Feedback visual
-  const cont = document.getElementById('todos-pedidos');
-  let aviso = document.getElementById('ped-filtro-aviso');
-  if (!aviso) {
-    aviso = document.createElement('div');
-    aviso.id = 'ped-filtro-aviso';
-    aviso.style.cssText = 'font-size:.78rem;color:#888;padding:10px 0;text-align:center';
-    cont?.prepend(aviso);
-  }
-  if (de || ate || t) {
-    const label = de && ate ? `${new Date(de+'T00:00:00').toLocaleDateString('pt-BR')} → ${new Date(ate+'T00:00:00').toLocaleDateString('pt-BR')}`
-                 : de ? `A partir de ${new Date(de+'T00:00:00').toLocaleDateString('pt-BR')}`
-                 : ate ? `Até ${new Date(ate+'T00:00:00').toLocaleDateString('pt-BR')}` : '';
-    aviso.textContent = `${visiveis} pedido(s) encontrado(s)${label ? ' — ' + label : ''}`;
-  } else {
-    aviso.textContent = '';
-  }
+  showToast('Buscando pedidos...','#f59e0b');
+
+  const estab = getEstab();
+  let query = getSupa().from('pedidos').select('*,estabelecimentos!inner(nome)')
+    .eq('estabelecimento_id', estab.id)
+    .order('created_at', { ascending: false });
+
+  if (de)  query = query.gte('created_at', de + 'T00:00:00');
+  if (ate) query = query.lte('created_at', ate + 'T23:59:59');
+
+  const { data, error } = await query;
+  if (error) { showToast('❌ Erro: ' + error.message,'#ef4444'); return; }
+
+  const peds = data || [];
+  const label = de && ate
+    ? `${new Date(de+'T00:00:00').toLocaleDateString('pt-BR')} → ${new Date(ate+'T00:00:00').toLocaleDateString('pt-BR')}`
+    : de ? `A partir de ${new Date(de+'T00:00:00').toLocaleDateString('pt-BR')}`
+    : `Até ${new Date(ate+'T00:00:00').toLocaleDateString('pt-BR')}`;
+
+  // Re-renderiza com os dados do banco
+  await renderPedidosFiltrados(peds, label);
+  showToast(`✅ ${peds.length} pedido(s) — ${label}`);
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1932,14 +1961,38 @@ let _finPedidos = [];
 
 async function carregarFinanceiro() {
   const estab = getEstab(); if (!estab || estab.id === 'demo') return;
+  // Busca 2000 pedidos (cobre histórico maior)
   const { data } = await getSupa()
     .from('pedidos').select('*')
     .eq('estabelecimento_id', estab.id)
     .order('created_at', { ascending: false })
-    .limit(500);
-  // Financeiro inclui TODOS os pedidos: delivery + mesas/comandas
+    .limit(2000);
   _finPedidos = (data || []);
   renderFinanceiro();
+}
+
+// Busca pedidos para período customizado indo direto ao banco
+async function buscarPedidosPeriodoCustom() {
+  const estab = getEstab(); if (!estab) return;
+  const de  = document.getElementById('fin-data-de')?.value;
+  const ate = document.getElementById('fin-data-ate')?.value;
+  if (!de && !ate) { renderFinanceiro(); return; }
+
+  showToast('Buscando período...', '#f59e0b');
+
+  let query = getSupa().from('pedidos').select('*')
+    .eq('estabelecimento_id', estab.id)
+    .neq('status', 'recusado')
+    .order('created_at', { ascending: false });
+
+  if (de)  query = query.gte('created_at', de + 'T00:00:00');
+  if (ate) query = query.lte('created_at', ate + 'T23:59:59');
+
+  const { data, error } = await query;
+  if (error) { showToast('❌ Erro: ' + error.message, '#ef4444'); return; }
+  _finPedidos = data || [];
+  renderFinanceiro();
+  showToast(`✅ ${_finPedidos.length} pedido(s) encontrado(s)`);
 }
 
 function filtroPedidosFin() {
@@ -2089,7 +2142,6 @@ function setFinPeriodo(p, btn) {
     if (el) el.classList.remove('ativo');
   });
   if (btn) btn.classList.add('ativo');
-  // Mostra/esconde seletor de período personalizado
   const cw = document.getElementById('fin-custom-wrap');
   if (cw) {
     if (p === 'custom') {
@@ -2103,6 +2155,12 @@ function setFinPeriodo(p, btn) {
     renderFinanceiro();
   }
 }
+
+// Chamado pelo botão Buscar no filtro de datas
+window.buscarPeriodoFinanceiro = function() {
+  _finPeriodo = 'custom';
+  buscarPedidosPeriodoCustom();
+};
 
 function exportarCSV() {
   const estab  = getEstab();
