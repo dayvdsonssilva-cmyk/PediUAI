@@ -638,6 +638,18 @@ let _pollingId = null;
 let _statusAnt = {};
 let _avaliacoesMostradas = new Set();
 
+// Atualiza status de aberto/fechado a cada minuto (para respeitar horários)
+setInterval(() => {
+  if (!_lojas.length) return;
+  _lojas = _lojas.map(l => {
+    const dentroHorario = !l.horarios || dentroDoHorario(l.horarios);
+    const estaAberto = l.aberto !== false && dentroHorario;
+    return { ...l, _aberto: estaAberto };
+  });
+  // Re-renderiza home se estiver na tela
+  if (_screen === 'home') renderHome();
+}, 60 * 1000);
+
 const CATS = [
   {id:'all',    label:'Todos',      emoji:'🍽️'},
   {id:'promo',  label:'Promoção',   emoji:'🔥'},
@@ -651,7 +663,42 @@ const CATS = [
 const $ = id => document.getElementById(id);
 const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
 
-// Formata número de telefone/WhatsApp → (88) 98888-8888
+
+// Verifica se a loja está dentro do horário de funcionamento
+function dentroDoHorario(horarios) {
+  if (!horarios || typeof horarios !== 'object') return true; // sem horário = sempre aberto
+  const agora = new Date();
+  const diaSemana = agora.getDay(); // 0=Dom, 1=Seg... 6=Sab
+  // Nosso índice: 0=Seg, 1=Ter, 2=Qua, 3=Qui, 4=Sex, 5=Sab, 6=Dom
+  const mapa = [1,2,3,4,5,6,0]; // converte domingo-JS para nosso índice
+  const idxDia = mapa.indexOf(diaSemana);
+  const config = horarios[idxDia];
+  if (!config || !config.ativo) return false; // dia marcado como fechado
+  const [hAb, mAb] = (config.abertura || '00:00').split(':').map(Number);
+  const [hFch, mFch] = (config.fechamento || '23:59').split(':').map(Number);
+  const minAgora = agora.getHours() * 60 + agora.getMinutes();
+  const minAb    = hAb  * 60 + mAb;
+  const minFch   = hFch * 60 + mFch;
+  if (minFch < minAb) {
+    // Passa da meia-noite: ex 22:00 → 02:00
+    return minAgora >= minAb || minAgora <= minFch;
+  }
+  return minAgora >= minAb && minAgora <= minFch;
+}
+
+// Texto do horário de hoje para exibir no app
+function horarioHoje(horarios) {
+  if (!horarios || typeof horarios !== 'object') return null;
+  const agora = new Date();
+  const diaSemana = agora.getDay();
+  const mapa = [1,2,3,4,5,6,0];
+  const idxDia = mapa.indexOf(diaSemana);
+  const config = horarios[idxDia];
+  if (!config || !config.ativo) return 'Fechado hoje';
+  return config.abertura + ' às ' + config.fechamento;
+}
+
+// Formata número de telefone → (88) 98888-8888
 function fmtFone(num) {
   if (!num) return '';
   const d = String(num).replace(/\D/g,'');
@@ -696,14 +743,21 @@ async function init() {
 
   // Carrega lojas
   const {data, error} = await db.from('estabelecimentos')
-    .select('id,nome,slug,logo_url,cor_primaria,cidade,aberto,descricao,taxa_entrega,tempo_entrega,faz_entrega,faz_retirada,whatsapp,promocao_ativa,desconto_percent,tipo_estab')
+    .select('id,nome,slug,logo_url,cor_primaria,cidade,aberto,descricao,taxa_entrega,tempo_entrega,faz_entrega,faz_retirada,whatsapp,promocao_ativa,desconto_percent,tipo_estab,horarios')
     .order('nome');
   if(!error) {
-    _lojas = (data||[]).map(l => ({
-      ...l,
-      _emoji: lojaEmoji(l.nome),
-      _bg: l.cor_primaria||'#C0001A',
-    }));
+    _lojas = (data||[]).map(l => {
+      // Verifica horário de funcionamento programado
+      const dentroHorario = !l.horarios || dentroDoHorario(l.horarios);
+      const estaAberto = l.aberto !== false && dentroHorario;
+      return {
+        ...l,
+        _emoji: lojaEmoji(l.nome),
+        _bg: l.cor_primaria||'#C0001A',
+        _aberto: estaAberto,
+        _horarioHoje: horarioHoje(l.horarios),
+      };
+    });
 
     // Busca médias de avaliação
     try {
@@ -900,7 +954,7 @@ function toggleCardStyle() {
 let _cardStyle = 'A';
 
 function storeCardHTML(l) {
-  const ab = l.aberto!==false;
+  const ab = l._aberto !== undefined ? l._aberto : l.aberto!==false;
   const temPromo = l.promocao_ativa || _promoItems.some(p=>p.estabelecimento_id===l.id);
   const promosDaLoja = _promoItems.filter(p=>p.estabelecimento_id===l.id).map(p=>p.desconto);
   const maxDesc = temPromo && promosDaLoja.length ? Math.max(...promosDaLoja, l.desconto_percent||0) : (l.desconto_percent||0);
@@ -1255,7 +1309,7 @@ async function abrirLoja(id) {
 
 function renderStore(fresquinhos=[]) {
   const l = _loja;
-  const ab = l.aberto!==false;
+  const ab = l._aberto !== undefined ? l._aberto : l.aberto!==false;
   const cats = ['Todos', ...new Set(_produtos.map(p=>p.categoria).filter(Boolean))];
   const promos  = _produtos.filter(p=>p.promocao);                                    // PROMOÇÃO normal
   const quentes = _produtos.filter(p=>p.em_promocao && parseInt(p.desconto_percent||0)>0); // QUENTE
@@ -2024,7 +2078,7 @@ window.finalizarPedido = async function(lid) {
   saveStepData(lid);
   const c=_carrinhos[lid]; if(!c||!c.itens.length) return toast('Sacola vazia');
   const l=c.loja;
-  if(l.aberto===false) return toast('Loja fechada no momento');
+  if(!l._aberto && (l.aberto===false || !dentroDoHorario(l.horarios||null))) return toast(l.horarios?'🕐 Fora do horário de atendimento':'Loja fechada no momento');
   const d=_checkoutData[lid]||{};
   const nome  = d.nome?.trim();
   const whats = (d.tel||'').replace(/\D/g,'');
