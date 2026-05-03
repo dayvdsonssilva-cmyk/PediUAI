@@ -2606,7 +2606,7 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
             <span id="fin-ate-label" style="font-size:.75rem;font-weight:600;color:#333;flex:1">Selecionar</span>
             <input type="date" id="fin-data-ate" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none" onchange="document.getElementById('fin-ate-label').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('pt-BR'):'Selecionar'">
           </label>
-          <button onclick="renderFinanceiro()"
+          <button onclick="buscarPeriodoFinanceiro()"
             style="padding:9px 18px;background:var(--red);color:#fff;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.8rem;cursor:pointer;white-space:nowrap;flex-shrink:0">
             Buscar
           </button>
