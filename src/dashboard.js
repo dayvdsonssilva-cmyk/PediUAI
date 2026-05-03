@@ -255,7 +255,7 @@ function preencherConfig(estab) {
   set('cfg-whats', fmtFone(estab.whatsapp) || '');
   set('cfg-desc', estab.descricao || '');
   const descCount = document.getElementById('cfg-desc-count');
-  if (descCount) descCount.textContent = (estab.descricao||'').length + '/80';
+  if (descCount) descCount.textContent = (estab.descricao||'').length + '/40';
   // Tipo do estabelecimento
   if (document.getElementById('cfg-tipo-estab')) {
     document.getElementById('cfg-tipo-estab').value = estab.tipo_estab || '';
@@ -263,7 +263,7 @@ function preencherConfig(estab) {
   }
   // Horários de funcionamento
   setTimeout(() => window.renderHorariosCfg?.(estab.horarios || {}), 120);
-  if(descCount) descCount.textContent = (estab.descricao||'').length + '/80';
+  if(descCount) descCount.textContent = (estab.descricao||'').length + '/40';
   set('cfg-endereco',  estab.endereco || '');
   set('cfg-tempo',     estab.tempo_entrega || '30-45 min');
   set('cfg-telefone', fmtFone(estab.telefone_contato) || '');
