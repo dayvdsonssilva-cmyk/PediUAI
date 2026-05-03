@@ -3510,9 +3510,9 @@ function renderCardapioComanda(mesaKey, prods) {
       <div onclick="toggleCmdCat('${uid}')" id="${uid}-hdr"
         style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:#f5f0eb;border-radius:10px;cursor:pointer;user-select:none;margin-bottom:2px">
         <span style="font-size:.68rem;font-weight:800;color:#666;text-transform:uppercase;letter-spacing:.08em">${cat} <span style="color:#aaa;font-weight:400">(${items.length})</span></span>
-        <span id="${uid}-arrow" style="font-size:.7rem;color:#aaa;transition:transform .2s">▼</span>
+        <span id="${uid}-arrow" style="font-size:.7rem;color:#aaa;transition:transform .2s;transform:rotate(-90deg)">▼</span>
       </div>
-      <div id="${uid}">${itemsHtml}</div>
+      <div id="${uid}" style="display:none">${itemsHtml}</div>
     </div>`;
   }).join('');
 }
@@ -3522,9 +3522,9 @@ window.toggleCmdCat = function(uid) {
   const el  = document.getElementById(uid);
   const arr = document.getElementById(uid + '-arrow');
   if (!el) return;
-  const open = el.style.display !== 'none';
-  el.style.display = open ? 'none' : 'block';
-  if (arr) arr.style.transform = open ? 'rotate(-90deg)' : '';
+  const isClosed = el.style.display === 'none';
+  el.style.display = isClosed ? 'block' : 'none';
+  if (arr) arr.style.transform = isClosed ? '' : 'rotate(-90deg)';
 };
 
 function renderPedidosComanda(mesaKey) {
@@ -3593,20 +3593,25 @@ async function confirmarFecharComanda() {
     if (!confirm('Há itens não enviados no carrinho. Deseja fechar mesmo assim?')) return;
   }
 
-  // 1. IMPRIMIR PRIMEIRO
+  // 1. Imprime a comanda
   imprimirComanda();
 
-  // 2. Confirmação após imprimir
-  await new Promise(r => setTimeout(r, 800));
-  if (!confirm(`Comanda da Mesa ${_mesaAtual} impressa.\n\nTotal: ${fmt(totalMesa)}\n\nConfirmar fechamento e escolher pagamento?`)) return;
-
-  // Reseta seleção de pagamento e abre modal
+  // 2. Abre o modal de pagamento direto (sem confirm extra)
   _pagamentoComanda = null;
   _taxaServicoRemovida = false;
-  ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
-    const btn = document.getElementById('pgto-btn-' + m);
-    if (btn) { btn.style.borderColor='#e0dbd5'; btn.style.background='#fff'; btn.style.color='#555'; }
+
+  // Reset visual dos botões de pagamento
+  ['PIX','CARTÃO','DINHEIRO','CRÉDITO','DÉBITO'].forEach(m => {
+    const b = document.getElementById('pgto-btn-' + m);
+    if (!b) return;
+    b.style.borderColor = '#e0dbd5';
+    b.style.background  = '#fff';
+    b.style.color       = '#555';
   });
+  const sub = document.getElementById('pgto-cartao-submenu');
+  if (sub) sub.style.display = 'none';
+  const bandWrap = document.getElementById('pgto-bandeiras-wrap');
+  if (bandWrap) bandWrap.style.display = 'none';
   const aviso = document.getElementById('pgto-aviso');
   if (aviso) aviso.style.display = 'none';
 
