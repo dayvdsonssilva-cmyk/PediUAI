@@ -3518,6 +3518,28 @@ function renderCardapioComanda(mesaKey, prods) {
 }
 
 
+window.filtrarCardapioComanda = function(q) {
+  const term = (q||'').toLowerCase().trim();
+  // Se vazio, mostra todos os grupos
+  document.querySelectorAll('#comanda-cardapio > div').forEach(grupo => {
+    if (!term) { grupo.style.display = ''; return; }
+    const itens = grupo.querySelectorAll('.cmd-item');
+    let algumVisivel = false;
+    itens.forEach(item => {
+      const nome = (item.dataset.nome||'').toLowerCase();
+      const vis  = nome.includes(term);
+      item.style.display = vis ? '' : 'none';
+      if (vis) algumVisivel = true;
+    });
+    grupo.style.display = algumVisivel ? '' : 'none';
+    // Se busca ativa, abre o grupo
+    if (term && algumVisivel) {
+      const content = grupo.querySelector('[id^="cmd-cat-"]');
+      if (content) content.style.display = 'block';
+    }
+  });
+};
+
 window.toggleCmdCat = function(uid) {
   const el  = document.getElementById(uid);
   const arr = document.getElementById(uid + '-arrow');
@@ -3728,6 +3750,16 @@ window.selecionarPagamentoComanda = function(metodo) {
   }
 };
 
+let _bandeiraComanda = 'visa';
+
+window.selecionarBandeiraComanda = function(band) {
+  _bandeiraComanda = band;
+  document.querySelectorAll('.pgto-band-btn').forEach(b => b.classList.remove('ativo'));
+  document.querySelectorAll('.pgto-band-btn').forEach(b => {
+    if (b.getAttribute('onclick')?.includes("'"+band+"'")) b.classList.add('ativo');
+  });
+};
+
 window.executarFecharComanda = async function() {
   // Exige pagamento selecionado
   if (!_pagamentoComanda) {
@@ -3752,15 +3784,22 @@ window.executarFecharComanda = async function() {
   const valorTaxa = taxaAtiva ? subtotal * (percServico / 100) : 0;
   const totalMesa = subtotal + valorTaxa;
 
+  // Monta string de pagamento sem acento (evita bug de encoding)
+  let pgtoStr = _pagamentoComanda.toLowerCase();
+  if (_pagamentoComanda === 'CRÉDITO')      pgtoStr = `cartao-credito-${_bandeiraComanda}`;
+  else if (_pagamentoComanda === 'DÉBITO')  pgtoStr = `cartao-debito-${_bandeiraComanda}`;
+  else if (_pagamentoComanda === 'CARTÃO')  pgtoStr = `cartao-credito-${_bandeiraComanda}`;
+  else if (_pagamentoComanda === 'PIX')     pgtoStr = 'pix';
+  else if (_pagamentoComanda === 'DINHEIRO') pgtoStr = 'dinheiro';
+
   // Salva pagamento + status nos pedidos da mesa
   const ids = peds.map(p=>p.id);
   if (ids.length) {
-    await getSupa().from('pedidos').update({
+    const { error } = await getSupa().from('pedidos').update({
       status: 'pronto',
-      pagamento: (_pagamentoComanda === 'CRÉDITO' || _pagamentoComanda === 'DÉBITO')
-        ? `cartao-${_pagamentoComanda.toLowerCase()}-${_bandeiraComanda}`
-        : (_pagamentoComanda || 'pix'),
+      pagamento: pgtoStr,
     }).in('id', ids);
+    if (error) { showToast('❌ Erro ao fechar: ' + error.message, '#ef4444'); return; }
   }
 
   delete _pedidosMesas[mesaFechando];
@@ -3769,6 +3808,7 @@ window.executarFecharComanda = async function() {
   setTimeout(()=>{ _mesasFechadas.delete(mesaFechando); renderMesas(); }, 5000);
 
   _pagamentoComanda = null;
+  _bandeiraComanda  = 'visa';
   _taxaServicoRemovida = false;
   window.fecharComanda();
   showToast('Comanda da ' + mesaFechando + ' fechada! ' + fmt(totalMesa));
