@@ -179,7 +179,8 @@ html,body{height:100%;overflow:hidden;background:#FFFFFF;font-family:var(--font)
 .produto-card{background:#fff;border-radius:14px;overflow:hidden;display:flex;align-items:stretch;box-shadow:0 1px 10px rgba(232,0,28,.07);border:1px solid var(--accent2);cursor:pointer;transition:transform .12s;max-height:130px;}
 .produto-card:active{transform:scale(.99);}
 .produto-img-wrap{width:110px;min-width:110px;max-width:110px;max-height:130px;overflow:hidden;background:var(--cream);flex-shrink:0;align-self:stretch;}
-.produto-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.produto-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .3s;}
+.produto-img-wrap img.loaded{opacity:1;}
 .produto-emoji-bg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;}
 
 .produto-body{flex:1;padding:12px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;}
@@ -869,7 +870,7 @@ function abrirTelaPromos(pct, itens) {
       onclick="abrirLoja('${loja.id || ''}')">
       <!-- Imagem do item -->
       <div style="width:100px;min-height:100px;flex-shrink:0;background:${lojaHex}18;display:flex;align-items:center;justify-content:center;font-size:36px;position:relative;overflow:hidden;">
-        ${item.foto_url ? `<img src="${item.foto_url}" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;">` : `<span>${loja._emoji||'🍽️'}</span>`}
+        ${item.foto_url ? `<img src="${item.foto_url}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;">` : `<span>${loja._emoji||'🍽️'}</span>`}
         <div style="position:absolute;top:0;left:0;z-index:3;"><div style="background:#E8001C;color:#fff;font-size:9px;font-weight:900;padding:4px 9px 4px 7px;border-radius:0 0 10px 0;display:flex;align-items:center;gap:3px;box-shadow:2px 2px 6px rgba(0,0,0,.2);">🔥 ${item.desconto}% OFF</div></div>
       </div>
       <!-- Info -->
@@ -2796,6 +2797,15 @@ window.addEventListener('appinstalled', () => {
   const b = document.getElementById('pwa-install-banner');
   if (b) b.style.transform = 'translateY(120%)';
   localStorage.setItem('pw_pwa_instalado', '1');
+});
+
+// Lazy-load com fade-in para imagens dos produtos
+document.addEventListener('DOMContentLoaded',()=>{
+  document.body.addEventListener('load',function(e){
+    if(e.target.tagName==='IMG'&&e.target.closest('.produto-img-wrap')){
+      e.target.classList.add('loaded');
+    }
+  },true);
 });
 </script>
 </body>
