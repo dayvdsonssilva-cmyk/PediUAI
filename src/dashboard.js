@@ -4201,11 +4201,10 @@ async function renderCaixa() {
     if (abrirCard)  abrirCard.style.display  = 'none';
     if (fecharCard) fecharCard.style.display = 'block';
 
-    // Operador
     const opLabel = document.getElementById('caixa-operador-label');
     if (opLabel) opLabel.textContent = _caixaAberto.operador ? `Operador: ${_caixaAberto.operador}` : 'Caixa em andamento';
 
-    // Busca pedidos do período do caixa
+    // Busca pedidos FRESCOS do banco a cada chamada
     const estab = getEstab();
     let pedsCaixa = [];
     try {
@@ -4218,16 +4217,14 @@ async function renderCaixa() {
     } catch(e) {}
 
     // Totais por forma de pagamento
-    let totPix=0, totCred=0, totDeb=0, totDin=0, totMesa=0, totVendas=0;
+    let totPix=0, totCred=0, totDeb=0, totDin=0, totVendas=0;
     pedsCaixa.forEach(p => {
-      const v = Number(p.total||0);
+      const v  = Number(p.total||0);
       const pg = (p.pagamento||'').toLowerCase();
-      if (pg.includes('pix'))      totPix   += v;
-      else if (pg.includes('cred')) totCred += v;
-      else if (pg.includes('deb'))  totDeb  += v;
-      else if (pg.includes('din'))  totDin  += v;
-      else if (pg.includes('mesa')) totMesa += v;
-      else totPix += v; // fallback
+      if (pg.includes('cred'))       totCred += v;
+      else if (pg.includes('deb'))   totDeb  += v;
+      else if (pg.includes('din'))   totDin  += v;
+      else                            totPix  += v; // PIX é o padrão/fallback
       totVendas += v;
     });
 
@@ -4239,16 +4236,14 @@ async function renderCaixa() {
     set('caixa-total-credito', fmtR(totCred));
     set('caixa-total-debito',  fmtR(totDeb));
     set('caixa-total-dinheiro',fmtR(totDin));
-    set('caixa-total-mesa',    fmtR(totMesa));
     set('caixa-total-vendas',  fmtR(totVendas));
     set('caixa-fundo-display', fmtR(fundo));
     set('caixa-res-esperado',  fmtR(esperado));
     set('caixa-qtd-pedidos',   pedsCaixa.length);
 
-    // Guarda esperado para diferença
-    if (fecharCard) fecharCard._esperado = esperado;
+    if (fecharCard) fecharCard._esperado  = esperado;
     if (fecharCard) fecharCard._pedsCaixa = pedsCaixa;
-    if (fecharCard) fecharCard._totais = { totPix, totCred, totDeb, totDin, totMesa, totVendas, fundo };
+    if (fecharCard) fecharCard._totais    = { totPix, totCred, totDeb, totDin, totMesa:0, totVendas, fundo };
 
   } else {
     if (statusLbl)  statusLbl.textContent  = '— Fechado —';
