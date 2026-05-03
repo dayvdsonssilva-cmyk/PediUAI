@@ -565,6 +565,38 @@ let statusAnterior = {};
 let capaAtual  = null;
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
+
+// Verifica se a loja está dentro do horário de funcionamento
+function dentroDoHorario(horarios) {
+  if (!horarios || typeof horarios !== 'object') return true;
+  const agora = new Date();
+  const mapa = [1,2,3,4,5,6,0];
+  const idxDia = mapa.indexOf(agora.getDay());
+  const config = horarios[idxDia];
+  if (!config || !config.ativo) return false;
+  const [hAb, mAb] = (config.abertura || '00:00').split(':').map(Number);
+  const [hFch, mFch] = (config.fechamento || '23:59').split(':').map(Number);
+  const minAgora = agora.getHours() * 60 + agora.getMinutes();
+  const minAb  = hAb  * 60 + mAb;
+  const minFch = hFch * 60 + mFch;
+  if (minFch < minAb) return minAgora >= minAb || minAgora <= minFch;
+  return minAgora >= minAb && minAgora <= minFch;
+}
+function horarioHoje(horarios) {
+  if (!horarios || typeof horarios !== 'object') return null;
+  const mapa = [1,2,3,4,5,6,0];
+  const idxDia = mapa.indexOf(new Date().getDay());
+  const config = horarios[idxDia];
+  if (!config || !config.ativo) return 'Fechado hoje';
+  return config.abertura + ' às ' + config.fechamento;
+}
+function lojaEstaAberta(est) {
+  if (!est) return false;
+  if (est.aberto === false) return false;
+  if (est.horarios) return dentroDoHorario(est.horarios);
+  return true;
+}
+
 const $ = id => document.getElementById(id);
 const fmt = v => 'R$ ' + Number(v).toFixed(2).replace('.', ',');
 
@@ -675,18 +707,39 @@ function aplicarEstab(est) {
   const banner = $('banner-fechada');
   const fab    = $('fab');
   const btnFin = $('btn-finalizar');
-  if (est.aberto === false) {
-    if (banner) banner.classList.add('show');
+  const estaAberta = lojaEstaAberta(est);
+  if (!estaAberta) {
+    if (banner) {
+      banner.classList.add('show');
+      const hj = horarioHoje(est.horarios);
+      const msg = banner.querySelector('.banner-msg');
+      if (msg) msg.textContent = est.horarios ? (hj === 'Fechado hoje' ? '😴 Fechado hoje' : '🕐 Abre às ' + (est.horarios?.[([1,2,3,4,5,6,0].indexOf(new Date().getDay()))]?.abertura||'')) : '😴 Estabelecimento fechado no momento';
+    }
     const fabBar = $('fab-bar'); if (fabBar) fabBar.classList.remove('show');
-    if (btnFin) btnFin.disabled = true;
+    if (btnFin) { btnFin.disabled = true; btnFin.style.opacity = '.5'; }
   } else {
     if (banner) banner.classList.remove('show');
-    if (btnFin) btnFin.disabled = false;
+    if (btnFin) { btnFin.disabled = false; btnFin.style.opacity = ''; }
     atualizarFab();
   }
 
   // Título da página
   document.title = est.nome ? `${est.nome} — Cardápio` : 'Cardápio';
+
+  // Atualiza status aberto/fechado a cada minuto (respeita horários programados)
+  setInterval(() => {
+    const estaAberta = lojaEstaAberta(estab);
+    const banner = $('banner-fechada');
+    const btnFin = $('btn-finalizar');
+    if (!estaAberta) {
+      if (banner) banner.classList.add('show');
+      const fabBar = $('fab-bar'); if (fabBar) fabBar.classList.remove('show');
+      if (btnFin) { btnFin.disabled = true; btnFin.style.opacity = '.5'; }
+    } else {
+      if (banner) banner.classList.remove('show');
+      if (btnFin) { btnFin.disabled = false; btnFin.style.opacity = ''; }
+    }
+  }, 60 * 1000);
 }
 
 // ── FRESQUINHO ────────────────────────────────────────────────────────────────
@@ -1083,7 +1136,7 @@ function atualizarFab() {
   const bar = $('fab-bar');
   const count = $('fab-count');
   if (!bar) return;
-  if (total > 0 && estab?.aberto !== false) {
+  if (total > 0 && lojaEstaAberta(estab)) {
     bar.classList.add('show');
     if (count) count.textContent = total + (total === 1 ? ' item' : ' itens');
   } else {
@@ -1254,7 +1307,7 @@ window.selecionarTroco = function(sim) {
 
 // ── FINALIZAR PEDIDO ──────────────────────────────────────────────────────────
 window.finalizarPedido = async function() {
-  if (estab?.aberto === false) return mostrarToast('Loja fechada no momento.', '#333');
+  if (!lojaEstaAberta(estab)) return mostrarToast(estab?.horarios ? '🕐 Fora do horário de atendimento.' : 'Loja fechada no momento.', '#333');
   if (!carrinho.length) return mostrarToast('Sua sacola está vazia.', '#333');
   const nome  = $('cli-nome')?.value.trim();
   const whats = $('cli-whats')?.value.replace(/\D/g,'');
