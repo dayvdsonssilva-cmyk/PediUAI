@@ -3692,11 +3692,11 @@ window.toggleCartaoSubMenu = function() {
   const btn = document.getElementById('pgto-btn-CARTÃO');
   const bandWrap = document.getElementById('pgto-bandeiras-wrap');
   if (!sub) return;
-  const isOpen = sub.style.display === 'flex';
-  sub.style.display = isOpen ? 'none' : 'flex';
-  if (bandWrap) bandWrap.style.display = 'none'; // reset bandeiras
+  const isOpen = sub.style.display === 'block';
+  sub.style.display = isOpen ? 'none' : 'block';
+  if (bandWrap) bandWrap.style.display = 'none';
   if (!isOpen) {
-    if(btn){btn.style.borderColor='#e65e32';btn.style.background='#fff5f0';btn.style.color='#e65e32';}
+    if(btn){btn.style.borderColor='var(--red)';btn.style.background='#fff5f0';btn.style.color='var(--red)';}
   } else {
     if(btn){btn.style.borderColor='#e0dbd5';btn.style.background='#fff';btn.style.color='#555';}
     _pagamentoComanda = null;
@@ -3705,11 +3705,12 @@ window.toggleCartaoSubMenu = function() {
 
 window.selecionarPagamentoComanda = function(metodo) {
   _pagamentoComanda = metodo;
+  // Esconde submenu só se não for cartão
   const sub = document.getElementById('pgto-cartao-submenu');
   if (sub && metodo !== 'CRÉDITO' && metodo !== 'DÉBITO') sub.style.display = 'none';
   const aviso = document.getElementById('pgto-aviso');
   if (aviso) aviso.style.display = 'none';
-  // Reset todos
+  // Reset todos os botões
   ['PIX','CARTÃO','DINHEIRO','CRÉDITO','DÉBITO'].forEach(m => {
     const b = document.getElementById('pgto-btn-' + m);
     if (!b) return;
@@ -3717,13 +3718,13 @@ window.selecionarPagamentoComanda = function(metodo) {
     b.style.background  = '#fff';
     b.style.color       = '#555';
   });
-  // Destaca selecionado
+  // Destaca o selecionado
   const sel = document.getElementById('pgto-btn-' + metodo);
-  if (sel) { sel.style.borderColor='#e65e32'; sel.style.background='#fff5f0'; sel.style.color='#e65e32'; }
-  // Se crédito/débito também destaca Cartão
+  if (sel) { sel.style.borderColor='var(--red)'; sel.style.background='#fff5f0'; sel.style.color='var(--red)'; }
+  // Crédito/Débito também destaca o botão Cartão
   if (metodo === 'CRÉDITO' || metodo === 'DÉBITO') {
     const cb = document.getElementById('pgto-btn-CARTÃO');
-    if (cb) { cb.style.borderColor='#e65e32'; cb.style.background='#fff5f0'; cb.style.color='#e65e32'; }
+    if (cb) { cb.style.borderColor='var(--red)'; cb.style.background='#fff5f0'; cb.style.color='var(--red)'; }
   }
 };
 
