@@ -238,6 +238,8 @@ export async function initDashboard() {
     renderEmojiGrid();
     // Carrega estado do caixa na inicialização (persiste após F5)
     setTimeout(carregarCaixa, 500);
+    // Pré-aquece cache do cardápio (1º open da comanda fica instantâneo)
+    setTimeout(() => carregarCardapioComanda(), 1200);
   } else {
     renderCardapioDemo();
     renderPedidosDemo();
@@ -3454,24 +3456,31 @@ async function abrirComanda(num) {
   const title = document.getElementById('comanda-title');
   if (title) title.textContent = key;
 
-  // Número grande da mesa
   const numEl = document.getElementById('comanda-num-mesa');
   if (numEl) numEl.textContent = num;
 
-  // Carrega cardápio
-  const prods = await carregarCardapioComanda();
-  renderCardapioComanda(key, prods);
-  renderPedidosComanda(key);
-  renderCarrinhoComanda(key);
-
-  // Preenche nome salvo
   const nomeInput = document.getElementById('comanda-nome-cliente');
   if (nomeInput) nomeInput.value = _nomeComanda[key] || '';
 
-  // Sempre abre na tab "Novo pedido"
+  // Abre o modal IMEDIATAMENTE — não espera o banco
   window.switchComandaTab('pedido');
-
   if (modal) modal.classList.add('open');
+
+  // Renderiza com cache se disponível (instantâneo)
+  if (_cardapioCache) {
+    renderCardapioComanda(key, _cardapioCache);
+  } else {
+    const el = document.getElementById('comanda-cardapio');
+    if (el) el.innerHTML = '<div style="color:#aaa;font-size:.85rem;text-align:center;padding:32px">Carregando cardápio...</div>';
+  }
+
+  renderPedidosComanda(key);
+  renderCarrinhoComanda(key);
+
+  // Carrega do banco em paralelo (atualiza sem travar a UI)
+  carregarCardapioComanda().then(prods => {
+    if (_mesaAtual === key) renderCardapioComanda(key, prods);
+  });
 }
 
 function renderCardapioComanda(mesaKey, prods) {
