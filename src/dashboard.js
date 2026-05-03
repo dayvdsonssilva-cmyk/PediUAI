@@ -3481,6 +3481,7 @@ function renderCardapioComanda(mesaKey, prods) {
     el.innerHTML = '<div style="color:#aaa;font-size:.8rem;text-align:center;padding:24px">Nenhum produto disponível</div>';
     return;
   }
+  // Agrupa por categoria
   const cats = {};
   prods.forEach(p => {
     const cat = p.categoria || 'Outros';
@@ -3488,7 +3489,8 @@ function renderCardapioComanda(mesaKey, prods) {
     cats[cat].push(p);
   });
 
-  el.innerHTML = Object.entries(cats).map(([cat, items]) => {
+  el.innerHTML = Object.entries(cats).map(([cat, items], idx) => {
+    const uid = 'cmd-cat-' + idx;
     const itemsHtml = items.map(p => {
       const nomeEnc  = p.nome.replace(/"/g, '&quot;');
       const precoFmt = Number(p.preco).toFixed(2).replace('.',',');
@@ -3503,12 +3505,27 @@ function renderCardapioComanda(mesaKey, prods) {
         <span class="cmd-item-preco">R$ ${precoFmt}</span>
       </div>`;
     }).join('');
-    return `<span class="cmd-cat-label">${cat}</span>${itemsHtml}`;
+    return `
+    <div style="margin-bottom:4px">
+      <div onclick="toggleCmdCat('${uid}')" id="${uid}-hdr"
+        style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:#f5f0eb;border-radius:10px;cursor:pointer;user-select:none;margin-bottom:2px">
+        <span style="font-size:.68rem;font-weight:800;color:#666;text-transform:uppercase;letter-spacing:.08em">${cat} <span style="color:#aaa;font-weight:400">(${items.length})</span></span>
+        <span id="${uid}-arrow" style="font-size:.7rem;color:#aaa;transition:transform .2s">▼</span>
+      </div>
+      <div id="${uid}">${itemsHtml}</div>
+    </div>`;
   }).join('');
 }
 
 
-function renderPedidosComanda(mesaKey) {
+window.toggleCmdCat = function(uid) {
+  const el  = document.getElementById(uid);
+  const arr = document.getElementById(uid + '-arrow');
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (arr) arr.style.transform = open ? 'rotate(-90deg)' : '';
+};
   const el   = document.getElementById('comanda-historico');
   const peds = _pedidosMesas[mesaKey] || [];
   const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
@@ -3571,8 +3588,15 @@ async function confirmarFecharComanda() {
 
   // Avisa carrinho pendente
   if (carr.length > 0) {
-    if (!confirm('Ha itens nao enviados no carrinho. Deseja fechar mesmo assim?')) return;
+    if (!confirm('Há itens não enviados no carrinho. Deseja fechar mesmo assim?')) return;
   }
+
+  // 1. IMPRIMIR PRIMEIRO
+  imprimirComanda();
+
+  // 2. Confirmação após imprimir
+  await new Promise(r => setTimeout(r, 800));
+  if (!confirm(`Comanda da Mesa ${_mesaAtual} impressa.\n\nTotal: ${fmt(totalMesa)}\n\nConfirmar fechamento e escolher pagamento?`)) return;
 
   // Reseta seleção de pagamento e abre modal
   _pagamentoComanda = null;
