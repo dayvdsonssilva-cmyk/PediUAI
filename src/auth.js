@@ -96,6 +96,8 @@ const CAMPOS_PUBLICOS_ESTAB = [
   'assinatura_vencimento', 'num_mesas', 'aceita_pix',
   'aceita_cartao', 'aceita_dinheiro', 'instagram', 'tiktok',
   'site', 'msg_nota', 'taxa_servico', 'perc_servico',
+  'created_at',        // necessário para calcular os 15 dias de trial
+  'pagamento_status',  // necessário para exibir status do plano no dashboard
 ];
 
 function filtrarEstabParaStorage(estab) {
