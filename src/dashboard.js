@@ -1748,7 +1748,8 @@ ${(insta || ttok) ? '<div class="social">'+(insta ? '📲 Instagram: <b>'+insta+
 <div class="msg-final">🙏 ${msgFim}</div>
 <div class="rodape">pediway.com.br · ${agora}</div>
 
-</body></html>
+</body></html>`;
+
   const win = window.open('', '_blank', 'width=380,height=700');
   if (!win) { showToast('⚠️ Permita pop-ups para imprimir'); return; }
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comprovante de Caixa</title>
