@@ -7,14 +7,14 @@ import { showToast } from './utils.js';
 // ─────────────────────────────────────────────────────────────────────────────
 const BASE_URL = 'https://pediway.com.br';
 
-// Garante que o estab salvo não tenha domínio antigo
+// Limpa domínio antigo do localStorage se existir
 (function() {
   try {
     const saved = localStorage.getItem('pw_estab');
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Limpa qualquer domínio antigo que possa ter sido salvo
-      if (parsed.link && parsed.link.includes('vercel.app')) {
+      // Remove campo 'link' que possa ter domínio antigo
+      if (parsed.link) {
         delete parsed.link;
         localStorage.setItem('pw_estab', JSON.stringify(parsed));
       }
@@ -2945,36 +2945,44 @@ function abrirAdicionaisGrupo(mesaKey, prodId, nome, preco, emoji, grupo) {
 }
 
 
+// Copia o link do cardápio com o domínio correto
+window.copiarLink = function() {
+  const estab = getEstab(); if (!estab) return;
+  // Sempre usa BASE_URL + slug — ignora qualquer campo 'link' que possa ter domínio antigo
+  const slug = estab.slug || '';
+  const url  = `${BASE_URL}/${slug}`;
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('Link do cardápio copiado! ✅');
+  }).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = url;
+    el.style.position = 'fixed';
+    el.style.opacity  = '0';
+    document.body.appendChild(el);
+    el.focus();
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast('Link do cardápio copiado! ✅');
+  });
+};
+
 window.copiarLinkGarcom = function() {
   const estab = getEstab(); if (!estab) return;
   const url = `${BASE_URL}/comandas/${estab.slug}`;
   navigator.clipboard.writeText(url).then(() => {
-    showToast('Link copiado! ✅');
+    showToast('Link do garçom copiado! ✅');
   }).catch(() => {
-    const el = document.createElement('input');
+    const el = document.createElement('textarea');
     el.value = url;
+    el.style.position = 'fixed';
+    el.style.opacity  = '0';
     document.body.appendChild(el);
+    el.focus();
     el.select();
     document.execCommand('copy');
     document.body.removeChild(el);
-    showToast('Link copiado! ✅');
-  });
-};
-
-// Copia o link do cardápio com o domínio correto
-window.copiarLink = function() {
-  const estab = getEstab(); if (!estab) return;
-  const url = `${BASE_URL}/${estab.slug}`;
-  navigator.clipboard.writeText(url).then(() => {
-    showToast('Link do cardápio copiado! ✅');
-  }).catch(() => {
-    const el = document.createElement('input');
-    el.value = url;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-    showToast('Link do cardápio copiado! ✅');
+    showToast('Link do garçom copiado! ✅');
   });
 };
 
