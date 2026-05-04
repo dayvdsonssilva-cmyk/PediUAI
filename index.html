@@ -4403,4 +4403,41 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </div>
 </body>
+
+<script>
+// ── Patch: garante carregamento da loja após login ─────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  function tentarPatch(tentativas) {
+    var supa = window.getSupa ? window.getSupa() : window._supabase;
+    if (!supa && tentativas < 20) { setTimeout(function(){tentarPatch(tentativas+1);}, 500); return; }
+    if (!supa) return;
+
+    supa.auth.onAuthStateChange(function(event, session) {
+      if (event === 'SIGNED_IN' && session && session.user) {
+        setTimeout(async function() {
+          if (window._estab && window._estab.id) return;
+          try {
+            var res = await supa.from('estabelecimentos').select('*').eq('user_id', session.user.id).maybeSingle();
+            var estab = res.data;
+            if (estab) {
+              window._estab = estab;
+              localStorage.setItem('pw_estab', JSON.stringify(estab));
+              localStorage.setItem('pw_tela_atual', 's-dash');
+              if (typeof goTo === 'function') goTo('s-dash');
+              if (typeof window.initDashboard === 'function') await window.initDashboard();
+            }
+          } catch(e) { console.warn('Patch auth error:', e); }
+        }, 400);
+      }
+      if (event === 'SIGNED_OUT') {
+        window._estab = null;
+        localStorage.removeItem('pw_estab');
+        localStorage.removeItem('pw_tela_atual');
+      }
+    });
+  }
+  tentarPatch(0);
+});
+</script>
+</body>
 </html>
