@@ -257,7 +257,8 @@ export async function initDashboard() {
 
   // Textos do header
   const sn = $('dash-store-name'); if (sn) sn.textContent = estab.nome;
-  const lu = $('link-url');        if (lu) lu.textContent = `${BASE_URL}/${estab.slug}`;
+  const lu = $('link-url');
+  if (lu) lu.textContent = `pediway.com.br/${estab.slug}`;
   const lug = $('link-url-garcom');if (lug) lug.textContent = `${BASE_URL}/comandas/${estab.slug}`;
 
   // Preenche configurações
