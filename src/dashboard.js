@@ -6,21 +6,6 @@ import { showToast } from './utils.js';
 // CONSTANTES
 // ─────────────────────────────────────────────────────────────────────────────
 const BASE_URL = 'https://pediway.com.br';
-
-// Limpa domínio antigo do localStorage se existir
-(function() {
-  try {
-    const saved = localStorage.getItem('pw_estab');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Remove campo 'link' que possa ter domínio antigo
-      if (parsed.link) {
-        delete parsed.link;
-        localStorage.setItem('pw_estab', JSON.stringify(parsed));
-      }
-    }
-  } catch(e) {}
-})();
 const CORES = [
   // Cores sólidas
   '#C0392B','#E74C3C','#E67E22','#F39C12','#F1C40F',
@@ -258,7 +243,7 @@ export async function initDashboard() {
   // Textos do header
   const sn = $('dash-store-name'); if (sn) sn.textContent = estab.nome;
   const lu = $('link-url');
-  if (lu) lu.textContent = `pediway.com.br/${estab.slug}`;
+  if (lu) lu.textContent = `pediway.com.br/${estab.slug || ''}`;
   const lug = $('link-url-garcom');if (lug) lug.textContent = `${BASE_URL}/comandas/${estab.slug}`;
 
   // Preenche configurações
