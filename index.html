@@ -360,6 +360,7 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 .item-card {
   background:#fff; border:1.5px solid #EBEBEB;
   border-radius:16px; overflow:hidden;
+  position:relative; /* necessário para conter o badge position:absolute */
   transition:border-color .2s, transform .2s;
 }
 .item-card:hover { border-color:#D0D0D0; transform:translateY(-2px); }
