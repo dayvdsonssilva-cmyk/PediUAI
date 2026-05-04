@@ -5,7 +5,7 @@ import { showToast } from './utils.js';
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTES
 // ─────────────────────────────────────────────────────────────────────────────
-const BASE_URL = 'https://pediway.vercel.app';
+const BASE_URL = 'https://pediway.com.br';
 const CORES = [
   // Cores sólidas
   '#C0392B','#E74C3C','#E67E22','#F39C12','#F1C40F',
@@ -127,11 +127,11 @@ function aplicarRestricaoPlano(estab) {
   if (banner) banner.style.display = (plano === 'basico' && !trialAtivo) ? 'flex' : 'none';
 }
 
-// ── Link ME AJUDA PEDIWAY — usa config do CEO ──────────────────────────────
+// ── Link ME AJUDA PEDIUAI — usa config do CEO ──────────────────────────────
 function atualizarLinkSuporte() {
   const cfg = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
   const wpp = cfg.wpp || '5500000000000';
-  const msg = encodeURIComponent(cfg.wppMsg || 'Olá! Preciso de ajuda com o PEDIWAY.');
+  const msg = encodeURIComponent(cfg.wppMsg || 'Olá! Preciso de ajuda com o PEDIUAI.');
   const link = document.getElementById('link-me-ajuda');
   if (link) link.href = `https://wa.me/${wpp}?text=${msg}`;
 }
@@ -254,6 +254,7 @@ function preencherConfig(estab) {
   set('cfg-desc', estab.descricao || '');
   const descCount = document.getElementById('cfg-desc-count');
   if(descCount) descCount.textContent = (estab.descricao||'').length + '/80';
+  set('cfg-cidade',    estab.cidade || '');
   set('cfg-endereco',  estab.endereco || '');
   set('cfg-tempo',     estab.tempo_entrega || '30-45 min');
   set('cfg-telefone',  estab.telefone_contato || '');
@@ -272,17 +273,6 @@ function preencherConfig(estab) {
   const cp = $('cfg-pix');      if (cp) cp.checked = estab.aceita_pix      !== false;
   const cc = $('cfg-cartao');   if (cc) cc.checked = estab.aceita_cartao   !== false;
   const cd = $('cfg-dinheiro'); if (cd) cd.checked = estab.aceita_dinheiro !== false;
-  // Taxa de serviço
-  const ctsToggle = $('cfg-taxa-servico');
-  const ctsWrap   = document.getElementById('cfg-taxa-servico-wrap');
-  const ctsPerc   = $('cfg-perc-servico');
-  if (ctsToggle) ctsToggle.checked = estab.taxa_servico === true;
-  if (ctsWrap)   ctsWrap.style.display = estab.taxa_servico ? 'block' : 'none';
-  if (ctsPerc)   ctsPerc.value = estab.perc_servico || 10;
-  // Carrega estados e restaura estado + cidade salvos
-  if (typeof window.carregarEstadosDash === 'function') {
-    window.carregarEstadosDash({ estado: estab.estado || null, cidade: estab.cidade || null });
-  }
 }
 
 function aplicarCorDash(cor) {
@@ -294,7 +284,12 @@ function aplicarCorDash(cor) {
 
 function renderCores(ativa) {
   const grid = $('cores-grid'); if (!grid) return;
-  grid.innerHTML = CORES.map(c => `     <div class="cor-opcao ${c === ativa ? 'ativa' : ''}"          style="background:${c}"          data-hex="${c}"          onclick="selecionarCor('${c}',this)"          title="${c}"></div>`).join('');
+  grid.innerHTML = CORES.map(c => `
+    <div class="cor-opcao ${c === ativa ? 'ativa' : ''}"
+         style="background:${c}"
+         data-hex="${c}"
+         onclick="selecionarCor('${c}',this)"
+         title="${c}"></div>`).join('');
 }
 
 window.selecionarCor = function(hex, el) {
@@ -526,9 +521,8 @@ export async function salvarConfig() {
 
   const nome     = $('cfg-nome')?.value.trim();
   const slug     = $('cfg-slug')?.value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');
-  const whats    = ($('cfg-whats')?.value || '').replace(/\D/g,''); // salva só dígitos → evita bug na recuperação de senha
+  const whats    = $('cfg-whats')?.value.trim();
   const desc     = $('cfg-desc')?.value.trim();
-  const estado   = $('cfg-estado')?.value || null;
   const cidade   = $('cfg-cidade')?.value.trim() || null;
   const endereco = $('cfg-endereco')?.value.trim();
   const tempo    = $('cfg-tempo')?.value;
@@ -569,16 +563,13 @@ export async function salvarConfig() {
     const aceita_pix     = $('cfg-pix')?.checked      !== false;
     const aceita_cartao  = $('cfg-cartao')?.checked   !== false;
     const aceita_dinheiro= $('cfg-dinheiro')?.checked !== false;
-    const taxa_servico   = $('cfg-taxa-servico')?.checked === true;
-    const perc_servico   = parseInt($('cfg-perc-servico')?.value) || 10;
 
     const updates = {
-      nome, slug, whatsapp: whats, descricao: desc, estado, cidade, endereco,
+      nome, slug, whatsapp: whats, descricao: desc, cidade, endereco,
       tempo_entrega: tempo, aberto, faz_entrega: entrega, faz_retirada: retirada,
       cor_primaria, logo_url,
       capa_url: null, capa_tipo: 'cor',
       taxa_entrega, aceita_pix, aceita_cartao, aceita_dinheiro,
-      taxa_servico, perc_servico,
       telefone_contato, cnpj, instagram, tiktok, site, msg_nota,
     };
 
@@ -622,33 +613,558 @@ async function renderCardapio() {
 
   if (stat) stat.textContent = data?.length || 0;
 
-  // Filtra por sub-aba
-  const filtrado = (_dashSubTab === 'quente')
-    ? (data||[]).filter(p => p.em_promocao && parseInt(p.desconto_percent||0) > 0)
-    : (data||[]);
-
-  // Atualiza foguinho
-  atualizarFireDash();
-
-  if (!filtrado?.length) {
-    grid.innerHTML = _dashSubTab === 'quente'
-      ? `<div class="empty-state-light" style="grid-column:1/-1"><span>🔥</span><p>Nenhum produto QUENTE ainda.<br><small>Use o botão 🔥 QUENTE para criar uma promoção</small></p></div>`
-      : `<div class="empty-state-light" style="grid-column:1/-1"><span>🍽️</span><p>Nenhum item ainda. Adicione seu primeiro produto!</p></div>`;
+  if (!data?.length) {
+    grid.innerHTML = `<div class="empty-state-light" style="grid-column:1/-1">
+      <span>🍽️</span><p>Nenhum item ainda. Adicione seu primeiro produto!</p></div>`;
     return;
   }
 
-  grid.innerHTML = filtrado.map(p => `     <div class="item-card">       <div class="item-card-img">         ${p.foto_url           ? '<img class="item-img" src="'+p.foto_url+'" alt="${p.nome}">'           : '<div class="item-emoji-bg">'+p.emoji || '🍔'+'</div>'}         <span class="item-disponivel">${p.disponivel ? 'Disponível' : 'Indisponível'}</span>         ${p.promocao ? `<span class="item-promo-badge">🔥 Promoção</span>' : ''}        </div>       <div class="item-body">         <div class="item-categoria">'+p.categoria || 'SEM CATEGORIA'+'</div>         <div class="item-nome">${p.nome}</div>         <div class="item-desc-text">${p.descricao || ''}</div>         <div class="item-footer">           <div>             ${p.em_promocao && p.desconto_percent > 0               ? '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">                   <span class="item-promo-badge" style="background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;">🔥 ${p.desconto_percent}% OFF</span>                   <span class="item-preco-original">R$ ${Number(p.preco_original||p.preco).toFixed(2).replace('.',',')}</span>                 </div>                 <div class="item-preco" style="color:var(--red);">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`               : p.promocao && p.preco_original                 ? `<div class="item-preco-original">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</div>                    <div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`                 : `<div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>'}           </div>           <div class="item-acoes">             <button class="btn-icon" onclick="editarItem(''+p.id+'')">✏️</button>             <button class="btn-icon danger" onclick="deletarItem('${p.id}')">🗑️</button>           </div>         </div>       </div>     </div>').join(''); }  function renderPedidosDemo() {   // Visão geral zerada — demo mostruário   const sp = $('stat-pedidos');     if (sp) sp.textContent = '0';   const sf = $('stat-faturamento'); if (sf) sf.textContent = 'R$ 0,00';    // Sem pedidos na lista   const lista = $('pedidos-novos-lista');   if (lista) {     lista.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#aaa">       <div style="font-size:2.5rem;margin-bottom:10px">🎉</div>       <div style="font-size:.88rem;font-weight:700;color:#555;margin-bottom:6px">Nenhum pedido ainda</div>       <div style="font-size:.76rem">Crie sua conta e receba pedidos reais!</div>     </div>`;   }    // Badge sem notificação   const badgeW = $('badge-pedidos-wrap'); if (badgeW) badgeW.style.display = 'none'; }   function renderCardapioDemo() {   const grid = $('cardapio-grid'); const stat = $('stat-itens');   const demo = [     { nome:'X-Burguer Especial', categoria:'LANCHES', preco:28.90, emoji:'🍔' },     { nome:'X-Tudo',             categoria:'LANCHES', preco:34.90, emoji:'🍔' },     { nome:'Batata Frita Grande', categoria:'ACOMPANHAMENTOS', preco:14.90, emoji:'🍟' },     { nome:'Onion Rings',        categoria:'ACOMPANHAMENTOS', preco:12.90, emoji:'🧅' },     { nome:'Refrigerante 350ml', categoria:'BEBIDAS', preco:7.90, emoji:'🥤' },     { nome:'Suco Natural 400ml', categoria:'BEBIDAS', preco:11.90, emoji:'🥤' },     { nome:'Sorvete Caseiro',    categoria:'SOBREMESAS', preco:9.90, emoji:'🍦' },     { nome:'Combo Família',      categoria:'COMBOS', preco:89.90, emoji:'🎁' },   ];   if (stat) stat.textContent = String(demo.length);   if (!grid) return;   grid.innerHTML = demo.map(p => '     <div class="item-card">       <div class="item-card-img"><div class="item-emoji-bg">'+p.emoji+'</div></div>       <div class="item-body">         <div class="item-categoria">${p.categoria}</div>         <div class="item-nome">${p.nome}</div>         <div class="item-footer">           <div class="item-preco">R$ ${p.preco.toFixed(2).replace('.',',')}</div>         </div>       </div>     </div>').join(''); }  function renderEmojiGrid() {   const grid = $('emoji-grid'); if (!grid) return;   grid.innerHTML = EMOJIS.map(e =>     '<button class="emoji-btn '+e === emojiSel ? 'selected' : ''+'" onclick="selecionarEmoji('${e}',this)">${e}</button>'   ).join(''); }  // ─── Modal de item ─────────────────────────────────────────────────────────── export function abrirModalItem() {   $('modal-item').classList.add('open');   ['item-nome','item-desc','item-cat','item-preco','item-preco-orig'].forEach(id => { const el=$(id); if(el) el.value=''; });   const dd=$('item-desconto-percent'); if(dd) dd.value='0';   const dg=$('desconto-group'); if(dg) dg.style.display='none';   const pr = $('item-promocao'); if (pr) pr.checked = false;   const pg = $('preco-orig-group'); if (pg) pg.style.display = 'none';   fotosFiles = []; fotosPosX = []; fotosPosY = [];   renderFotosGrid();   emojiSel = '🍔'; renderEmojiGrid();   // Reset botão salvar   const btn = document.querySelector('#modal-item .btn-primary');   if (btn) { btn.textContent = 'Salvar item'; btn.onclick = salvarItem; } } export function fecharModal() { $('modal-item').classList.remove('open'); } export function fecharModalFora(e) { if (e.target.id === 'modal-item') fecharModal(); } export function selecionarEmoji(emoji, btn) {   emojiSel = emoji;   document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));   btn.classList.add('selected'); }  // ─── Fotos com drag de posição ─────────────────────────────────────────────── export function previewFotos(event) {   const file = event.target.files[0]; if (!file) return;   event.target.value = '';   // Abre modal de crop para ajuste antes de adicionar   abrirCropFoto(file); } export function previewFoto(e) { previewFotos(e); }    // ── CROP DE FOTO DO PRODUTO ──────────────────────────────────────────────── let _cropFotoFile  = null; let _cropFotoUrl   = null; let _cropFotoPosX  = 50; let _cropFotoPosY  = 50; let _cropFotoDragAtivo = false; let _cropFotoDragX = 0, _cropFotoDragY = 0;  window.abrirCropFoto = function(file) {   _cropFotoFile = file;   const url = URL.createObjectURL(file);   const img = new Image();   img.onload = () => {     _CRP.img = img; _CRP.offX = 0; _CRP.offY = 0;     _CRP.canvasId = 'crop-foto-canvas'; _CRP.stageId = 'crop-foto-stage'; _CRP.safePrefix = 'cfso';     crpApplyMinScale(); _CRP.scale = _CRP.minScale;     crpInitDrag('crop-foto-stage');     const modal = $('modal-crop-foto');     if (modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }     setTimeout(() => { crpApplyMinScale(); crpDraw(); }, 50);   };   img.src = url;   _cropFotoUrl = url; };  window.confirmarCropFoto = function() {   if (!_CRP.img) { console.warn('[crop] sem imagem'); return; }    // Crop via canvas da imagem original (mais confiável que drawImage canvas->canvas)   const stage  = $('crop-foto-stage');   const W      = stage ? stage.offsetWidth : 340;   const safe   = Math.floor(W * 0.82);   const sx     = Math.floor((W - safe) / 2);    const out    = document.createElement('canvas');   out.width    = safe; out.height = safe;   const ctx    = out.getContext('2d');    // Calcula onde a imagem está posicionada no stage   const iw = _CRP.img.naturalWidth, ih = _CRP.img.naturalHeight;   const dw = iw * _CRP.scale, dh = ih * _CRP.scale;   const dx = W/2 - dw/2 + _CRP.offX;   const dy = W/2 - dh/2 + _CRP.offY;    // Desenha a porção da imagem que está dentro da safe area   ctx.drawImage(_CRP.img, dx - sx, dy - sx, dw, dh);    out.toBlob(blob => {     if (!blob || blob.size < 100) {       // Fallback: salva sem crop       const fallbackFile = _cropFotoFile;       if (fallbackFile) {         fallbackFile._urlExistente = null;         fotosFiles.push(fallbackFile); fotosPosX.push(50); fotosPosY.push(50);       }     } else {       const file = new File([blob], _cropFotoFile?.name || 'foto.jpg', { type:'image/jpeg' });       file._urlExistente = null;       const editIdx = window._cropFotoEditIdx;       if (editIdx != null && editIdx >= 0 && editIdx < fotosFiles.length) {         fotosFiles[editIdx] = file; fotosPosX[editIdx] = 50; fotosPosY[editIdx] = 50;         window._cropFotoEditIdx = null;       } else {         fotosFiles.push(file); fotosPosX.push(50); fotosPosY.push(50);       }     }      renderFotosGrid();     const modal = $('modal-crop-foto');     if (modal) { modal.classList.remove('open'); document.body.style.overflow = ''; }     _CRP.img = null;      if (_fotoQueue && _fotoQueue.length > 0) {       const next = _fotoQueue.shift(); _cropFotoFile = next;       setTimeout(() => window.abrirCropFoto(next), 200);     }   }, 'image/jpeg', 0.92); };  // Função chamada pelo foto-input (modal de item) window.adicionarFotos = function(event) {   const files = Array.from(event.target.files || []);   if (!files.length) return;   event.target.value = '';   // Processa um arquivo de cada vez via fila   let idx = 0;   const next = () => {     if (idx >= files.length) return;     _cropFotoFile = files[idx++];     window.abrirCropFoto(_cropFotoFile);     // Após confirmar, se houver mais arquivos, o próximo será aberto     // via _fotoQueue que guardamos aqui     _fotoQueue = files.slice(idx);   };   _fotoQueue = files.slice(1);   window.abrirCropFoto(files[0]);   _cropFotoFile = files[0]; };  let _fotoQueue = [];  window.fecharCropFoto = function() {   const m = $('modal-crop-foto'); if (m) m.classList.remove('open');   document.body.style.overflow = '';   _cropFotoFile = null;   crpCleanup(); };  // Drag no modal de crop   function renderFotosGrid() {   const grid = $('fotos-grid'); if (!grid) return;    if (!fotosFiles.length) {     grid.innerHTML = `<div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
+  grid.innerHTML = data.map(p => `
+    <div class="item-card">
+      <div class="item-card-img">
+        ${p.foto_url           ? `<img class="item-img" src="${p.foto_url}" alt="${p.nome}">`           : `<div class="item-emoji-bg">${p.emoji || '🍔'}</div>`}
+        <span class="item-disponivel">${p.disponivel ? 'Disponível' : 'Indisponível'}</span>
+        ${p.promocao ? `<span class="item-promo-badge">🔥 Promoção</span>` : ''}
+
+      </div>
+      <div class="item-body">
+        <div class="item-categoria">${p.categoria || 'SEM CATEGORIA'}</div>
+        <div class="item-nome">${p.nome}</div>
+        <div class="item-desc-text">${p.descricao || ''}</div>
+        <div class="item-footer">
+          <div>
+            ${p.em_promocao && p.desconto_percent > 0               ? `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">                   <span class="item-promo-badge" style="background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;">🔥 ${p.desconto_percent}% OFF</span>                   <span class="item-preco-original">R$ ${Number(p.preco_original||p.preco).toFixed(2).replace('.',',')}</span>                 </div>                 <div class="item-preco" style="color:var(--red);">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`               : p.promocao && p.preco_original                 ? `<div class="item-preco-original">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</div>                    <div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`                 : `<div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`}
+          </div>
+          <div class="item-acoes">
+            <button class="btn-icon" onclick="editarItem('${p.id}')">✏️</button>
+            <button class="btn-icon danger" onclick="deletarItem('${p.id}')">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderPedidosDemo() {
+  // Visão geral zerada — demo mostruário
+  const sp = $('stat-pedidos');     if (sp) sp.textContent = '0';
+  const sf = $('stat-faturamento'); if (sf) sf.textContent = 'R$ 0,00';
+
+  // Sem pedidos na lista
+  const lista = $('pedidos-novos-lista');
+  if (lista) {
+    lista.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#aaa">
+      <div style="font-size:2.5rem;margin-bottom:10px">🎉</div>
+      <div style="font-size:.88rem;font-weight:700;color:#555;margin-bottom:6px">Nenhum pedido ainda</div>
+      <div style="font-size:.76rem">Crie sua conta e receba pedidos reais!</div>
+    </div>`;
+  }
+
+  // Badge sem notificação
+  const badgeW = $('badge-pedidos-wrap'); if (badgeW) badgeW.style.display = 'none';
+}
+
+
+function renderCardapioDemo() {
+  const grid = $('cardapio-grid'); const stat = $('stat-itens');
+  const demo = [
+    { nome:'X-Burguer Especial', categoria:'LANCHES', preco:28.90, emoji:'🍔' },
+    { nome:'X-Tudo',             categoria:'LANCHES', preco:34.90, emoji:'🍔' },
+    { nome:'Batata Frita Grande', categoria:'ACOMPANHAMENTOS', preco:14.90, emoji:'🍟' },
+    { nome:'Onion Rings',        categoria:'ACOMPANHAMENTOS', preco:12.90, emoji:'🧅' },
+    { nome:'Refrigerante 350ml', categoria:'BEBIDAS', preco:7.90, emoji:'🥤' },
+    { nome:'Suco Natural 400ml', categoria:'BEBIDAS', preco:11.90, emoji:'🥤' },
+    { nome:'Sorvete Caseiro',    categoria:'SOBREMESAS', preco:9.90, emoji:'🍦' },
+    { nome:'Combo Família',      categoria:'COMBOS', preco:89.90, emoji:'🎁' },
+  ];
+  if (stat) stat.textContent = String(demo.length);
+  if (!grid) return;
+  grid.innerHTML = demo.map(p => `
+    <div class="item-card">
+      <div class="item-card-img"><div class="item-emoji-bg">${p.emoji}</div></div>
+      <div class="item-body">
+        <div class="item-categoria">${p.categoria}</div>
+        <div class="item-nome">${p.nome}</div>
+        <div class="item-footer">
+          <div class="item-preco">R$ ${p.preco.toFixed(2).replace('.',',')}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderEmojiGrid() {
+  const grid = $('emoji-grid'); if (!grid) return;
+  grid.innerHTML = EMOJIS.map(e =>
+    `<button class="emoji-btn ${e === emojiSel ? 'selected' : ''}" onclick="selecionarEmoji('${e}',this)">${e}</button>`
+  ).join('');
+}
+
+// ─── Modal de item ───────────────────────────────────────────────────────────
+export function abrirModalItem() {
+  $('modal-item').classList.add('open');
+  ['item-nome','item-desc','item-cat','item-preco','item-preco-orig'].forEach(id => { const el=$(id); if(el) el.value=''; });
+  const dd=$('item-desconto-percent'); if(dd) dd.value='0';
+  const dg=$('desconto-group'); if(dg) dg.style.display='none';
+  const pr = $('item-promocao'); if (pr) pr.checked = false;
+  const pg = $('preco-orig-group'); if (pg) pg.style.display = 'none';
+  fotosFiles = []; fotosPosX = []; fotosPosY = [];
+  renderFotosGrid();
+  emojiSel = '🍔'; renderEmojiGrid();
+  // Reset botão salvar
+  const btn = document.querySelector('#modal-item .btn-primary');
+  if (btn) { btn.textContent = 'Salvar item'; btn.onclick = salvarItem; }
+}
+export function fecharModal() { $('modal-item').classList.remove('open'); }
+export function fecharModalFora(e) { if (e.target.id === 'modal-item') fecharModal(); }
+export function selecionarEmoji(emoji, btn) {
+  emojiSel = emoji;
+  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// ─── Fotos com drag de posição ───────────────────────────────────────────────
+export function previewFotos(event) {
+  const file = event.target.files[0]; if (!file) return;
+  event.target.value = '';
+  // Abre modal de crop para ajuste antes de adicionar
+  abrirCropFoto(file);
+}
+export function previewFoto(e) { previewFotos(e); }
+
+
+
+// ── CROP DE FOTO DO PRODUTO ────────────────────────────────────────────────
+let _cropFotoFile  = null;
+let _cropFotoUrl   = null;
+let _cropFotoPosX  = 50;
+let _cropFotoPosY  = 50;
+let _cropFotoDragAtivo = false;
+let _cropFotoDragX = 0, _cropFotoDragY = 0;
+
+window.abrirCropFoto = function(file) {
+  _cropFotoFile = file;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    _CRP.img = img; _CRP.offX = 0; _CRP.offY = 0;
+    _CRP.canvasId = 'crop-foto-canvas'; _CRP.stageId = 'crop-foto-stage'; _CRP.safePrefix = 'cfso';
+    crpApplyMinScale(); _CRP.scale = _CRP.minScale;
+    crpInitDrag('crop-foto-stage');
+    const modal = $('modal-crop-foto');
+    if (modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    setTimeout(() => { crpApplyMinScale(); crpDraw(); }, 50);
+  };
+  img.src = url;
+  _cropFotoUrl = url;
+};
+
+window.confirmarCropFoto = function() {
+  if (!_CRP.img) { console.warn('[crop] sem imagem'); return; }
+
+  // Crop via canvas da imagem original (mais confiável que drawImage canvas->canvas)
+  const stage  = $('crop-foto-stage');
+  const W      = stage ? stage.offsetWidth : 340;
+  const safe   = Math.floor(W * 0.82);
+  const sx     = Math.floor((W - safe) / 2);
+
+  const out    = document.createElement('canvas');
+  out.width    = safe; out.height = safe;
+  const ctx    = out.getContext('2d');
+
+  // Calcula onde a imagem está posicionada no stage
+  const iw = _CRP.img.naturalWidth, ih = _CRP.img.naturalHeight;
+  const dw = iw * _CRP.scale, dh = ih * _CRP.scale;
+  const dx = W/2 - dw/2 + _CRP.offX;
+  const dy = W/2 - dh/2 + _CRP.offY;
+
+  // Desenha a porção da imagem que está dentro da safe area
+  ctx.drawImage(_CRP.img, dx - sx, dy - sx, dw, dh);
+
+  out.toBlob(blob => {
+    if (!blob || blob.size < 100) {
+      // Fallback: salva sem crop
+      const fallbackFile = _cropFotoFile;
+      if (fallbackFile) {
+        fallbackFile._urlExistente = null;
+        fotosFiles.push(fallbackFile); fotosPosX.push(50); fotosPosY.push(50);
+      }
+    } else {
+      const file = new File([blob], _cropFotoFile?.name || 'foto.jpg', { type:'image/jpeg' });
+      file._urlExistente = null;
+      const editIdx = window._cropFotoEditIdx;
+      if (editIdx != null && editIdx >= 0 && editIdx < fotosFiles.length) {
+        fotosFiles[editIdx] = file; fotosPosX[editIdx] = 50; fotosPosY[editIdx] = 50;
+        window._cropFotoEditIdx = null;
+      } else {
+        fotosFiles.push(file); fotosPosX.push(50); fotosPosY.push(50);
+      }
+    }
+
+    renderFotosGrid();
+    const modal = $('modal-crop-foto');
+    if (modal) { modal.classList.remove('open'); document.body.style.overflow = ''; }
+    _CRP.img = null;
+
+    if (_fotoQueue && _fotoQueue.length > 0) {
+      const next = _fotoQueue.shift(); _cropFotoFile = next;
+      setTimeout(() => window.abrirCropFoto(next), 200);
+    }
+  }, 'image/jpeg', 0.92);
+};
+
+// Função chamada pelo foto-input (modal de item)
+window.adicionarFotos = function(event) {
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
+  event.target.value = '';
+  // Processa um arquivo de cada vez via fila
+  let idx = 0;
+  const next = () => {
+    if (idx >= files.length) return;
+    _cropFotoFile = files[idx++];
+    window.abrirCropFoto(_cropFotoFile);
+    // Após confirmar, se houver mais arquivos, o próximo será aberto
+    // via _fotoQueue que guardamos aqui
+    _fotoQueue = files.slice(idx);
+  };
+  _fotoQueue = files.slice(1);
+  window.abrirCropFoto(files[0]);
+  _cropFotoFile = files[0];
+};
+
+let _fotoQueue = [];
+
+window.fecharCropFoto = function() {
+  const m = $('modal-crop-foto'); if (m) m.classList.remove('open');
+  document.body.style.overflow = '';
+  _cropFotoFile = null;
+  crpCleanup();
+};
+
+// Drag no modal de crop
+
+
+function renderFotosGrid() {
+  const grid = $('fotos-grid'); if (!grid) return;
+
+  if (!fotosFiles.length) {
+    grid.innerHTML = `<div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
       <span style="font-size:1.5rem">📷</span>
       <span style="font-size:0.72rem;color:#aaa">Adicionar foto</span>
-    </div>`;     return;   }    let html = fotosFiles.map((f, i) => {     const url = f._urlExistente || URL.createObjectURL(f);     const px  = fotosPosX[i] ?? 50;     const py  = fotosPosY[i] ?? 50;     const isExist = !!f._urlExistente;     return '<div class="foto-thumb-wrap" id="foto-wrap-'+i+'">       <div style="position:relative;width:100%;aspect-ratio:1/1;max-height:280px;border-radius:14px;overflow:hidden;background:#f0ebe4;border:2px solid var(--border);margin-bottom:8px;cursor:grab;touch-action:none" id="foto-drag-${i}">         <img src="${url}" id="foto-img-${i}" draggable="false"           style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:${px}% ${py}%;pointer-events:none;user-select:none">         ${i===0 ? '<div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:.62rem;font-weight:800;padding:3px 10px;border-radius:50px;z-index:3;letter-spacing:.04em">PRINCIPAL</div>' : ''}         <div style="position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;pointer-events:none;z-index:2">           <div style="background:rgba(0,0,0,.55);color:#fff;font-size:.62rem;font-weight:600;padding:4px 12px;border-radius:50px;backdrop-filter:blur(6px)">             ✋ Arraste para reposicionar           </div>         </div>         <div style="position:absolute;bottom:10px;right:10px;width:44px;height:44px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,.6);border:2px solid rgba(255,255,255,.35);z-index:3">           <img src="${url}" style="width:100%;height:100%;object-fit:cover;opacity:.7">           <div id="foto-pin-${i}" style="position:absolute;width:8px;height:8px;background:#fff;border-radius:50%;border:1.5px solid var(--red);transform:translate(-50%,-50%);left:${px}%;top:${py}%;box-shadow:0 1px 4px rgba(0,0,0,.5)"></div>         </div>       </div>       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">         <span style="font-size:.65rem;color:#aaa">${isExist ? '📎 Existente' : '✨ Nova'}</span>         <button onclick="removerFotoItem(${i})" style="background:none;border:1px solid #e0dbd5;color:#aaa;padding:4px 12px;border-radius:8px;font-size:.7rem;font-weight:600;cursor:pointer" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='#e0dbd5';this.style.color='#aaa'">🗑 Remover</button>       </div>     </div>';   }).join('');    html += `<div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
+    </div>`;
+    return;
+  }
+
+  let html = fotosFiles.map((f, i) => {
+    const url = f._urlExistente || URL.createObjectURL(f);
+    const px  = fotosPosX[i] ?? 50;
+    const py  = fotosPosY[i] ?? 50;
+    const isExist = !!f._urlExistente;
+    return `<div class="foto-thumb-wrap" id="foto-wrap-${i}">
+      <div style="position:relative;width:100%;aspect-ratio:1/1;max-height:280px;border-radius:14px;overflow:hidden;background:#f0ebe4;border:2px solid var(--border);margin-bottom:8px;cursor:grab;touch-action:none" id="foto-drag-${i}">
+        <img src="${url}" id="foto-img-${i}" draggable="false"
+          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:${px}% ${py}%;pointer-events:none;user-select:none">
+        ${i===0 ? '<div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:.62rem;font-weight:800;padding:3px 10px;border-radius:50px;z-index:3;letter-spacing:.04em">PRINCIPAL</div>' : ''}
+        <div style="position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;pointer-events:none;z-index:2">
+          <div style="background:rgba(0,0,0,.55);color:#fff;font-size:.62rem;font-weight:600;padding:4px 12px;border-radius:50px;backdrop-filter:blur(6px)">
+            ✋ Arraste para reposicionar
+          </div>
+        </div>
+        <div style="position:absolute;bottom:10px;right:10px;width:44px;height:44px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,.6);border:2px solid rgba(255,255,255,.35);z-index:3">
+          <img src="${url}" style="width:100%;height:100%;object-fit:cover;opacity:.7">
+          <div id="foto-pin-${i}" style="position:absolute;width:8px;height:8px;background:#fff;border-radius:50%;border:1.5px solid var(--red);transform:translate(-50%,-50%);left:${px}%;top:${py}%;box-shadow:0 1px 4px rgba(0,0,0,.5)"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:.65rem;color:#aaa">${isExist ? '📎 Existente' : '✨ Nova'}</span>
+        <button onclick="removerFotoItem(${i})" style="background:none;border:1px solid #e0dbd5;color:#aaa;padding:4px 12px;border-radius:8px;font-size:.7rem;font-weight:600;cursor:pointer" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='#e0dbd5';this.style.color='#aaa'">🗑 Remover</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  html += `<div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
     <span style="font-size:1.5rem">📷</span>
     <span style="font-size:0.72rem;color:#aaa">Adicionar foto</span>
-  </div>`;    grid.innerHTML = html;   fotosFiles.forEach((_, i) => iniciarDragFoto(null, i, true)); }  window.adicionarFotos = function(event) {   const files = Array.from(event.target.files || []);   if (!files.length) return;   event.target.value = '';   // Processa um arquivo de cada vez via fila   let idx = 0;   const next = () => {     if (idx >= files.length) return;     _cropFotoFile = files[idx++];     window.abrirCropFoto(_cropFotoFile);     // Após confirmar, se houver mais arquivos, o próximo será aberto     // via _fotoQueue que guardamos aqui     _fotoQueue = files.slice(idx);   };   _fotoQueue = files.slice(1);   window.abrirCropFoto(files[0]);   _cropFotoFile = files[0]; };  window.fecharCropFoto = function() {   const m = $('modal-crop-foto'); if (m) m.classList.remove('open');   document.body.style.overflow = '';   _cropFotoFile = null;   crpCleanup(); };  // Drag no modal de crop     let _fotoDrag = { ativo:false, idx:-1, startX:0, startY:0 };  function iniciarDragFoto(event, i, apenasSetup) {   const area = $('foto-drag-'+i+''); if (!area) return;   // Sempre configura via addEventListener (funciona melhor no mobile)   area.removeEventListener('mousedown',  area._onMD);   area.removeEventListener('touchstart', area._onTS);   area._onMD = e => _startDragFoto(e, i);   area._onTS = e => { e.preventDefault(); _startDragFoto(e, i); };   area.addEventListener('mousedown',  area._onMD);   area.addEventListener('touchstart', area._onTS, { passive:false });   if (!apenasSetup && event) _startDragFoto(event, i); }  function _startDragFoto(e, i) {   _fotoDrag.ativo = true; _fotoDrag.idx = i;   const t = e.touches ? e.touches[0] : e;   _fotoDrag.startX = t.clientX; _fotoDrag.startY = t.clientY;   e.preventDefault(); }  // Listeners do drag de foto — passivos para não bloquear scroll document.addEventListener('mousemove', _moveDragFoto, { passive: true }); document.addEventListener('touchmove', _moveDragFoto, { passive: true }); document.addEventListener('mouseup',   () => { _fotoDrag.ativo = false; }); document.addEventListener('touchend',  () => { _fotoDrag.ativo = false; }); document.addEventListener('touchend',  () => _fotoDrag.ativo = false);  function _moveDragFoto(e) {   if (!_fotoDrag.ativo) return;   const i = _fotoDrag.idx;   const t = e.touches ? e.touches[0] : e;   const area = $('foto-drag-'+i+''); if (!area) return;   const dx = (t.clientX - _fotoDrag.startX) / area.offsetWidth  * 100;   const dy = (t.clientY - _fotoDrag.startY) / area.offsetHeight * 100;   _fotoDrag.startX = t.clientX; _fotoDrag.startY = t.clientY;   fotosPosX[i] = Math.max(0, Math.min(100, fotosPosX[i] - dx * 0.5));   fotosPosY[i] = Math.max(0, Math.min(100, fotosPosY[i] - dy * 0.5));   const img = $('foto-img-'+i+'');   if (img) img.style.objectPosition = ''+fotosPosX[i]+'% ${fotosPosY[i]}%';   const pin = $('foto-pin-'+i+'');   if (pin) { pin.style.left = fotosPosX[i] + '%'; pin.style.top = fotosPosY[i] + '%'; } } window.removerFotoExistente = function(btn) {   btn.closest('.foto-thumb-item').remove(); };  window.removerFotoItem = function(i) {   fotosFiles.splice(i,1); fotosPosX.splice(i,1); fotosPosY.splice(i,1);   renderFotosGrid(); };  window.reabrirCropFoto = function(i) {   const f = fotosFiles[i]; if (!f) return;   const url = f._urlExistente || URL.createObjectURL(f);   _cropFotoFile = f;   const img = new Image();   img.onload = () => {     _CRP.img = img; _CRP.offX = 0; _CRP.offY = 0;     _CRP.canvasId = 'crop-foto-canvas'; _CRP.stageId = 'crop-foto-stage'; _CRP.safePrefix = 'cfso';     crpApplyMinScale(); _CRP.scale = _CRP.minScale;     crpInitDrag('crop-foto-stage');     const modal = $('modal-crop-foto');     if (modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }     setTimeout(() => { crpApplyMinScale(); crpDraw(); }, 50);     // Ao confirmar esta edição, substituir no índice i     window._cropFotoEditIdx = i;   };   img.src = url; };  export async function salvarItem() {   const estab = getEstab(); if (!estab) return showToast('Faça login novamente.','error');   const nome  = $('item-nome')?.value.trim();   const preco = parseFloat($('item-preco')?.value);   if (!nome)        return showToast('Digite o nome do item.','error');   if (isNaN(preco)) return showToast('Digite o preço.','error');    const btn = document.querySelector('#modal-item .btn-primary');   if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }    try {     // Upload de todas as fotos     const fotos_urls = [];     for (let fi = 0; fi < fotosFiles.length; fi++) {       const file = fotosFiles[fi];       const url  = await uploadFile('fotos', ''+estab.id+'/${Date.now()}_${fi}.${file.name.split('.').pop()}', file);       fotos_urls.push(url);     }     const foto_url = fotos_urls[0] || null;     const promocao   = $('item-promocao')?.checked || false;     const preco_orig = parseFloat($('item-preco-orig')?.value) || null;     const { error } = await getSupa().from('produtos').insert({       estabelecimento_id: estab.id, nome,       descricao:    $('item-desc')?.value.trim(),       categoria:    $('item-cat')?.value.trim().toUpperCase(),       preco, preco_original: promocao ? preco_orig : null,       foto_url, fotos_urls, emoji: emojiSel, disponivel: true, promocao,     });     if (error) throw new Error(error.message);     await renderCardapio(); fecharModal(); showToast('Item adicionado! ✅');   } catch (e) { showToast(e.message,'error'); }   finally { if (btn) { btn.disabled = false; btn.textContent = 'Salvar item'; } } }  export async function editarItem(id) {   const estab = getEstab(); if (!estab) return;   const { data: p } = await getSupa().from('produtos').select('*').eq('id', id).maybeSingle();   if (!p) return;    abrirModalItem();   setTimeout(() => {     const set = (sel, val) => { const el=$(sel); if(el && val!=null) el.value=val; };     set('item-nome', p.nome); set('item-desc', p.descricao||'');     set('item-cat', p.categoria||'');     // Se tem desconto %, o campo mostra o preço ORIGINAL (o que o dono digitou)     set('item-preco', p.em_promocao && p.preco_original ? p.preco_original : p.preco);     set('item-preco-orig', p.preco_original||'');     const pr = $('item-promocao'); if (pr) {       pr.checked = !!p.promocao;       const g=$('preco-orig-group'); if(g) g.style.display=p.promocao?'flex':'none';       const dd=$('item-desconto-percent'); if(dd) dd.value=p.desconto_percent||'0';       const dg=$('desconto-group'); if(dg) dg.style.display=p.promocao?'flex':'none';     }     emojiSel = p.emoji || '🍔'; renderEmojiGrid();     // Fotos existentes — carrega no mesmo sistema de drag 1:1     const fotosExist = (p.fotos_urls && p.fotos_urls.length) ? p.fotos_urls : (p.foto_url ? [p.foto_url] : []);     // Converte URLs existentes para Blob para entrar no mesmo array fotosFiles     const carregarFotosExist = async () => {       for (const url of fotosExist) {         try {           const resp = await fetch(url);           const blob = await resp.blob();           const ext  = url.split('.').pop().split('?')[0] || 'jpg';           const file = new File([blob], 'existente.' + ext, { type: blob.type });           file._urlExistente = url; // marca URL original para salvar sem re-upload           fotosFiles.push(file);           fotosPosX.push(50);           fotosPosY.push(50);         } catch(e) {           console.warn('Foto não carregou:', url, e);         }       }       renderFotosGrid();     };     carregarFotosExist();     // Botão salvar     const btn = document.querySelector('#modal-item .btn-primary');     if (btn) {       btn.textContent = 'Salvar alterações';       btn.onclick = async () => {         btn.disabled = true; btn.textContent = 'Salvando...';         try {           // Upload só das fotos novas; fotos existentes (com _urlExistente) reutilizam a URL           const fotos_urls = [];           for (let fi = 0; fi < fotosFiles.length; fi++) {             const file = fotosFiles[fi];             if (file._urlExistente) {               fotos_urls.push(file._urlExistente); // reusa URL original — sem re-upload             } else {               const url = await uploadFile('fotos', ''+estab.id+'/${Date.now()}_${fi}.${file.name.split('.').pop()}', file);               fotos_urls.push(url);             }           }           const foto_url = fotos_urls[0] || null;           const promocao   = $('item-promocao')?.checked || false;           const preco_orig = parseFloat($('item-preco-orig')?.value) || null;           const desconto_pct_u = parseInt($('item-desconto-percent')?.value||'0');           const precoBase = parseFloat($('item-preco')?.value);           let precoFinalU = precoBase;           let precoOrigU = promocao ? preco_orig : null;           if (promocao && desconto_pct_u > 0) {             precoOrigU = precoBase;             precoFinalU = parseFloat((precoBase * (1 - desconto_pct_u / 100)).toFixed(2));           }           const { error } = await getSupa().from('produtos').update({             nome:         $('item-nome')?.value.trim(),             descricao:    $('item-desc')?.value.trim(),             categoria:    $('item-cat')?.value.trim().toUpperCase(),             preco:        precoFinalU,             preco_original: precoOrigU,             foto_url, fotos_urls, emoji: emojiSel, promocao,             em_promocao: promocao && desconto_pct_u > 0,             desconto_percent: promocao ? desconto_pct_u : 0,           }).eq('id', id);           if (error) throw new Error(error.message);           await renderCardapio(); fecharModal(); showToast('Item atualizado!');         } catch (e) { showToast(e.message,'error'); }         finally { btn.disabled = false; btn.textContent = 'Salvar alterações'; }       };     }   }, 100); }  export async function deletarItem(id) {   if (!confirm('Remover este item?')) return;   await getSupa().from('produtos').delete().eq('id', id);   await renderCardapio(); showToast('Item removido.'); }  // ───────────────────────────────────────────────────────────────────────────── // FRESQUINHO // ───────────────────────────────────────────────────────────────────────────── async function renderFresquinho() {   const estab = getEstab(); const grid = $('fresquinho-grid');   if (!grid || !estab) return;   const { data } = await getSupa().from('fresquinhos').select('*')     .eq('estabelecimento_id', estab.id).gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false });   if (!data?.length) { grid.innerHTML = `<div class="empty-state-light"><span>✨</span><p>Nenhum conteúdo ainda.</p></div>`; return; }   grid.innerHTML = '<div class="fresh-stories-row">' + data.map(f => {     const rest = new Date(f.expires_at) - new Date();     const h = Math.floor(rest/3600000), m = Math.floor((rest%3600000)/60000);     return '<div class="fresh-story-item">       <div class="fresh-story-thumb" onclick="abrirStoryDash(''+f.url+'','${f.tipo||'foto'}')">         ${f.tipo === 'video'           ? '<video src="${f.url}" muted playsinline loop style="width:100%;height:100%;object-fit:cover"></video>`           : '<img src="'+f.url+'" style="width:100%;height:100%;object-fit:cover">'}         <div class="fresh-overlay"></div>         <div class="fresh-timer-badge">⏱ ${h > 0 ? h+'h '+m+'min' : m+'min'}</div>       </div>       <button class="fresh-remove-btn" onclick="removerFresquinho('${f.id}')">🗑️</button>     </div>`;   }).join('') + '</div>'; }  export async function postarFresquinho(event) {   const estab = getEstab(); const file = event.target.files[0];   if (!file || !estab) return;   if (file.size > 50 * 1024 * 1024) return showToast('Máx. 50MB','error');    const tipo = file.type.startsWith('video') ? 'video' : 'foto';    // Valida duração do vídeo (máx 30s)   if (tipo === 'video') {     const durOk = await new Promise(resolve => {       const v = document.createElement('video');       v.preload = 'metadata';       v.onloadedmetadata = () => resolve(30 >= v.duration);       v.onerror = () => resolve(true); // se não conseguir checar, deixa passar       v.src = URL.createObjectURL(file);     });
+  </div>`;
+
+  grid.innerHTML = html;
+  fotosFiles.forEach((_, i) => iniciarDragFoto(null, i, true));
+}
+
+window.adicionarFotos = function(event) {
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
+  event.target.value = '';
+  // Processa um arquivo de cada vez via fila
+  let idx = 0;
+  const next = () => {
+    if (idx >= files.length) return;
+    _cropFotoFile = files[idx++];
+    window.abrirCropFoto(_cropFotoFile);
+    // Após confirmar, se houver mais arquivos, o próximo será aberto
+    // via _fotoQueue que guardamos aqui
+    _fotoQueue = files.slice(idx);
+  };
+  _fotoQueue = files.slice(1);
+  window.abrirCropFoto(files[0]);
+  _cropFotoFile = files[0];
+};
+
+window.fecharCropFoto = function() {
+  const m = $('modal-crop-foto'); if (m) m.classList.remove('open');
+  document.body.style.overflow = '';
+  _cropFotoFile = null;
+  crpCleanup();
+};
+
+// Drag no modal de crop
+
+
+
+
+let _fotoDrag = { ativo:false, idx:-1, startX:0, startY:0 };
+
+function iniciarDragFoto(event, i, apenasSetup) {
+  const area = $(`foto-drag-${i}`); if (!area) return;
+  // Sempre configura via addEventListener (funciona melhor no mobile)
+  area.removeEventListener('mousedown',  area._onMD);
+  area.removeEventListener('touchstart', area._onTS);
+  area._onMD = e => _startDragFoto(e, i);
+  area._onTS = e => { e.preventDefault(); _startDragFoto(e, i); };
+  area.addEventListener('mousedown',  area._onMD);
+  area.addEventListener('touchstart', area._onTS, { passive:false });
+  if (!apenasSetup && event) _startDragFoto(event, i);
+}
+
+function _startDragFoto(e, i) {
+  _fotoDrag.ativo = true; _fotoDrag.idx = i;
+  const t = e.touches ? e.touches[0] : e;
+  _fotoDrag.startX = t.clientX; _fotoDrag.startY = t.clientY;
+  e.preventDefault();
+}
+
+// Listeners do drag de foto — passivos para não bloquear scroll
+document.addEventListener('mousemove', _moveDragFoto, { passive: true });
+document.addEventListener('touchmove', _moveDragFoto, { passive: true });
+document.addEventListener('mouseup',   () => { _fotoDrag.ativo = false; });
+document.addEventListener('touchend',  () => { _fotoDrag.ativo = false; });
+document.addEventListener('touchend',  () => _fotoDrag.ativo = false);
+
+function _moveDragFoto(e) {
+  if (!_fotoDrag.ativo) return;
+  const i = _fotoDrag.idx;
+  const t = e.touches ? e.touches[0] : e;
+  const area = $(`foto-drag-${i}`); if (!area) return;
+  const dx = (t.clientX - _fotoDrag.startX) / area.offsetWidth  * 100;
+  const dy = (t.clientY - _fotoDrag.startY) / area.offsetHeight * 100;
+  _fotoDrag.startX = t.clientX; _fotoDrag.startY = t.clientY;
+  fotosPosX[i] = Math.max(0, Math.min(100, fotosPosX[i] - dx * 0.5));
+  fotosPosY[i] = Math.max(0, Math.min(100, fotosPosY[i] - dy * 0.5));
+  const img = $(`foto-img-${i}`);
+  if (img) img.style.objectPosition = `${fotosPosX[i]}% ${fotosPosY[i]}%`;
+  const pin = $(`foto-pin-${i}`);
+  if (pin) { pin.style.left = fotosPosX[i] + '%'; pin.style.top = fotosPosY[i] + '%'; }
+}
+window.removerFotoExistente = function(btn) {
+  btn.closest('.foto-thumb-item').remove();
+};
+
+window.removerFotoItem = function(i) {
+  fotosFiles.splice(i,1); fotosPosX.splice(i,1); fotosPosY.splice(i,1);
+  renderFotosGrid();
+};
+
+window.reabrirCropFoto = function(i) {
+  const f = fotosFiles[i]; if (!f) return;
+  const url = f._urlExistente || URL.createObjectURL(f);
+  _cropFotoFile = f;
+  const img = new Image();
+  img.onload = () => {
+    _CRP.img = img; _CRP.offX = 0; _CRP.offY = 0;
+    _CRP.canvasId = 'crop-foto-canvas'; _CRP.stageId = 'crop-foto-stage'; _CRP.safePrefix = 'cfso';
+    crpApplyMinScale(); _CRP.scale = _CRP.minScale;
+    crpInitDrag('crop-foto-stage');
+    const modal = $('modal-crop-foto');
+    if (modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    setTimeout(() => { crpApplyMinScale(); crpDraw(); }, 50);
+    // Ao confirmar esta edição, substituir no índice i
+    window._cropFotoEditIdx = i;
+  };
+  img.src = url;
+};
+
+export async function salvarItem() {
+  const estab = getEstab(); if (!estab) return showToast('Faça login novamente.','error');
+  const nome  = $('item-nome')?.value.trim();
+  const preco = parseFloat($('item-preco')?.value);
+  if (!nome)        return showToast('Digite o nome do item.','error');
+  if (isNaN(preco)) return showToast('Digite o preço.','error');
+
+  const btn = document.querySelector('#modal-item .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
+
+  try {
+    // Upload de todas as fotos
+    const fotos_urls = [];
+    for (let fi = 0; fi < fotosFiles.length; fi++) {
+      const file = fotosFiles[fi];
+      const url  = await uploadFile('fotos', `${estab.id}/${Date.now()}_${fi}.${file.name.split('.').pop()}`, file);
+      fotos_urls.push(url);
+    }
+    const foto_url = fotos_urls[0] || null;
+    const promocao   = $('item-promocao')?.checked || false;
+    const preco_orig = parseFloat($('item-preco-orig')?.value) || null;
+    const { error } = await getSupa().from('produtos').insert({
+      estabelecimento_id: estab.id, nome,
+      descricao:    $('item-desc')?.value.trim(),
+      categoria:    $('item-cat')?.value.trim().toUpperCase(),
+      preco, preco_original: promocao ? preco_orig : null,
+      foto_url, fotos_urls, emoji: emojiSel, disponivel: true, promocao,
+    });
+    if (error) throw new Error(error.message);
+    await renderCardapio(); fecharModal(); showToast('Item adicionado! ✅');
+  } catch (e) { showToast(e.message,'error'); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Salvar item'; } }
+}
+
+export async function editarItem(id) {
+  const estab = getEstab(); if (!estab) return;
+  const { data: p } = await getSupa().from('produtos').select('*').eq('id', id).maybeSingle();
+  if (!p) return;
+
+  abrirModalItem();
+  setTimeout(() => {
+    const set = (sel, val) => { const el=$(sel); if(el && val!=null) el.value=val; };
+    set('item-nome', p.nome); set('item-desc', p.descricao||'');
+    set('item-cat', p.categoria||'');
+    // Se tem desconto %, o campo mostra o preço ORIGINAL (o que o dono digitou)
+    set('item-preco', p.em_promocao && p.preco_original ? p.preco_original : p.preco);
+    set('item-preco-orig', p.preco_original||'');
+    const pr = $('item-promocao'); if (pr) {
+      pr.checked = !!p.promocao;
+      const g=$('preco-orig-group'); if(g) g.style.display=p.promocao?'flex':'none';
+      const dd=$('item-desconto-percent'); if(dd) dd.value=p.desconto_percent||'0';
+      const dg=$('desconto-group'); if(dg) dg.style.display=p.promocao?'flex':'none';
+    }
+    emojiSel = p.emoji || '🍔'; renderEmojiGrid();
+    // Fotos existentes — carrega no mesmo sistema de drag 1:1
+    const fotosExist = (p.fotos_urls && p.fotos_urls.length) ? p.fotos_urls : (p.foto_url ? [p.foto_url] : []);
+    // Converte URLs existentes para Blob para entrar no mesmo array fotosFiles
+    const carregarFotosExist = async () => {
+      for (const url of fotosExist) {
+        try {
+          const resp = await fetch(url);
+          const blob = await resp.blob();
+          const ext  = url.split('.').pop().split('?')[0] || 'jpg';
+          const file = new File([blob], 'existente.' + ext, { type: blob.type });
+          file._urlExistente = url; // marca URL original para salvar sem re-upload
+          fotosFiles.push(file);
+          fotosPosX.push(50);
+          fotosPosY.push(50);
+        } catch(e) {
+          console.warn('Foto não carregou:', url, e);
+        }
+      }
+      renderFotosGrid();
+    };
+    carregarFotosExist();
+    // Botão salvar
+    const btn = document.querySelector('#modal-item .btn-primary');
+    if (btn) {
+      btn.textContent = 'Salvar alterações';
+      btn.onclick = async () => {
+        btn.disabled = true; btn.textContent = 'Salvando...';
+        try {
+          // Upload só das fotos novas; fotos existentes (com _urlExistente) reutilizam a URL
+          const fotos_urls = [];
+          for (let fi = 0; fi < fotosFiles.length; fi++) {
+            const file = fotosFiles[fi];
+            if (file._urlExistente) {
+              fotos_urls.push(file._urlExistente); // reusa URL original — sem re-upload
+            } else {
+              const url = await uploadFile('fotos', `${estab.id}/${Date.now()}_${fi}.${file.name.split('.').pop()}`, file);
+              fotos_urls.push(url);
+            }
+          }
+          const foto_url = fotos_urls[0] || null;
+          const promocao   = $('item-promocao')?.checked || false;
+          const preco_orig = parseFloat($('item-preco-orig')?.value) || null;
+          const desconto_pct_u = parseInt($('item-desconto-percent')?.value||'0');
+          const precoBase = parseFloat($('item-preco')?.value);
+          let precoFinalU = precoBase;
+          let precoOrigU = promocao ? preco_orig : null;
+          if (promocao && desconto_pct_u > 0) {
+            precoOrigU = precoBase;
+            precoFinalU = parseFloat((precoBase * (1 - desconto_pct_u / 100)).toFixed(2));
+          }
+          const { error } = await getSupa().from('produtos').update({
+            nome:         $('item-nome')?.value.trim(),
+            descricao:    $('item-desc')?.value.trim(),
+            categoria:    $('item-cat')?.value.trim().toUpperCase(),
+            preco:        precoFinalU,
+            preco_original: precoOrigU,
+            foto_url, fotos_urls, emoji: emojiSel, promocao,
+            em_promocao: promocao && desconto_pct_u > 0,
+            desconto_percent: promocao ? desconto_pct_u : 0,
+          }).eq('id', id);
+          if (error) throw new Error(error.message);
+          await renderCardapio(); fecharModal(); showToast('Item atualizado!');
+        } catch (e) { showToast(e.message,'error'); }
+        finally { btn.disabled = false; btn.textContent = 'Salvar alterações'; }
+      };
+    }
+  }, 100);
+}
+
+export async function deletarItem(id) {
+  if (!confirm('Remover este item?')) return;
+  await getSupa().from('produtos').delete().eq('id', id);
+  await renderCardapio(); showToast('Item removido.');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FRESQUINHO
+// ─────────────────────────────────────────────────────────────────────────────
+async function renderFresquinho() {
+  const estab = getEstab(); const grid = $('fresquinho-grid');
+  if (!grid || !estab) return;
+  const { data } = await getSupa().from('fresquinhos').select('*')
+    .eq('estabelecimento_id', estab.id).gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false });
+  if (!data?.length) { grid.innerHTML = `<div class="empty-state-light"><span>✨</span><p>Nenhum conteúdo ainda.</p></div>`; return; }
+  grid.innerHTML = '<div class="fresh-stories-row">' + data.map(f => {
+    const rest = new Date(f.expires_at) - new Date();
+    const h = Math.floor(rest/3600000), m = Math.floor((rest%3600000)/60000);
+    return `<div class="fresh-story-item">
+      <div class="fresh-story-thumb" onclick="abrirStoryDash('${f.url}','${f.tipo||'foto'}')">
+        ${f.tipo === 'video'           ? `<video src="${f.url}" muted playsinline loop style="width:100%;height:100%;object-fit:cover"></video>`           : `<img src="${f.url}" style="width:100%;height:100%;object-fit:cover">`}
+        <div class="fresh-overlay"></div>
+        <div class="fresh-timer-badge">⏱ ${h > 0 ? h+'h '+m+'min' : m+'min'}</div>
+      </div>
+      <button class="fresh-remove-btn" onclick="removerFresquinho('${f.id}')">🗑️</button>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+export async function postarFresquinho(event) {
+  const estab = getEstab(); const file = event.target.files[0];
+  if (!file || !estab) return;
+  if (file.size > 50 * 1024 * 1024) return showToast('Máx. 50MB','error');
+
+  const tipo = file.type.startsWith('video') ? 'video' : 'foto';
+
+  // Valida duração do vídeo (máx 30s)
+  if (tipo === 'video') {
+    const durOk = await new Promise(resolve => {
+      const v = document.createElement('video');
+      v.preload = 'metadata';
+      v.onloadedmetadata = () => resolve(30 >= v.duration);
+      v.onerror = () => resolve(true); // se não conseguir checar, deixa passar
+      v.src = URL.createObjectURL(file);
+    });
     if (!durOk) return showToast('Vídeo deve ter no máximo 30 segundos.', 'error');
   }
 
   showToast('Enviando...');
-  const url = await uploadFile('fotos', ''+estab.id+'/fresh_${Date.now()}.${file.name.split('.').pop()}', file);
+  const url = await uploadFile('fotos', `${estab.id}/fresh_${Date.now()}.${file.name.split('.').pop()}`, file);
   await getSupa().from('fresquinhos').insert({
     estabelecimento_id: estab.id, url, tipo,
     expires_at: new Date(Date.now() + 4*60*60*1000).toISOString(),
@@ -667,8 +1183,8 @@ window.abrirStoryDash = function(url, tipo) {
   o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer';
   o.onclick = () => o.remove();
   o.innerHTML = tipo === 'video'
-    ? '<video src="'+url+'" controls autoplay style="max-width:90vw;max-height:90vh;border-radius:12px"></video>'
-    : '<img src="'+url+'" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain">';
+    ? `<video src="${url}" controls autoplay style="max-width:90vw;max-height:90vh;border-radius:12px"></video>`
+    : `<img src="${url}" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain">`;
   const btn = document.createElement('button');
   btn.style.cssText = 'position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:1rem;cursor:pointer';
   btn.textContent = '✕'; btn.onclick = e => { e.stopPropagation(); o.remove(); };
@@ -718,12 +1234,12 @@ async function renderPedidos() {
     const lbl = LBL[p.status] || 'Novo';
     const ico = ICONS[p.status] || '🔔';
     const min = Math.floor((Date.now() - new Date(p.created_at)) / 60000);
-    const tempoStr = min < 1 ? 'agora' : min < 60 ? ''+min+'min' : ''+Math.floor(min/60)+'h${min%60>0?min%60+'min':''}';
-    const itensStr = Array.isArray(p.itens) ? p.itens.map(i=>''+i.qtd+'x ${i.nome}').join(' · ') : '';
+    const tempoStr = min < 1 ? 'agora' : min < 60 ? `${min}min` : `${Math.floor(min/60)}h${min%60>0?min%60+'min':''}`;
+    const itensStr = Array.isArray(p.itens) ? p.itens.map(i=>`${i.qtd}x ${i.nome}`).join(' · ') : '';
     const totalFmt = 'R$ ' + Number(p.total||0).toFixed(2).replace('.',',');
-    const endStr   = p.endereco === 'Retirada no local' ? '🏃 Retirada' : p.endereco ? '🛵 '+p.endereco.split(',')[0]+'' : '🏃 Retirada';
+    const endStr   = p.endereco === 'Retirada no local' ? '🏃 Retirada' : p.endereco ? `🛵 ${p.endereco.split(',')[0]}` : '🏃 Retirada';
     const pgto     = p.pagamento ? p.pagamento.toUpperCase() : '';
-    return '<div class="pedido-card ped-status-'+p.status||'novo'+'">
+    return `<div class="pedido-card ped-status-${p.status||'novo'}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:10px;min-width:0">
           <div style="width:38px;height:38px;border-radius:10px;background:#f5f0eb;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">${ico}</div>
@@ -737,7 +1253,64 @@ async function renderPedidos() {
         </div>
         <span class="pedido-status ${cls}" style="white-space:nowrap;flex-shrink:0">${lbl}</span>
       </div>
-      ${itensStr ? '<div style="font-size:.82rem;color:#666;background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.5">${itensStr}</div>' : ''}       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">         <div style="display:flex;align-items:center;gap:8px">           <span style="font-size:1rem;font-weight:800;color:var(--red)">'+totalFmt+'</span>           ${pgto ? '<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700;color:#888">${pgto}</span>' : ''}         </div>         <div style="display:flex;gap:6px;flex-wrap:wrap">           '+p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id+'')">✓ Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}')">✕ Recusar</button>':''}           ${p.status==='preparo'?'<button class="btn-ped-aceitar" onclick="marcarPronto(''+p.id+'')">✅ Pronto</button>':''}           <button class="btn-ped-imprimir" onclick="verPedido('${p.id}')">🖨️ Ver</button>         </div>       </div>     </div>`;   };   if (lu) lu.innerHTML = pedHoje.length ? pedHoje.slice(0,3).map(cardHtml).join('') : '<div class="empty-state-light"><span>🛵</span><p>Nenhum pedido ainda.</p></div>';   if (td) td.innerHTML = pedidos.length ? pedidos.map(cardHtml).join('') : '<div class="empty-state-light"><span>📋</span><p>Nenhum pedido ainda.</p></div>'; }  function cardNovoHTML(p) {   const itens = Array.isArray(p.itens) ? p.itens.map(i=>''+i.qtd+'x ${i.nome}').join(', ') : '';   return '<div class="pedido-novo-card" id="pnc-'+p.id+'">     <div class="pnc-id">#${p.id.slice(-4).toUpperCase()}</div>     <div class="pnc-cliente">${p.cliente_nome||'Cliente'}</div>     <div class="pnc-total">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>     <div style="font-size:0.72rem;color:#888;margin-bottom:8px">${itens}</div>     <div class="pnc-actions">       <button class="btn-aceitar" onclick="aceitarPedido('${p.id}')">Aceitar</button>       <button class="btn-recusar" onclick="recusarPedido('${p.id}')">Recusar</button>     </div>     <button class="btn-ver-ped" onclick="verPedido('${p.id}')">Ver detalhes</button>   </div>'; }  function atualizarBadgePedidos() {   const lista = $('pedidos-novos-lista');   const qtd   = lista ? lista.querySelectorAll('.pedido-novo-card').length : 0;   const badge = $('badge-pedidos');   const count = $('novos-count');   if (badge)  { badge.textContent = qtd; badge.classList.toggle('show', qtd > 0); }   if (count) count.textContent = qtd; }  function removerCardNovo(id) {   const card = $('pnc-'+id+''); if (!card) return;   card.style.transition = 'opacity 0.3s,transform 0.3s';   card.style.opacity = '0'; card.style.transform = 'scale(0.8)';   setTimeout(() => {     card.remove(); atualizarBadgePedidos();     const lista = $('pedidos-novos-lista');     if (lista && !lista.querySelector('.pedido-novo-card'))       lista.innerHTML = '<div style="color:#bbb;font-size:0.82rem;margin:auto">Nenhum pedido novo no momento</div>';   }, 300); }  window.aceitarPedido = async function(id) {   pararNotif();   // Busca o pedido para saber o tipo antes de aceitar   const { data: ped } = await getSupa().from('pedidos').select('endereco').eq('id', id).maybeSingle();
+      ${itensStr ? `<div style="font-size:.82rem;color:#666;background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.5">${itensStr}</div>` : ''}
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:1rem;font-weight:800;color:var(--red)">${totalFmt}</span>
+          ${pgto ? `<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700;color:#888">${pgto}</span>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}')">✓ Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}')">✕ Recusar</button>`:''}
+          ${p.status==='preparo'?`<button class="btn-ped-aceitar" onclick="marcarPronto('${p.id}')">✅ Pronto</button>`:''}
+          <button class="btn-ped-imprimir" onclick="verPedido('${p.id}')">🖨️ Ver</button>
+        </div>
+      </div>
+    </div>`;
+  };
+  if (lu) lu.innerHTML = pedHoje.length ? pedHoje.slice(0,3).map(cardHtml).join('') : '<div class="empty-state-light"><span>🛵</span><p>Nenhum pedido ainda.</p></div>';
+  if (td) td.innerHTML = pedidos.length ? pedidos.map(cardHtml).join('') : '<div class="empty-state-light"><span>📋</span><p>Nenhum pedido ainda.</p></div>';
+}
+
+function cardNovoHTML(p) {
+  const itens = Array.isArray(p.itens) ? p.itens.map(i=>`${i.qtd}x ${i.nome}`).join(', ') : '';
+  return `<div class="pedido-novo-card" id="pnc-${p.id}">
+    <div class="pnc-id">#${p.id.slice(-4).toUpperCase()}</div>
+    <div class="pnc-cliente">${p.cliente_nome||'Cliente'}</div>
+    <div class="pnc-total">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
+    <div style="font-size:0.72rem;color:#888;margin-bottom:8px">${itens}</div>
+    <div class="pnc-actions">
+      <button class="btn-aceitar" onclick="aceitarPedido('${p.id}')">Aceitar</button>
+      <button class="btn-recusar" onclick="recusarPedido('${p.id}')">Recusar</button>
+    </div>
+    <button class="btn-ver-ped" onclick="verPedido('${p.id}')">Ver detalhes</button>
+  </div>`;
+}
+
+function atualizarBadgePedidos() {
+  const lista = $('pedidos-novos-lista');
+  const qtd   = lista ? lista.querySelectorAll('.pedido-novo-card').length : 0;
+  const badge = $('badge-pedidos');
+  const count = $('novos-count');
+  if (badge)  { badge.textContent = qtd; badge.classList.toggle('show', qtd > 0); }
+  if (count) count.textContent = qtd;
+}
+
+function removerCardNovo(id) {
+  const card = $(`pnc-${id}`); if (!card) return;
+  card.style.transition = 'opacity 0.3s,transform 0.3s';
+  card.style.opacity = '0'; card.style.transform = 'scale(0.8)';
+  setTimeout(() => {
+    card.remove(); atualizarBadgePedidos();
+    const lista = $('pedidos-novos-lista');
+    if (lista && !lista.querySelector('.pedido-novo-card'))
+      lista.innerHTML = '<div style="color:#bbb;font-size:0.82rem;margin:auto">Nenhum pedido novo no momento</div>';
+  }, 300);
+}
+
+window.aceitarPedido = async function(id) {
+  pararNotif();
+  // Busca o pedido para saber o tipo antes de aceitar
+  const { data: ped } = await getSupa().from('pedidos').select('endereco').eq('id', id).maybeSingle();
   const isMesa = ped && (ped.endereco||'').startsWith('No local');
 
   const { error } = await getSupa().from('pedidos').update({ status:'preparo' }).eq('id', id);
@@ -781,25 +1354,51 @@ window.verPedido = async function(id) {
   const itens = Array.isArray(p.itens) ? p.itens : [];
   const body  = $('modal-pedido-body');
   if (!body) return;
-  body.innerHTML = '
+  body.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:12px">
       <div style="display:flex;justify-content:space-between">
-        <strong>#'+p.id.slice(-4).toUpperCase()+'</strong>
+        <strong>#${p.id.slice(-4).toUpperCase()}</strong>
         <span class="pedido-status status-${p.status||'novo'}">${{novo:'NOVO',preparo:'PREPARO',pronto:'PRONTO',recusado:'RECUSADO'}[p.status]||'NOVO'}</span>
       </div>
       <div><b>Cliente:</b> ${p.cliente_nome||'-'}</div>
       <div><b>WhatsApp:</b> ${p.cliente_whats||'-'}</div>
       <div><b>Entrega:</b> ${p.endereco||'Retirada no local'}</div>
-      ${p.observacao?'<div><b>Obs:</b> ${p.observacao}</div>':''}       <hr style="border:none;border-top:1px solid var(--border)">       '+itens.map(i=>`<div style="display:flex;justify-content:space-between"><span>${i.qtd+'x ${i.nome}</span><span>R$ ${(i.preco*i.qtd).toFixed(2).replace('.',',')}</span></div>').join('')}       <hr style="border:none;border-top:1px solid var(--border)">       <div style="display:flex;justify-content:space-between;font-weight:800"><span>Total</span><span>R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</span></div>       <div style="display:flex;gap:8px;margin-top:8px">         ${p.status==='novo'?'<button class="btn-ped-aceitar" onclick="aceitarPedido(''+p.id+'');fecharModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}');fecharModalPedido()">Recusar</button>':''}         <button class="btn-ped-imprimir" onclick="imprimirPedido('${p.id}')">🖨️ Imprimir</button>       </div>     </div>`;   $('modal-pedido').classList.add('open'); }; window.fecharModalPedido = () => $('modal-pedido')?.classList.remove('open');  window.imprimirPedido = async function(id) {   const { data: p } = await getSupa().from('pedidos').select('*').eq('id', id).maybeSingle();   if (!p) return;   const estab = getEstab();   const itens = Array.isArray(p.itens) ? p.itens : [];   const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');   const subtotal  = itens.reduce((s,i) => s + (i.preco||0)*(i.qtd||1), 0);   const taxa      = Number(p.taxa_entrega||0);   const total     = Number(p.total||0);   const agora     = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});   const isEntrega = p.endereco && p.endereco !== 'Retirada no local' && !p.endereco.startsWith('No local');   const cnpjRaw   = (estab?.cnpj || '').replace(/\D/g,'');   const cnpjFmt   = cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+      ${p.observacao?`<div><b>Obs:</b> ${p.observacao}</div>`:''}
+      <hr style="border:none;border-top:1px solid var(--border)">
+      ${itens.map(i=>`<div style="display:flex;justify-content:space-between"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco*i.qtd).toFixed(2).replace('.',',')}</span></div>`).join('')}
+      <hr style="border:none;border-top:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;font-weight:800"><span>Total</span><span>R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</span></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}');fecharModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}');fecharModalPedido()">Recusar</button>`:''}
+        <button class="btn-ped-imprimir" onclick="imprimirPedido('${p.id}')">🖨️ Imprimir</button>
+      </div>
+    </div>`;
+  $('modal-pedido').classList.add('open');
+};
+window.fecharModalPedido = () => $('modal-pedido')?.classList.remove('open');
+
+window.imprimirPedido = async function(id) {
+  const { data: p } = await getSupa().from('pedidos').select('*').eq('id', id).maybeSingle();
+  if (!p) return;
+  const estab = getEstab();
+  const itens = Array.isArray(p.itens) ? p.itens : [];
+  const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const subtotal  = itens.reduce((s,i) => s + (i.preco||0)*(i.qtd||1), 0);
+  const taxa      = Number(p.taxa_entrega||0);
+  const total     = Number(p.total||0);
+  const agora     = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const isEntrega = p.endereco && p.endereco !== 'Retirada no local' && !p.endereco.startsWith('No local');
+  const cnpjRaw   = (estab?.cnpj || '').replace(/\D/g,'');
+  const cnpjFmt   = cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
   const insta     = estab?.instagram ? '@' + estab.instagram : '';
   const ttok      = estab?.tiktok   ? '@' + estab.tiktok   : '';
   const msgFim    = estab?.msg_nota || 'Obrigado pela preferencia!';
   const pgto      = (p.pagamento || 'Nao informado').toUpperCase();
   const numPed    = '#' + p.id.slice(-6).toUpperCase();
 
-  const html = '<!DOCTYPE html><html><head>
+  const html = `<!DOCTYPE html><html><head>
 <meta charset="UTF-8">
-<title>Nota '+numPed+'</title>
+<title>Nota ${numPed}</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -962,10 +1561,746 @@ window.verPedido = async function(id) {
 
 <!-- ====== CABEÇALHO ====== -->
 <div class="center">
-  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
+  <div class="logo">PEDI<span class="logo-red">UAI</span></div>
   <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
   <div class="info-sm">
-    ${estab?.endereco ? '${estab.endereco}<br>' : ''}     '+estab?.telefone_contato ? `Tel: ${estab.telefone_contato+'<br>' : ''}     ${estab?.whatsapp ? 'WhatsApp: '+estab.whatsapp+'<br>' : ''}     ${cnpjFmt ? 'CNPJ: '+cnpjFmt+'' : ''}   </div> </div>  <hr class="sep-thick">  <!-- ====== NÚMERO DO PEDIDO ====== --> <div class="center">   <div class="num-ped">${numPed}</div>   <div class="badge">${isEntrega ? 'ENTREGA' : 'RETIRADA'}</div>   <div class="info-sm" style="margin-top:4px">${agora}</div> </div>  <hr class="sep-dash">  <!-- ====== DADOS DO CLIENTE ====== --> <div class="sec">Dados do Cliente</div>  <div class="linha">   <span class="label">Nome</span>   <span class="val">${p.cliente_nome || '-'}</span> </div> ${p.cliente_whats ? '<div class="linha"><span class="label">WhatsApp</span><span class="val">'+p.cliente_whats+'</span></div>' : ''} ${isEntrega ? ' <div class="linha" style="margin-top:3px">   <span class="label">Entrega&nbsp;</span>   <span class="val" style="text-align:right">'+p.endereco+'</span> </div>' : ''}  <!-- OBSERVAÇÃO --> ${p.observacao ? ' <div class="obs">   <div class="obs-titulo">Observacao</div>   '+p.observacao+' </div>' : ''}  <hr class="sep-dash">  <!-- ====== ITENS ====== --> <div class="sec">Itens do Pedido</div>  ${itens.map(i => {   const sub = ((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');   const adds = Array.isArray(i.adicionais) && i.adicionais.length     ? i.adicionais.map(a => '<div class="adicional">+ '+a.nome+' (R$ ${Number(a.preco||0).toFixed(2).replace('.',',')})</div>').join('')     : '';   return '<div class="item">     <span class="item-qtd">'+i.qtd||1+'x</span>     <span class="item-nome">${i.nome}</span>     <span class="item-val">R$ ${sub}</span>   </div>${adds}'; }).join('')}  <hr class="sep-dash">  <!-- ====== TOTAIS ====== --> ${subtotal !== total - taxa ? '<div class="subtotal-linha"><span>Subtotal</span><span>'+fmtR(subtotal)+'</span></div>' : ''} ${taxa > 0 ? '<div class="subtotal-linha"><span>Entrega</span><span>'+fmtR(taxa)+'</span></div>' : ''}  <div class="total-bloco">   <span class="total-label">TOTAL</span>   <span class="total-val">${fmtR(total)}</span> </div>  <div class="pgto-linha">   <span>Pagamento</span>   <span>${pgto}</span> </div>  ${(insta || ttok || estab?.site) ? ' <hr class="sep-dash"> <div class="social">   '+insta ? 'Instagram: <b>'+insta+'</b><br>' : ''}   ${ttok  ? 'TikTok: <b>'+ttok+'</b><br>'    : ''}   ${estab?.site ? '<span>'+estab.site+'</span>' : ''} </div>' : ''}  <hr class="sep-dash"> <div class="msg-final">'+msgFim+'</div> <div class="rodape">PEDIWAY · Plataforma de delivery independente</div>  </body></html>';    const w = window.open('', '_blank', 'width=340,height=750');   if (!w) { alert('Permita pop-ups para imprimir.'); return; }   w.document.write(html);   w.document.close();   w.focus();   setTimeout(() => w.print(), 600); };  window.buscarPedidos = function(termo) {   const t = (termo||'').toLowerCase();   document.querySelectorAll('#todos-pedidos .pedido-card').forEach(c => {     c.style.display = (!t || c.textContent.toLowerCase().includes(t)) ? '' : 'none';   }); };  // ───────────────────────────────────────────────────────────────────────────── // REALTIME + POLLING (pedidos) // ───────────────────────────────────────────────────────────────────────────── let _notifLoop = null;  function tocarNotif() {   if (_audioAtual) {     _audioAtual.pause();     _audioAtual.currentTime = 0;   }   try {     const a = new Audio('/sounds/new-order.mp3');     a.volume = 0.85;     _audioAtual = a;     a.play().catch(() => {       // Fallback: tenta o arquivo antigo       const b = new Audio('/notificacao.mp3');       b.volume = 0.85; _audioAtual = b;       b.play().catch(()=>{});     });   } catch(e) {} } function pararNotif() {   clearTimeout(_notifLoop);   _notifLoop = null;   if (_audioAtual) { _audioAtual.pause(); _audioAtual.currentTime = 0; _audioAtual = null; } } function notifLoop(id) {   tocarNotif();   // Quando o som terminar, aguarda 5s e toca de novo se o pedido ainda está aguardando   if (_audioAtual) {     _audioAtual.onended = () => {       _notifLoop = setTimeout(() => {         if (document.getElementById('pnc-'+id+'')) notifLoop(id);       }, 5000);     };   } else {     _notifLoop = setTimeout(() => {       if (document.getElementById('pnc-'+id+'')) notifLoop(id);     }, 5000);   } }  function iniciarRealtime() {   const estab = getEstab(); if (!estab || estab.id === 'demo') return;    // Remove canal anterior limpo   if (realtimeSub) {     try { getSupa().removeChannel(realtimeSub); } catch(e) {}     realtimeSub = null;   }    const channelName = 'pedidos-' + estab.id;    realtimeSub = getSupa()     .channel(channelName)     .on(       'postgres_changes',       { event: 'INSERT', schema: 'public', table: 'pedidos' },       async payload => {         const p = payload.new;         if (!p || !p.id) return;         if (p.estabelecimento_id !== estab.id) return;          // ── Pedido de mesa (No local) ──────────────────────────────         if (p.endereco && p.endereco.startsWith('No local')) {           const parts = p.endereco.split('—');           if (parts.length >= 2) {             const key = parts[1].trim();             if (!_pedidosMesas[key]) _pedidosMesas[key] = [];             if (!_pedidosMesas[key].find(x => x.id === p.id)) {               _pedidosMesas[key].push(p);               renderMesas();               showToast('🍽️ Novo pedido na ' + key + '!');             }           }         }          // ── Pedido de mesa: atualiza visão geral, financeiro e mesas         if ((p.endereco||'').startsWith('No local')) {           await carregarPedidosMesas(); renderMesas();           await renderPedidos();           if (document.querySelector('#tab-financeiro.active') ||               document.querySelector('[data-tab="financeiro"].active')) {             await carregarFinanceiro();           }           return;         }         // ── Pedido normal (delivery/retirada) — aparece na aba Pedidos ─         if (pedidosConhecidos.has(p.id)) return;         pedidosConhecidos.add(p.id);         const lista = $('pedidos-novos-lista');         if (lista) {           const ph = lista.querySelector('[data-placeholder]');           if (ph) ph.remove();           lista.insertAdjacentHTML('afterbegin', cardNovoHTML(p));           atualizarBadgePedidos();           notifLoop(p.id);         }       }     )     .on(       'postgres_changes',       { event: 'UPDATE', schema: 'public', table: 'pedidos' },       async payload => {         const p = payload.new;         if (!p || p.estabelecimento_id !== estab.id) return;         await renderPedidos(); // atualiza visão geral (stat-pedidos, stat-faturamento)         // Financeiro em tempo real — recarrega se a aba estiver ativa         if (document.querySelector('#tab-financeiro.active') ||             document.querySelector('[data-tab="financeiro"].active')) {           await carregarFinanceiro();         }         // Se é pedido de mesa, re-sincroniza mesas         if ((p.endereco||'').startsWith('No local')) {           await carregarPedidosMesas();           renderMesas();           window.renderHistoricoMesas();         }       }     )     .subscribe((status) => {       if (status === 'SUBSCRIBED') {         console.log('[Realtime] Conectado ao canal:', channelName);       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {         console.warn('[Realtime] Erro, tentando reconectar em 5s...');         setTimeout(iniciarRealtime, 5000);       }     });    // Polling de segurança a cada 5s   clearInterval(pollingId);   pollingId = setInterval(async () => {     const est = getEstab(); if (!est || est.id === 'demo') return;     const { data } = await getSupa().from('pedidos').select('id,cliente_nome,itens,total,status,created_at,endereco')       .eq('estabelecimento_id', est.id).eq('status','novo').order('created_at',{ascending:false}).limit(20);     if (!data) return;     data.forEach(p => {       if ((p.endereco||'').startsWith('No local')) return; // mesa → aba Comandas       if (!pedidosConhecidos.has(p.id)) {         pedidosConhecidos.add(p.id);         const lista = $('pedidos-novos-lista');         if (lista) {           const ph = lista.querySelector('div[style]');           if (ph && ph.textContent.includes('Nenhum')) ph.remove();           lista.insertAdjacentHTML('afterbegin', cardNovoHTML(p));           atualizarBadgePedidos();           notifLoop(p.id);         }       }     });   }, 5000); }   // ───────────────────────────────────────────────────────────────────────────── // FINANCEIRO DO ESTABELECIMENTO // ───────────────────────────────────────────────────────────────────────────── let _finPeriodo = 'hoje'; let _finPedidos = [];  async function carregarFinanceiro() {   const estab = getEstab(); if (!estab || estab.id === 'demo') return;   const { data } = await getSupa()     .from('pedidos').select('*')     .eq('estabelecimento_id', estab.id)     .order('created_at', { ascending: false })     .limit(500);   // Financeiro inclui TODOS os pedidos: delivery + mesas/comandas   _finPedidos = (data || []);   renderFinanceiro(); }  function filtroPedidosFin() {   const now = new Date();   return _finPedidos.filter(p => {     if (p.status === 'recusado') return false;     const d = new Date(p.created_at);     if (_finPeriodo === 'hoje')   return d.toDateString() === now.toDateString();     if (_finPeriodo === 'semana') { const s=new Date(now); s.setDate(s.getDate()-7); return d>=s; }     if (_finPeriodo === 'mes')    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();     return true;   }); }  function renderFinanceiro() {   const peds = filtroPedidosFin();   const fat  = peds.reduce((s,p)=>s+Number(p.total||0),0);   const taxa = peds.reduce((s,p)=>s+Number(p.taxa_entrega||0),0);   const tick = peds.length ? fat/peds.length : 0;   const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');    const se = id => document.getElementById(id);   if (se('fin-fat-est'))  se('fin-fat-est').textContent  = fmtR(fat);   if (se('fin-qtd-est'))  se('fin-qtd-est').textContent  = peds.length;   if (se('fin-tick-est')) se('fin-tick-est').textContent = fmtR(tick);   if (se('fin-taxa-est')) se('fin-taxa-est').textContent = fmtR(taxa);    // ── Formas de Pagamento (normaliza "No local" legado) ──   const pm = {};   peds.forEach(p => {     let k = (p.pagamento||'Não informado').toUpperCase();     if (k === 'NO LOCAL') k = 'NÃO INFORMADO';     pm[k] = (pm[k]||0) + Number(p.total||0);   });   const totPag = Object.values(pm).reduce((s,v)=>s+v,0)||1;   const pagsEl = se('fin-pags-est');   if (pagsEl) pagsEl.innerHTML = Object.entries(pm).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{     const pct = Math.round(v/totPag*100);     return '<div class="pag-row">       <span class="pag-label">'+k+'</span>       <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pct}%"></div></div>       <span class="pag-val">${fmtR(v)}</span>       <span class="pag-pct">${pct}%</span>     </div>';   }).join('') || '<div style="color:#aaa;font-size:.82rem;text-align:center;padding:20px">Sem pedidos no período</div>';    // ── Origem: Mesas vs Delivery — mesmo padrão visual das barras ──   const pedsMesa     = peds.filter(p=>(p.endereco||'').startsWith('No local'));   const pedsDelivery = peds.filter(p=>!(p.endereco||'').startsWith('No local'));   const fatMesa      = pedsMesa.reduce((s,p)=>s+Number(p.total||0),0);   const fatDelivery  = pedsDelivery.reduce((s,p)=>s+Number(p.total||0),0);   const totOrigem    = (fatMesa + fatDelivery) || 1;   const pctMesa      = Math.round(fatMesa / totOrigem * 100);   const pctDelivery  = Math.round(fatDelivery / totOrigem * 100);   const origemEl     = se('fin-origem-est');   if (origemEl) origemEl.innerHTML = '     <div class="pag-row">       <span class="pag-label">🍽️ Mesas</span>       <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:'+pctMesa+'%;background:#8E44AD"></div></div>       <span class="pag-val" style="color:#8E44AD">${fmtR(fatMesa)}</span>       <span class="pag-pct">${pctMesa}%</span>     </div>     <div class="pag-row">       <span class="pag-label">🛵 Delivery</span>       <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pctDelivery}%;background:#2980B9"></div></div>       <span class="pag-val" style="color:#2980B9">${fmtR(fatDelivery)}</span>       <span class="pag-pct">${pctDelivery}%</span>     </div>';    // ── Histórico ──   const histEl = se('fin-hist-est');   if (histEl) histEl.innerHTML = !peds.length     ? '<tr><td colspan="6" style="text-align:center;padding:24px;color:#aaa;font-size:0.82rem">Nenhum pedido no período</td></tr>'     : peds.slice(0,100).map(p => {         const dt = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});         const fmtV = v => 'R$ '+Number(v||0).toFixed(2).replace('.',',');         const isMesa   = (p.endereco||'').startsWith('No local');         const origem   = isMesa ? '🍽️ Mesa' : '🛵 Delivery';         const endCurto = isMesa           ? (p.endereco||'').replace('No local — ','')           : (p.endereco||'Retirada').length > 18 ? (p.endereco||'').slice(0,18)+'…' : (p.endereco||'Retirada');         let pgto = (p.pagamento||'—').toUpperCase();         if (pgto === 'NO LOCAL') pgto = '—';         return '<tr>           <td style="font-weight:800;color:var(--red)">#'+p.id.slice(-4).toUpperCase()+'</td>           <td style="font-weight:600">${p.cliente_nome||'—'}</td>           <td style="font-size:.72rem;color:#aaa" title="${p.endereco||''}">${origem} · ${endCurto}</td>           <td><span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.68rem;font-weight:700">${pgto}</span></td>           <td style="text-align:right;font-weight:800;color:var(--red)">${fmtV(p.total)}</td>           <td style="color:#aaa;font-size:.7rem;white-space:nowrap">${dt}</td>         </tr>';       }).join(''); }  function setFinPeriodo(p, btn) {   _finPeriodo = p;   ['fin-hoje','fin-semana','fin-mes','fin-tudo'].forEach(id => {     const el = document.getElementById(id);     if (el) el.classList.remove('ativo');   });   if (btn) btn.classList.add('ativo');   renderFinanceiro(); }  function exportarCSV() {   const estab  = getEstab();   const linhas = [['#','Cliente','WhatsApp','Status','Pagamento','Total','Taxa Entrega','Data']];   _finPedidos.forEach(p => {     linhas.push([       p.id.slice(-4).toUpperCase(),       p.cliente_nome||'',       p.cliente_whats||'',       p.status,       p.pagamento||'',       Number(p.total||0).toFixed(2),       Number(p.taxa_entrega||0).toFixed(2),       new Date(p.created_at).toLocaleString('pt-BR'),     ]);   });   const csv = linhas.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');   const a   = document.createElement('a');   a.href    = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);   a.download= 'pedidos-'+estab?.slug||'loja'+'-${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.csv';   a.click(); }  function exportarPDF() {   const estab = getEstab();   const peds  = filtroPedidosFin();   const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');   const fat   = peds.reduce((s,p)=>s+Number(p.total||0),0);   const taxa  = peds.reduce((s,p)=>s+Number(p.taxa_entrega||0),0);   const tick  = peds.length ? fat/peds.length : 0;   const periodoLabel = {hoje:'Hoje',semana:'Esta semana',mes:'Este mês',tudo:'Todo o período'}[_finPeriodo]||'';   const agora = new Date().toLocaleString('pt-BR');    // Breakdown de pagamentos   const pm = {};   peds.forEach(p => {     const k = (p.pagamento||'Não informado').toUpperCase();     if (!pm[k]) pm[k] = { q:0, f:0 };     pm[k].q++; pm[k].f += Number(p.total||0);   });   const totPag = Object.values(pm).reduce((s,v)=>s+v.f,0)||1;   const pagRows = Object.entries(pm).sort((a,b)=>b[1].f-a[1].f)     .map(([k,d]) => '<tr><td>'+k+'</td><td>'+d.q+'</td><td style="text-align:right">'+fmtR(d.f)+'</td><td style="text-align:right">'+Math.round(d.f/totPag*100)+'%</td></tr>')     .join('');    // Linhas do histórico   const pedRows = peds.slice(0,200).map(p => {     const dt = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});     return '<tr><td style="font-weight:700">#'+p.id.slice(-4).toUpperCase()+'</td><td>'+(p.cliente_nome||'—')+'</td><td style="font-size:10px;color:#666">'+(p.endereco||'Retirada')+'</td><td>'+(p.pagamento||'—')+'</td><td style="text-align:right;font-weight:700;color:#C0392B">'+fmtR(p.total)+'</td><td style="color:#888">'+dt+'</td></tr>';   }).join('') + '<tr style="font-weight:800;background:#fdf8f5"><td colspan="4">TOTAL ('+peds.length+' pedidos)</td><td style="text-align:right;color:#16a34a">'+fmtR(fat)+'</td><td></td></tr>';    const html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório — '+(estab?.nome||'Loja')+'</title>'     + '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;padding:32px}'     + '.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;border-bottom:2px solid #C0392B;padding-bottom:16px}'     + '.logo{font-size:20px;font-weight:900}.logo span{color:#C0392B}'     + '.meta{text-align:right;font-size:11px;color:#666}'     + '.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}'     + '.card{background:#f8f5f2;border-radius:8px;padding:14px}'     + '.card-label{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}'     + '.card-val{font-size:18px;font-weight:800}.card-val.g{color:#16a34a}.card-val.r{color:#C0392B}'     + '.section{margin-bottom:20px}.section-title{font-size:11px;font-weight:800;text-transform:uppercase;color:#888;margin-bottom:10px}'     + 'table{width:100%;border-collapse:collapse}'     + 'th{background:#f0ebe4;padding:7px 10px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;color:#666}'     + 'td{padding:8px 10px;border-bottom:1px solid #ede8e0;font-size:11px}'     + 'tr:last-child td{border-bottom:none}'     + '.footer{margin-top:32px;text-align:center;font-size:10px;color:#aaa}'     + '@media print{body{padding:0}}'     + '</style></head><body>'     + '<div class="header"><div><div class="logo">PEDI<span>WAY</span></div><div style="font-size:13px;font-weight:700;margin-top:4px">'+(estab?.nome||'Estabelecimento')+'</div></div>'     + '<div class="meta"><strong style="display:block;font-size:13px;color:#1a1a1a">Relatório Financeiro</strong>Período: '+periodoLabel+'<br>Gerado em: '+agora+'</div></div>'     + '<div class="cards">'     + '<div class="card"><div class="card-label">Faturamento</div><div class="card-val g">'+fmtR(fat)+'</div></div>'     + '<div class="card"><div class="card-label">Pedidos</div><div class="card-val">'+peds.length+'</div></div>'     + '<div class="card"><div class="card-label">Ticket médio</div><div class="card-val r">'+fmtR(tick)+'</div></div>'     + '<div class="card"><div class="card-label">Taxa entrega</div><div class="card-val">'+fmtR(taxa)+'</div></div>'     + '</div>'     + '<div class="section"><div class="section-title">Por forma de pagamento</div>'     + '<table><thead><tr><th>Forma</th><th>Pedidos</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead><tbody>'+pagRows+'</tbody></table></div>'     + '<div class="section"><div class="section-title">Histórico de pedidos</div>'     + '<table><thead><tr><th>#</th><th>Cliente</th><th>Endereço</th><th>Pagamento</th><th style="text-align:right">Total</th><th>Data</th></tr></thead><tbody>'+pedRows+'</tbody></table></div>'     + '<div class="footer">Relatório gerado pelo PEDIWAY — '+agora+'</div>'     + '</body></html>';    const w = window.open('','_blank');   if (!w) { alert('Permita pop-ups para exportar o PDF.'); return; }   w.document.write(html);   w.document.close();   w.focus();   setTimeout(() => w.print(), 600); }   // ── CANCELAR PLANO ──────────────────────────────────────────────────────────── window.abrirCancelarPlano = function() {   document.getElementById('modal-cancelar-plano')?.classList.add('open'); }; window.fecharCancelarPlano = function() {   document.getElementById('modal-cancelar-plano')?.classList.remove('open'); }; window.confirmarCancelamento = async function() {   const radios = document.querySelectorAll('input[name="motivo-cancel"]');   let motivo = '';   radios.forEach(r => { if(r.checked) motivo = r.value; });   if (!motivo) return showToast('Selecione um motivo.', 'error');    const msg    = document.getElementById('cancel-msg')?.value.trim() || '';   const estab  = getEstab();   if (!estab) return;    const { error } = await getSupa().from('cancelamentos_plano').insert({     estab_id: estab.id,     motivo,     mensagem: msg || null,   });    if (error) return showToast('Erro ao registrar cancelamento.', 'error');    // Atualiza plano para basico   await getSupa().from('estabelecimentos')     .update({ plano:'basico', pagamento_status:'cancelado' })     .eq('id', estab.id);    fecharCancelarPlano();   showToast('Cancelamento registrado. Sentiremos sua falta! 😔');   setTimeout(() => initDashboard(), 1000); };  // Mostra/esconde botão cancelar baseado no plano function atualizarBotaoCancelar(estab) {   const wrap = document.getElementById('cancelar-plano-wrap');   if (wrap) wrap.style.display = (estab?.plano && estab.plano !== 'basico') ? 'block' : 'none'; }      // ═══════════════════════════════════════════════════════════ // SISTEMA DE ADICIONAIS (comanda garçom + cardápio) // ═══════════════════════════════════════════════════════════ let _adicionalProduto   = null; // produto sendo configurado let _adicionalSel       = {};   // { grupoIdx: [opcaoIdx, ...] } let _adicionalMesaKey   = null;  window.fecharAdicionais = function() {   document.getElementById('modal-adicionais')?.classList.remove('open');   document.body.style.overflow = '';   _adicionalProduto = null;   _adicionalSel = {}; };  // Chamada quando produto tem adicionais window.abrirAdicionais = function(mesaKey, prodJSON) {   const prod = JSON.parse(decodeURIComponent(prodJSON));   _adicionalProduto = prod;   _adicionalMesaKey = mesaKey;   _adicionalSel     = {};    document.getElementById('adicionais-nome').textContent  = prod.nome;   document.getElementById('adicionais-preco-base').textContent = 'R$ ' + Number(prod.preco).toFixed(2).replace('.',',');    const grupos = Array.isArray(prod.adicionais) ? prod.adicionais : [];   const el = document.getElementById('adicionais-grupos');   if (!el) return;    el.innerHTML = grupos.map((g, gi) => {     const maxTxt = g.max === 1 ? 'Escolha 1' : g.min > 0 ? 'Mín. '+g.min+', Máx. ${g.max}' : 'Até '+g.max+'';     const obrig  = g.min > 0;     return '<div class="adicional-grupo">       <div class="adicional-grupo-titulo">'+g.grupo+' ${obrig?'<span style="color:var(--red);font-size:.65rem">*obrigatório</span>':''}</div>       <div class="adicional-grupo-desc">${maxTxt}</div>       ${g.opcoes.map((o, oi) => '         <div class="adicional-opt" id="aopt-${gi}-${oi}" onclick="toggleAdicional(${gi},${oi},${g.max})">           <div class="adicional-opt-left">             <div class="adicional-opt-check">✓</div>             <span class="adicional-opt-nome">${o.nome}</span>           </div>           <span class="adicional-opt-preco">${Number(o.preco||0) > 0 ? '+R$ '+Number(o.preco).toFixed(2).replace('.',',') : 'Grátis'}</span>         </div>').join('')}       <div class="adicional-limite-aviso" id="aviso-'+gi+'">Limite de ${g.max} opções atingido</div>     </div>';   }).join('');    calcTotalAdicionais();   document.getElementById('modal-adicionais')?.classList.add('open'); };  window.toggleAdicional = function(gi, oi, max) {   if (!_adicionalSel[gi]) _adicionalSel[gi] = [];   const sel = _adicionalSel[gi];   const idx = sel.indexOf(oi);    if (idx >= 0) {     // Deseleciona     sel.splice(idx, 1);     document.getElementById('aopt-'+gi+'-'+oi)?.classList.remove('sel');   } else {     if (sel.length >= max) {       // Atingiu limite       document.getElementById('aviso-'+gi)?.classList.add('show');       setTimeout(()=>document.getElementById('aviso-'+gi)?.classList.remove('show'), 2000);       return;     }     sel.push(oi);     document.getElementById('aopt-'+gi+'-'+oi)?.classList.add('sel');   }   calcTotalAdicionais(); };  function calcTotalAdicionais() {   if (!_adicionalProduto) return;   const grupos = Array.isArray(_adicionalProduto.adicionais) ? _adicionalProduto.adicionais : [];   let extra = 0;   Object.entries(_adicionalSel).forEach(([gi, ois]) => {     ois.forEach(oi => {       extra += Number(grupos[gi]?.opcoes?.[oi]?.preco || 0);     });   });   const total = Number(_adicionalProduto.preco) + extra;   const el = document.getElementById('adicionais-total');   if (el) el.textContent = 'R$ ' + total.toFixed(2).replace('.',','); }  window.confirmarAdicionais = function() {   if (!_adicionalProduto || !_adicionalMesaKey) return;   const grupos  = Array.isArray(_adicionalProduto.adicionais) ? _adicionalProduto.adicionais : [];    // Valida obrigatórios   for (let gi = 0; gi < grupos.length; gi++) {     const g = grupos[gi];     const qtdSel = (_adicionalSel[gi]||[]).length;     if (g.min > 0 && qtdSel < g.min) {       showToast('Escolha pelo menos ' + g.min + ' opção em "' + g.grupo + '"', 'error');       return;     }   }    // Monta descrição dos adicionais selecionados   const descAdic = [];   Object.entries(_adicionalSel).forEach(([gi, ois]) => {     ois.forEach(oi => descAdic.push(grupos[gi]?.opcoes?.[oi]?.nome));   });   let extra = 0;   Object.entries(_adicionalSel).forEach(([gi, ois]) => {     ois.forEach(oi => { extra += Number(grupos[gi]?.opcoes?.[oi]?.preco || 0); });   });    const nomeCompleto = descAdic.length ? _adicionalProduto.nome + ' (' + descAdic.join(', ') + ')' : _adicionalProduto.nome;   const precoFinal   = Number(_adicionalProduto.preco) + extra;    addItemComanda(_adicionalMesaKey, _adicionalProduto.id + '_' + Date.now(), nomeCompleto, precoFinal, _adicionalProduto.emoji||'🍽️');   window.fecharAdicionais();   showToast('Adicionado! ✅'); };  // ── Imprimir comanda da mesa ────────────────────────────────────────────────── window.imprimirComanda = function() {   if (!_mesaAtual) return;   const estab = getEstab();   const peds  = _pedidosMesas[_mesaAtual] || [];   const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');   const subtotal = peds.reduce((s,p) => s + Number(p.total||0), 0);   const agora = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});   const cnpjRaw = (estab?.cnpj || '').replace(/\D/g,'');   const cnpjFmt = cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');   const insta   = estab?.instagram ? '@' + estab.instagram : '';   const msgFim  = estab?.msg_nota || 'Obrigado pela preferencia!';    // Taxa de serviço — respeita se o garçom removeu   const taxaAtiva = estab?.taxa_servico === true && !_taxaServicoRemovida;   const percServico = Number(estab?.perc_servico || 10);   const valorTaxa = taxaAtiva ? subtotal * (percServico / 100) : 0;   const total = subtotal + valorTaxa;    // Agrupa por nome   const grupos = {};   peds.forEach(p => {     const nm = p.cliente_nome || _mesaAtual;     if (!grupos[nm]) grupos[nm] = [];     grupos[nm].push(p);   });    const linhaTaxa = taxaAtiva ? '   <div class="taxa-row">     <span>Subtotal</span><span>'+fmtR(subtotal)+'</span>   </div>   <div class="taxa-row">     <span>Taxa de serviço (${percServico}%)</span><span>${fmtR(valorTaxa)}</span>   </div>' : '';    const html = '<!DOCTYPE html><html><head> <meta charset="UTF-8"> <title>Comanda '+_mesaAtual+'</title> <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet"> <style>   * { margin:0; padding:0; box-sizing:border-box; }   body {     font-family: 'Poppins', Arial, sans-serif;     font-size: 13px;     font-weight: 400;     color: #000;     background: #fff;     width: 300px;     max-width: 300px;     margin: 0 auto;     padding: 14px 10px;   }   * { max-width: 100%; word-break: break-word; }   .center  { text-align: center; }   .logo    { font-size: 18px; font-weight: 900; letter-spacing: .06em; }   .logo-red { color: #C0392B; }   .empresa { font-size: 13px; font-weight: 700; margin-top: 2px; }   .info-sm { font-size: 10px; font-weight: 400; color: #444; line-height: 1.6; margin-top: 3px; }   .sep-dash  { border: none; border-top: 1px dashed #888; margin: 8px 0; }   .sep-thick { border: none; border-top: 3px solid #000; margin: 8px 0; }   .mesa-bloco {     background: #000; color: #fff;     border-radius: 6px; padding: 10px 8px 8px;     text-align: center; margin: 6px 0;   }   .mesa-lbl { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #aaa; }   .mesa-num { font-size: 38px; font-weight: 900; line-height: 1.1; }   .hora     { font-size: 11px; font-weight: 400; color: #888; text-align: center; }   .pessoa-bloco { margin-bottom: 10px; }   .pessoa-nome {     display: flex; align-items: center; gap: 8px;     background: #f5f5f5; border-radius: 4px;     padding: 5px 8px; margin-bottom: 4px;   }   .pessoa-avatar {     width: 26px; height: 26px; border-radius: 50%;     background: #C0392B; color: #fff;     font-size: 12px; font-weight: 900;     display: flex; align-items: center; justify-content: center;     flex-shrink: 0;   }   .pessoa-label { font-size: 13px; font-weight: 700; }   .item {     display: flex; justify-content: space-between;     align-items: flex-start; gap: 6px;     font-size: 12px; font-weight: 400;     padding: 2px 4px;   }   .item-nome { flex: 1; }   .item-val  { flex-shrink: 0; font-weight: 700; }   .pessoa-sub {     display: flex; justify-content: flex-end;     font-size: 12px; font-weight: 700;     color: #C0392B; border-top: 1px dashed #ccc;     padding-top: 3px; margin-top: 2px;   }   .taxa-row {     display: flex; justify-content: space-between;     font-size: 12px; font-weight: 500;     padding: 3px 0; color: #444;   }   .total-row {     display: flex; justify-content: space-between;     font-size: 16px; font-weight: 900;     border-top: 3px solid #000; border-bottom: 2px solid #000;     padding: 6px 0; margin: 4px 0;   }   .total-val { color: #C0392B; }   .social { font-size: 10px; font-weight: 400; text-align: center; line-height: 1.8; color: #444; }   .msg-final { font-size: 12px; font-weight: 700; text-align: center; margin: 5px 0 2px; }   .rodape { font-size: 9px; font-weight: 400; color: #bbb; text-align: center; letter-spacing: .04em; }   @media print {     body { padding: 4px 6px; }     @page { margin: 0; size: 80mm auto; }   } </style></head><body>  <!-- CABEÇALHO --> <div class="center">   <div class="logo">PEDI<span class="logo-red">WAY</span></div>   <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>   <div class="info-sm">     ${estab?.endereco ? estab.endereco + '<br>' : ''}     ${estab?.telefone_contato ? 'Tel: ' + estab.telefone_contato + '<br>' : ''}     ${cnpjFmt ? 'CNPJ: ' + cnpjFmt : ''}   </div> </div>  <hr class="sep-thick">  <div class="mesa-bloco">   <div class="mesa-lbl">Mesa</div>   <div class="mesa-num">${_mesaAtual.replace('Mesa ','')}</div> </div> <div class="hora">${agora}</div>  <hr class="sep-dash">  <!-- PEDIDOS POR PESSOA --> ${Object.entries(grupos).map(([nm, gpeds]) => {   const sub = gpeds.reduce((s,p) => s + Number(p.total||0), 0);   const inicial = nm.charAt(0).toUpperCase();   const itensRows = gpeds.map(p => {     const itens = Array.isArray(p.itens) ? p.itens : [];     return itens.map(i =>       '<div class="item">         <span class="item-nome">${i.qtd||1}x ${i.nome}</span>         <span class="item-val">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span>       </div>`     ).join('');   }).join('');   return '<div class="pessoa-bloco">     <div class="pessoa-nome">       <div class="pessoa-avatar">'+inicial+'</div>       <span class="pessoa-label">${nm}</span>     </div>     ${itensRows}     <div class="pessoa-sub">${fmtR(sub)}</div>   </div>'; }).join('')}  ${linhaTaxa}  <div class="total-row">   <span>TOTAL</span>   <span class="total-val">${fmtR(total)}</span> </div>  ${insta ? '<hr class="sep-dash"><div class="social">Instagram: <b>'+insta+'</b></div>' : ''} ${estab?.site ? '<div class="social">'+estab.site+'</div>' : ''}  <hr class="sep-dash"> <div class="msg-final">${msgFim}</div> <div class="rodape">PEDIWAY · Plataforma de delivery independente</div>  </body></html>`;    const w = window.open('','_blank','width=340,height=750');   if (!w) { alert('Permita pop-ups para imprimir.'); return; }
+    ${estab?.endereco ? `${estab.endereco}<br>` : ''}
+    ${estab?.telefone_contato ? `Tel: ${estab.telefone_contato}<br>` : ''}
+    ${estab?.whatsapp ? `WhatsApp: ${estab.whatsapp}<br>` : ''}
+    ${cnpjFmt ? `CNPJ: ${cnpjFmt}` : ''}
+  </div>
+</div>
+
+<hr class="sep-thick">
+
+<!-- ====== NÚMERO DO PEDIDO ====== -->
+<div class="center">
+  <div class="num-ped">${numPed}</div>
+  <div class="badge">${isEntrega ? 'ENTREGA' : 'RETIRADA'}</div>
+  <div class="info-sm" style="margin-top:4px">${agora}</div>
+</div>
+
+<hr class="sep-dash">
+
+<!-- ====== DADOS DO CLIENTE ====== -->
+<div class="sec">Dados do Cliente</div>
+
+<div class="linha">
+  <span class="label">Nome</span>
+  <span class="val">${p.cliente_nome || '-'}</span>
+</div>
+${p.cliente_whats ? `<div class="linha"><span class="label">WhatsApp</span><span class="val">${p.cliente_whats}</span></div>` : ''}
+${isEntrega ? ` <div class="linha" style="margin-top:3px">   <span class="label">Entrega&nbsp;</span>   <span class="val" style="text-align:right">${p.endereco}</span> </div>` : ''}
+
+<!-- OBSERVAÇÃO -->
+${p.observacao ? ` <div class="obs">   <div class="obs-titulo">Observacao</div>   ${p.observacao} </div>` : ''}
+
+<hr class="sep-dash">
+
+<!-- ====== ITENS ====== -->
+<div class="sec">Itens do Pedido</div>
+
+${itens.map(i => {   const sub = ((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');   const adds = Array.isArray(i.adicionais) && i.adicionais.length     ? i.adicionais.map(a => `<div class="adicional">+ ${a.nome} (R$ ${Number(a.preco||0).toFixed(2).replace('.',',')})</div>`).join('')     : '';   return `<div class="item">     <span class="item-qtd">${i.qtd||1}x</span>     <span class="item-nome">${i.nome}</span>     <span class="item-val">R$ ${sub}</span>   </div>${adds}`; }).join('')}
+
+<hr class="sep-dash">
+
+<!-- ====== TOTAIS ====== -->
+${subtotal !== total - taxa ? `<div class="subtotal-linha"><span>Subtotal</span><span>${fmtR(subtotal)}</span></div>` : ''}
+${taxa > 0 ? `<div class="subtotal-linha"><span>Entrega</span><span>${fmtR(taxa)}</span></div>` : ''}
+
+<div class="total-bloco">
+  <span class="total-label">TOTAL</span>
+  <span class="total-val">${fmtR(total)}</span>
+</div>
+
+<div class="pgto-linha">
+  <span>Pagamento</span>
+  <span>${pgto}</span>
+</div>
+
+${(insta || ttok || estab?.site) ? ` <hr class="sep-dash"> <div class="social">   ${insta ? `Instagram: <b>${insta}</b><br>` : ''}   ${ttok  ? `TikTok: <b>${ttok}</b><br>`    : ''}   ${estab?.site ? `<span>${estab.site}</span>` : ''} </div>` : ''}
+
+<hr class="sep-dash">
+<div class="msg-final">${msgFim}</div>
+<div class="rodape">PEDIUAI · Plataforma de delivery independente</div>
+
+</body></html>`;
+
+  const w = window.open('', '_blank', 'width=340,height=750');
+  if (!w) { alert('Permita pop-ups para imprimir.'); return; }
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 600);
+};
+
+window.buscarPedidos = function(termo) {
+  const t = (termo||'').toLowerCase();
+  document.querySelectorAll('#todos-pedidos .pedido-card').forEach(c => {
+    c.style.display = (!t || c.textContent.toLowerCase().includes(t)) ? '' : 'none';
+  });
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REALTIME + POLLING (pedidos)
+// ─────────────────────────────────────────────────────────────────────────────
+let _notifLoop = null;
+
+function tocarNotif() {
+  if (_audioAtual) {
+    _audioAtual.pause();
+    _audioAtual.currentTime = 0;
+  }
+  try {
+    const a = new Audio('/sounds/new-order.mp3');
+    a.volume = 0.85;
+    _audioAtual = a;
+    a.play().catch(() => {
+      // Fallback: tenta o arquivo antigo
+      const b = new Audio('/notificacao.mp3');
+      b.volume = 0.85; _audioAtual = b;
+      b.play().catch(()=>{});
+    });
+  } catch(e) {}
+}
+function pararNotif() {
+  clearTimeout(_notifLoop);
+  _notifLoop = null;
+  if (_audioAtual) { _audioAtual.pause(); _audioAtual.currentTime = 0; _audioAtual = null; }
+}
+function notifLoop(id) {
+  tocarNotif();
+  // Quando o som terminar, aguarda 5s e toca de novo se o pedido ainda está aguardando
+  if (_audioAtual) {
+    _audioAtual.onended = () => {
+      _notifLoop = setTimeout(() => {
+        if (document.getElementById(`pnc-${id}`)) notifLoop(id);
+      }, 5000);
+    };
+  } else {
+    _notifLoop = setTimeout(() => {
+      if (document.getElementById(`pnc-${id}`)) notifLoop(id);
+    }, 5000);
+  }
+}
+
+function iniciarRealtime() {
+  const estab = getEstab(); if (!estab || estab.id === 'demo') return;
+
+  // Remove canal anterior limpo
+  if (realtimeSub) {
+    try { getSupa().removeChannel(realtimeSub); } catch(e) {}
+    realtimeSub = null;
+  }
+
+  const channelName = 'pedidos-' + estab.id;
+
+  realtimeSub = getSupa()
+    .channel(channelName)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'pedidos' },
+      async payload => {
+        const p = payload.new;
+        if (!p || !p.id) return;
+        if (p.estabelecimento_id !== estab.id) return;
+
+        // ── Pedido de mesa (No local) ──────────────────────────────
+        if (p.endereco && p.endereco.startsWith('No local')) {
+          const parts = p.endereco.split('—');
+          if (parts.length >= 2) {
+            const key = parts[1].trim();
+            if (!_pedidosMesas[key]) _pedidosMesas[key] = [];
+            if (!_pedidosMesas[key].find(x => x.id === p.id)) {
+              _pedidosMesas[key].push(p);
+              renderMesas();
+              showToast('🍽️ Novo pedido na ' + key + '!');
+            }
+          }
+        }
+
+        // ── Pedido de mesa: atualiza visão geral, financeiro e mesas
+        if ((p.endereco||'').startsWith('No local')) {
+          await carregarPedidosMesas(); renderMesas();
+          await renderPedidos();
+          if (document.querySelector('#tab-financeiro.active') ||
+              document.querySelector('[data-tab="financeiro"].active')) {
+            await carregarFinanceiro();
+          }
+          return;
+        }
+        // ── Pedido normal (delivery/retirada) — aparece na aba Pedidos ─
+        if (pedidosConhecidos.has(p.id)) return;
+        pedidosConhecidos.add(p.id);
+        const lista = $('pedidos-novos-lista');
+        if (lista) {
+          const ph = lista.querySelector('[data-placeholder]');
+          if (ph) ph.remove();
+          lista.insertAdjacentHTML('afterbegin', cardNovoHTML(p));
+          atualizarBadgePedidos();
+          notifLoop(p.id);
+        }
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'pedidos' },
+      async payload => {
+        const p = payload.new;
+        if (!p || p.estabelecimento_id !== estab.id) return;
+        await renderPedidos(); // atualiza visão geral (stat-pedidos, stat-faturamento)
+        // Financeiro em tempo real — recarrega se a aba estiver ativa
+        if (document.querySelector('#tab-financeiro.active') ||
+            document.querySelector('[data-tab="financeiro"].active')) {
+          await carregarFinanceiro();
+        }
+        // Se é pedido de mesa, re-sincroniza mesas
+        if ((p.endereco||'').startsWith('No local')) {
+          await carregarPedidosMesas();
+          renderMesas();
+          window.renderHistoricoMesas();
+        }
+      }
+    )
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('[Realtime] Conectado ao canal:', channelName);
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn('[Realtime] Erro, tentando reconectar em 5s...');
+        setTimeout(iniciarRealtime, 5000);
+      }
+    });
+
+  // Polling de segurança a cada 5s
+  clearInterval(pollingId);
+  pollingId = setInterval(async () => {
+    const est = getEstab(); if (!est || est.id === 'demo') return;
+    const { data } = await getSupa().from('pedidos').select('id,cliente_nome,itens,total,status,created_at,endereco')
+      .eq('estabelecimento_id', est.id).eq('status','novo').order('created_at',{ascending:false}).limit(20);
+    if (!data) return;
+    data.forEach(p => {
+      if ((p.endereco||'').startsWith('No local')) return; // mesa → aba Comandas
+      if (!pedidosConhecidos.has(p.id)) {
+        pedidosConhecidos.add(p.id);
+        const lista = $('pedidos-novos-lista');
+        if (lista) {
+          const ph = lista.querySelector('div[style]');
+          if (ph && ph.textContent.includes('Nenhum')) ph.remove();
+          lista.insertAdjacentHTML('afterbegin', cardNovoHTML(p));
+          atualizarBadgePedidos();
+          notifLoop(p.id);
+        }
+      }
+    });
+  }, 5000);
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FINANCEIRO DO ESTABELECIMENTO
+// ─────────────────────────────────────────────────────────────────────────────
+let _finPeriodo = 'hoje';
+let _finPedidos = [];
+
+async function carregarFinanceiro() {
+  const estab = getEstab(); if (!estab || estab.id === 'demo') return;
+  const { data } = await getSupa()
+    .from('pedidos').select('*')
+    .eq('estabelecimento_id', estab.id)
+    .order('created_at', { ascending: false })
+    .limit(500);
+  // Financeiro inclui TODOS os pedidos: delivery + mesas/comandas
+  _finPedidos = (data || []);
+  renderFinanceiro();
+}
+
+function filtroPedidosFin() {
+  const now = new Date();
+  return _finPedidos.filter(p => {
+    if (p.status === 'recusado') return false;
+    const d = new Date(p.created_at);
+    if (_finPeriodo === 'hoje')   return d.toDateString() === now.toDateString();
+    if (_finPeriodo === 'semana') { const s=new Date(now); s.setDate(s.getDate()-7); return d>=s; }
+    if (_finPeriodo === 'mes')    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+    return true;
+  });
+}
+
+function renderFinanceiro() {
+  const peds = filtroPedidosFin();
+  const fat  = peds.reduce((s,p)=>s+Number(p.total||0),0);
+  const taxa = peds.reduce((s,p)=>s+Number(p.taxa_entrega||0),0);
+  const tick = peds.length ? fat/peds.length : 0;
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+
+  const se = id => document.getElementById(id);
+  if (se('fin-fat-est'))  se('fin-fat-est').textContent  = fmtR(fat);
+  if (se('fin-qtd-est'))  se('fin-qtd-est').textContent  = peds.length;
+  if (se('fin-tick-est')) se('fin-tick-est').textContent = fmtR(tick);
+  if (se('fin-taxa-est')) se('fin-taxa-est').textContent = fmtR(taxa);
+
+  // ── Formas de Pagamento (normaliza "No local" legado) ──
+  const pm = {};
+  peds.forEach(p => {
+    let k = (p.pagamento||'Não informado').toUpperCase();
+    if (k === 'NO LOCAL') k = 'NÃO INFORMADO';
+    pm[k] = (pm[k]||0) + Number(p.total||0);
+  });
+  const totPag = Object.values(pm).reduce((s,v)=>s+v,0)||1;
+  const pagsEl = se('fin-pags-est');
+  if (pagsEl) pagsEl.innerHTML = Object.entries(pm).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+    const pct = Math.round(v/totPag*100);
+    return `<div class="pag-row">
+      <span class="pag-label">${k}</span>
+      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pct}%"></div></div>
+      <span class="pag-val">${fmtR(v)}</span>
+      <span class="pag-pct">${pct}%</span>
+    </div>`;
+  }).join('') || '<div style="color:#aaa;font-size:.82rem;text-align:center;padding:20px">Sem pedidos no período</div>';
+
+  // ── Origem: Mesas vs Delivery — mesmo padrão visual das barras ──
+  const pedsMesa     = peds.filter(p=>(p.endereco||'').startsWith('No local'));
+  const pedsDelivery = peds.filter(p=>!(p.endereco||'').startsWith('No local'));
+  const fatMesa      = pedsMesa.reduce((s,p)=>s+Number(p.total||0),0);
+  const fatDelivery  = pedsDelivery.reduce((s,p)=>s+Number(p.total||0),0);
+  const totOrigem    = (fatMesa + fatDelivery) || 1;
+  const pctMesa      = Math.round(fatMesa / totOrigem * 100);
+  const pctDelivery  = Math.round(fatDelivery / totOrigem * 100);
+  const origemEl     = se('fin-origem-est');
+  if (origemEl) origemEl.innerHTML = `
+    <div class="pag-row">
+      <span class="pag-label">🍽️ Mesas</span>
+      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pctMesa}%;background:#8E44AD"></div></div>
+      <span class="pag-val" style="color:#8E44AD">${fmtR(fatMesa)}</span>
+      <span class="pag-pct">${pctMesa}%</span>
+    </div>
+    <div class="pag-row">
+      <span class="pag-label">🛵 Delivery</span>
+      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pctDelivery}%;background:#2980B9"></div></div>
+      <span class="pag-val" style="color:#2980B9">${fmtR(fatDelivery)}</span>
+      <span class="pag-pct">${pctDelivery}%</span>
+    </div>`;
+
+  // ── Histórico ──
+  const histEl = se('fin-hist-est');
+  if (histEl) histEl.innerHTML = !peds.length
+    ? '<tr><td colspan="6" style="text-align:center;padding:24px;color:#aaa;font-size:0.82rem">Nenhum pedido no período</td></tr>'
+    : peds.slice(0,100).map(p => {
+        const dt = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+        const fmtV = v => 'R$ '+Number(v||0).toFixed(2).replace('.',',');
+        const isMesa   = (p.endereco||'').startsWith('No local');
+        const origem   = isMesa ? '🍽️ Mesa' : '🛵 Delivery';
+        const endCurto = isMesa
+          ? (p.endereco||'').replace('No local — ','')
+          : (p.endereco||'Retirada').length > 18 ? (p.endereco||'').slice(0,18)+'…' : (p.endereco||'Retirada');
+        let pgto = (p.pagamento||'—').toUpperCase();
+        if (pgto === 'NO LOCAL') pgto = '—';
+        return `<tr>
+          <td style="font-weight:800;color:var(--red)">#${p.id.slice(-4).toUpperCase()}</td>
+          <td style="font-weight:600">${p.cliente_nome||'—'}</td>
+          <td style="font-size:.72rem;color:#aaa" title="${p.endereco||''}">${origem} · ${endCurto}</td>
+          <td><span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.68rem;font-weight:700">${pgto}</span></td>
+          <td style="text-align:right;font-weight:800;color:var(--red)">${fmtV(p.total)}</td>
+          <td style="color:#aaa;font-size:.7rem;white-space:nowrap">${dt}</td>
+        </tr>`;
+      }).join('');
+}
+
+function setFinPeriodo(p, btn) {
+  _finPeriodo = p;
+  ['fin-hoje','fin-semana','fin-mes','fin-tudo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('ativo');
+  });
+  if (btn) btn.classList.add('ativo');
+  renderFinanceiro();
+}
+
+function exportarCSV() {
+  const estab  = getEstab();
+  const linhas = [['#','Cliente','WhatsApp','Status','Pagamento','Total','Taxa Entrega','Data']];
+  _finPedidos.forEach(p => {
+    linhas.push([
+      p.id.slice(-4).toUpperCase(),
+      p.cliente_nome||'',
+      p.cliente_whats||'',
+      p.status,
+      p.pagamento||'',
+      Number(p.total||0).toFixed(2),
+      Number(p.taxa_entrega||0).toFixed(2),
+      new Date(p.created_at).toLocaleString('pt-BR'),
+    ]);
+  });
+  const csv = linhas.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
+  const a   = document.createElement('a');
+  a.href    = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download= `pedidos-${estab?.slug||'loja'}-${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.csv`;
+  a.click();
+}
+
+function exportarPDF() {
+  const estab = getEstab();
+  const peds  = filtroPedidosFin();
+  const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fat   = peds.reduce((s,p)=>s+Number(p.total||0),0);
+  const taxa  = peds.reduce((s,p)=>s+Number(p.taxa_entrega||0),0);
+  const tick  = peds.length ? fat/peds.length : 0;
+  const periodoLabel = {hoje:'Hoje',semana:'Esta semana',mes:'Este mês',tudo:'Todo o período'}[_finPeriodo]||'';
+  const agora = new Date().toLocaleString('pt-BR');
+
+  // Breakdown de pagamentos
+  const pm = {};
+  peds.forEach(p => {
+    const k = (p.pagamento||'Não informado').toUpperCase();
+    if (!pm[k]) pm[k] = { q:0, f:0 };
+    pm[k].q++; pm[k].f += Number(p.total||0);
+  });
+  const totPag = Object.values(pm).reduce((s,v)=>s+v.f,0)||1;
+  const pagRows = Object.entries(pm).sort((a,b)=>b[1].f-a[1].f)
+    .map(([k,d]) => '<tr><td>'+k+'</td><td>'+d.q+'</td><td style="text-align:right">'+fmtR(d.f)+'</td><td style="text-align:right">'+Math.round(d.f/totPag*100)+'%</td></tr>')
+    .join('');
+
+  // Linhas do histórico
+  const pedRows = peds.slice(0,200).map(p => {
+    const dt = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return '<tr><td style="font-weight:700">#'+p.id.slice(-4).toUpperCase()+'</td><td>'+(p.cliente_nome||'—')+'</td><td style="font-size:10px;color:#666">'+(p.endereco||'Retirada')+'</td><td>'+(p.pagamento||'—')+'</td><td style="text-align:right;font-weight:700;color:#C0392B">'+fmtR(p.total)+'</td><td style="color:#888">'+dt+'</td></tr>';
+  }).join('') + '<tr style="font-weight:800;background:#fdf8f5"><td colspan="4">TOTAL ('+peds.length+' pedidos)</td><td style="text-align:right;color:#16a34a">'+fmtR(fat)+'</td><td></td></tr>';
+
+  const html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório — '+(estab?.nome||'Loja')+'</title>'
+    + '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;padding:32px}'
+    + '.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;border-bottom:2px solid #C0392B;padding-bottom:16px}'
+    + '.logo{font-size:20px;font-weight:900}.logo span{color:#C0392B}'
+    + '.meta{text-align:right;font-size:11px;color:#666}'
+    + '.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}'
+    + '.card{background:#f8f5f2;border-radius:8px;padding:14px}'
+    + '.card-label{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}'
+    + '.card-val{font-size:18px;font-weight:800}.card-val.g{color:#16a34a}.card-val.r{color:#C0392B}'
+    + '.section{margin-bottom:20px}.section-title{font-size:11px;font-weight:800;text-transform:uppercase;color:#888;margin-bottom:10px}'
+    + 'table{width:100%;border-collapse:collapse}'
+    + 'th{background:#f0ebe4;padding:7px 10px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;color:#666}'
+    + 'td{padding:8px 10px;border-bottom:1px solid #ede8e0;font-size:11px}'
+    + 'tr:last-child td{border-bottom:none}'
+    + '.footer{margin-top:32px;text-align:center;font-size:10px;color:#aaa}'
+    + '@media print{body{padding:0}}'
+    + '</style></head><body>'
+    + '<div class="header"><div><div class="logo">PEDI<span>WAY</span></div><div style="font-size:13px;font-weight:700;margin-top:4px">'+(estab?.nome||'Estabelecimento')+'</div></div>'
+    + '<div class="meta"><strong style="display:block;font-size:13px;color:#1a1a1a">Relatório Financeiro</strong>Período: '+periodoLabel+'<br>Gerado em: '+agora+'</div></div>'
+    + '<div class="cards">'
+    + '<div class="card"><div class="card-label">Faturamento</div><div class="card-val g">'+fmtR(fat)+'</div></div>'
+    + '<div class="card"><div class="card-label">Pedidos</div><div class="card-val">'+peds.length+'</div></div>'
+    + '<div class="card"><div class="card-label">Ticket médio</div><div class="card-val r">'+fmtR(tick)+'</div></div>'
+    + '<div class="card"><div class="card-label">Taxa entrega</div><div class="card-val">'+fmtR(taxa)+'</div></div>'
+    + '</div>'
+    + '<div class="section"><div class="section-title">Por forma de pagamento</div>'
+    + '<table><thead><tr><th>Forma</th><th>Pedidos</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead><tbody>'+pagRows+'</tbody></table></div>'
+    + '<div class="section"><div class="section-title">Histórico de pedidos</div>'
+    + '<table><thead><tr><th>#</th><th>Cliente</th><th>Endereço</th><th>Pagamento</th><th style="text-align:right">Total</th><th>Data</th></tr></thead><tbody>'+pedRows+'</tbody></table></div>'
+    + '<div class="footer">Relatório gerado pelo PEDIUAI — '+agora+'</div>'
+    + '</body></html>';
+
+  const w = window.open('','_blank');
+  if (!w) { alert('Permita pop-ups para exportar o PDF.'); return; }
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 600);
+}
+
+
+// ── CANCELAR PLANO ────────────────────────────────────────────────────────────
+window.abrirCancelarPlano = function() {
+  document.getElementById('modal-cancelar-plano')?.classList.add('open');
+};
+window.fecharCancelarPlano = function() {
+  document.getElementById('modal-cancelar-plano')?.classList.remove('open');
+};
+window.confirmarCancelamento = async function() {
+  const radios = document.querySelectorAll('input[name="motivo-cancel"]');
+  let motivo = '';
+  radios.forEach(r => { if(r.checked) motivo = r.value; });
+  if (!motivo) return showToast('Selecione um motivo.', 'error');
+
+  const msg    = document.getElementById('cancel-msg')?.value.trim() || '';
+  const estab  = getEstab();
+  if (!estab) return;
+
+  const { error } = await getSupa().from('cancelamentos_plano').insert({
+    estab_id: estab.id,
+    motivo,
+    mensagem: msg || null,
+  });
+
+  if (error) return showToast('Erro ao registrar cancelamento.', 'error');
+
+  // Atualiza plano para basico
+  await getSupa().from('estabelecimentos')
+    .update({ plano:'basico', pagamento_status:'cancelado' })
+    .eq('id', estab.id);
+
+  fecharCancelarPlano();
+  showToast('Cancelamento registrado. Sentiremos sua falta! 😔');
+  setTimeout(() => initDashboard(), 1000);
+};
+
+// Mostra/esconde botão cancelar baseado no plano
+function atualizarBotaoCancelar(estab) {
+  const wrap = document.getElementById('cancelar-plano-wrap');
+  if (wrap) wrap.style.display = (estab?.plano && estab.plano !== 'basico') ? 'block' : 'none';
+}
+
+
+
+
+
+// ═══════════════════════════════════════════════════════════
+// SISTEMA DE ADICIONAIS (comanda garçom + cardápio)
+// ═══════════════════════════════════════════════════════════
+let _adicionalProduto   = null; // produto sendo configurado
+let _adicionalSel       = {};   // { grupoIdx: [opcaoIdx, ...] }
+let _adicionalMesaKey   = null;
+
+window.fecharAdicionais = function() {
+  document.getElementById('modal-adicionais')?.classList.remove('open');
+  document.body.style.overflow = '';
+  _adicionalProduto = null;
+  _adicionalSel = {};
+};
+
+// Chamada quando produto tem adicionais
+window.abrirAdicionais = function(mesaKey, prodJSON) {
+  const prod = JSON.parse(decodeURIComponent(prodJSON));
+  _adicionalProduto = prod;
+  _adicionalMesaKey = mesaKey;
+  _adicionalSel     = {};
+
+  document.getElementById('adicionais-nome').textContent  = prod.nome;
+  document.getElementById('adicionais-preco-base').textContent = 'R$ ' + Number(prod.preco).toFixed(2).replace('.',',');
+
+  const grupos = Array.isArray(prod.adicionais) ? prod.adicionais : [];
+  const el = document.getElementById('adicionais-grupos');
+  if (!el) return;
+
+  el.innerHTML = grupos.map((g, gi) => {
+    const maxTxt = g.max === 1 ? 'Escolha 1' : g.min > 0 ? `Mín. ${g.min}, Máx. ${g.max}` : `Até ${g.max}`;
+    const obrig  = g.min > 0;
+    return `<div class="adicional-grupo">
+      <div class="adicional-grupo-titulo">${g.grupo} ${obrig?'<span style="color:var(--red);font-size:.65rem">*obrigatório</span>':''}</div>
+      <div class="adicional-grupo-desc">${maxTxt}</div>
+      ${g.opcoes.map((o, oi) => `         <div class="adicional-opt" id="aopt-${gi}-${oi}" onclick="toggleAdicional(${gi},${oi},${g.max})">           <div class="adicional-opt-left">             <div class="adicional-opt-check">✓</div>             <span class="adicional-opt-nome">${o.nome}</span>           </div>           <span class="adicional-opt-preco">${Number(o.preco||0) > 0 ? '+R$ '+Number(o.preco).toFixed(2).replace('.',',') : 'Grátis'}</span>         </div>`).join('')}
+      <div class="adicional-limite-aviso" id="aviso-${gi}">Limite de ${g.max} opções atingido</div>
+    </div>`;
+  }).join('');
+
+  calcTotalAdicionais();
+  document.getElementById('modal-adicionais')?.classList.add('open');
+};
+
+window.toggleAdicional = function(gi, oi, max) {
+  if (!_adicionalSel[gi]) _adicionalSel[gi] = [];
+  const sel = _adicionalSel[gi];
+  const idx = sel.indexOf(oi);
+
+  if (idx >= 0) {
+    // Deseleciona
+    sel.splice(idx, 1);
+    document.getElementById('aopt-'+gi+'-'+oi)?.classList.remove('sel');
+  } else {
+    if (sel.length >= max) {
+      // Atingiu limite
+      document.getElementById('aviso-'+gi)?.classList.add('show');
+      setTimeout(()=>document.getElementById('aviso-'+gi)?.classList.remove('show'), 2000);
+      return;
+    }
+    sel.push(oi);
+    document.getElementById('aopt-'+gi+'-'+oi)?.classList.add('sel');
+  }
+  calcTotalAdicionais();
+};
+
+function calcTotalAdicionais() {
+  if (!_adicionalProduto) return;
+  const grupos = Array.isArray(_adicionalProduto.adicionais) ? _adicionalProduto.adicionais : [];
+  let extra = 0;
+  Object.entries(_adicionalSel).forEach(([gi, ois]) => {
+    ois.forEach(oi => {
+      extra += Number(grupos[gi]?.opcoes?.[oi]?.preco || 0);
+    });
+  });
+  const total = Number(_adicionalProduto.preco) + extra;
+  const el = document.getElementById('adicionais-total');
+  if (el) el.textContent = 'R$ ' + total.toFixed(2).replace('.',',');
+}
+
+window.confirmarAdicionais = function() {
+  if (!_adicionalProduto || !_adicionalMesaKey) return;
+  const grupos  = Array.isArray(_adicionalProduto.adicionais) ? _adicionalProduto.adicionais : [];
+
+  // Valida obrigatórios
+  for (let gi = 0; gi < grupos.length; gi++) {
+    const g = grupos[gi];
+    const qtdSel = (_adicionalSel[gi]||[]).length;
+    if (g.min > 0 && qtdSel < g.min) {
+      showToast('Escolha pelo menos ' + g.min + ' opção em "' + g.grupo + '"', 'error');
+      return;
+    }
+  }
+
+  // Monta descrição dos adicionais selecionados
+  const descAdic = [];
+  Object.entries(_adicionalSel).forEach(([gi, ois]) => {
+    ois.forEach(oi => descAdic.push(grupos[gi]?.opcoes?.[oi]?.nome));
+  });
+  let extra = 0;
+  Object.entries(_adicionalSel).forEach(([gi, ois]) => {
+    ois.forEach(oi => { extra += Number(grupos[gi]?.opcoes?.[oi]?.preco || 0); });
+  });
+
+  const nomeCompleto = descAdic.length ? _adicionalProduto.nome + ' (' + descAdic.join(', ') + ')' : _adicionalProduto.nome;
+  const precoFinal   = Number(_adicionalProduto.preco) + extra;
+
+  addItemComanda(_adicionalMesaKey, _adicionalProduto.id + '_' + Date.now(), nomeCompleto, precoFinal, _adicionalProduto.emoji||'🍽️');
+  window.fecharAdicionais();
+  showToast('Adicionado! ✅');
+};
+
+// ── Imprimir comanda da mesa ──────────────────────────────────────────────────
+window.imprimirComanda = function() {
+  if (!_mesaAtual) return;
+  const estab = getEstab();
+  const peds  = _pedidosMesas[_mesaAtual] || [];
+  const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const total = peds.reduce((s,p) => s + Number(p.total||0), 0);
+  const agora = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const cnpjRaw = (estab?.cnpj || '').replace(/\D/g,'');
+  const cnpjFmt = cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+  const insta   = estab?.instagram ? '@' + estab.instagram : '';
+  const msgFim  = estab?.msg_nota || 'Obrigado pela preferencia!';
+
+  // Agrupa por nome
+  const grupos = {};
+  peds.forEach(p => {
+    const nm = p.cliente_nome || _mesaAtual;
+    if (!grupos[nm]) grupos[nm] = [];
+    grupos[nm].push(p);
+  });
+
+  const html = `<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<title>Comanda ${_mesaAtual}</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: #000;
+    background: #fff;
+    width: 300px;
+    max-width: 300px;
+    margin: 0 auto;
+    padding: 14px 10px;
+  }
+  * { max-width: 100%; word-break: break-word; }
+  .center  { text-align: center; }
+  .logo    { font-size: 18px; font-weight: 900; letter-spacing: .06em; }
+  .logo-red { color: #C0392B; }
+  .empresa { font-size: 13px; font-weight: 700; margin-top: 2px; }
+  .info-sm { font-size: 10px; font-weight: 400; color: #444; line-height: 1.6; margin-top: 3px; }
+  .sep-dash  { border: none; border-top: 1px dashed #888; margin: 8px 0; }
+  .sep-thick { border: none; border-top: 3px solid #000; margin: 8px 0; }
+  .mesa-bloco {
+    background: #000; color: #fff;
+    border-radius: 6px; padding: 10px 8px 8px;
+    text-align: center; margin: 6px 0;
+  }
+  .mesa-lbl { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #aaa; }
+  .mesa-num { font-size: 38px; font-weight: 900; line-height: 1.1; }
+  .hora     { font-size: 11px; font-weight: 400; color: #888; text-align: center; }
+  .pessoa-bloco { margin-bottom: 10px; }
+  .pessoa-nome {
+    display: flex; align-items: center; gap: 8px;
+    background: #f5f5f5; border-radius: 4px;
+    padding: 5px 8px; margin-bottom: 4px;
+  }
+  .pessoa-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #C0392B; color: #fff;
+    font-size: 12px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .pessoa-label { font-size: 13px; font-weight: 700; }
+  .item {
+    display: flex; justify-content: space-between;
+    align-items: flex-start; gap: 6px;
+    font-size: 12px; font-weight: 400;
+    padding: 2px 4px;
+  }
+  .item-nome { flex: 1; }
+  .item-val  { flex-shrink: 0; font-weight: 700; }
+  .pessoa-sub {
+    display: flex; justify-content: flex-end;
+    font-size: 12px; font-weight: 700;
+    color: #C0392B; border-top: 1px dashed #ccc;
+    padding-top: 3px; margin-top: 2px;
+  }
+  .total-row {
+    display: flex; justify-content: space-between;
+    font-size: 16px; font-weight: 900;
+    border-top: 3px solid #000; border-bottom: 2px solid #000;
+    padding: 6px 0; margin: 4px 0;
+  }
+  .total-val { color: #C0392B; }
+  .social { font-size: 10px; font-weight: 400; text-align: center; line-height: 1.8; color: #444; }
+  .msg-final { font-size: 12px; font-weight: 700; text-align: center; margin: 5px 0 2px; }
+  .rodape { font-size: 9px; font-weight: 400; color: #bbb; text-align: center; letter-spacing: .04em; }
+  @media print {
+    body { padding: 4px 6px; }
+    @page { margin: 0; size: 80mm auto; }
+  }
+</style></head><body>
+
+<!-- CABEÇALHO -->
+<div class="center">
+  <div class="logo">PEDI<span class="logo-red">UAI</span></div>
+  <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
+  <div class="info-sm">
+    ${estab?.endereco ? estab.endereco + '<br>' : ''}
+    ${estab?.telefone_contato ? 'Tel: ' + estab.telefone_contato + '<br>' : ''}
+    ${cnpjFmt ? 'CNPJ: ' + cnpjFmt : ''}
+  </div>
+</div>
+
+<hr class="sep-thick">
+
+<div class="mesa-bloco">
+  <div class="mesa-lbl">Mesa</div>
+  <div class="mesa-num">${_mesaAtual.replace('Mesa ','')}</div>
+</div>
+<div class="hora">${agora}</div>
+
+<hr class="sep-dash">
+
+<!-- PEDIDOS POR PESSOA -->
+${Object.entries(grupos).map(([nm, gpeds]) => {   const sub = gpeds.reduce((s,p) => s + Number(p.total||0), 0);   const inicial = nm.charAt(0).toUpperCase();   const itensRows = gpeds.map(p => {     const itens = Array.isArray(p.itens) ? p.itens : [];     return itens.map(i =>       `<div class="item">         <span class="item-nome">${i.qtd||1}x ${i.nome}</span>         <span class="item-val">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span>       </div>`     ).join('');   }).join('');   return `<div class="pessoa-bloco">     <div class="pessoa-nome">       <div class="pessoa-avatar">${inicial}</div>       <span class="pessoa-label">${nm}</span>     </div>     ${itensRows}     <div class="pessoa-sub">${fmtR(sub)}</div>   </div>`; }).join('')}
+
+<div class="total-row">
+  <span>TOTAL</span>
+  <span class="total-val">${fmtR(total)}</span>
+</div>
+
+${insta ? `<hr class="sep-dash"><div class="social">Instagram: <b>${insta}</b></div>` : ''}
+${estab?.site ? `<div class="social">${estab.site}</div>` : ''}
+
+<hr class="sep-dash">
+<div class="msg-final">${msgFim}</div>
+<div class="rodape">PEDIUAI · Plataforma de delivery independente</div>
+
+</body></html>`;
+
+  const w = window.open('','_blank','width=340,height=750');
+  if (!w) { alert('Permita pop-ups para imprimir.'); return; }
   w.document.write(html);
   w.document.close();
   w.focus();
@@ -1011,7 +2346,11 @@ async function carregarGruposAdicionais() {
   _produtosCache = prods || [];
 
   if (!_gruposAdicionais.length) {
-    el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#aaa">       <div style="font-size:2rem;margin-bottom:10px">🧩</div>       <div style="font-size:.88rem;font-weight:600;margin-bottom:4px">Nenhum grupo criado</div>       <div style="font-size:.78rem">Crie grupos como "Complementos Açaí" e vincule aos produtos</div>     </div>`;
+    el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#aaa">
+      <div style="font-size:2rem;margin-bottom:10px">🧩</div>
+      <div style="font-size:.88rem;font-weight:600;margin-bottom:4px">Nenhum grupo criado</div>
+      <div style="font-size:.78rem">Crie grupos como "Complementos Açaí" e vincule aos produtos</div>
+    </div>`;
     return;
   }
 
@@ -1019,12 +2358,12 @@ async function carregarGruposAdicionais() {
     const prodsV = _produtosCache.filter(p => p.grupo_adicional_id === g.id);
     const opcStr = (g.opcoes||[]).slice(0,3).map(o=>o.nome).join(', ') + ((g.opcoes||[]).length>3?'…':'');
     const prodsHtml = prodsV.length
-      ? prodsV.map(p=>'<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.68rem;font-weight:600">'+p.emoji||'🍽️'+' ${p.nome}</span>').join('')
+      ? prodsV.map(p=>`<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.68rem;font-weight:600">${p.emoji||'🍽️'} ${p.nome}</span>`).join('')
       : '<span style="font-size:.68rem;color:#ccc">Nenhum produto vinculado</span>';
-    return '<div style="border:1.5px solid #e0dbd5;border-radius:14px;padding:14px;margin-bottom:10px;background:#fff">
+    return `<div style="border:1.5px solid #e0dbd5;border-radius:14px;padding:14px;margin-bottom:10px;background:#fff">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
         <div>
-          <div style="font-size:.92rem;font-weight:800">'+g.nome+'</div>
+          <div style="font-size:.92rem;font-weight:800">${g.nome}</div>
           <div style="font-size:.68rem;color:#aaa;margin-top:2px">Mín. ${g.min} · Máx. ${g.max} · ${(g.opcoes||[]).length} opções</div>
           <div style="font-size:.72rem;color:#888;margin-top:2px">${opcStr}</div>
         </div>
@@ -1034,7 +2373,7 @@ async function carregarGruposAdicionais() {
         </div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:5px">${prodsHtml}</div>
-    </div>';
+    </div>`;
   }).join('');
 }
 
@@ -1074,16 +2413,16 @@ window.fecharEditarGrupoAdd = function() {
 
 function renderOpcoesTmp() {
   const el = document.getElementById('eger-opcoes'); if (!el) return;
-  el.innerHTML = _opcoesTmp.map((o, i) => '
+  el.innerHTML = _opcoesTmp.map((o, i) => `
     <div style="display:flex;gap:8px;align-items:center">
-      <input value="'+o.nome||''+'" placeholder="Nome da opção (ex: Ninho)"
+      <input value="${o.nome||''}" placeholder="Nome da opção (ex: Ninho)"
         oninput="syncOpcao(${i},'nome',this.value)"
         style="flex:2;border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-family:Poppins,sans-serif;font-size:.85rem;outline:none">
       <input type="number" value="${o.preco||0}" placeholder="R$" step="0.50" min="0"
         oninput="syncOpcao(${i},'preco',parseFloat(this.value)||0)"
         style="width:72px;border:1.5px solid var(--border);border-radius:9px;padding:9px 8px;font-family:Poppins,sans-serif;font-size:.85rem;outline:none;text-align:right">
       <button onclick="rmOpcao(${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:4px;flex-shrink:0">✕</button>
-    </div>').join('');
+    </div>`).join('');
 }
 
 
@@ -1212,7 +2551,7 @@ function abrirAdicionaisGrupo(mesaKey, prodId, nome, preco, emoji, grupo) {
 
 window.copiarLinkGarcom = function() {
   const estab = getEstab(); if (!estab) return;
-  const url = ''+BASE_URL+'/comandas/${estab.slug}';
+  const url = `${BASE_URL}/comandas/${estab.slug}`;
   navigator.clipboard.writeText(url).then(() => {
     showToast('Link copiado! ✅');
   }).catch(() => {
@@ -1274,32 +2613,448 @@ window.renderHistoricoMesas = async function() {
     const ativosHtml = ativos.map(p => _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl)).join('');
 
     // Cards de pedidos histórico (prontos)
-    const histHtml = prontos.length ? '
+    const histHtml = prontos.length ? `
       <div style="margin-top:10px">
-        <button onclick="toggleHistMesa(''+mesaId+'-hist')" style="width:100%;display:flex;align-items:center;justify-content:between;gap:8px;background:#f5f0eb;border:1.5px dashed #d4c4b0;border-radius:8px;padding:8px 12px;font-family:'Poppins',sans-serif;font-size:.75rem;font-weight:700;color:#888;cursor:pointer">
+        <button onclick="toggleHistMesa('${mesaId}-hist')" style="width:100%;display:flex;align-items:center;justify-content:between;gap:8px;background:#f5f0eb;border:1.5px dashed #d4c4b0;border-radius:8px;padding:8px 12px;font-family:'Poppins',sans-serif;font-size:.75rem;font-weight:700;color:#888;cursor:pointer">
           <span style="flex:1;text-align:left">📋 Histórico de pedidos (${prontos.length})</span>
           <span id="${mesaId}-hist-arrow">▼</span>
         </button>
         <div id="${mesaId}-hist" style="display:none;margin-top:8px">
           ${prontos.map(p => _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl)).join('')}
         </div>
-      </div>' : '';
+      </div>` : '';
 
     // Conteúdo expandível
-    const conteudo = '
-      <div id="'+mesaId+'" style="display:none;padding:10px 0 4px">
+    const conteudo = `
+      <div id="${mesaId}" style="display:none;padding:10px 0 4px">
         ${ativosHtml || '<div style="color:#aaa;font-size:.8rem;padding:8px 0">Nenhum pedido ativo</div>'}
         ${histHtml}
-      </div>';
+      </div>`;
 
-    return '<div style="margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:10px;padding:13px 16px;background:#fff;border:1.5px solid '+temAtivo?'#16a34a':'#e0dbd5'+';border-radius:12px;cursor:pointer" onclick="togglePedidosMesa('${mesaId}')">
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;padding:13px 16px;background:#fff;border:1.5px solid ${temAtivo?'#16a34a':'#e0dbd5'};border-radius:12px;cursor:pointer" onclick="togglePedidosMesa('${mesaId}')">
         <div style="width:42px;height:42px;border-radius:10px;background:${temAtivo?'#16a34a':'#e0dbd5'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;flex-shrink:0">${num}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:.95rem;font-weight:800">${mesa}</div>
           <div style="font-size:.72rem;margin-top:1px">
             <span style="color:#888">${peds.length} pedido${peds.length!==1?'s':''}</span>
-            ${temAtivo               ? '<span style="color:var(--red);font-weight:700;margin-left:6px">● ativa</span>'               : `<span style="color:#22c55e;font-weight:700;margin-left:6px">✓ encerrada</span>'}           </div>         </div>         <div style="text-align:right;flex-shrink:0">           <div style="font-size:.88rem;font-weight:800;color:var(--red)">'+temAtivo ? fmtR(totalMesa) : 'R$ 0,00'+'</div>           <button id="${mesaId}-btn" style="margin-top:4px;background:none;border:1.5px solid var(--border);border-radius:8px;padding:5px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer;white-space:nowrap">Ver pedidos ▼</button>         </div>       </div>       <div style="padding:0 6px">         ${conteudo}       </div>     </div>';   }).join(''); };  // Função auxiliar — card de pedido individual function _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl) {   const itens   = Array.isArray(p.itens) ? p.itens : [];   const dt      = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});   const nome    = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';   const enviado = getEnviadosCozinha().has(p.id);    // Cor da borda: vermelho = não foi pra cozinha, verde = foi pra cozinha, cinza = pronto/outro   const bordaCor = p.status === 'pronto' ? '#aaa'     : enviado ? '#16a34a'     : '#C0392B';    // Badge de status — destaque visual forte   const stBadge = {     novo:    { bg:'#fef3c7', cor:'#92400e', icon:'🔔', txt:'Aguardando' },     preparo: { bg:'#f0fdf4', cor:'#16a34a', icon:'✅', txt:'Na cozinha' },     pronto:  { bg:'#dcfce7', cor:'#15803d', icon:'✅', txt:'Pronto'     },   }[p.status] || { bg:'#f3f4f6', cor:'#555', icon:'', txt: p.status };    return '<div style="background:#fff;border:1.5px solid #f0e9e0;border-left:5px solid '+bordaCor+';border-radius:10px;padding:12px;margin-bottom:8px">     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px">       <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">         ${nome ? '<span style="background:#f0e9e0;padding:3px 10px;border-radius:50px;font-size:.78rem;font-weight:700;color:#555">${nome}</span>' : ''}         <span style="font-size:.68rem;color:#aaa">#'+p.id.slice(-4).toUpperCase()+' · ${dt}</span>       </div>       <!-- Status badge bem destacado -->       <span style="display:inline-flex;align-items:center;gap:4px;background:${stBadge.bg};color:${stBadge.cor};padding:5px 12px;border-radius:50px;font-size:.75rem;font-weight:800;flex-shrink:0;white-space:nowrap;letter-spacing:.01em">         ${stBadge.icon} ${stBadge.txt}       </span>     </div>      <!-- Indicador cozinha inline -->     ${p.status !== 'pronto' ? '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:5px 10px;border-radius:8px;background:${enviado?'#f0fdf4':'#fff5f5'};border:1px solid ${enviado?'#bbf7d0':'#fecaca'}">       <span style="font-size:.75rem">${enviado ? '✅' : '⏳'}</span>       <span style="font-size:.72rem;font-weight:700;color:${enviado?'#15803d':'#C0392B'}">${enviado ? 'Enviado para a cozinha' : 'Aguardando envio para cozinha'}</span>     </div>' : ''}      <!-- Itens -->     <div style="background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px">       '+itens.map(i=>`<div style="display:flex;justify-content:space-between;font-size:.83rem;padding:2px 0"><span style="font-weight:600">${i.qtd||1+'x ${i.nome}</span><span style="color:#888">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span></div>').join('')}       <div style="text-align:right;font-size:.9rem;font-weight:800;color:var(--red);margin-top:6px;border-top:1px solid #f0e9e0;padding-top:6px">${fmtR(p.total)}</div>     </div>      <!-- Ações -->     <div style="display:flex;gap:6px;flex-wrap:wrap">       ${p.status==='novo' ? '<button class="btn-ped-aceitar" style="padding:7px 12px;font-size:.75rem" onclick="aceitarPedido(''+p.id+'')">Aceitar</button>       <button class="btn-ped-recusar" style="padding:7px 10px;font-size:.75rem" onclick="recusarPedido('${p.id}')">Recusar</button>' : ''}       ${p.status !== 'pronto' ? '<button class="btn-ped-imprimir" style="font-size:.75rem;background:'+enviado?'#f0fdf4':'#fff5f5'+';border:1.5px solid ${enviado?'#16a34a':'#C0392B'};color:${enviado?'#16a34a':'#C0392B'};font-weight:700" onclick="imprimirCozinha('${p.id}')">         ${enviado ? '✓ Reenviado' : '🖨️ Enviar cozinha'}       </button>' : ''}       <button class="btn-ped-imprimir" style="font-size:.75rem" onclick="verPedido('${p.id}')">Ver mais</button>     </div>   </div>`; }  // Expande/colapsa lista de pedidos de uma mesa window.togglePedidosMesa = function(id) {   const el   = document.getElementById(id);   const btn  = document.getElementById(id + '-btn');   if (!el) return;   const open = el.style.display !== 'none';   el.style.display  = open ? 'none' : 'block';   if (btn) btn.innerHTML = open ? 'Ver pedidos ▼' : 'Ocultar ▲'; };  // Expande/colapsa histórico (prontos) de uma mesa window.toggleHistMesa = function(id) {   const el  = document.getElementById(id);   const arr = document.getElementById(id + '-arrow');   if (!el) return;   const open = el.style.display !== 'none';   el.style.display = open ? 'none' : 'block';   if (arr) arr.textContent = open ? '▼' : '▲'; };      // ── Controle de "enviado para cozinha" ────────────────────────────────────── const _COZINHA_KEY = 'pw_enviados_cozinha';  function getEnviadosCozinha() {   try { return new Set(JSON.parse(localStorage.getItem(_COZINHA_KEY)||'[]')); }   catch(e) { return new Set(); } }  function marcarEnviadoCozinha(pedidoId) {   const set = getEnviadosCozinha();   set.add(pedidoId);   // Limpa IDs antigos (mais de 24h) — mantém localStorage limpo   localStorage.setItem(_COZINHA_KEY, JSON.stringify([...set])); }  // ── Imprimir ticket de cozinha (pedido individual) ──────────────────────────── window.imprimirCozinha = function(pedidoId) {   getSupa().from('pedidos').select('*').eq('id', pedidoId).maybeSingle().then(({ data: p }) => {     if (!p) return;     const itens   = Array.isArray(p.itens) ? p.itens : [];     const parts   = (p.endereco||'').split('—');     const mesa    = parts.length >= 2 ? parts[1].trim() : p.endereco || '—';     const isMesa  = (p.endereco||'').startsWith('No local');     const nome    = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';     const dt      = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});     const loja    = getEstab()?.nome || 'Estabelecimento';     const numPed  = '#' + p.id.slice(-6).toUpperCase();      const html = '<!DOCTYPE html><html><head> <meta charset="UTF-8"> <title>Cozinha '+numPed+'</title> <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet"> <style>   * { margin:0; padding:0; box-sizing:border-box; }   body {     font-family: 'Poppins', Arial, sans-serif;     font-size: 13px;     font-weight: 400;     color: #000;     background: #fff;     width: 300px;     max-width: 300px;     margin: 0 auto;     padding: 14px 10px;   }   * { max-width: 100%; word-break: break-word; }   .center  { text-align: center; }   .logo    { font-size: 18px; font-weight: 900; letter-spacing: .06em; }   .logo-red { color: #C0392B; }   .empresa { font-size: 13px; font-weight: 700; margin-top: 2px; }   .tag     { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #888; margin-top: 2px; }   .sep-dash  { border: none; border-top: 1px dashed #888; margin: 8px 0; }   .sep-thick { border: none; border-top: 3px solid #000; margin: 8px 0; }   .mesa-bloco {     background: #000;     color: #fff;     border-radius: 6px;     padding: 10px 8px 8px;     text-align: center;     margin: 6px 0;   }   .mesa-lbl { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #aaa; }   .mesa-num { font-size: 42px; font-weight: 900; line-height: 1.1; }   .mesa-nome { font-size: 13px; font-weight: 700; color: #ddd; margin-top: 2px; }   .delivery-bloco {     border: 2px solid #000;     border-radius: 6px;     padding: 8px;     text-align: center;     margin: 6px 0;   }   .delivery-badge { font-size: 14px; font-weight: 900; letter-spacing: .06em; }   .delivery-cliente { font-size: 14px; font-weight: 700; margin-top: 3px; }   .delivery-end { font-size: 11px; font-weight: 400; color: #444; margin-top: 2px; }   .hora { font-size: 11px; font-weight: 400; color: #888; text-align: center; margin-bottom: 4px; }   .sec { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #555; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin: 6px 0 5px; }   .item {     display: flex;     align-items: flex-start;     gap: 8px;     padding: 4px 0;     border-bottom: 1px dotted #ddd;   }   .item:last-child { border-bottom: none; }   .item-qtd  { font-size: 16px; font-weight: 900; color: #C0392B; flex-shrink: 0; min-width: 24px; }   .item-nome { font-size: 14px; font-weight: 700; flex: 1; line-height: 1.3; }   .adicional { font-size: 11px; font-weight: 400; color: #555; padding: 1px 0 1px 32px; }   .obs {     border: 2px solid #C0392B;     border-radius: 4px;     padding: 6px 8px;     margin: 6px 0;   }   .obs-titulo { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; color: #C0392B; }   .obs-texto  { font-size: 12px; font-weight: 700; }   .rodape { font-size: 9px; font-weight: 400; color: #bbb; text-align: center; margin-top: 8px; letter-spacing: .04em; }   @media print {     body { padding: 4px 6px; }     @page { margin: 0; size: 80mm auto; }   } </style></head><body>  <!-- CABEÇALHO --> <div class="center">   <div class="logo">PEDI<span class="logo-red">WAY</span></div>   <div class="empresa">${loja}</div>   <div class="tag">Ticket de Cozinha</div> </div>  <hr class="sep-thick">  <!-- IDENTIFICAÇÃO: MESA ou DELIVERY --> ${isMesa ? ' <div class="mesa-bloco">   <div class="mesa-lbl">Mesa</div>   <div class="mesa-num">${mesa.replace('Mesa ','')}</div>   ${nome ? '<div class="mesa-nome">'+nome+'</div>' : ''} </div>` : ' <div class="delivery-bloco">   <div class="delivery-badge">DELIVERY / RETIRADA</div>   '+p.cliente_nome ? `<div class="delivery-cliente">${p.cliente_nome+'</div>' : ''}   ${p.endereco ? '<div class="delivery-end">'+p.endereco+'</div>' : ''} </div>'}  <div class="hora">'+numPed+' &nbsp;·&nbsp; ${dt}</div>  <hr class="sep-dash">  <!-- ITENS --> <div class="sec">Itens</div> ${itens.map(i => {   const adds = Array.isArray(i.adicionais) && i.adicionais.length     ? i.adicionais.map(a => '<div class="adicional">+ ${a.nome}</div>`).join('')     : '';   return '<div class="item">     <span class="item-qtd">'+i.qtd||1+'x</span>     <span class="item-nome">${i.nome}</span>   </div>${adds}'; }).join('')}  ${p.observacao ? ' <hr class="sep-dash"> <div class="obs">   <div class="obs-titulo">Observacao</div>   <div class="obs-texto">'+p.observacao+'</div> </div>' : ''}  <hr class="sep-dash"> <div class="rodape">PEDIWAY &mdash; Sistema de Gestao</div>  </body></html>`;      const w = window.open('','_blank','width=340,height=680');     if (!w) { alert('Permita pop-ups.'); return; }     w.document.write(html);     w.document.close();     w.focus();     setTimeout(() => w.print(), 600);      marcarEnviadoCozinha(pedidoId);     window.renderHistoricoMesas();   }); };  // ───────────────────────────────────────────────────────────────────────────── // EXPORTS GLOBAIS // ───────────────────────────────────────────────────────────────────────────── window.initDashboard     = initDashboard; window.abrirModalItem    = abrirModalItem; window.fecharModal       = fecharModal; window.fecharModalFora   = fecharModalFora; window.selecionarEmoji   = selecionarEmoji; window.previewFotos      = previewFotos; window.previewFoto       = previewFoto; window.salvarItem        = salvarItem; window.editarItem        = editarItem; window.deletarItem       = deletarItem; window.postarFresquinho  = postarFresquinho; window.removerFresquinho = removerFresquinho; window.renderPedidos     = renderPedidos;  // ── Financeiro do estabelecimento ───────────────────────── window.setFinPeriodo = setFinPeriodo; window.exportarCSV   = exportarCSV; window.exportarPDF   = exportarPDF;  // ═══════════════════════════════════════════════════════════ // SISTEMA DE COMANDAS — MODO GARÇOM // ═══════════════════════════════════════════════════════════ let _mesaAtual        = null;   // chave da mesa aberta "Mesa 3" let _pedidosMesas     = {};     // { "Mesa 3": [{...pedido}] } let _mesasFechadas    = new Set(); let _cardapioCache    = null;   // cache dos produtos para seleção rápida let _carrinhoComanda  = {};     // { "Mesa 3": [{nome, preco, qtd, emoji}] } let _nomeComanda      = {};     // { "Mesa 3": "João" } let _pagamentoComanda = null;   // pagamento selecionado ao fechar comanda let _taxaServicoRemovida = false; // true se o garçom removeu a taxa no fechamento  function getNumMesas() {   const estab = getEstab();   // Prioridade: 1) banco (num_mesas no estab) 2) localStorage 3) padrão 10   const doLocalStorage = localStorage.getItem('pw_num_mesas_' + (estab?.id || ''));   return parseInt(estab?.num_mesas || doLocalStorage || '10', 10); }  window.salvarNumMesas = async function(val) {   const estab = getEstab(); if (!estab) return;   const n = Math.max(1, Math.min(200, parseInt(val) || 10));    // Atualiza o estab em memória IMEDIATAMENTE para renderMesas() pegar o valor novo   estab.num_mesas = n;   window._estab = { ...window._estab, num_mesas: n };   const stored = JSON.parse(localStorage.getItem('pw_estab') || '{}');   localStorage.setItem('pw_estab', JSON.stringify({ ...stored, num_mesas: n }));   localStorage.setItem('pw_num_mesas_' + estab.id, String(n));    // Atualiza o input visualmente com o valor normalizado   const inp = document.getElementById('cfg-num-mesas');   if (inp) inp.value = n;    // Re-renderiza imediatamente   renderMesas();    // Salva no banco em background (não bloqueia)   getSupa().from('estabelecimentos').update({ num_mesas: n }).eq('id', estab.id)     .then(({ error }) => {       if (error) console.error('[mesas] erro ao salvar:', error);       else showToast(''+n+' mesas configuradas ✅');     }); };  async function carregarPedidosMesas() {   const estab = getEstab(); if (!estab) return;   const { data } = await getSupa()     .from('pedidos')     .select('*')     .eq('estabelecimento_id', estab.id)     .ilike('endereco', 'No local%')     .in('status', ['novo', 'preparo'])   // só pedidos ativos     .order('created_at', { ascending: true });    _pedidosMesas = {};   (data || []).forEach(p => {     const raw   = (p.endereco || '');     const parts = raw.split('—');     if (parts.length < 2) return;     const mesa  = parts[1].trim();     if (!_pedidosMesas[mesa]) _pedidosMesas[mesa] = [];     _pedidosMesas[mesa].push(p);   });   renderMesas(); }  function renderMesas() {   const grid = document.getElementById('mesas-grid'); if (!grid) return;   const n    = getNumMesas();   const inp  = document.getElementById('cfg-num-mesas');   if (inp) inp.value = n;   const fmt  = v => 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',');    // Atualiza cards de resumo   const allPeds   = Object.values(_pedidosMesas).flat();   const mOcup     = Object.keys(_pedidosMesas).filter(k => _pedidosMesas[k].length > 0).length;   const totalAb   = allPeds.reduce((s, p) => s + Number(p.total || 0), 0);   const elOcup    = document.getElementById('mesas-ocupadas-count');   const elPeds    = document.getElementById('mesas-pedidos-count');   const elTotal   = document.getElementById('mesas-total-count');   if (elOcup)  elOcup.textContent  = mOcup;   if (elPeds)  elPeds.textContent  = allPeds.length;   if (elTotal) elTotal.textContent = fmt(totalAb);    // Pedidos novos aguardando nas mesas (área de destaque)   const novosM     = allPeds.filter(p => p.status === 'novo');   const wrapNovos  = document.getElementById('mesas-pedidos-novos-wrap');   const listaNovos = document.getElementById('mesas-pedidos-novos-lista');   const badgeNovos = document.getElementById('badge-mesas-novos');   if (wrapNovos)  wrapNovos.style.display  = novosM.length ? 'block' : 'none';   if (badgeNovos) badgeNovos.textContent   = novosM.length;   if (listaNovos && novosM.length) {     listaNovos.innerHTML = novosM.map(p => {       const itens = Array.isArray(p.itens) ? p.itens.map(i => ''+i.qtd+'x ${i.nome}').join(' · ') : '';       const parts = (p.endereco||'').split('—');       const mesa  = parts.length >= 2 ? parts[1].trim() : p.endereco || 'Mesa';       const nome  = p.cliente_nome && p.cliente_nome !== mesa ? p.cliente_nome : '';       const numMesa = mesa.replace('Mesa ','');       return '<div style="background:#fff;border:2px solid var(--red);border-radius:14px;padding:14px 12px;display:flex;flex-direction:column;gap:8px;min-height:160px">         <!-- Número da mesa destaque -->         <div style="display:flex;align-items:center;justify-content:space-between">           <div style="width:46px;height:46px;background:var(--red);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;color:#fff">'+numMesa+'</div>           <span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:50px;font-size:.65rem;font-weight:800">NOVO</span>         </div>         <!-- Nome e itens -->         <div style="flex:1">           <div style="font-size:.92rem;font-weight:800;color:#1a1a1a">${mesa}${nome ? ' <span style='font-size:.72rem;color:#888;font-weight:500'>${nome}</span>' : ''}</div>           <div style="font-size:.72rem;color:#aaa;margin-top:3px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+itens+'</div>         </div>         <!-- Valor e ações -->         <div style="border-top:1px solid #f0e9e0;padding-top:8px">           <div style="font-size:1rem;font-weight:800;color:var(--red);margin-bottom:6px">${fmt(p.total)}</div>           <div style="display:flex;gap:5px">             <button class="btn-ped-aceitar" style="flex:1;padding:6px;font-size:.72rem" onclick="aceitarPedido('${p.id}')">✓ Aceitar</button>             <button class="btn-ped-recusar" style="padding:6px 8px;font-size:.72rem" onclick="recusarPedido('${p.id}')">✕</button>             <button class="btn-ped-imprimir" style="padding:6px 8px;font-size:.72rem" onclick="imprimirCozinha('${p.id}')">🖨️</button>           </div>         </div>       </div>';     }).join('');   }    grid.innerHTML = Array.from({ length: n }, (_, i) => {     const num    = i + 1;     const key    = 'Mesa ' + num;     const peds   = _pedidosMesas[key] || [];     const ativa  = peds.length > 0;     const fechada= _mesasFechadas.has(key);     const total  = peds.reduce((s, p) => s + Number(p.total || 0), 0);     const qtdIt  = peds.reduce((s, p) => s + (Array.isArray(p.itens) ? p.itens.reduce((a, i) => a + (i.qtd || 1), 0) : 0), 0);      let cls = 'vazia', dot = 'livre', info = '<span class="mesa-label">Livre</span>';     if (fechada) {       cls  = 'fechando'; dot = '';       info = '<span class="mesa-label" style="color:var(--red)">✗ Fechada</span>';     } else if (ativa) {       cls  = 'ocupada'; dot = 'ocup';       info = '<span class="mesa-total">' + fmt(total) + '</span><span class="mesa-qtd">' + peds.length + ' ped · ' + qtdIt + ' itens</span>';     }      return '<div class="mesa-card ' + cls + '" onclick="abrirComanda(' + num + ')">' +       '<div class="mesa-status-dot ' + dot + '"></div>' +       '<div class="mesa-num">' + num + '</div>' +       '<div style="display:flex;flex-direction:column;align-items:center;gap:3px">' + info + '</div>' +       '</div>';   }).join(''); }  // ── Carrega cardápio para seleção no modo garçom ────────────────────────────── async function carregarCardapioComanda() {   if (_cardapioCache) return _cardapioCache;   const estab = getEstab(); if (!estab) return [];   const { data } = await getSupa()     .from('produtos').select('id,nome,preco,emoji,categoria,disponivel,grupo_adicional_id')     .eq('estabelecimento_id', estab.id)     .eq('disponivel', true)     .order('categoria');      // Enriquece com dados do grupo de adicionais   if (data) {     const grupoIds = [...new Set(data.filter(p=>p.grupo_adicional_id).map(p=>p.grupo_adicional_id))];     if (grupoIds.length) {       const { data: grupos } = await getSupa().from('grupos_adicionais').select('*').in('id', grupoIds);       const grupoMap = {};       (grupos||[]).forEach(g=>{ grupoMap[g.id]=g; });       data.forEach(p=>{ if(p.grupo_adicional_id) p.adicionais_grupo = grupoMap[p.grupo_adicional_id]; });
+            ${temAtivo               ? `<span style="color:var(--red);font-weight:700;margin-left:6px">● ativa</span>`               : `<span style="color:#22c55e;font-weight:700;margin-left:6px">✓ encerrada</span>`}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:.88rem;font-weight:800;color:var(--red)">${temAtivo ? fmtR(totalMesa) : 'R$ 0,00'}</div>
+          <button id="${mesaId}-btn" style="margin-top:4px;background:none;border:1.5px solid var(--border);border-radius:8px;padding:5px 12px;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer;white-space:nowrap">Ver pedidos ▼</button>
+        </div>
+      </div>
+      <div style="padding:0 6px">
+        ${conteudo}
+      </div>
+    </div>`;
+  }).join('');
+};
+
+// Função auxiliar — card de pedido individual
+function _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl) {
+  const itens   = Array.isArray(p.itens) ? p.itens : [];
+  const dt      = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const nome    = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';
+  const enviado = getEnviadosCozinha().has(p.id);
+
+  // Cor da borda: vermelho = não foi pra cozinha, verde = foi pra cozinha, cinza = pronto/outro
+  const bordaCor = p.status === 'pronto' ? '#aaa'
+    : enviado ? '#16a34a'
+    : '#C0392B';
+
+  // Badge de status — destaque visual forte
+  const stBadge = {
+    novo:    { bg:'#fef3c7', cor:'#92400e', icon:'🔔', txt:'Aguardando' },
+    preparo: { bg:'#f0fdf4', cor:'#16a34a', icon:'✅', txt:'Na cozinha' },
+    pronto:  { bg:'#dcfce7', cor:'#15803d', icon:'✅', txt:'Pronto'     },
+  }[p.status] || { bg:'#f3f4f6', cor:'#555', icon:'', txt: p.status };
+
+  return `<div style="background:#fff;border:1.5px solid #f0e9e0;border-left:5px solid ${bordaCor};border-radius:10px;padding:12px;margin-bottom:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px">
+      <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+        ${nome ? `<span style="background:#f0e9e0;padding:3px 10px;border-radius:50px;font-size:.78rem;font-weight:700;color:#555">${nome}</span>` : ''}
+        <span style="font-size:.68rem;color:#aaa">#${p.id.slice(-4).toUpperCase()} · ${dt}</span>
+      </div>
+      <!-- Status badge bem destacado -->
+      <span style="display:inline-flex;align-items:center;gap:4px;background:${stBadge.bg};color:${stBadge.cor};padding:5px 12px;border-radius:50px;font-size:.75rem;font-weight:800;flex-shrink:0;white-space:nowrap;letter-spacing:.01em">
+        ${stBadge.icon} ${stBadge.txt}
+      </span>
+    </div>
+
+    <!-- Indicador cozinha inline -->
+    ${p.status !== 'pronto' ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:5px 10px;border-radius:8px;background:${enviado?'#f0fdf4':'#fff5f5'};border:1px solid ${enviado?'#bbf7d0':'#fecaca'}">       <span style="font-size:.75rem">${enviado ? '✅' : '⏳'}</span>       <span style="font-size:.72rem;font-weight:700;color:${enviado?'#15803d':'#C0392B'}">${enviado ? 'Enviado para a cozinha' : 'Aguardando envio para cozinha'}</span>     </div>` : ''}
+
+    <!-- Itens -->
+    <div style="background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px">
+      ${itens.map(i=>`<div style="display:flex;justify-content:space-between;font-size:.83rem;padding:2px 0"><span style="font-weight:600">${i.qtd||1}x ${i.nome}</span><span style="color:#888">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span></div>`).join('')}
+      <div style="text-align:right;font-size:.9rem;font-weight:800;color:var(--red);margin-top:6px;border-top:1px solid #f0e9e0;padding-top:6px">${fmtR(p.total)}</div>
+    </div>
+
+    <!-- Ações -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${p.status==='novo' ? `<button class="btn-ped-aceitar" style="padding:7px 12px;font-size:.75rem" onclick="aceitarPedido('${p.id}')">Aceitar</button>       <button class="btn-ped-recusar" style="padding:7px 10px;font-size:.75rem" onclick="recusarPedido('${p.id}')">Recusar</button>` : ''}
+      ${p.status !== 'pronto' ? `<button class="btn-ped-imprimir" style="font-size:.75rem;background:${enviado?'#f0fdf4':'#fff5f5'};border:1.5px solid ${enviado?'#16a34a':'#C0392B'};color:${enviado?'#16a34a':'#C0392B'};font-weight:700" onclick="imprimirCozinha('${p.id}')">         ${enviado ? '✓ Reenviado' : '🖨️ Enviar cozinha'}       </button>` : ''}
+      <button class="btn-ped-imprimir" style="font-size:.75rem" onclick="verPedido('${p.id}')">Ver mais</button>
+    </div>
+  </div>`;
+}
+
+// Expande/colapsa lista de pedidos de uma mesa
+window.togglePedidosMesa = function(id) {
+  const el   = document.getElementById(id);
+  const btn  = document.getElementById(id + '-btn');
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display  = open ? 'none' : 'block';
+  if (btn) btn.innerHTML = open ? 'Ver pedidos ▼' : 'Ocultar ▲';
+};
+
+// Expande/colapsa histórico (prontos) de uma mesa
+window.toggleHistMesa = function(id) {
+  const el  = document.getElementById(id);
+  const arr = document.getElementById(id + '-arrow');
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (arr) arr.textContent = open ? '▼' : '▲';
+};
+
+
+
+
+
+// ── Controle de "enviado para cozinha" ──────────────────────────────────────
+const _COZINHA_KEY = 'pw_enviados_cozinha';
+
+function getEnviadosCozinha() {
+  try { return new Set(JSON.parse(localStorage.getItem(_COZINHA_KEY)||'[]')); }
+  catch(e) { return new Set(); }
+}
+
+function marcarEnviadoCozinha(pedidoId) {
+  const set = getEnviadosCozinha();
+  set.add(pedidoId);
+  // Limpa IDs antigos (mais de 24h) — mantém localStorage limpo
+  localStorage.setItem(_COZINHA_KEY, JSON.stringify([...set]));
+}
+
+// ── Imprimir ticket de cozinha (pedido individual) ────────────────────────────
+window.imprimirCozinha = function(pedidoId) {
+  getSupa().from('pedidos').select('*').eq('id', pedidoId).maybeSingle().then(({ data: p }) => {
+    if (!p) return;
+    const itens   = Array.isArray(p.itens) ? p.itens : [];
+    const parts   = (p.endereco||'').split('—');
+    const mesa    = parts.length >= 2 ? parts[1].trim() : p.endereco || '—';
+    const isMesa  = (p.endereco||'').startsWith('No local');
+    const nome    = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';
+    const dt      = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const loja    = getEstab()?.nome || 'Estabelecimento';
+    const numPed  = '#' + p.id.slice(-6).toUpperCase();
+
+    const html = `<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<title>Cozinha ${numPed}</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: #000;
+    background: #fff;
+    width: 300px;
+    max-width: 300px;
+    margin: 0 auto;
+    padding: 14px 10px;
+  }
+  * { max-width: 100%; word-break: break-word; }
+  .center  { text-align: center; }
+  .logo    { font-size: 18px; font-weight: 900; letter-spacing: .06em; }
+  .logo-red { color: #C0392B; }
+  .empresa { font-size: 13px; font-weight: 700; margin-top: 2px; }
+  .tag     { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #888; margin-top: 2px; }
+  .sep-dash  { border: none; border-top: 1px dashed #888; margin: 8px 0; }
+  .sep-thick { border: none; border-top: 3px solid #000; margin: 8px 0; }
+  .mesa-bloco {
+    background: #000;
+    color: #fff;
+    border-radius: 6px;
+    padding: 10px 8px 8px;
+    text-align: center;
+    margin: 6px 0;
+  }
+  .mesa-lbl { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #aaa; }
+  .mesa-num { font-size: 42px; font-weight: 900; line-height: 1.1; }
+  .mesa-nome { font-size: 13px; font-weight: 700; color: #ddd; margin-top: 2px; }
+  .delivery-bloco {
+    border: 2px solid #000;
+    border-radius: 6px;
+    padding: 8px;
+    text-align: center;
+    margin: 6px 0;
+  }
+  .delivery-badge { font-size: 14px; font-weight: 900; letter-spacing: .06em; }
+  .delivery-cliente { font-size: 14px; font-weight: 700; margin-top: 3px; }
+  .delivery-end { font-size: 11px; font-weight: 400; color: #444; margin-top: 2px; }
+  .hora { font-size: 11px; font-weight: 400; color: #888; text-align: center; margin-bottom: 4px; }
+  .sec { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #555; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin: 6px 0 5px; }
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px dotted #ddd;
+  }
+  .item:last-child { border-bottom: none; }
+  .item-qtd  { font-size: 16px; font-weight: 900; color: #C0392B; flex-shrink: 0; min-width: 24px; }
+  .item-nome { font-size: 14px; font-weight: 700; flex: 1; line-height: 1.3; }
+  .adicional { font-size: 11px; font-weight: 400; color: #555; padding: 1px 0 1px 32px; }
+  .obs {
+    border: 2px solid #C0392B;
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin: 6px 0;
+  }
+  .obs-titulo { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; color: #C0392B; }
+  .obs-texto  { font-size: 12px; font-weight: 700; }
+  .rodape { font-size: 9px; font-weight: 400; color: #bbb; text-align: center; margin-top: 8px; letter-spacing: .04em; }
+  @media print {
+    body { padding: 4px 6px; }
+    @page { margin: 0; size: 80mm auto; }
+  }
+</style></head><body>
+
+<!-- CABEÇALHO -->
+<div class="center">
+  <div class="logo">PEDI<span class="logo-red">UAI</span></div>
+  <div class="empresa">${loja}</div>
+  <div class="tag">Ticket de Cozinha</div>
+</div>
+
+<hr class="sep-thick">
+
+<!-- IDENTIFICAÇÃO: MESA ou DELIVERY -->
+${isMesa ? ` <div class="mesa-bloco">   <div class="mesa-lbl">Mesa</div>   <div class="mesa-num">${mesa.replace('Mesa ','')}</div>   ${nome ? `<div class="mesa-nome">${nome}</div>` : ''} </div>` : ` <div class="delivery-bloco">   <div class="delivery-badge">DELIVERY / RETIRADA</div>   ${p.cliente_nome ? `<div class="delivery-cliente">${p.cliente_nome}</div>` : ''}   ${p.endereco ? `<div class="delivery-end">${p.endereco}</div>` : ''} </div>`}
+
+<div class="hora">${numPed} &nbsp;·&nbsp; ${dt}</div>
+
+<hr class="sep-dash">
+
+<!-- ITENS -->
+<div class="sec">Itens</div>
+${itens.map(i => {   const adds = Array.isArray(i.adicionais) && i.adicionais.length     ? i.adicionais.map(a => `<div class="adicional">+ ${a.nome}</div>`).join('')     : '';   return `<div class="item">     <span class="item-qtd">${i.qtd||1}x</span>     <span class="item-nome">${i.nome}</span>   </div>${adds}`; }).join('')}
+
+${p.observacao ? ` <hr class="sep-dash"> <div class="obs">   <div class="obs-titulo">Observacao</div>   <div class="obs-texto">${p.observacao}</div> </div>` : ''}
+
+<hr class="sep-dash">
+<div class="rodape">PEDIUAI &mdash; Sistema de Gestao</div>
+
+</body></html>`;
+
+    const w = window.open('','_blank','width=340,height=680');
+    if (!w) { alert('Permita pop-ups.'); return; }
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 600);
+
+    marcarEnviadoCozinha(pedidoId);
+    window.renderHistoricoMesas();
+  });
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPORTS GLOBAIS
+// ─────────────────────────────────────────────────────────────────────────────
+window.initDashboard     = initDashboard;
+window.abrirModalItem    = abrirModalItem;
+window.fecharModal       = fecharModal;
+window.fecharModalFora   = fecharModalFora;
+window.selecionarEmoji   = selecionarEmoji;
+window.previewFotos      = previewFotos;
+window.previewFoto       = previewFoto;
+window.salvarItem        = salvarItem;
+window.editarItem        = editarItem;
+window.deletarItem       = deletarItem;
+window.postarFresquinho  = postarFresquinho;
+window.removerFresquinho = removerFresquinho;
+window.renderPedidos     = renderPedidos;
+
+// ── Financeiro do estabelecimento ─────────────────────────
+window.setFinPeriodo = setFinPeriodo;
+window.exportarCSV   = exportarCSV;
+window.exportarPDF   = exportarPDF;
+
+// ═══════════════════════════════════════════════════════════
+// SISTEMA DE COMANDAS — MODO GARÇOM
+// ═══════════════════════════════════════════════════════════
+let _mesaAtual        = null;   // chave da mesa aberta "Mesa 3"
+let _pedidosMesas     = {};     // { "Mesa 3": [{...pedido}] }
+let _mesasFechadas    = new Set();
+let _cardapioCache    = null;   // cache dos produtos para seleção rápida
+let _carrinhoComanda  = {};     // { "Mesa 3": [{nome, preco, qtd, emoji}] }
+let _nomeComanda      = {};     // { "Mesa 3": "João" }
+let _pagamentoComanda = null;   // pagamento selecionado ao fechar comanda
+
+function getNumMesas() {
+  const estab = getEstab();
+  // Prioridade: 1) banco (num_mesas no estab) 2) localStorage 3) padrão 10
+  const doLocalStorage = localStorage.getItem('pw_num_mesas_' + (estab?.id || ''));
+  return parseInt(estab?.num_mesas || doLocalStorage || '10', 10);
+}
+
+window.salvarNumMesas = async function(val) {
+  const estab = getEstab(); if (!estab) return;
+  const n = Math.max(1, Math.min(200, parseInt(val) || 10));
+
+  // Atualiza o estab em memória IMEDIATAMENTE para renderMesas() pegar o valor novo
+  estab.num_mesas = n;
+  window._estab = { ...window._estab, num_mesas: n };
+  const stored = JSON.parse(localStorage.getItem('pw_estab') || '{}');
+  localStorage.setItem('pw_estab', JSON.stringify({ ...stored, num_mesas: n }));
+  localStorage.setItem('pw_num_mesas_' + estab.id, String(n));
+
+  // Atualiza o input visualmente com o valor normalizado
+  const inp = document.getElementById('cfg-num-mesas');
+  if (inp) inp.value = n;
+
+  // Re-renderiza imediatamente
+  renderMesas();
+
+  // Salva no banco em background (não bloqueia)
+  getSupa().from('estabelecimentos').update({ num_mesas: n }).eq('id', estab.id)
+    .then(({ error }) => {
+      if (error) console.error('[mesas] erro ao salvar:', error);
+      else showToast(`${n} mesas configuradas ✅`);
+    });
+};
+
+async function carregarPedidosMesas() {
+  const estab = getEstab(); if (!estab) return;
+  const { data } = await getSupa()
+    .from('pedidos')
+    .select('*')
+    .eq('estabelecimento_id', estab.id)
+    .ilike('endereco', 'No local%')
+    .in('status', ['novo', 'preparo'])   // só pedidos ativos
+    .order('created_at', { ascending: true });
+
+  _pedidosMesas = {};
+  (data || []).forEach(p => {
+    const raw   = (p.endereco || '');
+    const parts = raw.split('—');
+    if (parts.length < 2) return;
+    const mesa  = parts[1].trim();
+    if (!_pedidosMesas[mesa]) _pedidosMesas[mesa] = [];
+    _pedidosMesas[mesa].push(p);
+  });
+  renderMesas();
+}
+
+function renderMesas() {
+  const grid = document.getElementById('mesas-grid'); if (!grid) return;
+  const n    = getNumMesas();
+  const inp  = document.getElementById('cfg-num-mesas');
+  if (inp) inp.value = n;
+  const fmt  = v => 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',');
+
+  // Atualiza cards de resumo
+  const allPeds   = Object.values(_pedidosMesas).flat();
+  const mOcup     = Object.keys(_pedidosMesas).filter(k => _pedidosMesas[k].length > 0).length;
+  const totalAb   = allPeds.reduce((s, p) => s + Number(p.total || 0), 0);
+  const elOcup    = document.getElementById('mesas-ocupadas-count');
+  const elPeds    = document.getElementById('mesas-pedidos-count');
+  const elTotal   = document.getElementById('mesas-total-count');
+  if (elOcup)  elOcup.textContent  = mOcup;
+  if (elPeds)  elPeds.textContent  = allPeds.length;
+  if (elTotal) elTotal.textContent = fmt(totalAb);
+
+  // Pedidos novos aguardando nas mesas (área de destaque)
+  const novosM     = allPeds.filter(p => p.status === 'novo');
+  const wrapNovos  = document.getElementById('mesas-pedidos-novos-wrap');
+  const listaNovos = document.getElementById('mesas-pedidos-novos-lista');
+  const badgeNovos = document.getElementById('badge-mesas-novos');
+  if (wrapNovos)  wrapNovos.style.display  = novosM.length ? 'block' : 'none';
+  if (badgeNovos) badgeNovos.textContent   = novosM.length;
+  if (listaNovos && novosM.length) {
+    listaNovos.innerHTML = novosM.map(p => {
+      const itens = Array.isArray(p.itens) ? p.itens.map(i => `${i.qtd}x ${i.nome}`).join(' · ') : '';
+      const parts = (p.endereco||'').split('—');
+      const mesa  = parts.length >= 2 ? parts[1].trim() : p.endereco || 'Mesa';
+      const nome  = p.cliente_nome && p.cliente_nome !== mesa ? p.cliente_nome : '';
+      const numMesa = mesa.replace('Mesa ','');
+      return `<div style="background:#fff;border:2px solid var(--red);border-radius:14px;padding:14px 12px;display:flex;flex-direction:column;gap:8px;min-height:160px">
+        <!-- Número da mesa destaque -->
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="width:46px;height:46px;background:var(--red);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;color:#fff">${numMesa}</div>
+          <span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:50px;font-size:.65rem;font-weight:800">NOVO</span>
+        </div>
+        <!-- Nome e itens -->
+        <div style="flex:1">
+          <div style="font-size:.92rem;font-weight:800;color:#1a1a1a">${mesa}${nome ? ` <span style='font-size:.72rem;color:#888;font-weight:500'>${nome}</span>` : ''}</div>
+          <div style="font-size:.72rem;color:#aaa;margin-top:3px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${itens}</div>
+        </div>
+        <!-- Valor e ações -->
+        <div style="border-top:1px solid #f0e9e0;padding-top:8px">
+          <div style="font-size:1rem;font-weight:800;color:var(--red);margin-bottom:6px">${fmt(p.total)}</div>
+          <div style="display:flex;gap:5px">
+            <button class="btn-ped-aceitar" style="flex:1;padding:6px;font-size:.72rem" onclick="aceitarPedido('${p.id}')">✓ Aceitar</button>
+            <button class="btn-ped-recusar" style="padding:6px 8px;font-size:.72rem" onclick="recusarPedido('${p.id}')">✕</button>
+            <button class="btn-ped-imprimir" style="padding:6px 8px;font-size:.72rem" onclick="imprimirCozinha('${p.id}')">🖨️</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  grid.innerHTML = Array.from({ length: n }, (_, i) => {
+    const num    = i + 1;
+    const key    = 'Mesa ' + num;
+    const peds   = _pedidosMesas[key] || [];
+    const ativa  = peds.length > 0;
+    const fechada= _mesasFechadas.has(key);
+    const total  = peds.reduce((s, p) => s + Number(p.total || 0), 0);
+    const qtdIt  = peds.reduce((s, p) => s + (Array.isArray(p.itens) ? p.itens.reduce((a, i) => a + (i.qtd || 1), 0) : 0), 0);
+
+    let cls = 'vazia', dot = 'livre', info = '<span class="mesa-label">Livre</span>';
+    if (fechada) {
+      cls  = 'fechando'; dot = '';
+      info = '<span class="mesa-label" style="color:var(--red)">✗ Fechada</span>';
+    } else if (ativa) {
+      cls  = 'ocupada'; dot = 'ocup';
+      info = '<span class="mesa-total">' + fmt(total) + '</span><span class="mesa-qtd">' + peds.length + ' ped · ' + qtdIt + ' itens</span>';
+    }
+
+    return '<div class="mesa-card ' + cls + '" onclick="abrirComanda(' + num + ')">' +
+      '<div class="mesa-status-dot ' + dot + '"></div>' +
+      '<div class="mesa-num">' + num + '</div>' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:3px">' + info + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+// ── Carrega cardápio para seleção no modo garçom ──────────────────────────────
+async function carregarCardapioComanda() {
+  if (_cardapioCache) return _cardapioCache;
+  const estab = getEstab(); if (!estab) return [];
+  const { data } = await getSupa()
+    .from('produtos').select('id,nome,preco,emoji,categoria,disponivel,grupo_adicional_id')
+    .eq('estabelecimento_id', estab.id)
+    .eq('disponivel', true)
+    .order('categoria');
+  
+  // Enriquece com dados do grupo de adicionais
+  if (data) {
+    const grupoIds = [...new Set(data.filter(p=>p.grupo_adicional_id).map(p=>p.grupo_adicional_id))];
+    if (grupoIds.length) {
+      const { data: grupos } = await getSupa().from('grupos_adicionais').select('*').in('id', grupoIds);
+      const grupoMap = {};
+      (grupos||[]).forEach(g=>{ grupoMap[g.id]=g; });
+      data.forEach(p=>{ if(p.grupo_adicional_id) p.adicionais_grupo = grupoMap[p.grupo_adicional_id]; });
     }
   }
   _cardapioCache = data || [];
@@ -1351,9 +3106,9 @@ function renderCarrinhoComanda(mesaKey) {
     if (btnEnviar) btnEnviar.disabled = true;
     return;
   }
-  el.innerHTML = carr.map(i=>'
+  el.innerHTML = carr.map(i=>`
     <div class="carr-row">
-      <span style="font-size:1.1rem;flex-shrink:0">'+i.emoji||'🍽️'+'</span>
+      <span style="font-size:1.1rem;flex-shrink:0">${i.emoji||'🍽️'}</span>
       <span class="carr-nome">${i.nome}</span>
       <div class="carr-ctrl">
         <button class="carr-btn minus" onclick="rmItemComanda('${mesaKey}','${i.id}')">−</button>
@@ -1361,7 +3116,7 @@ function renderCarrinhoComanda(mesaKey) {
         <button class="carr-btn plus" onclick="addItemComanda('${mesaKey}','${i.id}','${i.nome.replace(/'/g,"\'")}',${i.preco},'${i.emoji||''}')">+</button>
       </div>
       <span class="carr-subtot">${fmtR(i.preco*i.qtd)}</span>
-    </div>').join('');
+    </div>`).join('');
   if (elTotal)   elTotal.textContent = fmtR(total);
   if (btnEnviar) btnEnviar.disabled = false;
 }
@@ -1448,8 +3203,8 @@ function renderCardapioComanda(mesaKey, prods) {
     const itemsHtml = items.map(p => {
       const nomeEnc  = p.nome.replace(/"/g, '&quot;');
       const precoFmt = Number(p.preco).toFixed(2).replace('.',',');
-      return '<div class="cmd-item" onclick="tcmdItem(this)"
-        data-pid="'+p.id+'"
+      return `<div class="cmd-item" onclick="tcmdItem(this)"
+        data-pid="${p.id}"
         data-nome="${nomeEnc}"
         data-preco="${p.preco}"
         data-emoji="${p.emoji||'🍽️'}"
@@ -1457,9 +3212,9 @@ function renderCardapioComanda(mesaKey, prods) {
         <span class="cmd-item-emoji">${p.emoji||'🍽️'}</span>
         <span class="cmd-item-nome">${p.nome}</span>
         <span class="cmd-item-preco">R$ ${precoFmt}</span>
-      </div>';
+      </div>`;
     }).join('');
-    return '<span class="cmd-cat-label">'+cat+'</span>${itemsHtml}';
+    return `<span class="cmd-cat-label">${cat}</span>${itemsHtml}`;
   }).join('');
 }
 
@@ -1532,7 +3287,6 @@ async function confirmarFecharComanda() {
 
   // Reseta seleção de pagamento e abre modal
   _pagamentoComanda = null;
-  _taxaServicoRemovida = false;
   ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
     const btn = document.getElementById('pgto-btn-' + m);
     if (btn) { btn.style.borderColor='#e0dbd5'; btn.style.background='#fff'; btn.style.color='#555'; }
@@ -1544,35 +3298,8 @@ async function confirmarFecharComanda() {
   const totEl  = document.getElementById('fechar-comanda-total');
   const infEl  = document.getElementById('fechar-comanda-info');
   if (mesaEl) mesaEl.textContent = _mesaAtual;
+  if (totEl)  totEl.textContent  = fmt(totalMesa);
   if (infEl)  infEl.textContent  = peds.length + ' pedido(s)';
-
-  // Taxa de serviço
-  const estab = getEstab();
-  const taxaAtiva = estab?.taxa_servico === true;
-  const percServico = Number(estab?.perc_servico || 10);
-  const taxaWrap = document.getElementById('fechar-taxa-wrap');
-  const btnRemover = document.getElementById('btn-remover-taxa');
-
-  if (taxaAtiva) {
-    const valorTaxa = totalMesa * (percServico / 100);
-    const totalFinal = totalMesa + valorTaxa;
-    // Mostra breakdown
-    if (totEl) totEl.textContent = fmt(totalFinal);
-    const subEl = document.getElementById('fechar-subtotal');
-    const labEl = document.getElementById('fechar-taxa-label');
-    const taxaEl = document.getElementById('fechar-taxa-valor');
-    const finalEl = document.getElementById('fechar-total-final');
-    if (subEl)   subEl.textContent  = fmt(totalMesa);
-    if (labEl)   labEl.textContent  = 'Taxa de serviço ('+percServico+'%)';
-    if (taxaEl)  taxaEl.textContent = fmt(valorTaxa);
-    if (finalEl) finalEl.textContent = fmt(totalFinal);
-    if (taxaWrap) taxaWrap.style.display = 'block';
-    if (btnRemover) btnRemover.style.display = 'inline-flex';
-  } else {
-    if (totEl) totEl.textContent = fmt(totalMesa);
-    if (taxaWrap) taxaWrap.style.display = 'none';
-  }
-
   const modal = document.getElementById('modal-fechar-comanda');
   if (modal) modal.style.display = 'flex';
 }
@@ -1581,30 +3308,6 @@ window.cancelarFecharComanda = function() {
   const modal = document.getElementById('modal-fechar-comanda');
   if (modal) modal.style.display = 'none';
   _pagamentoComanda = null;
-  _taxaServicoRemovida = false;
-};
-
-// Remove a taxa de serviço a pedido do cliente
-window.removerTaxaServico = function() {
-  _taxaServicoRemovida = true;
-  const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  // Esconde a linha da taxa e atualiza os totais
-  const taxaLinha = document.getElementById('fechar-taxa-linha');
-  if (taxaLinha) taxaLinha.style.display = 'none';
-  // Subtotal vira o total
-  const subEl   = document.getElementById('fechar-subtotal');
-  const finalEl = document.getElementById('fechar-total-final');
-  const totEl   = document.getElementById('fechar-comanda-total');
-  const subtotal = subEl?.textContent || '';
-  if (finalEl) finalEl.textContent = subtotal;
-  if (totEl)   totEl.textContent   = subtotal;
-  // Muda label do bloco pra "Sem taxa de serviço"
-  const labEl = document.getElementById('fechar-taxa-label');
-  if (labEl) { labEl.textContent = 'Taxa de serviço removida'; labEl.style.textDecoration = 'line-through'; labEl.style.color = '#ccc'; }
-  const taxaEl = document.getElementById('fechar-taxa-valor');
-  if (taxaEl) { taxaEl.textContent = 'R$ 0,00'; taxaEl.style.color = '#ccc'; }
-  const btn = document.getElementById('btn-remover-taxa');
-  if (btn) btn.style.display = 'none';
 };
 
 window.selecionarPagamentoComanda = function(metodo) {
@@ -1641,14 +3344,7 @@ window.executarFecharComanda = async function() {
   const peds = _pedidosMesas[_mesaAtual] || [];
   const mesaFechando = _mesaAtual;
   const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  const subtotal = peds.reduce((s,p)=>s+Number(p.total||0),0);
-
-  // Calcula total final considerando taxa de serviço
-  const estab = getEstab();
-  const taxaAtiva = estab?.taxa_servico === true && !_taxaServicoRemovida;
-  const percServico = Number(estab?.perc_servico || 10);
-  const valorTaxa = taxaAtiva ? subtotal * (percServico / 100) : 0;
-  const totalMesa = subtotal + valorTaxa;
+  const totalMesa = peds.reduce((s,p)=>s+Number(p.total||0),0);
 
   // Salva pagamento + status nos pedidos da mesa
   const ids = peds.map(p=>p.id);
@@ -1665,7 +3361,6 @@ window.executarFecharComanda = async function() {
   setTimeout(()=>{ _mesasFechadas.delete(mesaFechando); renderMesas(); }, 5000);
 
   _pagamentoComanda = null;
-  _taxaServicoRemovida = false;
   window.fecharComanda();
   showToast('Comanda da ' + mesaFechando + ' fechada! ' + fmt(totalMesa));
   renderMesas();
@@ -1691,201 +3386,4 @@ window.switchComandaTab       = window.switchComandaTab;
 window.toggleTaxaEntrega = function(ativo) {
   const w = document.getElementById('taxa-entrega-wrap');
   if (w) w.style.display = ativo ? 'block' : 'none';
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🔥 MODAL QUENTE — Promoção por percentual
-// ═══════════════════════════════════════════════════════════════════════════════
-let _quentePct = 10;
-
-window.abrirModalQuente = async function() {
-  const modal = document.getElementById('modal-quente');
-  if (!modal) return;
-
-  // Gera pills de percentual (5 a 50, step 5)
-  const pctWrap = document.getElementById('quente-percentuais');
-  if (pctWrap) {
-    pctWrap.innerHTML = [5,10,15,20,25,30,35,40,45,50].map(p => '
-      <button onclick="selecionarPctQuente('+p+')" id="qpct-${p}"
-        style="padding:8px 16px;border-radius:100px;border:2px solid ${p===_quentePct?'#e65e32':'#e0dbd5'};
-               background:${p===_quentePct?'#e65e32':'#fff'};
-               color:${p===_quentePct?'#fff':'#555'};
-               font-family:'Poppins',sans-serif;font-weight:800;font-size:.82rem;cursor:pointer;transition:all .15s">
-        ${p}% OFF
-      </button>').join('');
-  }
-
-  // Mostra preview
-  atualizarPreviewQuente();
-
-  // Carrega produtos da loja
-  await carregarProdutosQuente();
-
-  modal.style.display = 'flex';
-};
-
-window.selecionarPctQuente = function(pct) {
-  _quentePct = pct;
-  // Atualiza visual dos botões
-  [5,10,15,20,25,30,35,40,45,50].forEach(p => {
-    const btn = document.getElementById('qpct-'+p);
-    if (!btn) return;
-    btn.style.background     = p === pct ? '#e65e32' : '#fff';
-    btn.style.borderColor    = p === pct ? '#e65e32' : '#e0dbd5';
-    btn.style.color          = p === pct ? '#fff'    : '#555';
-  });
-  atualizarPreviewQuente();
-  // Recalcula preços nos cards de produto usando o preço BASE (nunca o descontado)
-  document.querySelectorAll('[data-preco-orig]').forEach(el => {
-    const base = parseFloat(el.dataset.precoOrig);
-    const desc = base * (1 - _quentePct / 100);
-    el.textContent = 'R$ ' + desc.toFixed(2).replace('.', ',');
-  });
-};
-
-function atualizarPreviewQuente() {
-  const prev = document.getElementById('quente-preview');
-  const lbl  = document.getElementById('quente-preview-pct');
-  if (prev) prev.style.display = 'flex';
-  if (lbl)  lbl.textContent   = _quentePct + '% OFF';
-}
-
-async function carregarProdutosQuente() {
-  const lista = document.getElementById('quente-lista-produtos');
-  if (!lista) return;
-  lista.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:.82rem">Carregando...</div>';
-
-  const estab = getEstab();
-  if (!estab?.id) { lista.innerHTML = '<div style="color:#aaa;font-size:.82rem;padding:20px;text-align:center">Nenhum produto encontrado</div>'; return; }
-
-  const { data: prods } = await getSupa().from('produtos').select('id,nome,preco,preco_original,em_promocao,desconto_percent,foto_url,categoria').eq('estabelecimento_id', estab.id).eq('disponivel', true).order('nome');
-
-  if (!prods?.length) {
-    lista.innerHTML = '<div style="color:#aaa;font-size:.82rem;padding:20px;text-align:center">Nenhum produto cadastrado</div>';
-    return;
-  }
-
-  lista.innerHTML = prods.map(p => {
-    const emPromo = p.em_promocao && p.desconto_percent > 0;
-    // SEMPRE usa preco_original como base — nunca o preço já descontado
-    const precoBase = parseFloat(p.preco_original || p.preco);
-    const precoDesc = precoBase * (1 - _quentePct / 100);
-    return '
-    <label style="display:flex;align-items:center;gap:12px;background:'+emPromo?'#fff8f5':'#faf8f5'+';border:1.5px solid ${emPromo?'#e65e32':'#f0ebe4'};border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s">
-      <input type="checkbox" value="${p.id}" ${emPromo?'checked':''}
-        data-preco-base="${precoBase}"
-        style="width:18px;height:18px;accent-color:#e65e32;cursor:pointer;flex-shrink:0">
-      ${p.foto_url?'<img src="${p.foto_url}" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`:         `<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>'}       <div style="flex:1;min-width:0">         <div style="font-size:.85rem;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.nome+'</div>         <div style="font-size:.72rem;color:#aaa">${p.categoria||''}</div>       </div>       <div style="text-align:right;flex-shrink:0">         <div style="font-size:.72rem;color:#bbb;text-decoration:line-through">R$ ${precoBase.toFixed(2).replace('.',',')}</div>         <div style="font-size:.9rem;font-weight:800;color:#e65e32" data-preco-orig="${precoBase}">R$ ${precoDesc.toFixed(2).replace('.',',')}</div>       </div>     </label>';   }).join(''); }  window.salvarQuente = async function() {   const checkboxes = document.querySelectorAll('#quente-lista-produtos input[type=checkbox]');   const marcados   = [...checkboxes].filter(c => c.checked);   const desmarcados= [...checkboxes].filter(c => !c.checked);   const pct        = _quentePct;   const estab      = getEstab();    showToast('Salvando...', '#f59e0b');    // Remove promoção dos desmarcados — SEMPRE restaura preco ao preco_original   for (const cb of desmarcados) {     const precoBase = parseFloat(cb.dataset.precoBase); // original guardado no data attr     // Dupla segurança: busca preco_original do banco     const { data: prod } = await getSupa().from('produtos')
-      .select('preco_original,em_promocao').eq('id', cb.value).single();
-    // Só age em produtos que estavam em promoção
-    if (!prod?.em_promocao) continue;
-    const precoRestaurado = prod?.preco_original || precoBase;
-    await getSupa().from('produtos').update({
-      em_promocao:      false,
-      desconto_percent: 0,
-      preco:            precoRestaurado,  // ← restaura o preço original de verdade
-      preco_original:   null,
-    }).eq('id', cb.value);
-  }
-
-  // Salva produtos marcados com o percentual
-  for (const cb of marcados) {
-    const precoBase = parseFloat(cb.dataset.precoBase); // sempre o original
-    const precoDesc = parseFloat((precoBase * (1 - pct/100)).toFixed(2));
-    await getSupa().from('produtos').update({
-      em_promocao:      true,
-      desconto_percent: pct,
-      preco_original:   precoBase,   // guarda o original
-      preco:            precoDesc,   // aplica desconto sobre o original
-    }).eq('id', cb.value);
-  }
-
-  // Atualiza flag da loja
-  if (estab?.id) {
-    await getSupa().from('estabelecimentos').update({
-      promocao_ativa:   marcados.length > 0,
-      desconto_percent: marcados.length > 0 ? pct : 0,
-    }).eq('id', estab.id);
-  }
-
-  fecharModalQuente();
-  showToast(marcados.length > 0 ? '🔥 Promoção QUENTE salva!' : '✅ Promoção removida!');
-  await renderCardapio();
-};
-
-window.fecharModalQuente = function() {
-  const modal = document.getElementById('modal-quente');
-  if (modal) modal.style.display = 'none';
-  const prev = document.getElementById('quente-preview');
-  if (prev) prev.style.display = 'none';
-};
-
-// ── Sub-abas do cardápio (Todos / 🔥 QUENTE) ─────────────────────────────────
-let _dashSubTab = 'todos';
-
-window.dashSubTab = async function(tab, btn) {
-  _dashSubTab = tab;
-  // Estilo dos botões
-  ['todos','quente'].forEach(t => {
-    const b = document.getElementById('dash-subtab-' + t);
-    if (!b) return;
-    const ativo = t === tab;
-    b.style.color       = ativo ? 'var(--red)' : '#aaa';
-    b.style.borderBottom= ativo ? '2.5px solid var(--red)' : '2.5px solid transparent';
-  });
-  await renderCardapio();
-};
-
-// Atualiza animação do foguinho no dashboard
-function atualizarFireDash() {
-  const ico = document.getElementById('dash-fire-ico');
-  if (!ico) return;
-  // Verifica se há produtos QUENTE
-  getSupa().from('produtos').select('id').eq('estabelecimento_id', getEstab()?.id).eq('em_promocao', true).limit(1)
-    .then(({ data }) => {
-      if (data?.length) {
-        ico.style.cssText = 'display:inline-block;animation:fire-pulse-dash 1.8s ease-in-out infinite';
-      } else {
-        ico.style.cssText = 'display:inline-block;opacity:.3;filter:grayscale(1)';
-      }
-    });
-}
-
-// Injeta keyframe no dash
-if (!document.getElementById('dash-fire-style')) {
-  const s = document.createElement('style');
-  s.id = 'dash-fire-style';
-  s.textContent = '@keyframes fire-pulse-dash{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}';
-  document.head.appendChild(s);
-}
-
-window.toggleCfgTaxaServico = function(ativo) {
-  const w = document.getElementById('cfg-taxa-servico-wrap');
-  if (w) w.style.display = ativo ? 'block' : 'none';
-};
-
-// ── Accordion das configurações ───────────────────────────────────────────────
-window.initCfgAccordion = function() {
-  document.querySelectorAll('.cfg-topic-header').forEach(header => {
-    if (header.dataset.accordion) return;
-    header.dataset.accordion = '1';
-    header.addEventListener('click', function(e) {
-      if (e.target.closest('input,button,label,select,a')) return;
-      const card = this.closest('.cfg-topic-card');
-      const body = card?.querySelector('.cfg-topic-body');
-      if (!body) return;
-      const isOpen = body.classList.contains('open');
-      // Fecha todos
-      document.querySelectorAll('.cfg-topic-body.open').forEach(b => {
-        b.classList.remove('open');
-        b.closest('.cfg-topic-card')?.querySelector('.cfg-topic-header')?.classList.remove('open');
-      });
-      // Abre o clicado se estava fechado
-      if (!isOpen) {
-        body.classList.add('open');
-        this.classList.add('open');
-        setTimeout(() => card.scrollIntoView({ behavior:'smooth', block:'nearest' }), 60);
-      }
-    });
-  });
 };
