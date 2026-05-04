@@ -2098,7 +2098,7 @@ function renderFinanceiro() {
   const fat  = peds.reduce((s,p)=>s+Number(p.total||0),0);
   const taxa = peds.reduce((s,p)=>s+Number(p.taxa_entrega||0),0);
   const tick = peds.length ? fat/peds.length : 0;
-  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmtR = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
 
   const se = id => document.getElementById(id);
   if (se('fin-fat-est'))  se('fin-fat-est').textContent  = fmtR(fat);
@@ -2239,6 +2239,9 @@ function setFinPeriodo(p, btn) {
     renderFinanceiro();
   }
 }
+
+// Exporta setFinPeriodo para uso nos botões HTML
+window.setFinPeriodo = setFinPeriodo;
 
 // Chamado pelo botão Buscar no filtro de datas
 window.buscarPeriodoFinanceiro = function() {
@@ -2988,7 +2991,7 @@ window.renderHistoricoMesas = async function() {
     return;
   }
 
-  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmtR = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const stCor = { novo:'#f59e0b', preparo:'#3b82f6', pronto:'#22c55e' };
   const stLbl = { novo:'⏳ Aguardando', preparo:'✅ Na cozinha', pronto:'✅ Pronto' };
 
@@ -3329,7 +3332,7 @@ window.filtrarPorPagamento = function(metodo) {
   if (!fn) return;
 
   const peds = _finPedidos.filter(p => fn((p.pagamento||'').toLowerCase()) && p.status !== 'recusado');
-  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmtR = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const LABELS = { pix:'PIX', credito:'Cartão Crédito', debito:'Cartão Débito', dinheiro:'Dinheiro' };
 
   // Navega para a aba de pedidos e mostra filtrado
@@ -3740,7 +3743,7 @@ window.toggleCmdCat = function(uid) {
 function renderPedidosComanda(mesaKey) {
   const el   = document.getElementById('comanda-historico');
   const peds = _pedidosMesas[mesaKey] || [];
-  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmtR = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const stLbl = {novo:'⏳ Aguardando',preparo:'✅ Na cozinha',pronto:'✅ Pronto'};
   const stClr = {novo:'#f59e0b',preparo:'#3b82f6',pronto:'#22c55e'};
 
@@ -4377,7 +4380,7 @@ async function carregarCaixa() {
 }
 
 async function renderCaixa() {
-  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmtR = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const abrirCard   = document.getElementById('caixa-abrir-card');
   const fecharCard  = document.getElementById('caixa-fechar-card');
   const statusLbl   = document.getElementById('caixa-status-label');
@@ -4537,7 +4540,7 @@ window.fecharCaixa = async function() {
 window.imprimirComprovanteComDados = function(c) {
   const estab = getEstab();
   const t = c.totais || {};
-  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmtR = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const horaAb = c.created_at ? new Date(c.created_at).toLocaleString('pt-BR') : '—';
   const agora  = new Date().toLocaleString('pt-BR');
   const dif = c.dif ?? 0;
@@ -4553,7 +4556,7 @@ window.imprimirComprovanteCaixa = function() {
   const esperado = fecharCard?._esperado || 0;
   const vFech = parseFloat(document.getElementById('caixa-valor-fechamento')?.value) || 0;
   const dif = vFech - esperado;
-  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmtR = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const difTxt = Math.abs(dif) < 0.01 ? '✅ Conferido' :
     dif < 0 ? `❌ Falta ${fmtR(Math.abs(dif))}` : `⚠️ Sobra ${fmtR(dif)}`;
   const horaAb = _caixaAberto?.created_at ? new Date(_caixaAberto.created_at).toLocaleString('pt-BR') : '—';
@@ -4563,7 +4566,7 @@ window.imprimirComprovanteCaixa = function() {
 };
 
 function _abrirJanelaComprovante(estab, t, operador, horaAb, agora, esperado, vFech, difTxt, obs) {
-  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmtR = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const win = window.open('', '_blank', 'width=380,height=700');
   if (!win) { showToast('⚠️ Permita pop-ups para imprimir'); return; }
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comprovante de Caixa</title>
@@ -4609,7 +4612,7 @@ async function carregarHistoricoCaixa() {
     .order('created_at', { ascending: false }).limit(20);
   const el = document.getElementById('caixa-historico');
   if (!el) return;
-  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmtR = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   if (!data?.length) {
     el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:.82rem;padding:24px">Nenhum registro ainda</div>';
     return;
@@ -4644,7 +4647,7 @@ window.reimprimirCaixa = async function(caixaId) {
   if (!data) return;
   const estab = getEstab();
   const t = data.totais_pagamento || {};
-  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmtR = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const horaAb = new Date(data.created_at).toLocaleString('pt-BR');
   const horaFch = data.fechado_em ? new Date(data.fechado_em).toLocaleString('pt-BR') : '—';
   const esperado = (data.valor_abertura||0) + (t.totVendas||0);
