@@ -2409,7 +2409,7 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
             <div class="link-label">🛵 LINK DO CARDÁPIO</div>
             <div class="link-url" id="link-url">pediway.com.br/meu-estabelecimento</div>
           </div>
-          <button class="btn-copiar" onclick="copiarLink()">Copiar</button>
+          <button class="btn-copiar" onclick="(function(){var u=document.getElementById('link-url').textContent.trim();if(!u.startsWith('http'))u='https://'+u;navigator.clipboard.writeText(u).catch(function(){var el=document.createElement('textarea');el.value=u;document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el)});window.showToast&&showToast('✅ Link copiado: '+u)})()">Copiar</button>
         </div>
         <!-- Link garçons -->
         <div class="link-box" style="margin-bottom:0;background:#FFF5F5;border:1.5px dashed rgba(232,0,28,0.25)">
