@@ -4246,7 +4246,17 @@ function pararAutoRefresh() {
 
 window.showTab = (function(_orig) {
   return function(tab, btn) {
+    // Salva e restaura posição do scroll para evitar salto visual
+    const dashEl = document.getElementById('s-dash');
+    const scrollY = window.scrollY || window.pageYOffset;
+
     if (typeof _orig === 'function') _orig(tab, btn);
+
+    // Restaura scroll imediatamente após troca de aba
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0); // tabs sempre voltam ao topo — comportamento consistente
+    });
+
     if (tab === 'caixa') {
       setTimeout(carregarCaixa, 80);
       iniciarAutoRefresh('caixa');
