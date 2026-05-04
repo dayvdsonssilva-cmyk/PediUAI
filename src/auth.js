@@ -4,7 +4,7 @@ import { goTo, showToast, gerarSlug } from './utils.js';
 
 // ── Validação CPF ──────────────────────────────────────────
 function validarCPF(c) {
-  c = c.replace(/\D/g, '');
+  c = c.replace(/\D/g,'');
   if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false;
   let s = 0;
   for (let i = 0; i < 9; i++) s += +c[i] * (10 - i);
@@ -18,7 +18,7 @@ function validarCPF(c) {
 
 // ── Validação CNPJ ─────────────────────────────────────────
 function validarCNPJ(c) {
-  c = c.replace(/\D/g, '');
+  c = c.replace(/\D/g,'');
   if (c.length !== 14 || /^(\d)\1+$/.test(c)) return false;
   const calc = n => {
     let s = 0, p = n - 7;
@@ -29,14 +29,14 @@ function validarCNPJ(c) {
 }
 
 function docValido(d) {
-  const n = d.replace(/\D/g, '');
+  const n = d.replace(/\D/g,'');
   return n.length === 11 ? validarCPF(n) : n.length === 14 ? validarCNPJ(n) : false;
 }
 
 // ── Máscara de telefone ────────────────────────────────────
-window.mascaraTel = function (inp) {
-  let v = inp.value.replace(/\D/g, '').slice(0, 11);
-  if (v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+window.mascaraTel = function(inp) {
+  let v = inp.value.replace(/\D/g,'').slice(0,11);
+  if (v.length > 10)     v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
   else if (v.length > 6) v = v.replace(/^(\d{2})(\d{4})(\d*)$/, '($1) $2-$3');
   else if (v.length > 2) v = v.replace(/^(\d{2})(\d*)$/, '($1) $2');
   else if (v.length > 0) v = '(' + v;
@@ -44,7 +44,7 @@ window.mascaraTel = function (inp) {
 };
 
 // ── Toggle mostrar/ocultar senha ──────────────────────────
-window.toggleSenha = function (inputId, btnId) {
+window.toggleSenha = function(inputId, btnId) {
   const inp = document.getElementById(inputId);
   const btn = document.getElementById(btnId);
   if (!inp) return;
@@ -62,21 +62,21 @@ async function slugLivre(slug) {
 
 // ── CADASTRO ───────────────────────────────────────────────
 export async function doRegister() {
-  const nomeP = document.getElementById('rnome')?.value.trim();
-  const tel = document.getElementById('rtel')?.value.trim();
-  const nome = document.getElementById('rn')?.value.trim();
+  const nomeP  = document.getElementById('rnome')?.value.trim();
+  const tel    = document.getElementById('rtel')?.value.trim();
+  const nome   = document.getElementById('rn')?.value.trim();
   const cidade = document.getElementById('rcidade')?.value.trim() || null;
-  const doc = document.getElementById('rdoc')?.value.trim();
-  const email = document.getElementById('re')?.value.trim();
-  const pass = document.getElementById('rp')?.value;
+  const doc    = document.getElementById('rdoc')?.value.trim();
+  const email  = document.getElementById('re')?.value.trim();
+  const pass   = document.getElementById('rp')?.value;
 
-  if (!nomeP) return showToast('Digite seu nome completo.', 'error');
-  if (!tel || tel.replace(/\D/g, '').length < 10) return showToast('Digite um WhatsApp válido com DDD.', 'error');
-  if (!nome) return showToast('Digite o nome do estabelecimento.', 'error');
-  if (!cidade) return showToast('Digite a cidade do estabelecimento.', 'error');
-  if (!doc) return showToast('Digite o CPF ou CNPJ.', 'error');
+  if (!nomeP)          return showToast('Digite seu nome completo.', 'error');
+  if (!tel || tel.replace(/\D/g,'').length < 10) return showToast('Digite um WhatsApp válido com DDD.', 'error');
+  if (!nome)           return showToast('Digite o nome do estabelecimento.', 'error');
+  if (!cidade)         return showToast('Digite a cidade do estabelecimento.', 'error');
+  if (!doc)            return showToast('Digite o CPF ou CNPJ.', 'error');
   if (!docValido(doc)) return showToast('CPF ou CNPJ inválido.', 'error');
-  if (!email) return showToast('Digite o e-mail.', 'error');
+  if (!email)          return showToast('Digite o e-mail.', 'error');
   if (!pass || pass.length < 6) return showToast('Senha mínima: 6 caracteres.', 'error');
 
   const btn = document.querySelector('[onclick="doRegister()"]');
@@ -107,17 +107,17 @@ export async function doRegister() {
       if (t > 99) { slug = gerarSlug(nome) + '-' + Date.now(); break; }
     }
 
-    const telSoNumeros = tel.replace(/\D/g, '');
+    const telSoNumeros = tel.replace(/\D/g,'');
     const { error: dbErr } = await getSupa().from('estabelecimentos').insert({
-      user_id: userId,
+      user_id:          userId,
       nome,
       slug,
       cidade,
-      cpf_cnpj: doc.replace(/\D/g, ''),
+      cpf_cnpj:         doc.replace(/\D/g,''),
       nome_responsavel: nomeP,
-      telefone: telSoNumeros,
-      status: 'ativo',
-      plano: 'basico',
+      telefone:         telSoNumeros,
+      status:           'ativo',
+      plano:            'basico',
     });
 
     if (dbErr) {
@@ -139,10 +139,10 @@ export async function doRegister() {
 // ── LOGIN ──────────────────────────────────────────────────
 export async function doLogin() {
   const email = document.getElementById('le')?.value.trim();
-  const pass = document.getElementById('lp')?.value;
+  const pass  = document.getElementById('lp')?.value;
 
   if (!email) return showToast('Digite o e-mail.', 'error');
-  if (!pass) return showToast('Digite a senha.', 'error');
+  if (!pass)  return showToast('Digite a senha.', 'error');
 
   const btn = document.querySelector('[onclick="doLogin()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Entrando...'; }
@@ -196,7 +196,7 @@ export async function doLogin() {
 let _recEmailVerificado = null;
 
 function recAtivarStep(n) {
-  [1, 2, 3].forEach(i => {
+  [1,2,3].forEach(i => {
     const d = document.getElementById('rec-passo' + i);
     const dot = document.getElementById('step-dot-' + i);
     if (d) d.style.display = i === n ? 'block' : 'none';
@@ -212,10 +212,10 @@ function recAtivarStep(n) {
   });
 }
 
-window.recVoltar = function (passo) { recAtivarStep(passo); };
+window.recVoltar = function(passo) { recAtivarStep(passo); };
 
 // Passo 1: valida e-mail (só verifica se está preenchido)
-window.recPasso1 = function () {
+window.recPasso1 = function() {
   const email = document.getElementById('rec-email')?.value.trim();
   if (!email || !email.includes('@')) return showToast('Digite um e-mail válido.', 'error');
   _recEmailVerificado = email;
@@ -223,9 +223,9 @@ window.recPasso1 = function () {
 };
 
 // Passo 2: verifica telefone completo no banco
-window.recPasso2 = async function () {
-  const tel = document.getElementById('rec-tel')?.value.trim();
-  const tel9 = tel.replace(/\D/g, '');
+window.recPasso2 = async function() {
+  const tel  = document.getElementById('rec-tel')?.value.trim();
+  const tel9 = tel.replace(/\D/g,'');
 
   if (!tel9 || tel9.length < 10) return showToast('Digite o WhatsApp completo com DDD.', 'error');
 
@@ -260,12 +260,12 @@ window.recPasso2 = async function () {
   }
 };
 
-window.salvarNovaSenha = async function () {
+window.salvarNovaSenha = async function() {
   const nova = document.getElementById('rec-nova')?.value;
   const conf = document.getElementById('rec-conf')?.value;
 
   if (!nova || nova.length < 6) return showToast('Senha mínima: 6 caracteres.', 'error');
-  if (nova !== conf) return showToast('As senhas não coincidem.', 'error');
+  if (nova !== conf)            return showToast('As senhas não coincidem.', 'error');
 
   const btn = document.querySelector('[onclick="salvarNovaSenha()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
