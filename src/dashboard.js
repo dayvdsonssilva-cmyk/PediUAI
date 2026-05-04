@@ -177,9 +177,10 @@ function atualizarInfoPlano() {
 }
 
 export async function initDashboard() {
-  // Exporta imediatamente para window (auth.js precisa antes de qualquer await)
-  window.initDashboard = initDashboard;
-  // Se o dia salvo (quente_dia) for diferente do dia atual → desativa promoções automaticamente
+  let estab = getEstab();
+  if (!estab) return;
+
+  // ── Verifica expiração do QUENTE ao abrir o dashboard ────────────────────
   async function verificarExpiracaoQuente(estab) {
     if (!estab?.id) return;
     const diaAtual = new Date().getDay();
@@ -215,30 +216,7 @@ export async function initDashboard() {
       console.log('[QUENTE] Expirou. Dia salvo:', diaSalvo, '→ Hoje:', diaAtual);
     } catch(e) { console.warn('[QUENTE] Erro ao expirar:', e); }
   }
-  // Usa window._estab se já foi definido (ex: pelo doLogin)
-  // Se não estiver, tenta localStorage, depois banco
-  let estab = window._estab || (() => {
-    try { return JSON.parse(localStorage.getItem('pw_estab') || 'null'); } catch(e) { return null; }
-  })();
 
-  // Último recurso: busca do banco via sessão ativa
-  if (!estab) {
-    try {
-      const { data: { session } } = await getSupa().auth.getSession();
-      if (session?.user) {
-        const { data: fetchedEstab } = await getSupa()
-          .from('estabelecimentos').select('*')
-          .eq('user_id', session.user.id).maybeSingle();
-        if (fetchedEstab) {
-          estab = fetchedEstab;
-          window._estab = fetchedEstab;
-          localStorage.setItem('pw_estab', JSON.stringify(fetchedEstab));
-        }
-      }
-    } catch(e) { console.warn('initDashboard: erro ao buscar estab da sessão', e); }
-  }
-
-  if (!estab) { console.warn('initDashboard: estab não encontrado'); return; }
   atualizarLinkSuporte();
   atualizarInfoPlano();
   aplicarRestricaoPlano(estab);
