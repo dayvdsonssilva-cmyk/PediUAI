@@ -2124,7 +2124,7 @@ function renderFinanceiro() {
   const totPagGeral = peds.reduce((s,p)=>s+Number(p.total||0),0) || 1;
   const pagsEl = se('fin-pags-est');
   if (pagsEl) pagsEl.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:4px 0">
+    <div class="pag-circles-grid">
       ${METODOS.map(m => {
         const pedsMet = peds.filter(p => m.match((p.pagamento||'').toLowerCase()));
         const fatMet  = pedsMet.reduce((s,p)=>s+Number(p.total||0),0);
@@ -2134,11 +2134,11 @@ function renderFinanceiro() {
         const gap     = circ - dash;
         return `
         <div onclick="filtrarPorPagamento('${m.key}')"
-          style="background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:16px 10px;text-align:center;cursor:pointer;transition:all .2s;position:relative"
+          class="pag-circle-card" style="background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:16px 10px;text-align:center;cursor:pointer;transition:all .2s;position:relative"
           onmouseover="this.style.borderColor='${m.cor}';this.style.background='${m.cor}18'"
           onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg)'">
           <!-- Donut SVG -->
-          <svg width="72" height="72" viewBox="0 0 72 72" style="display:block;margin:0 auto 8px">
+          <svg viewBox="0 0 72 72" style="display:block;margin:0 auto 8px;width:100%;max-width:72px;height:auto">
             <!-- Trilha cinza -->
             <circle cx="36" cy="36" r="28" fill="none" stroke="#f0ebe4" stroke-width="8"/>
             <!-- Arco preenchido -->
@@ -2171,14 +2171,14 @@ function renderFinanceiro() {
   const circ2        = 2 * Math.PI * 28;
   const origemEl     = se('fin-origem-est');
   if (origemEl) origemEl.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 0">
+    <div class="pag-circles-grid">
       ${[
         {label:'Mesas (No local)', emoji:'🍽️', cor:'#8E44AD', pct:pctMesa,     fat:fatMesa,     q:pedsMesa.length},
         {label:'Delivery',         emoji:'🛵', cor:'#2980B9', pct:pctDelivery, fat:fatDelivery, q:pedsDelivery.length}
       ].map(o => {
         const dash2 = (o.pct/100)*circ2; const gap2 = circ2-dash2;
-        return `<div style="background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:16px 10px;text-align:center">
-          <svg width="72" height="72" viewBox="0 0 72 72" style="display:block;margin:0 auto 8px">
+        return `<div class="pag-circle-card" style="background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:16px 10px;text-align:center">
+          <svg viewBox="0 0 72 72" style="display:block;margin:0 auto 8px;width:100%;max-width:72px;height:auto">
             <circle cx="36" cy="36" r="28" fill="none" stroke="#f0ebe4" stroke-width="8"/>
             <circle cx="36" cy="36" r="28" fill="none" stroke="${o.cor}" stroke-width="8"
               stroke-dasharray="${dash2.toFixed(1)} ${gap2.toFixed(1)}"
