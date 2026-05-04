@@ -1763,7 +1763,7 @@ ${(insta || ttok) ? '<div class="social">'+(insta ? '📲 Instagram: <b>'+insta+
 <div class="line"></div>
 <div class="row"><span>Abertura:</span><span>${horaAb}</span></div>
 <div class="row"><span>Fechamento:</span><span>${agora}</span></div>
-${operador?`<div class="row"><span>Operador:</span><span>${operador}</span></div>`:''}
+${operador?('<div class="row"><span>Operador:</span><span>'+operador+'</span></div>'):''}
 <div class="line"></div>
 <p class="bold center">VENDAS POR FORMA DE PAGAMENTO</p>
 <div class="line"></div>
@@ -1776,11 +1776,11 @@ ${operador?`<div class="row"><span>Operador:</span><span>${operador}</span></div
 <div class="row bold"><span>TOTAL VENDAS</span><span>${fmtR(t.totVendas||0)}</span></div>
 <div class="row"><span>+ Fundo inicial</span><span>${fmtR(t.fundo||0)}</span></div>
 <div class="row bold"><span>TOTAL ESPERADO</span><span>${fmtR(esperado)}</span></div>
-${vFech>0?`<div class="row bold"><span>VALOR CONTADO</span><span>${fmtR(vFech)}</span></div>`:''}
+${vFech>0?'<div class="row bold"><span>VALOR CONTADO</span><span>'+fmtR(vFech)+'</span></div>':''}
 <div class="line"></div>
 <div class="status">${difTxt}</div>
 <div class="line"></div>
-${obs?`<p style="font-size:10px;text-align:center">Obs: ${obs}</p>`:''}
+${obs?'<p style="font-size:10px;text-align:center">Obs: '+obs+'</p>':''}
 <p class="center" style="margin-top:8px;font-size:10px">Gerado em ${agora}</p>
 <p class="center" style="font-size:10px">PEDIWAY — Sistema de Delivery</p>
 </body></html>`);
@@ -1812,15 +1812,15 @@ async function carregarHistoricoCaixa() {
           <span style="font-size:.7rem;font-weight:700;padding:2px 10px;border-radius:50px;background:${c.status==='aberto'?'#dcfce7':'#f0ebe4'};color:${c.status==='aberto'?'#166534':'#888'}">${c.status==='aberto'?'🔓 Aberto':'🔒 Fechado'}</span>
           <span style="font-size:.7rem;color:#aaa">${dtAb}${dtFch?' → '+dtFch:''}</span>
         </div>
-        ${c.status==='fechado'?`<button onclick="reimprimirCaixa('${c.id}')" style="background:none;border:1px solid #ddd;border-radius:8px;padding:3px 10px;font-size:.68rem;font-weight:700;cursor:pointer;color:#555">🖨️</button>`:''}
+        ${c.status==='fechado'?'<button onclick="reimprimirCaixa(\''+c.id+'\')">🖨️</button>':''}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.72rem">
         <span style="color:#888">Fundo: <b>${fmtR(c.valor_abertura)}</b></span>
-        ${c.valor_fechamento!=null?`<span style="color:#888">Fechado: <b>${fmtR(c.valor_fechamento)}</b></span>`:'<span></span>'}
-        ${totais.totVendas!=null?`<span style="color:#888">Vendas: <b style="color:var(--red)">${fmtR(totais.totVendas)}</b></span>`:'<span></span>'}
-        ${c.diferenca!=null?`<span style="color:#888">Diferença: <b style="color:${difColor}">${dif>=0?'+':''}${fmtR(dif)}</b></span>`:'<span></span>'}
+        ${c.valor_fechamento!=null?'<span style="color:#888">Fechado: <b>'+fmtR(c.valor_fechamento)+'</b></span>':'<span></span>'}
+        ${totais.totVendas!=null?'<span style="color:#888">Vendas: <b style="color:var(--red)">'+fmtR(totais.totVendas)+'</b></span>':'<span></span>'}
+        ${c.diferenca!=null?'<span style="color:#888">Diferença: <b style="color:'+difColor+'">'+(dif>=0?'+':'')+fmtR(dif)+'</b></span>':'<span></span>'}
       </div>
-      ${c.operador?`<div style="font-size:.68rem;color:#aaa;margin-top:4px">👤 ${c.operador}</div>`:''}
+      ${c.operador?'<div style="font-size:.68rem;color:#aaa;margin-top:4px">👤 '+c.operador+'</div>':''}
     </div>`;
   }).join('');
 }
@@ -1836,7 +1836,7 @@ window.reimprimirCaixa = async function(caixaId) {
   const esperado = (data.valor_abertura||0) + (t.totVendas||0);
   const dif = (data.valor_fechamento||0) - esperado;
   const difTxt = Math.abs(dif) < 0.01 ? '✅ Conferido' :
-    dif < 0 ? `❌ Falta ${fmtR(Math.abs(dif))}` : `⚠️ Sobra ${fmtR(dif)}`;
+    dif < 0 ? '❌ Falta '+fmtR(Math.abs(dif)) : '⚠️ Sobra '+fmtR(dif);
   const win = window.open('','_blank','width=380,height=700');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comprovante</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;font-size:12px;padding:16px;max-width:320px;margin:0 auto}.center{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.row{display:flex;justify-content:space-between;margin:3px 0}.bold{font-weight:bold}</style>
@@ -1848,7 +1848,7 @@ window.reimprimirCaixa = async function(caixaId) {
 <div class="line"></div>
 <div class="row"><span>Abertura:</span><span>${horaAb}</span></div>
 <div class="row"><span>Fechamento:</span><span>${horaFch}</span></div>
-${data.operador?`<div class="row"><span>Operador:</span><span>${data.operador}</span></div>`:''}
+${data.operador?'<div class="row"><span>Operador:</span><span>'+data.operador+'</span></div>':''}
 <div class="line"></div>
 <div class="row"><span>📱 PIX</span><span>${fmtR(t.totPix||0)}</span></div>
 <div class="row"><span>💳 Crédito</span><span>${fmtR(t.totCred||0)}</span></div>
@@ -1858,7 +1858,7 @@ ${data.operador?`<div class="row"><span>Operador:</span><span>${data.operador}</
 <div class="line"></div>
 <div class="row bold"><span>TOTAL VENDAS</span><span>${fmtR(t.totVendas||0)}</span></div>
 <div class="row bold"><span>TOTAL ESPERADO</span><span>${fmtR(esperado)}</span></div>
-${data.valor_fechamento!=null?`<div class="row bold"><span>VALOR CONTADO</span><span>${fmtR(data.valor_fechamento)}</span></div>`:''}
+${data.valor_fechamento!=null?'<div class="row bold"><span>VALOR CONTADO</span><span>'+fmtR(data.valor_fechamento)+'</span></div>':''}
 <p class="center bold" style="margin:8px 0">${difTxt}</p>
 <div class="line"></div>
 <p class="center" style="font-size:10px">PEDIWAY — ${new Date().toLocaleString('pt-BR')}</p>
