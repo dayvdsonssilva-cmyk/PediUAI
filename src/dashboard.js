@@ -177,6 +177,43 @@ function atualizarInfoPlano() {
 }
 
 export async function initDashboard() {
+  // ── Verifica expiração do QUENTE ao abrir o dashboard ────────────────────
+  // Se o dia salvo (quente_dia) for diferente do dia atual → desativa promoções automaticamente
+  async function verificarExpiracaoQuente(estab) {
+    if (!estab?.id) return;
+    const diaAtual = new Date().getDay();
+    const diaSalvo = estab.quente_dia;
+    // Se não tem quente ativo ou está no mesmo dia, não faz nada
+    if (diaSalvo === undefined || diaSalvo === null) return;
+    if (diaSalvo === diaAtual) return;
+    // Dia virou → desativa todas as promoções do estabelecimento
+    try {
+      // Busca todos os produtos em promoção
+      const { data: prodsPromo } = await getSupa().from('produtos')
+        .select('id,preco_original')
+        .eq('estabelecimento_id', estab.id)
+        .eq('em_promocao', true);
+      if (prodsPromo?.length) {
+        for (const p of prodsPromo) {
+          await getSupa().from('produtos').update({
+            em_promocao:      false,
+            desconto_percent: 0,
+            preco:            p.preco_original || undefined,
+            preco_original:   null,
+          }).eq('id', p.id);
+        }
+      }
+      // Reseta flag da loja
+      await getSupa().from('estabelecimentos').update({
+        promocao_ativa:   false,
+        desconto_percent: 0,
+        quente_dia:       null,
+        quente_nome:      null,
+      }).eq('id', estab.id);
+      showToast('🌅 QUENTE expirou — promoções removidas automaticamente');
+      console.log('[QUENTE] Expirou. Dia salvo:', diaSalvo, '→ Hoje:', diaAtual);
+    } catch(e) { console.warn('[QUENTE] Erro ao expirar:', e); }
+  }
   let estab = getEstab();
   if (!estab) return;
   atualizarLinkSuporte();
@@ -194,10 +231,11 @@ export async function initDashboard() {
         estab = fresh;
         window._estab = fresh;
         localStorage.setItem('pw_estab', JSON.stringify(fresh));
-        // Sincroniza número de mesas do banco para o localStorage local
         if (fresh.num_mesas) {
           localStorage.setItem('pw_num_mesas_' + fresh.id, String(fresh.num_mesas));
         }
+        // Verifica se o QUENTE expirou (dia virou)
+        await verificarExpiracaoQuente(fresh);
       }
     } catch(e) { console.log('Sync estab:', e); }
   }
