@@ -3128,7 +3128,7 @@ function renderMesas() {
         </div>
         <!-- Nome e itens -->
         <div style="flex:1">
-          <div style="font-size:.92rem;font-weight:800;color:#1a1a1a">${mesa}${nome ? ' <span style='font-size:.72rem;color:#888;font-weight:500'>'+(nome)+'</span>' : ''}</div>
+          <div style="font-size:.92rem;font-weight:800;color:#1a1a1a">${mesa}${nome ? ` <span style="font-size:.72rem;color:#888;font-weight:500">${nome}</span>` : ''}</div>
           <div style="font-size:.72rem;color:#aaa;margin-top:3px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${itens}</div>
         </div>
         <!-- Valor e ações -->
