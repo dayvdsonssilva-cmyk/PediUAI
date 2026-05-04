@@ -301,10 +301,25 @@ let planoSel  = params.get('plano') || 'pro';
 let metodo    = 'card';
 
 // Preços carregados do Supabase (fonte única de verdade)
-let PRECOS = {
-  pro:     Number(params.get('precoPro')  || 49),
-  premium: Number(params.get('precoPrem') || 99),
-};
+// Só aceita planos conhecidos — ignora valor da URL
+const PLANOS_VALIDOS = ['pro', 'premium'];
+if (!PLANOS_VALIDOS.includes(planoSel)) planoSel = 'pro';
+
+let PRECOS = { pro: 49, premium: 99 }; // fallback — sempre sobrescrito pelo servidor
+
+// ── Lê token JWT do Supabase sem precisar importar o SDK ────────────────────
+function getSupaToken() {
+  try {
+    const PROJECT_REF = 'nmttkjmfazcipefeakkx';
+    const raw = localStorage.getItem('sb-' + PROJECT_REF + '-auth-token');
+    if (!raw) return null;
+    const session = JSON.parse(raw);
+    // Verifica se o token ainda é válido (exp em segundos)
+    const exp = session?.expires_at || 0;
+    if (Date.now() / 1000 > exp) return null;
+    return session?.access_token || null;
+  } catch { return null; }
+}
 
 async function carregarPrecos() {
   try {
@@ -336,6 +351,19 @@ let brickController = null; // guarda o controller para destruir antes de recria
 
 // ── INIT ────────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Valida estabId — deve ser UUID válido
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!estabId || !UUID_REGEX.test(estabId)) {
+    document.body.innerHTML = '<div style="text-align:center;padding:60px;font-family:sans-serif;color:#C0392B"><h2>Link inválido</h2><p>Acesse o checkout pelo painel do PEDIWAY.</p></div>';
+    return;
+  }
+
+  // Verifica se usuário está logado
+  if (!getSupaToken()) {
+    document.body.innerHTML = '<div style="text-align:center;padding:60px;font-family:sans-serif;color:#C0392B"><h2>Sessão expirada</h2><p>Faça login novamente para acessar o checkout.</p></div>';
+    return;
+  }
+
   selPlano(planoSel, true);
   carregarPrecos(); // busca preços atualizados do Supabase
   // Botão PIX com valor inicial
@@ -435,9 +463,6 @@ async function iniciarBrick() {
           }
         },
         onSubmit: async (data) => {
-          // Captura TUDO que o Brick envia — independente do formato da versão
-          console.log('[MP onSubmit] data completo:', JSON.stringify(data));
-
           // Extrai campos explicitamente (compatível com diferentes versões do Brick)
           const fd = data?.formData || data || {};
           const sm = data?.selectedPaymentMethod || {};
@@ -451,12 +476,11 @@ async function iniciarBrick() {
             payer:             fd.payer             || sm.payer             || {},
           };
 
-          console.log('[MP onSubmit] cardData extraído:', JSON.stringify(cardData));
-
           await enviar({ type: 'card', cardData });
         },
         onError: (err) => {
-          console.error('[MP Brick] Erro:', err);
+          // Não loga detalhes do erro de cartão em produção
+          mostrarErroCheckout('Erro ao processar cartão. Verifique os dados e tente novamente.');
         },
       },
     });
@@ -499,11 +523,22 @@ async function enviar(payload) {
   try {
     payload.plano   = planoSel;
     payload.estabId = estabId;
-    payload.valor   = PRECOS[planoSel]; // valor atual (pode ter sido alterado pelo CEO)
+    // Não envia valor — servidor sempre usa o preço definido internamente
+
+    // ── Adiciona token JWT para autenticação na API ──────────────────────────
+    const token = getSupaToken();
+    if (!token) {
+      mostrarErroCheckout('Sessão expirada. Faça login novamente para continuar.');
+      return;
+    }
+
     const res  = await fetch('/api/criar-pagamento', {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload),
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': 'Bearer ' + token,
+      },
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
 
@@ -520,7 +555,6 @@ async function enviar(payload) {
     else mostrarErroCheckout('Status inesperado. Entre em contato com o suporte.');
 
   } catch (e) {
-    console.error('[enviar]', e);
     mostrarErroCheckout('Erro de conexão. Verifique sua internet e tente novamente.');
     if (payload.type === 'card') recriarBrick();
   }
@@ -535,12 +569,39 @@ function mostrarErroCheckout(msg) {
     const payBody = document.getElementById('pay-body');
     if (payBody) payBody.prepend(el);
   }
-  el.innerHTML = `<span style="font-size:1.2rem;flex-shrink:0">❌</span>
-    <div>
-      <div style="font-weight:700;color:#C0392B;margin-bottom:2px">Pagamento recusado</div>
-      <div style="color:#7f1d1d">${msg}</div>
-      ${msg.includes('PIX') || msg.includes('outro cartão') ? `<div style="margin-top:6px"><button onclick="setMetodo('pix')" style="background:none;border:1.5px solid #C0392B;color:#C0392B;border-radius:8px;padding:4px 12px;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer">Pagar com PIX →</button></div>` : ''}
-    </div>`;
+  // Sanitiza msg para evitar XSS (só usa textContent para conteúdo dinâmico)
+  const msgSegura = String(msg || '').slice(0, 300);
+  const sugerirPix = msgSegura.includes('PIX') || msgSegura.includes('outro cartão');
+
+  const iconEl = document.createElement('span');
+  iconEl.style.cssText = 'font-size:1.2rem;flex-shrink:0';
+  iconEl.textContent = '❌';
+
+  const tituloEl = document.createElement('div');
+  tituloEl.style.cssText = 'font-weight:700;color:#C0392B;margin-bottom:2px';
+  tituloEl.textContent = 'Pagamento recusado';
+
+  const msgEl = document.createElement('div');
+  msgEl.style.color = '#7f1d1d';
+  msgEl.textContent = msgSegura; // textContent — nunca innerHTML com dado externo
+
+  const wrapEl = document.createElement('div');
+  wrapEl.appendChild(tituloEl);
+  wrapEl.appendChild(msgEl);
+
+  if (sugerirPix) {
+    const btnEl = document.createElement('button');
+    btnEl.style.cssText = 'background:none;border:1.5px solid #C0392B;color:#C0392B;border-radius:8px;padding:4px 12px;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;margin-top:6px';
+    btnEl.textContent = 'Pagar com PIX →';
+    btnEl.onclick = () => setMetodo('pix');
+    const btnWrap = document.createElement('div');
+    btnWrap.appendChild(btnEl);
+    wrapEl.appendChild(btnWrap);
+  }
+
+  el.innerHTML = ''; // limpa antes de adicionar
+  el.appendChild(iconEl);
+  el.appendChild(wrapEl);
   el.style.display = 'flex';
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   // Fecha automaticamente após 12s
@@ -591,10 +652,12 @@ function mostrarPix(data) {
       // Para de verificar após 10 minutos (150 tentativas)
       if (pollCount > 150) { clearInterval(pollInt); return; }
       try {
-        const res = await fetch('/api/verificar-pagamento?id=' + data.id);
+        const tkn = getSupaToken();
+        const res = await fetch('/api/verificar-pagamento?id=' + data.id, {
+          headers: tkn ? { 'Authorization': 'Bearer ' + tkn } : {},
+        });
         if (!res.ok) return;
         const d = await res.json();
-        console.log('[PIX poll]', d.status);
         if (d.status === 'approved') {
           clearInterval(pollInt);
           clearInterval(timerInt);
@@ -603,7 +666,7 @@ function mostrarPix(data) {
           if (aw) aw.style.display = 'none';
           if (ap) { ap.style.display = 'block'; ap.scrollIntoView({behavior:'smooth'}); }
         }
-      } catch(e) { console.warn('[PIX poll erro]', e.message); }
+      } catch(e) { /* falha silenciosa no poll — tenta novamente no próximo ciclo */ }
     }, 4000);
   }
 }
