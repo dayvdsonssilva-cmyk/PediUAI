@@ -44,6 +44,8 @@ let pedidosConhecidos = new Set();
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
+// Formata valor em R$ — declarada no topo para garantir escopo em todo o módulo
+const fmtR = v => 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',');
 const getEstab = () => {
   if (window._estab) return window._estab;
   try { return JSON.parse(localStorage.getItem('pw_estab') || 'null'); } catch(e) { return null; }
