@@ -6,43 +6,44 @@ import { initDashboard } from './dashboard.js';
 
 // Intercepta goTo para footer aparecer só na landing
 const _goToOriginal = goTo;
-window.goTo = function(screen, extra) {
+window.goTo = function (screen, extra) {
   _goToOriginal(screen, extra);
   const footer = document.getElementById('site-footer');
-  if(footer) footer.style.display = screen === 's-landing' ? '' : 'none';
+  if (footer) footer.style.display = screen === 's-landing' ? '' : 'none';
 };
 // Esconde footer imediatamente ao carregar se não for landing
 document.addEventListener('DOMContentLoaded', () => {
   const footer = document.getElementById('site-footer');
   const screen = localStorage.getItem('pw-screen') || 's-landing';
-  if(footer) footer.style.display = screen === 's-landing' ? '' : 'none';
+  if (footer) footer.style.display = screen === 's-landing' ? '' : 'none';
 });
-window.openDemo        = openDemo;
+window.openDemo = openDemo;
 window.openDemoCliente = openDemoCliente;
-window.showToast       = showToast;
-window.showTab         = showTab;
-window.copiarLink      = copiarLink;
-window.doLogin         = doLogin;
-window.doRegister      = doRegister;
+window.showToast = showToast;
+window.showTab = showTab;
+window.copiarLink = copiarLink;
+window.doLogin = doLogin;
+window.doRegister = doRegister;
+window.initDashboard = initDashboard;
 
-window.mascaraDoc = function(input) {
+window.mascaraDoc = function (input) {
   let v = input.value.replace(/\D/g, '');
   if (v.length <= 11) {
     v = v.replace(/(\d{3})(\d)/, '$1.$2')
-         .replace(/(\d{3})(\d)/, '$1.$2')
-         .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
   } else {
     v = v.replace(/(\d{2})(\d)/, '$1.$2')
-         .replace(/(\d{3})(\d)/, '$1.$2')
-         .replace(/(\d{3})(\d)/, '$1/$2')
-         .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1/$2')
+      .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
   }
   input.value = v;
 };
 
-window.mascaraWhatsInput = function(input) {
-  let v = input.value.replace(/\D/g,'');
-  if (v.length > 11) v = v.slice(0,11);
+window.mascaraWhatsInput = function (input) {
+  let v = input.value.replace(/\D/g, '');
+  if (v.length > 11) v = v.slice(0, 11);
   if (v.length <= 10) {
     v = v.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
   } else {
@@ -51,12 +52,12 @@ window.mascaraWhatsInput = function(input) {
   input.value = v;
 };
 
-window.togglePromo = function(cb) {
+window.togglePromo = function (cb) {
   const g = document.getElementById('preco-orig-group');
   if (g) g.style.display = cb.checked ? 'flex' : 'none';
 };
 
-window.atualizarCfgLink = function(val) {
+window.atualizarCfgLink = function (val) {
   const slug = val.toLowerCase().replace(/[^a-z0-9-]/g, '-');
   const el = document.getElementById('cfg-link-preview');
   if (el) el.textContent = `pediway.vercel.app/${slug || 'meu-link'}`;
@@ -83,14 +84,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
     }
-  } catch(e) {
+  } catch (e) {
     console.warn('Erro ao restaurar sessão:', e);
   }
 
   // Fallback: localStorage
   const saved = localStorage.getItem('pw_estab');
   if (saved) {
-    try { window._estab = JSON.parse(saved); } catch(e) { localStorage.removeItem('pw_estab'); }
+    try { window._estab = JSON.parse(saved); } catch (e) { localStorage.removeItem('pw_estab'); }
   }
 
   const telaSalva = localStorage.getItem('pw_tela_atual');
