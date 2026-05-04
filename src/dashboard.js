@@ -1283,8 +1283,8 @@ async function renderPedidos() {
           ${pgto ? '<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700;color:#888">'+(pgto)+'</span>' : ''}
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${p.status==='novo'?'<button class="btn-ped-aceitar" onclick="aceitarPedido(''+(p.id)+'')">✓ Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido(''+(p.id)+'')">✕ Recusar</button>':''}
-          ${p.status==='preparo'?'<button class="btn-ped-aceitar" onclick="marcarPronto(''+(p.id)+'')">✅ Pronto</button>':''}
+          ${p.status==='novo'?'<button class="btn-ped-aceitar" onclick="aceitarPedido(\''+p.id+'\')">✓ Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido(\''+p.id+'\')">✕ Recusar</button>':''}
+          ${p.status==='preparo'?'<button class="btn-ped-aceitar" onclick="marcarPronto(\''+p.id+'\')">✅ Pronto</button>':''}
           <button class="btn-ped-imprimir" onclick="verPedido('${p.id}')">🖨️ Ver</button>
         </div>
       </div>
@@ -1392,7 +1392,7 @@ window.verPedido = async function(id) {
       <hr style="border:none;border-top:1px solid var(--border)">
       <div style="display:flex;justify-content:space-between;font-weight:800"><span>Total</span><span>R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</span></div>
       <div style="display:flex;gap:8px;margin-top:8px">
-        ${p.status==='novo'?'<button class="btn-ped-aceitar" onclick="aceitarPedido(''+(p.id)+'');fecharModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido(''+(p.id)+'');fecharModalPedido()">Recusar</button>':''}
+        ${p.status==='novo'?'<button class="btn-ped-aceitar" onclick="aceitarPedido('+p.id+');fecharModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('+p.id+');fecharModalPedido()">Recusar</button>':''}
         <button class="btn-ped-imprimir" onclick="imprimirPedido('${p.id}')">🖨️ Imprimir</button>
       </div>
     </div>`;
@@ -2827,8 +2827,8 @@ function _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl) {
 
     <!-- Ações -->
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      ${p.status==='novo' ? '<button class="btn-ped-aceitar" style="padding:7px 12px;font-size:.75rem" onclick="aceitarPedido(''+(p.id)+'')">Aceitar</button>       <button class="btn-ped-recusar" style="padding:7px 10px;font-size:.75rem" onclick="recusarPedido(''+(p.id)+'')">Recusar</button>' : ''}
-      ${p.status !== 'pronto' ? '<button class="btn-ped-imprimir" style="font-size:.75rem;background:'+(enviado?'#f0fdf4':'#fff5f5')+';border:1.5px solid '+(enviado?'#16a34a':'#C0392B')+';color:'+(enviado?'#16a34a':'#C0392B')+';font-weight:700" onclick="imprimirCozinha(''+(p.id)+'')">         '+(enviado ? '✓ Reenviado' : '🖨️ Enviar cozinha')+'       </button>' : ''}
+      ${p.status==='novo' ? '<button class="btn-ped-aceitar" style="padding:7px 12px;font-size:.75rem" onclick="aceitarPedido('+p.id+')">Aceitar</button>       <button class="btn-ped-recusar" style="padding:7px 10px;font-size:.75rem" onclick="recusarPedido('+p.id+')">Recusar</button>' : ''}
+      ${p.status !== 'pronto' ? '<button class="btn-ped-imprimir" style="font-size:.75rem;background:'+(enviado?'#f0fdf4':'#fff5f5')+';border:1.5px solid '+(enviado?'#16a34a':'#C0392B')+';color:'+(enviado?'#16a34a':'#C0392B')+';font-weight:700" onclick="imprimirCozinha('+p.id+')">         '+(enviado ? '✓ Reenviado' : '🖨️ Enviar cozinha')+'       </button>' : ''}
       <button class="btn-ped-imprimir" style="font-size:.75rem" onclick="verPedido('${p.id}')">Ver mais</button>
     </div>
   </div>`;
