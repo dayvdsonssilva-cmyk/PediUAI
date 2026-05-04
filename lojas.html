@@ -744,7 +744,7 @@ async function init() {
 
   // Carrega lojas
   const {data, error} = await db.from('estabelecimentos')
-    .select('id,nome,slug,logo_url,cor_primaria,cidade,aberto,descricao,taxa_entrega,tempo_entrega,faz_entrega,faz_retirada,whatsapp,promocao_ativa,desconto_percent,tipo_estab,horarios')
+    .select('id,nome,slug,logo_url,cor_primaria,cidade,aberto,descricao,taxa_entrega,tempo_entrega,faz_entrega,faz_retirada,whatsapp,promocao_ativa,desconto_percent,tipo_estab,horarios,quente_dia,quente_nome')
     .order('nome');
   if(!error) {
     _lojas = (data||[]).map(l => {
