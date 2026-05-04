@@ -621,7 +621,11 @@ function horarioHoje(horarios) {
 }
 function lojaEstaAberta(est) {
   if (!est) return false;
+  // Se dono marcou explicitamente como FECHADA — respeita sempre
   if (est.aberto === false) return false;
+  // Se dono marcou explicitamente como ABERTA — respeita sempre (ignora horário)
+  if (est.aberto === true) return true;
+  // Se aberto não foi definido explicitamente, usa horários configurados
   if (est.horarios) return dentroDoHorario(est.horarios);
   return true;
 }
