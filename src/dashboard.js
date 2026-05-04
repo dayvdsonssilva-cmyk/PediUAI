@@ -645,9 +645,9 @@ async function renderCardapio() {
   grid.innerHTML = filtrado.map(p => `
     <div class="item-card">
       <div class="item-card-img">
-        ${p.foto_url           ? `<img class="item-img" src="${p.foto_url}" alt="${p.nome}">`           : `<div class="item-emoji-bg">${p.emoji || '🍔'}</div>`}
+        ${p.foto_url           ? '<img class="item-img" src="'+(p.foto_url)+'" alt="'+(p.nome)+'">'           : '<div class="item-emoji-bg">'+(p.emoji || '🍔')+'</div>'}
         <span class="item-disponivel">${p.disponivel ? 'Disponível' : 'Indisponível'}</span>
-        ${p.promocao ? `<span class="item-promo-badge">🔥 Promoção</span>` : ''}
+        ${p.promocao ? '<span class="item-promo-badge">🔥 Promoção</span>' : ''}
 
       </div>
       <div class="item-body">
@@ -656,7 +656,7 @@ async function renderCardapio() {
         <div class="item-desc-text">${p.descricao || ''}</div>
         <div class="item-footer">
           <div>
-            ${p.em_promocao && p.desconto_percent > 0               ? `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">                   <span class="item-promo-badge" style="background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;">🔥 ${p.desconto_percent}% OFF</span>                   <span class="item-preco-original">R$ ${Number(p.preco_original||p.preco).toFixed(2).replace('.',',')}</span>                 </div>                 <div class="item-preco" style="color:var(--red);">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`               : p.promocao && p.preco_original                 ? `<div class="item-preco-original">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</div>                    <div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`                 : `<div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`}
+            ${p.em_promocao && p.desconto_percent > 0               ? '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">                   <span class="item-promo-badge" style="background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;">🔥 '+(p.desconto_percent)+'% OFF</span>                   <span class="item-preco-original">R$ '+(Number(p.preco_original||p.preco).toFixed(2).replace('.',','))+'</span>                 </div>                 <div class="item-preco" style="color:var(--red);">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'               : p.promocao && p.preco_original                 ? '<div class="item-preco-original">R$ '+(Number(p.preco_original).toFixed(2).replace('.',','))+'</div>                    <div class="item-preco">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'                 : '<div class="item-preco">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'}
           </div>
           <div class="item-acoes">
             <button class="btn-icon" onclick="editarItem('${p.id}')">✏️</button>
@@ -1158,7 +1158,7 @@ async function renderFresquinho() {
     const h = Math.floor(rest/3600000), m = Math.floor((rest%3600000)/60000);
     return `<div class="fresh-story-item">
       <div class="fresh-story-thumb" onclick="abrirStoryDash('${f.url}','${f.tipo||'foto'}')">
-        ${f.tipo === 'video'           ? `<video src="${f.url}" muted playsinline loop style="width:100%;height:100%;object-fit:cover"></video>`           : `<img src="${f.url}" style="width:100%;height:100%;object-fit:cover">`}
+        ${f.tipo === 'video'           ? '<video src="'+(f.url)+'" muted playsinline loop style="width:100%;height:100%;object-fit:cover"></video>'           : '<img src="'+(f.url)+'" style="width:100%;height:100%;object-fit:cover">'}
         <div class="fresh-overlay"></div>
         <div class="fresh-timer-badge">⏱ ${h > 0 ? h+'h '+m+'min' : m+'min'}</div>
       </div>
@@ -1276,15 +1276,15 @@ async function renderPedidos() {
         </div>
         <span class="pedido-status ${cls}" style="white-space:nowrap;flex-shrink:0">${lbl}</span>
       </div>
-      ${itensStr ? `<div style="font-size:.82rem;color:#666;background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.5">${itensStr}</div>` : ''}
+      ${itensStr ? '<div style="font-size:.82rem;color:#666;background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.5">'+(itensStr)+'</div>' : ''}
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:1rem;font-weight:800;color:var(--red)">${totalFmt}</span>
-          ${pgto ? `<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700;color:#888">${pgto}</span>` : ''}
+          ${pgto ? '<span style="background:#f0e9e0;padding:2px 8px;border-radius:50px;font-size:.65rem;font-weight:700;color:#888">'+(pgto)+'</span>' : ''}
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}')">✓ Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}')">✕ Recusar</button>`:''}
-          ${p.status==='preparo'?`<button class="btn-ped-aceitar" onclick="marcarPronto('${p.id}')">✅ Pronto</button>`:''}
+          ${p.status==='novo'?'<button class="btn-ped-aceitar" onclick="aceitarPedido(''+(p.id)+'')">✓ Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido(''+(p.id)+'')">✕ Recusar</button>':''}
+          ${p.status==='preparo'?'<button class="btn-ped-aceitar" onclick="marcarPronto(''+(p.id)+'')">✅ Pronto</button>':''}
           <button class="btn-ped-imprimir" onclick="verPedido('${p.id}')">🖨️ Ver</button>
         </div>
       </div>
@@ -1386,13 +1386,13 @@ window.verPedido = async function(id) {
       <div><b>Cliente:</b> ${p.cliente_nome||'-'}</div>
       <div><b>WhatsApp:</b> ${p.cliente_whats||'-'}</div>
       <div><b>Entrega:</b> ${p.endereco||'Retirada no local'}</div>
-      ${p.observacao?`<div><b>Obs:</b> ${p.observacao}</div>`:''}
+      ${p.observacao?'<div><b>Obs:</b> '+(p.observacao)+'</div>':''}
       <hr style="border:none;border-top:1px solid var(--border)">
-      ${itens.map(i=>`<div style="display:flex;justify-content:space-between"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco*i.qtd).toFixed(2).replace('.',',')}</span></div>`).join('')}
+      ${itens.map(i=>'<div style="display:flex;justify-content:space-between"><span>'+(i.qtd)+'x '+(i.nome)+'</span><span>R$ '+((i.preco*i.qtd).toFixed(2).replace('.',','))+'</span></div>').join('')}
       <hr style="border:none;border-top:1px solid var(--border)">
       <div style="display:flex;justify-content:space-between;font-weight:800"><span>Total</span><span>R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</span></div>
       <div style="display:flex;gap:8px;margin-top:8px">
-        ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}');fecharModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}');fecharModalPedido()">Recusar</button>`:''}
+        ${p.status==='novo'?'<button class="btn-ped-aceitar" onclick="aceitarPedido(''+(p.id)+'');fecharModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido(''+(p.id)+'');fecharModalPedido()">Recusar</button>':''}
         <button class="btn-ped-imprimir" onclick="imprimirPedido('${p.id}')">🖨️ Imprimir</button>
       </div>
     </div>`;
@@ -1587,10 +1587,10 @@ window.imprimirPedido = async function(id) {
   <div class="logo">PEDI<span class="logo-red">WAY</span></div>
   <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
   <div class="info-sm">
-    ${estab?.endereco ? `${estab.endereco}<br>` : ''}
-    ${estab?.telefone_contato ? `Tel: ${estab.telefone_contato}<br>` : ''}
-    ${estab?.whatsapp ? `WhatsApp: ${estab.whatsapp}<br>` : ''}
-    ${cnpjFmt ? `CNPJ: ${cnpjFmt}` : ''}
+    ${estab?.endereco ? ''+(estab.endereco)+'<br>' : ''}
+    ${estab?.telefone_contato ? 'Tel: '+(estab.telefone_contato)+'<br>' : ''}
+    ${estab?.whatsapp ? 'WhatsApp: '+(estab.whatsapp)+'<br>' : ''}
+    ${cnpjFmt ? 'CNPJ: '+(cnpjFmt)+'' : ''}
   </div>
 </div>
 
@@ -1612,24 +1612,24 @@ window.imprimirPedido = async function(id) {
   <span class="label">Nome</span>
   <span class="val">${p.cliente_nome || '-'}</span>
 </div>
-${p.cliente_whats ? `<div class="linha"><span class="label">WhatsApp</span><span class="val">${p.cliente_whats}</span></div>` : ''}
-${isEntrega ? ` <div class="linha" style="margin-top:3px">   <span class="label">Entrega&nbsp;</span>   <span class="val" style="text-align:right">${p.endereco}</span> </div>` : ''}
+${p.cliente_whats ? '<div class="linha"><span class="label">WhatsApp</span><span class="val">'+(p.cliente_whats)+'</span></div>' : ''}
+${isEntrega ? ' <div class="linha" style="margin-top:3px">   <span class="label">Entrega&nbsp;</span>   <span class="val" style="text-align:right">'+(p.endereco)+'</span> </div>' : ''}
 
 <!-- OBSERVAÇÃO -->
-${p.observacao ? ` <div class="obs">   <div class="obs-titulo">Observacao</div>   ${p.observacao} </div>` : ''}
+${p.observacao ? ' <div class="obs">   <div class="obs-titulo">Observacao</div>   '+(p.observacao)+' </div>' : ''}
 
 <hr class="sep-dash">
 
 <!-- ====== ITENS ====== -->
 <div class="sec">Itens do Pedido</div>
 
-${itens.map(i => {   const sub = ((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');   const adds = Array.isArray(i.adicionais) && i.adicionais.length     ? i.adicionais.map(a => `<div class="adicional">+ ${a.nome} (R$ ${Number(a.preco||0).toFixed(2).replace('.',',')})</div>`).join('')     : '';   return `<div class="item">     <span class="item-qtd">${i.qtd||1}x</span>     <span class="item-nome">${i.nome}</span>     <span class="item-val">R$ ${sub}</span>   </div>${adds}`; }).join('')}
+${itens.map(i => {   const sub = ((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');   const adds = Array.isArray(i.adicionais) && i.adicionais.length     ? i.adicionais.map(a => '<div class="adicional">+ '+(a.nome)+' (R$ '+(Number(a.preco||0).toFixed(2).replace('.',','))+')</div>').join('')     : '';   return '<div class="item">     <span class="item-qtd">'+(i.qtd||1)+'x</span>     <span class="item-nome">'+(i.nome)+'</span>     <span class="item-val">R$ '+(sub)+'</span>   </div>'+(adds)+''; }).join('')}
 
 <hr class="sep-dash">
 
 <!-- ====== TOTAIS ====== -->
-${subtotal !== total - taxa ? `<div class="subtotal-linha"><span>Subtotal</span><span>${fmtR(subtotal)}</span></div>` : ''}
-${taxa > 0 ? `<div class="subtotal-linha"><span>Entrega</span><span>${fmtR(taxa)}</span></div>` : ''}
+${subtotal !== total - taxa ? '<div class="subtotal-linha"><span>Subtotal</span><span>'+(fmtR(subtotal))+'</span></div>' : ''}
+${taxa > 0 ? '<div class="subtotal-linha"><span>Entrega</span><span>'+(fmtR(taxa))+'</span></div>' : ''}
 
 <div class="total-bloco">
   <span class="total-label">TOTAL</span>
@@ -1641,7 +1641,7 @@ ${taxa > 0 ? `<div class="subtotal-linha"><span>Entrega</span><span>${fmtR(taxa)
   <span>${pgto}</span>
 </div>
 
-${(insta || ttok || estab?.site) ? ` <hr class="sep-dash"> <div class="social">   ${insta ? `Instagram: <b>${insta}</b><br>` : ''}   ${ttok  ? `TikTok: <b>${ttok}</b><br>`    : ''}   ${estab?.site ? `<span>${estab.site}</span>` : ''} </div>` : ''}
+${(insta || ttok || estab?.site) ? ' <hr class="sep-dash"> <div class="social">   '+(insta ? 'Instagram: <b>'+(insta)+'</b><br>' : '')+'   '+(ttok  ? 'TikTok: <b>'+(ttok)+'</b><br>'    : '')+'   '+(estab?.site ? '<span>'+(estab.site)+'</span>' : '')+' </div>' : ''}
 
 <hr class="sep-dash">
 <div class="msg-final">${msgFim}</div>
@@ -2197,7 +2197,7 @@ window.abrirAdicionais = function(mesaKey, prodJSON) {
     return `<div class="adicional-grupo">
       <div class="adicional-grupo-titulo">${g.grupo} ${obrig?'<span style="color:var(--red);font-size:.65rem">*obrigatório</span>':''}</div>
       <div class="adicional-grupo-desc">${maxTxt}</div>
-      ${g.opcoes.map((o, oi) => `         <div class="adicional-opt" id="aopt-${gi}-${oi}" onclick="toggleAdicional(${gi},${oi},${g.max})">           <div class="adicional-opt-left">             <div class="adicional-opt-check">✓</div>             <span class="adicional-opt-nome">${o.nome}</span>           </div>           <span class="adicional-opt-preco">${Number(o.preco||0) > 0 ? '+R$ '+Number(o.preco).toFixed(2).replace('.',',') : 'Grátis'}</span>         </div>`).join('')}
+      ${g.opcoes.map((o, oi) => '         <div class="adicional-opt" id="aopt-'+(gi)+'-'+(oi)+'" onclick="toggleAdicional('+(gi)+','+(oi)+','+(g.max)+')">           <div class="adicional-opt-left">             <div class="adicional-opt-check">✓</div>             <span class="adicional-opt-nome">'+(o.nome)+'</span>           </div>           <span class="adicional-opt-preco">'+(Number(o.preco||0) > 0 ? '+R$ '+Number(o.preco).toFixed(2).replace('.',',') : 'Grátis')+'</span>         </div>').join('')}
       <div class="adicional-limite-aviso" id="aviso-${gi}">Limite de ${g.max} opções atingido</div>
     </div>`;
   }).join('');
@@ -2413,7 +2413,7 @@ window.imprimirComanda = function() {
 <hr class="sep-dash">
 
 <!-- PEDIDOS POR PESSOA -->
-${Object.entries(grupos).map(([nm, gpeds]) => {   const sub = gpeds.reduce((s,p) => s + Number(p.total||0), 0);   const inicial = nm.charAt(0).toUpperCase();   const itensRows = gpeds.map(p => {     const itens = Array.isArray(p.itens) ? p.itens : [];     return itens.map(i =>       `<div class="item">         <span class="item-nome">${i.qtd||1}x ${i.nome}</span>         <span class="item-val">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span>       </div>`     ).join('');   }).join('');   return `<div class="pessoa-bloco">     <div class="pessoa-nome">       <div class="pessoa-avatar">${inicial}</div>       <span class="pessoa-label">${nm}</span>     </div>     ${itensRows}     <div class="pessoa-sub">${fmtR(sub)}</div>   </div>`; }).join('')}
+${Object.entries(grupos).map(([nm, gpeds]) => {   const sub = gpeds.reduce((s,p) => s + Number(p.total||0), 0);   const inicial = nm.charAt(0).toUpperCase();   const itensRows = gpeds.map(p => {     const itens = Array.isArray(p.itens) ? p.itens : [];     return itens.map(i =>       '<div class="item">         <span class="item-nome">'+(i.qtd||1)+'x '+(i.nome)+'</span>         <span class="item-val">R$ '+(((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',','))+'</span>       </div>'     ).join('');   }).join('');   return '<div class="pessoa-bloco">     <div class="pessoa-nome">       <div class="pessoa-avatar">'+(inicial)+'</div>       <span class="pessoa-label">'+(nm)+'</span>     </div>     '+(itensRows)+'     <div class="pessoa-sub">'+(fmtR(sub))+'</div>   </div>'; }).join('')}
 
 ${linhaTaxa}
 
@@ -2422,8 +2422,8 @@ ${linhaTaxa}
   <span class="total-val">${fmtR(total)}</span>
 </div>
 
-${insta ? `<hr class="sep-dash"><div class="social">Instagram: <b>${insta}</b></div>` : ''}
-${estab?.site ? `<div class="social">${estab.site}</div>` : ''}
+${insta ? '<hr class="sep-dash"><div class="social">Instagram: <b>'+(insta)+'</b></div>' : ''}
+${estab?.site ? '<div class="social">'+(estab.site)+'</div>' : ''}
 
 <hr class="sep-dash">
 <div class="msg-final">${msgFim}</div>
@@ -2770,7 +2770,7 @@ window.renderHistoricoMesas = async function() {
           <div style="font-size:.95rem;font-weight:800">${mesa}</div>
           <div style="font-size:.72rem;margin-top:1px">
             <span style="color:#888">${peds.length} pedido${peds.length!==1?'s':''}</span>
-            ${temAtivo               ? `<span style="color:var(--red);font-weight:700;margin-left:6px">● ativa</span>`               : `<span style="color:#22c55e;font-weight:700;margin-left:6px">✓ encerrada</span>`}
+            ${temAtivo               ? '<span style="color:var(--red);font-weight:700;margin-left:6px">● ativa</span>'               : '<span style="color:#22c55e;font-weight:700;margin-left:6px">✓ encerrada</span>'}
           </div>
         </div>
         <div style="text-align:right;flex-shrink:0">
@@ -2807,7 +2807,7 @@ function _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl) {
   return `<div style="background:#fff;border:1.5px solid #f0e9e0;border-left:5px solid ${bordaCor};border-radius:10px;padding:12px;margin-bottom:8px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px">
       <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
-        ${nome ? `<span style="background:#f0e9e0;padding:3px 10px;border-radius:50px;font-size:.78rem;font-weight:700;color:#555">${nome}</span>` : ''}
+        ${nome ? '<span style="background:#f0e9e0;padding:3px 10px;border-radius:50px;font-size:.78rem;font-weight:700;color:#555">'+(nome)+'</span>' : ''}
         <span style="font-size:.68rem;color:#aaa">#${p.id.slice(-4).toUpperCase()} · ${dt}</span>
       </div>
       <!-- Status badge bem destacado -->
@@ -2817,18 +2817,18 @@ function _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl) {
     </div>
 
     <!-- Indicador cozinha inline -->
-    ${p.status !== 'pronto' ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:5px 10px;border-radius:8px;background:${enviado?'#f0fdf4':'#fff5f5'};border:1px solid ${enviado?'#bbf7d0':'#fecaca'}">       <span style="font-size:.75rem">${enviado ? '✅' : '⏳'}</span>       <span style="font-size:.72rem;font-weight:700;color:${enviado?'#15803d':'#C0392B'}">${enviado ? 'Enviado para a cozinha' : 'Aguardando envio para cozinha'}</span>     </div>` : ''}
+    ${p.status !== 'pronto' ? '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:5px 10px;border-radius:8px;background:'+(enviado?'#f0fdf4':'#fff5f5')+';border:1px solid '+(enviado?'#bbf7d0':'#fecaca')+'">       <span style="font-size:.75rem">'+(enviado ? '✅' : '⏳')+'</span>       <span style="font-size:.72rem;font-weight:700;color:'+(enviado?'#15803d':'#C0392B')+'">'+(enviado ? 'Enviado para a cozinha' : 'Aguardando envio para cozinha')+'</span>     </div>' : ''}
 
     <!-- Itens -->
     <div style="background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px">
-      ${itens.map(i=>`<div style="display:flex;justify-content:space-between;font-size:.83rem;padding:2px 0"><span style="font-weight:600">${i.qtd||1}x ${i.nome}</span><span style="color:#888">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span></div>`).join('')}
+      ${itens.map(i=>'<div style="display:flex;justify-content:space-between;font-size:.83rem;padding:2px 0"><span style="font-weight:600">'+(i.qtd||1)+'x '+(i.nome)+'</span><span style="color:#888">R$ '+(((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',','))+'</span></div>').join('')}
       <div style="text-align:right;font-size:.9rem;font-weight:800;color:var(--red);margin-top:6px;border-top:1px solid #f0e9e0;padding-top:6px">${fmtR(p.total)}</div>
     </div>
 
     <!-- Ações -->
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      ${p.status==='novo' ? `<button class="btn-ped-aceitar" style="padding:7px 12px;font-size:.75rem" onclick="aceitarPedido('${p.id}')">Aceitar</button>       <button class="btn-ped-recusar" style="padding:7px 10px;font-size:.75rem" onclick="recusarPedido('${p.id}')">Recusar</button>` : ''}
-      ${p.status !== 'pronto' ? `<button class="btn-ped-imprimir" style="font-size:.75rem;background:${enviado?'#f0fdf4':'#fff5f5'};border:1.5px solid ${enviado?'#16a34a':'#C0392B'};color:${enviado?'#16a34a':'#C0392B'};font-weight:700" onclick="imprimirCozinha('${p.id}')">         ${enviado ? '✓ Reenviado' : '🖨️ Enviar cozinha'}       </button>` : ''}
+      ${p.status==='novo' ? '<button class="btn-ped-aceitar" style="padding:7px 12px;font-size:.75rem" onclick="aceitarPedido(''+(p.id)+'')">Aceitar</button>       <button class="btn-ped-recusar" style="padding:7px 10px;font-size:.75rem" onclick="recusarPedido(''+(p.id)+'')">Recusar</button>' : ''}
+      ${p.status !== 'pronto' ? '<button class="btn-ped-imprimir" style="font-size:.75rem;background:'+(enviado?'#f0fdf4':'#fff5f5')+';border:1.5px solid '+(enviado?'#16a34a':'#C0392B')+';color:'+(enviado?'#16a34a':'#C0392B')+';font-weight:700" onclick="imprimirCozinha(''+(p.id)+'')">         '+(enviado ? '✓ Reenviado' : '🖨️ Enviar cozinha')+'       </button>' : ''}
       <button class="btn-ped-imprimir" style="font-size:.75rem" onclick="verPedido('${p.id}')">Ver mais</button>
     </div>
   </div>`;
@@ -2970,7 +2970,7 @@ window.imprimirCozinha = function(pedidoId) {
 <hr class="sep-thick">
 
 <!-- IDENTIFICAÇÃO: MESA ou DELIVERY -->
-${isMesa ? ` <div class="mesa-bloco">   <div class="mesa-lbl">Mesa</div>   <div class="mesa-num">${mesa.replace('Mesa ','')}</div>   ${nome ? `<div class="mesa-nome">${nome}</div>` : ''} </div>` : ` <div class="delivery-bloco">   <div class="delivery-badge">DELIVERY / RETIRADA</div>   ${p.cliente_nome ? `<div class="delivery-cliente">${p.cliente_nome}</div>` : ''}   ${p.endereco ? `<div class="delivery-end">${p.endereco}</div>` : ''} </div>`}
+${isMesa ? ' <div class="mesa-bloco">   <div class="mesa-lbl">Mesa</div>   <div class="mesa-num">'+(mesa.replace('Mesa ',''))+'</div>   '+(nome ? '<div class="mesa-nome">'+(nome)+'</div>' : '')+' </div>' : ' <div class="delivery-bloco">   <div class="delivery-badge">DELIVERY / RETIRADA</div>   '+(p.cliente_nome ? '<div class="delivery-cliente">'+(p.cliente_nome)+'</div>' : '')+'   '+(p.endereco ? '<div class="delivery-end">'+(p.endereco)+'</div>' : '')+' </div>'}
 
 <div class="hora">${numPed} &nbsp;·&nbsp; ${dt}</div>
 
@@ -2978,9 +2978,9 @@ ${isMesa ? ` <div class="mesa-bloco">   <div class="mesa-lbl">Mesa</div>   <div 
 
 <!-- ITENS -->
 <div class="sec">Itens</div>
-${itens.map(i => {   const adds = Array.isArray(i.adicionais) && i.adicionais.length     ? i.adicionais.map(a => `<div class="adicional">+ ${a.nome}</div>`).join('')     : '';   return `<div class="item">     <span class="item-qtd">${i.qtd||1}x</span>     <span class="item-nome">${i.nome}</span>   </div>${adds}`; }).join('')}
+${itens.map(i => {   const adds = Array.isArray(i.adicionais) && i.adicionais.length     ? i.adicionais.map(a => '<div class="adicional">+ '+(a.nome)+'</div>').join('')     : '';   return '<div class="item">     <span class="item-qtd">'+(i.qtd||1)+'x</span>     <span class="item-nome">'+(i.nome)+'</span>   </div>'+(adds)+''; }).join('')}
 
-${p.observacao ? ` <hr class="sep-dash"> <div class="obs">   <div class="obs-titulo">Observacao</div>   <div class="obs-texto">${p.observacao}</div> </div>` : ''}
+${p.observacao ? ' <hr class="sep-dash"> <div class="obs">   <div class="obs-titulo">Observacao</div>   <div class="obs-texto">'+(p.observacao)+'</div> </div>' : ''}
 
 <hr class="sep-dash">
 <div class="rodape">PEDIWAY &mdash; Sistema de Gestao</div>
@@ -3128,7 +3128,7 @@ function renderMesas() {
         </div>
         <!-- Nome e itens -->
         <div style="flex:1">
-          <div style="font-size:.92rem;font-weight:800;color:#1a1a1a">${mesa}${nome ? ` <span style='font-size:.72rem;color:#888;font-weight:500'>${nome}</span>` : ''}</div>
+          <div style="font-size:.92rem;font-weight:800;color:#1a1a1a">${mesa}${nome ? ' <span style='font-size:.72rem;color:#888;font-weight:500'>'+(nome)+'</span>' : ''}</div>
           <div style="font-size:.72rem;color:#aaa;margin-top:3px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${itens}</div>
         </div>
         <!-- Valor e ações -->
@@ -3663,7 +3663,7 @@ async function carregarProdutosQuente() {
       <input type="checkbox" value="${p.id}" ${emPromo?'checked':''}
         data-preco-base="${precoBase}"
         style="width:18px;height:18px;accent-color:#e65e32;cursor:pointer;flex-shrink:0">
-      ${p.foto_url?`<img src="${p.foto_url}" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`:         `<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>`}
+      ${p.foto_url?'<img src="'+(p.foto_url)+'" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">':         '<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>'}
       <div style="flex:1;min-width:0">
         <div style="font-size:.85rem;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nome}</div>
         <div style="font-size:.72rem;color:#aaa">${p.categoria||''}</div>
