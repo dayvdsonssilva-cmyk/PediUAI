@@ -1361,7 +1361,7 @@ async function renderPedidos() {
     const totalFmt = 'R$ ' + Number(p.total||0).toFixed(2).replace('.',',');
     const endStr   = p.endereco === 'Retirada no local' ? '🏃 Retirada' : p.endereco ? `🛵 ${p.endereco.split(',')[0]}` : '🏃 Retirada';
     const pgto     = p.pagamento ? p.pagamento.toUpperCase() : '';
-    return `<div class="pedido-card ped-status-${p.status||'novo'}">
+    return `<div class="pedido-card ped-status-${p.status||'novo'}" data-id="${p.id}" data-criado="${p.created_at||''}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:10px;min-width:0">
           <div style="width:38px;height:38px;border-radius:10px;background:#f5f0eb;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">${ico}</div>
@@ -3859,10 +3859,6 @@ let _bandeiraComanda = 'visa';
 
 window.selecionarBandeiraComanda = function(band) {
   _bandeiraComanda = band;
-  document.querySelectorAll('.pgto-band-btn').forEach(b => b.classList.remove('ativo'));
-  document.querySelectorAll('.pgto-band-btn').forEach(b => {
-    if (b.getAttribute('onclick')?.includes("'"+band+"'")) b.classList.add('ativo');
-  });
 };
 
 window.executarFecharComanda = async function() {
