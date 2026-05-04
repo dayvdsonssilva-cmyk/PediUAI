@@ -1977,58 +1977,6 @@ window.buscarPeriodoFinanceiro = function() {
   renderFinanceiro();
 };
 
-  const se = id => document.getElementById(id);
-  if (se('fin-fat-est'))  se('fin-fat-est').textContent  = fmtR(fat);
-  if (se('fin-qtd-est'))  se('fin-qtd-est').textContent  = peds.length;
-  if (se('fin-tick-est')) se('fin-tick-est').textContent = fmtR(tick);
-  if (se('fin-taxa-est')) se('fin-taxa-est').textContent = fmtR(taxa);
-
-  // ── Formas de Pagamento (normaliza "No local" legado) ──
-  const pm = {};
-  peds.forEach(p => {
-    let k = (p.pagamento||'Não informado').toUpperCase();
-    if (k === 'NO LOCAL') k = 'NÃO INFORMADO';
-    pm[k] = (pm[k]||0) + Number(p.total||0);
-  });
-  const totPag = Object.values(pm).reduce((s,v)=>s+v,0)||1;
-  const pagsEl = se('fin-pags-est');
-  if (pagsEl) pagsEl.innerHTML = Object.entries(pm).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
-    const pct = Math.round(v/totPag*100);
-    return `<div class="pag-row">
-      <span class="pag-label">${k}</span>
-      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pct}%"></div></div>
-      <span class="pag-val">${fmtR(v)}</span>
-      <span class="pag-pct">${pct}%</span>
-    </div>`;
-  }).join('') || '<div style="color:#aaa;font-size:.82rem;text-align:center;padding:20px">Sem pedidos no período</div>';
-
-  // ── Origem: Mesas vs Delivery — mesmo padrão visual das barras ──
-  const pedsMesa     = peds.filter(p=>(p.endereco||'').startsWith('No local'));
-  const pedsDelivery = peds.filter(p=>!(p.endereco||'').startsWith('No local'));
-  const fatMesa      = pedsMesa.reduce((s,p)=>s+Number(p.total||0),0);
-  const fatDelivery  = pedsDelivery.reduce((s,p)=>s+Number(p.total||0),0);
-  const totOrigem    = (fatMesa + fatDelivery) || 1;
-  const pctMesa      = Math.round(fatMesa / totOrigem * 100);
-  const pctDelivery  = Math.round(fatDelivery / totOrigem * 100);
-  const origemEl     = se('fin-origem-est');
-  if (origemEl) origemEl.innerHTML = `
-    <div class="pag-row">
-      <span class="pag-label">🍽️ Mesas</span>
-      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pctMesa}%;background:#8E44AD"></div></div>
-      <span class="pag-val" style="color:#8E44AD">${fmtR(fatMesa)}</span>
-      <span class="pag-pct">${pctMesa}%</span>
-    </div>
-    <div class="pag-row">
-      <span class="pag-label">🛵 Delivery</span>
-      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pctDelivery}%;background:#2980B9"></div></div>
-      <span class="pag-val" style="color:#2980B9">${fmtR(fatDelivery)}</span>
-      <span class="pag-pct">${pctDelivery}%</span>
-    </div>`;
-
-  // ── Histórico ──
-  const histEl = se('fin-hist-est');
-
-
 function exportarCSV() {
   const estab  = getEstab();
   const linhas = [['#','Cliente','WhatsApp','Status','Pagamento','Total','Taxa Entrega','Data']];
