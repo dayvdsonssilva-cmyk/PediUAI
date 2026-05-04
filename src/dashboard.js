@@ -1361,7 +1361,7 @@ async function renderPedidos() {
     const totalFmt = 'R$ ' + Number(p.total||0).toFixed(2).replace('.',',');
     const endStr   = p.endereco === 'Retirada no local' ? '🏃 Retirada' : p.endereco ? `🛵 ${p.endereco.split(',')[0]}` : '🏃 Retirada';
     const pgto     = p.pagamento ? p.pagamento.toUpperCase() : '';
-    return `<div class="pedido-card ped-status-${p.status||'novo'}" data-id="${p.id}" data-criado="${p.created_at||''}">
+    return `<div class="pedido-card ped-status-${p.status||'novo'}" data-id="${p.id}" data-criado="${p.created_at||''}" data-pagamento="${(p.pagamento||'pix').toLowerCase()}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:10px;min-width:0">
           <div style="width:38px;height:38px;border-radius:10px;background:#f5f0eb;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">${ico}</div>
@@ -2114,18 +2114,53 @@ function renderFinanceiro() {
     pm[k] = (pm[k]||0) + Number(p.total||0);
   });
   const totPag = Object.values(pm).reduce((s,v)=>s+v,0)||1;
+  // ── Pagamentos — 4 métodos fixos com círculos e click para filtrar ──
+  const METODOS = [
+    { key:'pix',     label:'PIX',            emoji:'📱', cor:'#22c55e', match: pg => pg.includes('pix') && !pg.includes('cred') },
+    { key:'credito', label:'Cartão Crédito', emoji:'💳', cor:'#3b82f6', match: pg => pg.includes('cred') },
+    { key:'debito',  label:'Cartão Débito',  emoji:'💳', cor:'#8b5cf6', match: pg => pg.includes('deb') },
+    { key:'dinheiro',label:'Dinheiro',       emoji:'💵', cor:'#f59e0b', match: pg => pg.includes('din') || pg.includes('dinheiro') },
+  ];
+  const totPagGeral = peds.reduce((s,p)=>s+Number(p.total||0),0) || 1;
   const pagsEl = se('fin-pags-est');
-  if (pagsEl) pagsEl.innerHTML = Object.entries(pm).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
-    const pct = Math.round(v/totPag*100);
-    return `<div class="pag-row">
-      <span class="pag-label">${k}</span>
-      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pct}%"></div></div>
-      <span class="pag-val">${fmtR(v)}</span>
-      <span class="pag-pct">${pct}%</span>
+  if (pagsEl) pagsEl.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:4px 0">
+      ${METODOS.map(m => {
+        const pedsMet = peds.filter(p => m.match((p.pagamento||'').toLowerCase()));
+        const fatMet  = pedsMet.reduce((s,p)=>s+Number(p.total||0),0);
+        const pct     = Math.round(fatMet / totPagGeral * 100);
+        const circ    = 2 * Math.PI * 28; // circunferência r=28
+        const dash    = (pct / 100) * circ;
+        const gap     = circ - dash;
+        return `
+        <div onclick="filtrarPorPagamento('${m.key}')"
+          style="background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:16px 10px;text-align:center;cursor:pointer;transition:all .2s;position:relative"
+          onmouseover="this.style.borderColor='${m.cor}';this.style.background='${m.cor}18'"
+          onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg)'">
+          <!-- Donut SVG -->
+          <svg width="72" height="72" viewBox="0 0 72 72" style="display:block;margin:0 auto 8px">
+            <!-- Trilha cinza -->
+            <circle cx="36" cy="36" r="28" fill="none" stroke="#f0ebe4" stroke-width="8"/>
+            <!-- Arco preenchido -->
+            <circle cx="36" cy="36" r="28" fill="none"
+              stroke="${m.cor}" stroke-width="8"
+              stroke-dasharray="${dash.toFixed(1)} ${gap.toFixed(1)}"
+              stroke-dashoffset="${(circ * 0.25).toFixed(1)}"
+              stroke-linecap="round"
+              transform="rotate(-90 36 36)"/>
+            <!-- Percentual no centro -->
+            <text x="36" y="40" text-anchor="middle"
+              style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:800;fill:${pct>0?m.cor:'#ccc'}"
+            >${pct}%</text>
+          </svg>
+          <div style="font-size:.65rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">${m.emoji} ${m.label}</div>
+          <div style="font-size:.92rem;font-weight:800;color:#1a1a1a">${fmtR(fatMet)}</div>
+          <div style="font-size:.65rem;color:#aaa;margin-top:2px">${pedsMet.length} pedido(s)</div>
+        </div>`;
+      }).join('')}
     </div>`;
-  }).join('') || '<div style="color:#aaa;font-size:.82rem;text-align:center;padding:20px">Sem pedidos no período</div>';
 
-  // ── Origem: Mesas vs Delivery — mesmo padrão visual das barras ──
+  // ── Origem: Mesas vs Delivery — círculos também ──
   const pedsMesa     = peds.filter(p=>(p.endereco||'').startsWith('No local'));
   const pedsDelivery = peds.filter(p=>!(p.endereco||'').startsWith('No local'));
   const fatMesa      = pedsMesa.reduce((s,p)=>s+Number(p.total||0),0);
@@ -2133,19 +2168,30 @@ function renderFinanceiro() {
   const totOrigem    = (fatMesa + fatDelivery) || 1;
   const pctMesa      = Math.round(fatMesa / totOrigem * 100);
   const pctDelivery  = Math.round(fatDelivery / totOrigem * 100);
+  const circ2        = 2 * Math.PI * 28;
   const origemEl     = se('fin-origem-est');
   if (origemEl) origemEl.innerHTML = `
-    <div class="pag-row">
-      <span class="pag-label">🍽️ Mesas</span>
-      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pctMesa}%;background:#8E44AD"></div></div>
-      <span class="pag-val" style="color:#8E44AD">${fmtR(fatMesa)}</span>
-      <span class="pag-pct">${pctMesa}%</span>
-    </div>
-    <div class="pag-row">
-      <span class="pag-label">🛵 Delivery</span>
-      <div class="pag-bar-wrap"><div class="pag-bar-fill" style="width:${pctDelivery}%;background:#2980B9"></div></div>
-      <span class="pag-val" style="color:#2980B9">${fmtR(fatDelivery)}</span>
-      <span class="pag-pct">${pctDelivery}%</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 0">
+      ${[
+        {label:'Mesas (No local)', emoji:'🍽️', cor:'#8E44AD', pct:pctMesa,     fat:fatMesa,     q:pedsMesa.length},
+        {label:'Delivery',         emoji:'🛵', cor:'#2980B9', pct:pctDelivery, fat:fatDelivery, q:pedsDelivery.length}
+      ].map(o => {
+        const dash2 = (o.pct/100)*circ2; const gap2 = circ2-dash2;
+        return `<div style="background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:16px 10px;text-align:center">
+          <svg width="72" height="72" viewBox="0 0 72 72" style="display:block;margin:0 auto 8px">
+            <circle cx="36" cy="36" r="28" fill="none" stroke="#f0ebe4" stroke-width="8"/>
+            <circle cx="36" cy="36" r="28" fill="none" stroke="${o.cor}" stroke-width="8"
+              stroke-dasharray="${dash2.toFixed(1)} ${gap2.toFixed(1)}"
+              stroke-dashoffset="${(circ2*0.25).toFixed(1)}"
+              stroke-linecap="round" transform="rotate(-90 36 36)"/>
+            <text x="36" y="40" text-anchor="middle"
+              style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:800;fill:${o.pct>0?o.cor:'#ccc'}">${o.pct}%</text>
+          </svg>
+          <div style="font-size:.65rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">${o.emoji} ${o.label}</div>
+          <div style="font-size:.92rem;font-weight:800;color:#1a1a1a">${fmtR(o.fat)}</div>
+          <div style="font-size:.65rem;color:#aaa;margin-top:2px">${o.q} pedido(s)</div>
+        </div>`;
+      }).join('')}
     </div>`;
 
   // ── Histórico ──
@@ -3271,7 +3317,44 @@ window.removerFresquinho = removerFresquinho;
 window.renderPedidos     = renderPedidos;
 
 // ── Financeiro do estabelecimento ─────────────────────────
-window.setFinPeriodo = setFinPeriodo;
+// Filtra pedidos por método de pagamento ao clicar no círculo
+window.filtrarPorPagamento = function(metodo) {
+  const MATCH = {
+    pix:      pg => pg.includes('pix') && !pg.includes('cred'),
+    credito:  pg => pg.includes('cred'),
+    debito:   pg => pg.includes('deb'),
+    dinheiro: pg => pg.includes('din') || pg.includes('dinheiro'),
+  };
+  const fn = MATCH[metodo];
+  if (!fn) return;
+
+  const peds = _finPedidos.filter(p => fn((p.pagamento||'').toLowerCase()) && p.status !== 'recusado');
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const LABELS = { pix:'PIX', credito:'Cartão Crédito', debito:'Cartão Débito', dinheiro:'Dinheiro' };
+
+  // Navega para a aba de pedidos e mostra filtrado
+  window.showTab('pedidos-tab', document.querySelector('[data-tab="pedidos-tab"]'));
+
+  const histEl = document.getElementById('todos-pedidos');
+  if (!histEl) return;
+
+  // Injeta aviso de filtro
+  let aviso = document.getElementById('ped-filtro-aviso');
+  if (!aviso) {
+    aviso = document.createElement('div');
+    aviso.id = 'ped-filtro-aviso';
+    aviso.style.cssText = 'font-size:.78rem;font-weight:700;padding:10px 0;text-align:center';
+    histEl.prepend(aviso);
+  }
+  aviso.style.color = 'var(--red)';
+  aviso.textContent = `🔍 Filtrando: ${LABELS[metodo]} — ${peds.length} pedido(s) • ${fmtR(peds.reduce((s,p)=>s+Number(p.total||0),0))}`;
+
+  // Mostra apenas os pedidos do método
+  document.querySelectorAll('#todos-pedidos .pedido-card').forEach(c => {
+    const pg = (c.dataset.pagamento||'').toLowerCase();
+    c.style.display = fn(pg) ? '' : 'none';
+  });
+};
 window.exportarCSV   = exportarCSV;
 window.exportarPDF   = exportarPDF;
 
