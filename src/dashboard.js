@@ -127,11 +127,11 @@ function aplicarRestricaoPlano(estab) {
   if (banner) banner.style.display = (plano === 'basico' && !trialAtivo) ? 'flex' : 'none';
 }
 
-// ── Link ME AJUDA PEDIUAI — usa config do CEO ──────────────────────────────
+// ── Link ME AJUDA PEDIWAY — usa config do CEO ──────────────────────────────
 function atualizarLinkSuporte() {
   const cfg = JSON.parse(localStorage.getItem('pw_ceo_cfg') || '{}');
   const wpp = cfg.wpp || '5500000000000';
-  const msg = encodeURIComponent(cfg.wppMsg || 'Olá! Preciso de ajuda com o PEDIUAI.');
+  const msg = encodeURIComponent(cfg.wppMsg || 'Olá! Preciso de ajuda com o PEDIWAY.');
   const link = document.getElementById('link-me-ajuda');
   if (link) link.href = `https://wa.me/${wpp}?text=${msg}`;
 }
@@ -254,7 +254,6 @@ function preencherConfig(estab) {
   set('cfg-desc', estab.descricao || '');
   const descCount = document.getElementById('cfg-desc-count');
   if(descCount) descCount.textContent = (estab.descricao||'').length + '/80';
-  set('cfg-cidade',    estab.cidade || '');
   set('cfg-endereco',  estab.endereco || '');
   set('cfg-tempo',     estab.tempo_entrega || '30-45 min');
   set('cfg-telefone',  estab.telefone_contato || '');
@@ -273,6 +272,17 @@ function preencherConfig(estab) {
   const cp = $('cfg-pix');      if (cp) cp.checked = estab.aceita_pix      !== false;
   const cc = $('cfg-cartao');   if (cc) cc.checked = estab.aceita_cartao   !== false;
   const cd = $('cfg-dinheiro'); if (cd) cd.checked = estab.aceita_dinheiro !== false;
+  // Taxa de serviço
+  const ctsToggle = $('cfg-taxa-servico');
+  const ctsWrap   = document.getElementById('cfg-taxa-servico-wrap');
+  const ctsPerc   = $('cfg-perc-servico');
+  if (ctsToggle) ctsToggle.checked = estab.taxa_servico === true;
+  if (ctsWrap)   ctsWrap.style.display = estab.taxa_servico ? 'block' : 'none';
+  if (ctsPerc)   ctsPerc.value = estab.perc_servico || 10;
+  // Carrega estados e restaura estado + cidade salvos
+  if (typeof window.carregarEstadosDash === 'function') {
+    window.carregarEstadosDash({ estado: estab.estado || null, cidade: estab.cidade || null });
+  }
 }
 
 function aplicarCorDash(cor) {
@@ -521,8 +531,9 @@ export async function salvarConfig() {
 
   const nome     = $('cfg-nome')?.value.trim();
   const slug     = $('cfg-slug')?.value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');
-  const whats    = $('cfg-whats')?.value.trim();
+  const whats    = ($('cfg-whats')?.value || '').replace(/\D/g,''); // salva só dígitos → evita bug na recuperação de senha
   const desc     = $('cfg-desc')?.value.trim();
+  const estado   = $('cfg-estado')?.value || null;
   const cidade   = $('cfg-cidade')?.value.trim() || null;
   const endereco = $('cfg-endereco')?.value.trim();
   const tempo    = $('cfg-tempo')?.value;
@@ -563,13 +574,16 @@ export async function salvarConfig() {
     const aceita_pix     = $('cfg-pix')?.checked      !== false;
     const aceita_cartao  = $('cfg-cartao')?.checked   !== false;
     const aceita_dinheiro= $('cfg-dinheiro')?.checked !== false;
+    const taxa_servico   = $('cfg-taxa-servico')?.checked === true;
+    const perc_servico   = parseInt($('cfg-perc-servico')?.value) || 10;
 
     const updates = {
-      nome, slug, whatsapp: whats, descricao: desc, cidade, endereco,
+      nome, slug, whatsapp: whats, descricao: desc, estado, cidade, endereco,
       tempo_entrega: tempo, aberto, faz_entrega: entrega, faz_retirada: retirada,
       cor_primaria, logo_url,
       capa_url: null, capa_tipo: 'cor',
       taxa_entrega, aceita_pix, aceita_cartao, aceita_dinheiro,
+      taxa_servico, perc_servico,
       telefone_contato, cnpj, instagram, tiktok, site, msg_nota,
     };
 
@@ -613,13 +627,22 @@ async function renderCardapio() {
 
   if (stat) stat.textContent = data?.length || 0;
 
-  if (!data?.length) {
-    grid.innerHTML = `<div class="empty-state-light" style="grid-column:1/-1">
-      <span>🍽️</span><p>Nenhum item ainda. Adicione seu primeiro produto!</p></div>`;
+  // Filtra por sub-aba
+  const filtrado = (_dashSubTab === 'quente')
+    ? (data||[]).filter(p => p.em_promocao && parseInt(p.desconto_percent||0) > 0)
+    : (data||[]);
+
+  // Atualiza foguinho
+  atualizarFireDash();
+
+  if (!filtrado?.length) {
+    grid.innerHTML = _dashSubTab === 'quente'
+      ? `<div class="empty-state-light" style="grid-column:1/-1"><span>🔥</span><p>Nenhum produto QUENTE ainda.<br><small>Use o botão 🔥 QUENTE para criar uma promoção</small></p></div>`
+      : `<div class="empty-state-light" style="grid-column:1/-1"><span>🍽️</span><p>Nenhum item ainda. Adicione seu primeiro produto!</p></div>`;
     return;
   }
 
-  grid.innerHTML = data.map(p => `
+  grid.innerHTML = filtrado.map(p => `
     <div class="item-card">
       <div class="item-card-img">
         ${p.foto_url           ? `<img class="item-img" src="${p.foto_url}" alt="${p.nome}">`           : `<div class="item-emoji-bg">${p.emoji || '🍔'}</div>`}
@@ -1561,7 +1584,7 @@ window.imprimirPedido = async function(id) {
 
 <!-- ====== CABEÇALHO ====== -->
 <div class="center">
-  <div class="logo">PEDI<span class="logo-red">UAI</span></div>
+  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
   <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
   <div class="info-sm">
     ${estab?.endereco ? `${estab.endereco}<br>` : ''}
@@ -1622,7 +1645,7 @@ ${(insta || ttok || estab?.site) ? ` <hr class="sep-dash"> <div class="social"> 
 
 <hr class="sep-dash">
 <div class="msg-final">${msgFim}</div>
-<div class="rodape">PEDIUAI · Plataforma de delivery independente</div>
+<div class="rodape">PEDIWAY · Plataforma de delivery independente</div>
 
 </body></html>`;
 
@@ -1995,7 +2018,7 @@ function exportarPDF() {
     + '<table><thead><tr><th>Forma</th><th>Pedidos</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead><tbody>'+pagRows+'</tbody></table></div>'
     + '<div class="section"><div class="section-title">Histórico de pedidos</div>'
     + '<table><thead><tr><th>#</th><th>Cliente</th><th>Endereço</th><th>Pagamento</th><th style="text-align:right">Total</th><th>Data</th></tr></thead><tbody>'+pedRows+'</tbody></table></div>'
-    + '<div class="footer">Relatório gerado pelo PEDIUAI — '+agora+'</div>'
+    + '<div class="footer">Relatório gerado pelo PEDIWAY — '+agora+'</div>'
     + '</body></html>';
 
   const w = window.open('','_blank');
@@ -2169,12 +2192,18 @@ window.imprimirComanda = function() {
   const estab = getEstab();
   const peds  = _pedidosMesas[_mesaAtual] || [];
   const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  const total = peds.reduce((s,p) => s + Number(p.total||0), 0);
+  const subtotal = peds.reduce((s,p) => s + Number(p.total||0), 0);
   const agora = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const cnpjRaw = (estab?.cnpj || '').replace(/\D/g,'');
   const cnpjFmt = cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
   const insta   = estab?.instagram ? '@' + estab.instagram : '';
   const msgFim  = estab?.msg_nota || 'Obrigado pela preferencia!';
+
+  // Taxa de serviço — respeita se o garçom removeu
+  const taxaAtiva = estab?.taxa_servico === true && !_taxaServicoRemovida;
+  const percServico = Number(estab?.perc_servico || 10);
+  const valorTaxa = taxaAtiva ? subtotal * (percServico / 100) : 0;
+  const total = subtotal + valorTaxa;
 
   // Agrupa por nome
   const grupos = {};
@@ -2183,6 +2212,14 @@ window.imprimirComanda = function() {
     if (!grupos[nm]) grupos[nm] = [];
     grupos[nm].push(p);
   });
+
+  const linhaTaxa = taxaAtiva ? `
+  <div class="taxa-row">
+    <span>Subtotal</span><span>${fmtR(subtotal)}</span>
+  </div>
+  <div class="taxa-row">
+    <span>Taxa de serviço (${percServico}%)</span><span>${fmtR(valorTaxa)}</span>
+  </div>` : '';
 
   const html = `<!DOCTYPE html><html><head>
 <meta charset="UTF-8">
@@ -2245,6 +2282,11 @@ window.imprimirComanda = function() {
     color: #C0392B; border-top: 1px dashed #ccc;
     padding-top: 3px; margin-top: 2px;
   }
+  .taxa-row {
+    display: flex; justify-content: space-between;
+    font-size: 12px; font-weight: 500;
+    padding: 3px 0; color: #444;
+  }
   .total-row {
     display: flex; justify-content: space-between;
     font-size: 16px; font-weight: 900;
@@ -2263,7 +2305,7 @@ window.imprimirComanda = function() {
 
 <!-- CABEÇALHO -->
 <div class="center">
-  <div class="logo">PEDI<span class="logo-red">UAI</span></div>
+  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
   <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
   <div class="info-sm">
     ${estab?.endereco ? estab.endereco + '<br>' : ''}
@@ -2285,6 +2327,8 @@ window.imprimirComanda = function() {
 <!-- PEDIDOS POR PESSOA -->
 ${Object.entries(grupos).map(([nm, gpeds]) => {   const sub = gpeds.reduce((s,p) => s + Number(p.total||0), 0);   const inicial = nm.charAt(0).toUpperCase();   const itensRows = gpeds.map(p => {     const itens = Array.isArray(p.itens) ? p.itens : [];     return itens.map(i =>       `<div class="item">         <span class="item-nome">${i.qtd||1}x ${i.nome}</span>         <span class="item-val">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span>       </div>`     ).join('');   }).join('');   return `<div class="pessoa-bloco">     <div class="pessoa-nome">       <div class="pessoa-avatar">${inicial}</div>       <span class="pessoa-label">${nm}</span>     </div>     ${itensRows}     <div class="pessoa-sub">${fmtR(sub)}</div>   </div>`; }).join('')}
 
+${linhaTaxa}
+
 <div class="total-row">
   <span>TOTAL</span>
   <span class="total-val">${fmtR(total)}</span>
@@ -2295,7 +2339,7 @@ ${estab?.site ? `<div class="social">${estab.site}</div>` : ''}
 
 <hr class="sep-dash">
 <div class="msg-final">${msgFim}</div>
-<div class="rodape">PEDIUAI · Plataforma de delivery independente</div>
+<div class="rodape">PEDIWAY · Plataforma de delivery independente</div>
 
 </body></html>`;
 
@@ -2830,7 +2874,7 @@ window.imprimirCozinha = function(pedidoId) {
 
 <!-- CABEÇALHO -->
 <div class="center">
-  <div class="logo">PEDI<span class="logo-red">UAI</span></div>
+  <div class="logo">PEDI<span class="logo-red">WAY</span></div>
   <div class="empresa">${loja}</div>
   <div class="tag">Ticket de Cozinha</div>
 </div>
@@ -2851,7 +2895,7 @@ ${itens.map(i => {   const adds = Array.isArray(i.adicionais) && i.adicionais.le
 ${p.observacao ? ` <hr class="sep-dash"> <div class="obs">   <div class="obs-titulo">Observacao</div>   <div class="obs-texto">${p.observacao}</div> </div>` : ''}
 
 <hr class="sep-dash">
-<div class="rodape">PEDIUAI &mdash; Sistema de Gestao</div>
+<div class="rodape">PEDIWAY &mdash; Sistema de Gestao</div>
 
 </body></html>`;
 
@@ -2899,6 +2943,7 @@ let _cardapioCache    = null;   // cache dos produtos para seleção rápida
 let _carrinhoComanda  = {};     // { "Mesa 3": [{nome, preco, qtd, emoji}] }
 let _nomeComanda      = {};     // { "Mesa 3": "João" }
 let _pagamentoComanda = null;   // pagamento selecionado ao fechar comanda
+let _taxaServicoRemovida = false; // true se o garçom removeu a taxa no fechamento
 
 function getNumMesas() {
   const estab = getEstab();
@@ -3287,6 +3332,7 @@ async function confirmarFecharComanda() {
 
   // Reseta seleção de pagamento e abre modal
   _pagamentoComanda = null;
+  _taxaServicoRemovida = false;
   ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
     const btn = document.getElementById('pgto-btn-' + m);
     if (btn) { btn.style.borderColor='#e0dbd5'; btn.style.background='#fff'; btn.style.color='#555'; }
@@ -3298,8 +3344,35 @@ async function confirmarFecharComanda() {
   const totEl  = document.getElementById('fechar-comanda-total');
   const infEl  = document.getElementById('fechar-comanda-info');
   if (mesaEl) mesaEl.textContent = _mesaAtual;
-  if (totEl)  totEl.textContent  = fmt(totalMesa);
   if (infEl)  infEl.textContent  = peds.length + ' pedido(s)';
+
+  // Taxa de serviço
+  const estab = getEstab();
+  const taxaAtiva = estab?.taxa_servico === true;
+  const percServico = Number(estab?.perc_servico || 10);
+  const taxaWrap = document.getElementById('fechar-taxa-wrap');
+  const btnRemover = document.getElementById('btn-remover-taxa');
+
+  if (taxaAtiva) {
+    const valorTaxa = totalMesa * (percServico / 100);
+    const totalFinal = totalMesa + valorTaxa;
+    // Mostra breakdown
+    if (totEl) totEl.textContent = fmt(totalFinal);
+    const subEl = document.getElementById('fechar-subtotal');
+    const labEl = document.getElementById('fechar-taxa-label');
+    const taxaEl = document.getElementById('fechar-taxa-valor');
+    const finalEl = document.getElementById('fechar-total-final');
+    if (subEl)   subEl.textContent  = fmt(totalMesa);
+    if (labEl)   labEl.textContent  = `Taxa de serviço (${percServico}%)`;
+    if (taxaEl)  taxaEl.textContent = fmt(valorTaxa);
+    if (finalEl) finalEl.textContent = fmt(totalFinal);
+    if (taxaWrap) taxaWrap.style.display = 'block';
+    if (btnRemover) btnRemover.style.display = 'inline-flex';
+  } else {
+    if (totEl) totEl.textContent = fmt(totalMesa);
+    if (taxaWrap) taxaWrap.style.display = 'none';
+  }
+
   const modal = document.getElementById('modal-fechar-comanda');
   if (modal) modal.style.display = 'flex';
 }
@@ -3308,6 +3381,30 @@ window.cancelarFecharComanda = function() {
   const modal = document.getElementById('modal-fechar-comanda');
   if (modal) modal.style.display = 'none';
   _pagamentoComanda = null;
+  _taxaServicoRemovida = false;
+};
+
+// Remove a taxa de serviço a pedido do cliente
+window.removerTaxaServico = function() {
+  _taxaServicoRemovida = true;
+  const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  // Esconde a linha da taxa e atualiza os totais
+  const taxaLinha = document.getElementById('fechar-taxa-linha');
+  if (taxaLinha) taxaLinha.style.display = 'none';
+  // Subtotal vira o total
+  const subEl   = document.getElementById('fechar-subtotal');
+  const finalEl = document.getElementById('fechar-total-final');
+  const totEl   = document.getElementById('fechar-comanda-total');
+  const subtotal = subEl?.textContent || '';
+  if (finalEl) finalEl.textContent = subtotal;
+  if (totEl)   totEl.textContent   = subtotal;
+  // Muda label do bloco pra "Sem taxa de serviço"
+  const labEl = document.getElementById('fechar-taxa-label');
+  if (labEl) { labEl.textContent = 'Taxa de serviço removida'; labEl.style.textDecoration = 'line-through'; labEl.style.color = '#ccc'; }
+  const taxaEl = document.getElementById('fechar-taxa-valor');
+  if (taxaEl) { taxaEl.textContent = 'R$ 0,00'; taxaEl.style.color = '#ccc'; }
+  const btn = document.getElementById('btn-remover-taxa');
+  if (btn) btn.style.display = 'none';
 };
 
 window.selecionarPagamentoComanda = function(metodo) {
@@ -3344,7 +3441,14 @@ window.executarFecharComanda = async function() {
   const peds = _pedidosMesas[_mesaAtual] || [];
   const mesaFechando = _mesaAtual;
   const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  const totalMesa = peds.reduce((s,p)=>s+Number(p.total||0),0);
+  const subtotal = peds.reduce((s,p)=>s+Number(p.total||0),0);
+
+  // Calcula total final considerando taxa de serviço
+  const estab = getEstab();
+  const taxaAtiva = estab?.taxa_servico === true && !_taxaServicoRemovida;
+  const percServico = Number(estab?.perc_servico || 10);
+  const valorTaxa = taxaAtiva ? subtotal * (percServico / 100) : 0;
+  const totalMesa = subtotal + valorTaxa;
 
   // Salva pagamento + status nos pedidos da mesa
   const ids = peds.map(p=>p.id);
@@ -3361,6 +3465,7 @@ window.executarFecharComanda = async function() {
   setTimeout(()=>{ _mesasFechadas.delete(mesaFechando); renderMesas(); }, 5000);
 
   _pagamentoComanda = null;
+  _taxaServicoRemovida = false;
   window.fecharComanda();
   showToast('Comanda da ' + mesaFechando + ' fechada! ' + fmt(totalMesa));
   renderMesas();
@@ -3386,4 +3491,227 @@ window.switchComandaTab       = window.switchComandaTab;
 window.toggleTaxaEntrega = function(ativo) {
   const w = document.getElementById('taxa-entrega-wrap');
   if (w) w.style.display = ativo ? 'block' : 'none';
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔥 MODAL QUENTE — Promoção por percentual
+// ═══════════════════════════════════════════════════════════════════════════════
+let _quentePct = 10;
+
+window.abrirModalQuente = async function() {
+  const modal = document.getElementById('modal-quente');
+  if (!modal) return;
+
+  // Gera pills de percentual (5 a 50, step 5)
+  const pctWrap = document.getElementById('quente-percentuais');
+  if (pctWrap) {
+    pctWrap.innerHTML = [5,10,15,20,25,30,35,40,45,50].map(p => `
+      <button onclick="selecionarPctQuente(${p})" id="qpct-${p}"
+        style="padding:8px 16px;border-radius:100px;border:2px solid ${p===_quentePct?'#e65e32':'#e0dbd5'};
+               background:${p===_quentePct?'#e65e32':'#fff'};
+               color:${p===_quentePct?'#fff':'#555'};
+               font-family:'Poppins',sans-serif;font-weight:800;font-size:.82rem;cursor:pointer;transition:all .15s">
+        ${p}% OFF
+      </button>`).join('');
+  }
+
+  // Mostra preview
+  atualizarPreviewQuente();
+
+  // Carrega produtos da loja
+  await carregarProdutosQuente();
+
+  modal.style.display = 'flex';
+};
+
+window.selecionarPctQuente = function(pct) {
+  _quentePct = pct;
+  // Atualiza visual dos botões
+  [5,10,15,20,25,30,35,40,45,50].forEach(p => {
+    const btn = document.getElementById('qpct-'+p);
+    if (!btn) return;
+    btn.style.background     = p === pct ? '#e65e32' : '#fff';
+    btn.style.borderColor    = p === pct ? '#e65e32' : '#e0dbd5';
+    btn.style.color          = p === pct ? '#fff'    : '#555';
+  });
+  atualizarPreviewQuente();
+  // Recalcula preços nos cards de produto usando o preço BASE (nunca o descontado)
+  document.querySelectorAll('[data-preco-orig]').forEach(el => {
+    const base = parseFloat(el.dataset.precoOrig);
+    const desc = base * (1 - _quentePct / 100);
+    el.textContent = 'R$ ' + desc.toFixed(2).replace('.', ',');
+  });
+};
+
+function atualizarPreviewQuente() {
+  const prev = document.getElementById('quente-preview');
+  const lbl  = document.getElementById('quente-preview-pct');
+  if (prev) prev.style.display = 'flex';
+  if (lbl)  lbl.textContent   = _quentePct + '% OFF';
+}
+
+async function carregarProdutosQuente() {
+  const lista = document.getElementById('quente-lista-produtos');
+  if (!lista) return;
+  lista.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:.82rem">Carregando...</div>';
+
+  const estab = getEstab();
+  if (!estab?.id) { lista.innerHTML = '<div style="color:#aaa;font-size:.82rem;padding:20px;text-align:center">Nenhum produto encontrado</div>'; return; }
+
+  const { data: prods } = await getSupa().from('produtos').select('id,nome,preco,preco_original,em_promocao,desconto_percent,foto_url,categoria').eq('estabelecimento_id', estab.id).eq('disponivel', true).order('nome');
+
+  if (!prods?.length) {
+    lista.innerHTML = '<div style="color:#aaa;font-size:.82rem;padding:20px;text-align:center">Nenhum produto cadastrado</div>';
+    return;
+  }
+
+  lista.innerHTML = prods.map(p => {
+    const emPromo = p.em_promocao && p.desconto_percent > 0;
+    // SEMPRE usa preco_original como base — nunca o preço já descontado
+    const precoBase = parseFloat(p.preco_original || p.preco);
+    const precoDesc = precoBase * (1 - _quentePct / 100);
+    return `
+    <label style="display:flex;align-items:center;gap:12px;background:${emPromo?'#fff8f5':'#faf8f5'};border:1.5px solid ${emPromo?'#e65e32':'#f0ebe4'};border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s">
+      <input type="checkbox" value="${p.id}" ${emPromo?'checked':''}
+        data-preco-base="${precoBase}"
+        style="width:18px;height:18px;accent-color:#e65e32;cursor:pointer;flex-shrink:0">
+      ${p.foto_url?`<img src="${p.foto_url}" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`:         `<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.85rem;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nome}</div>
+        <div style="font-size:.72rem;color:#aaa">${p.categoria||''}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:.72rem;color:#bbb;text-decoration:line-through">R$ ${precoBase.toFixed(2).replace('.',',')}</div>
+        <div style="font-size:.9rem;font-weight:800;color:#e65e32" data-preco-orig="${precoBase}">R$ ${precoDesc.toFixed(2).replace('.',',')}</div>
+      </div>
+    </label>`;
+  }).join('');
+}
+
+window.salvarQuente = async function() {
+  const checkboxes = document.querySelectorAll('#quente-lista-produtos input[type=checkbox]');
+  const marcados   = [...checkboxes].filter(c => c.checked);
+  const desmarcados= [...checkboxes].filter(c => !c.checked);
+  const pct        = _quentePct;
+  const estab      = getEstab();
+
+  showToast('Salvando...', '#f59e0b');
+
+  // Remove promoção dos desmarcados — SEMPRE restaura preco ao preco_original
+  for (const cb of desmarcados) {
+    const precoBase = parseFloat(cb.dataset.precoBase); // original guardado no data attr
+    // Dupla segurança: busca preco_original do banco
+    const { data: prod } = await getSupa().from('produtos')
+      .select('preco_original,em_promocao').eq('id', cb.value).single();
+    // Só age em produtos que estavam em promoção
+    if (!prod?.em_promocao) continue;
+    const precoRestaurado = prod?.preco_original || precoBase;
+    await getSupa().from('produtos').update({
+      em_promocao:      false,
+      desconto_percent: 0,
+      preco:            precoRestaurado,  // ← restaura o preço original de verdade
+      preco_original:   null,
+    }).eq('id', cb.value);
+  }
+
+  // Salva produtos marcados com o percentual
+  for (const cb of marcados) {
+    const precoBase = parseFloat(cb.dataset.precoBase); // sempre o original
+    const precoDesc = parseFloat((precoBase * (1 - pct/100)).toFixed(2));
+    await getSupa().from('produtos').update({
+      em_promocao:      true,
+      desconto_percent: pct,
+      preco_original:   precoBase,   // guarda o original
+      preco:            precoDesc,   // aplica desconto sobre o original
+    }).eq('id', cb.value);
+  }
+
+  // Atualiza flag da loja
+  if (estab?.id) {
+    await getSupa().from('estabelecimentos').update({
+      promocao_ativa:   marcados.length > 0,
+      desconto_percent: marcados.length > 0 ? pct : 0,
+    }).eq('id', estab.id);
+  }
+
+  fecharModalQuente();
+  showToast(marcados.length > 0 ? '🔥 Promoção QUENTE salva!' : '✅ Promoção removida!');
+  await renderCardapio();
+};
+
+window.fecharModalQuente = function() {
+  const modal = document.getElementById('modal-quente');
+  if (modal) modal.style.display = 'none';
+  const prev = document.getElementById('quente-preview');
+  if (prev) prev.style.display = 'none';
+};
+
+// ── Sub-abas do cardápio (Todos / 🔥 QUENTE) ─────────────────────────────────
+let _dashSubTab = 'todos';
+
+window.dashSubTab = async function(tab, btn) {
+  _dashSubTab = tab;
+  // Estilo dos botões
+  ['todos','quente'].forEach(t => {
+    const b = document.getElementById('dash-subtab-' + t);
+    if (!b) return;
+    const ativo = t === tab;
+    b.style.color       = ativo ? 'var(--red)' : '#aaa';
+    b.style.borderBottom= ativo ? '2.5px solid var(--red)' : '2.5px solid transparent';
+  });
+  await renderCardapio();
+};
+
+// Atualiza animação do foguinho no dashboard
+function atualizarFireDash() {
+  const ico = document.getElementById('dash-fire-ico');
+  if (!ico) return;
+  // Verifica se há produtos QUENTE
+  getSupa().from('produtos').select('id').eq('estabelecimento_id', getEstab()?.id).eq('em_promocao', true).limit(1)
+    .then(({ data }) => {
+      if (data?.length) {
+        ico.style.cssText = 'display:inline-block;animation:fire-pulse-dash 1.8s ease-in-out infinite';
+      } else {
+        ico.style.cssText = 'display:inline-block;opacity:.3;filter:grayscale(1)';
+      }
+    });
+}
+
+// Injeta keyframe no dash
+if (!document.getElementById('dash-fire-style')) {
+  const s = document.createElement('style');
+  s.id = 'dash-fire-style';
+  s.textContent = '@keyframes fire-pulse-dash{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}';
+  document.head.appendChild(s);
+}
+
+window.toggleCfgTaxaServico = function(ativo) {
+  const w = document.getElementById('cfg-taxa-servico-wrap');
+  if (w) w.style.display = ativo ? 'block' : 'none';
+};
+
+// ── Accordion das configurações ───────────────────────────────────────────────
+window.initCfgAccordion = function() {
+  document.querySelectorAll('.cfg-topic-header').forEach(header => {
+    if (header.dataset.accordion) return;
+    header.dataset.accordion = '1';
+    header.addEventListener('click', function(e) {
+      if (e.target.closest('input,button,label,select,a')) return;
+      const card = this.closest('.cfg-topic-card');
+      const body = card?.querySelector('.cfg-topic-body');
+      if (!body) return;
+      const isOpen = body.classList.contains('open');
+      // Fecha todos
+      document.querySelectorAll('.cfg-topic-body.open').forEach(b => {
+        b.classList.remove('open');
+        b.closest('.cfg-topic-card')?.querySelector('.cfg-topic-header')?.classList.remove('open');
+      });
+      // Abre o clicado se estava fechado
+      if (!isOpen) {
+        body.classList.add('open');
+        this.classList.add('open');
+        setTimeout(() => card.scrollIntoView({ behavior:'smooth', block:'nearest' }), 60);
+      }
+    });
+  });
 };
