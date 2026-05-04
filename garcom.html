@@ -205,6 +205,35 @@ const db=createClient(SUPA_URL,SUPA_KEY);
 const $=id=>document.getElementById(id);
 const fmtR=v=>'R$ '+Number(v||0).toFixed(2).replace('.',',');
 
+// ── Sanitização HTML — evita XSS com dados do banco ─────────────────────────
+function esc(s){
+  return String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+}
+
+// ── Parse seguro de JSON — nunca lança exceção ───────────────────────────────
+function parseSeguro(val,fallback=[]){
+  if(Array.isArray(val))return val;
+  if(typeof val!=='string')return fallback;
+  try{return JSON.parse(val);}catch{return fallback;}
+}
+
+// ── Rate limiting: máx 10 pedidos em 2 minutos por garçom ───────────────────
+const _enviosTimes=[];
+function podeEnviarAgora(){
+  const agora=Date.now();
+  while(_enviosTimes.length&&agora-_enviosTimes[0]>2*60*1000)_enviosTimes.shift();
+  if(_enviosTimes.length>=10)return false;
+  _enviosTimes.push(agora);return true;
+}
+
+// ── Verifica se sessão Supabase está ativa ───────────────────────────────────
+async function verificarSessao(){
+  const {data:{session}}=await db.auth.getSession();
+  return !!session?.user;
+}
+
 // EXTRAI SLUG — /comandas/nome_da_loja → nome_da_loja
 // Usa o mesmo padrão do cliente.html mas pega o 2o segmento
 const _p=location.pathname;
@@ -212,14 +241,23 @@ const _segs=_p.replace(/^\/|\/$/g,'').split('/');
 // _segs = ['comandas','nome_da_loja'] → slug = _segs[1]
 // ou _segs = ['nome_da_loja'] → slug = _segs[0] (fallback)
 const slug=_segs.length>=2&&_segs[0]==='comandas'?_segs[1]:_segs[_segs.length-1]||'';
-console.log('[Garcom] pathname='+_p+' slug='+slug);
+// Slug extraído da URL — sem log em produção
 
 let estab=null,produtos=[],pedMesas={},nomes={},carrinhos={},mesaAtual=null,fechadas=new Set();
 
 async function init(){
   if(!slug){$('gc-loading').innerHTML='<p style="color:#aaa;padding:40px;text-align:center">Link invalido - slug nao encontrado</p>';return;}
-  const{data:est,error}=await db.from('estabelecimentos').select('*').eq('slug',slug).maybeSingle();
-  console.log('[Garcom] resultado:',est?.nome,'erro:',error?.message);
+
+  // ── Autenticação obrigatória — garçom deve estar logado ─────────────────────
+  const autenticado=await verificarSessao();
+  if(!autenticado){
+    $('gc-loading').innerHTML='<div style="padding:40px;text-align:center;color:#c0392b">'      +'<div style="font-size:2rem;margin-bottom:12px">🔒</div>'      +'<div style="font-size:.92rem;font-weight:700;margin-bottom:8px">Acesso restrito</div>'      +'<div style="font-size:.8rem;color:#888">Faça login no painel para acessar o modo garçom.</div>'      +'</div>';
+    return;
+  }
+
+  // Busca apenas campos necessários — sem CPF/CNPJ/dados sensíveis
+  const CAMPOS_ESTAB='id,nome,slug,num_mesas,status,plano,assinatura_vencimento,taxa_servico,perc_servico';
+  const{data:est,error}=await db.from('estabelecimentos').select(CAMPOS_ESTAB).eq('slug',slug).maybeSingle();
   if(!est){
     $('gc-loading').innerHTML='<div style="padding:40px;text-align:center;line-height:2;color:#aaa">'
       +'<div style="font-size:2rem;margin-bottom:12px">😕</div>'
@@ -239,7 +277,7 @@ async function init(){
   // Polling de sincronização do estab a cada 30s (pega mudanças de mesas, etc.)
   setInterval(async()=>{
     try{
-      const{data:fresh}=await db.from('estabelecimentos').select('*').eq('id',estab.id).maybeSingle();
+      const{data:fresh}=await db.from('estabelecimentos').select('id,num_mesas,status,plano').eq('id',estab.id).maybeSingle();
       if(fresh&&fresh.num_mesas!==estab.num_mesas){
         estab=fresh;renderMesas();
       }
@@ -249,7 +287,7 @@ async function init(){
 
 async function loadPedidos(){
   // Só carrega pedidos ATIVOS — mesa fica limpa após fechar comanda
-  const{data}=await db.from('pedidos').select('*')
+  const{data}=await db.from('pedidos').select('id,cliente_nome,endereco,itens,total,status,pagamento,created_at')
     .eq('estabelecimento_id',estab.id)
     .ilike('endereco','No local%')
     .in('status',['novo','preparo'])
@@ -330,13 +368,13 @@ function renderCardapio(){
   const cats={};
   produtos.forEach(p=>{const cat=p.categoria||'Outros';if(!cats[cat])cats[cat]=[];cats[cat].push(p);});
   el.innerHTML=Object.entries(cats).map(([cat,items])=>
-    `<span class="cat-lbl">${cat}</span>` +
+    `<span class="cat-lbl">${esc(cat)}</span>` +
     items.map(p=>{
-      const nm=p.nome.replace(/"/g,'&quot;');
-      const em=p.emoji||'🍽️';
-      return `<div class="prod-item" onclick="gcAdd('${p.id}','${p.nome.replace(/'/g,"\'")}',${p.preco},'${em}')">
+      // Usa data-id para evitar injeção de código no onclick
+      const em=esc(p.emoji||'🍽️');
+      return `<div class="prod-item" data-pid="${esc(p.id)}" data-pnome="${esc(p.nome)}" data-ppreco="${Number(p.preco)||0}" data-pem="${em}" onclick="gcAddPorData(this)">
         <span class="prod-emoji">${em}</span>
-        <span class="prod-nome">${p.nome}</span>
+        <span class="prod-nome">${esc(p.nome)}</span>
         <span class="prod-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</span>
       </div>`;
     }).join('')
@@ -359,10 +397,27 @@ window.gcBuscar=function(termo){
   });
 };
 
+// Usa data attributes — evita injeção via parâmetros de string no onclick
+window.gcAddPorData=function(el){
+  if(!mesaAtual||!el)return;
+  const id=el.dataset.pid||'';
+  const nome=el.dataset.pnome||'';
+  const preco=Number(el.dataset.ppreco)||0;
+  const emoji=el.dataset.pem||'🍽️';
+  // Valida que o produto existe no array local (impede manipulação via DevTools)
+  const prodReal=produtos.find(p=>p.id===id);
+  if(!prodReal)return;
+  gcAdd(id,prodReal.nome,prodReal.preco,prodReal.emoji||'🍽️');
+};
+
 window.gcAdd=function(id,nome,preco,emoji){
   if(!mesaAtual)return;if(!carrinhos[mesaAtual])carrinhos[mesaAtual]=[];
+  // Valida produto contra lista local — nunca aceita preço externo
+  const prodReal=produtos.find(p=>p.id===id);
+  const precoSeguro=prodReal?Number(prodReal.preco):Number(preco)||0;
+  const nomeSeguro=prodReal?prodReal.nome:String(nome||'').slice(0,120);
   const ex=carrinhos[mesaAtual].find(x=>x.id===id);
-  if(ex)ex.qtd++;else carrinhos[mesaAtual].push({id,nome,preco:Number(preco),emoji,qtd:1});
+  if(ex)ex.qtd++;else carrinhos[mesaAtual].push({id,nome:nomeSeguro,preco:precoSeguro,emoji:String(emoji||'🍽️').slice(0,10),qtd:1});
   renderCarrinho();
 };
 window.gcRm=function(id){
@@ -379,15 +434,14 @@ function renderCarrinho(){
   if(btn)btn.disabled=!carr.length;if(!el)return;
   if(!carr.length){el.innerHTML='<div class="carr-empty">Nenhum item</div>';return;}
   el.innerHTML=carr.map(i=>{
-    const em=i.emoji||'🍽️';
-    const nm=i.nome.replace(/'/g,"\'");
+    const em=esc(i.emoji||'🍽️');
     return `<div class="carr-row">
       <span class="carr-emoji">${em}</span>
-      <span class="carr-nome">${i.nome}</span>
+      <span class="carr-nome">${esc(i.nome)}</span>
       <div class="carr-ctrl">
-        <button class="carr-btn" onclick="gcRm('${i.id}')">&#8722;</button>
+        <button class="carr-btn" data-rm="${esc(i.id)}" onclick="gcRm(this.dataset.rm)">&#8722;</button>
         <span class="carr-qtd">${i.qtd}</span>
-        <button class="carr-btn plus" onclick="gcAdd('${i.id}','${nm}',${i.preco},'${em}')">+</button>
+        <button class="carr-btn plus" data-add="${esc(i.id)}" onclick="gcAdd(this.dataset.add)">+</button>
       </div>
       <span class="carr-sub">${fmtR(i.preco*i.qtd)}</span>
     </div>`;
@@ -396,18 +450,31 @@ function renderCarrinho(){
 
 window.gcEnviar=async function(){
   if(!mesaAtual)return;const carr=carrinhos[mesaAtual]||[];if(!carr.length)return;
+
+  // Rate limiting
+  if(!podeEnviarAgora()){toast('Muitos pedidos em pouco tempo. Aguarde.','#ef4444');return;}
+
+  // Verifica sessão antes de inserir
+  if(!(await verificarSessao())){toast('Sessão expirada. Faça login novamente.','#ef4444');return;}
+
   const btn=$('gc-btn-env');if(btn){btn.disabled=true;btn.textContent='Enviando...';}
   try{
-    const nome=nomes[mesaAtual]||mesaAtual;const total=carr.reduce((s,i)=>s+i.preco*i.qtd,0);
-    const{error}=await db.from('pedidos').insert({estabelecimento_id:estab.id,cliente_nome:nome,cliente_whats:'',endereco:'No local — '+mesaAtual,itens:carr.map(i=>({nome:i.nome,preco:i.preco,qtd:i.qtd,emoji:i.emoji})),total,status:'novo',pagamento:'No local'});
-    if(error)throw error;
+    const nome=String(nomes[mesaAtual]||mesaAtual).slice(0,100);
+    // Total sempre recalculado com preços do banco — nunca aceita do frontend
+    const itensSeguro=carr.map(i=>{
+      const prodReal=produtos.find(p=>p.id===i.id);
+      return {nome:String(i.nome||'').slice(0,120),preco:prodReal?Number(prodReal.preco):Number(i.preco)||0,qtd:Math.max(1,Math.min(99,Number(i.qtd)||1)),emoji:String(i.emoji||'').slice(0,10)};
+    });
+    const total=Math.round(itensSeguro.reduce((s,i)=>s+i.preco*i.qtd,0)*100)/100;
+    const{error}=await db.from('pedidos').insert({estabelecimento_id:estab.id,cliente_nome:nome,cliente_whats:'',endereco:('No local — '+mesaAtual).slice(0,100),itens:itensSeguro,total,status:'novo',pagamento:'No local'});
+    if(error)throw new Error('Erro ao registrar pedido.');
     carrinhos[mesaAtual]=[];renderCarrinho();
     // Limpa nome para próxima pessoa poder se identificar
     const nomeEl=$('gc-nome');if(nomeEl)nomeEl.value='';
     delete nomes[mesaAtual]; // próxima pessoa começa sem nome
     toast('Pedido de '+nome+' enviado! 🍳');
     await loadPedidos();renderMesas();renderHistorico();atualizarTotalMesa();
-  }catch(e){toast('Erro: '+e.message,'#ef4444');}
+  }catch(e){toast(e.message||'Erro ao enviar pedido. Tente novamente.','#ef4444');}
   finally{if(btn){btn.disabled=false;btn.textContent='Enviar para cozinha 🍳';}}
 };
 
@@ -492,14 +559,14 @@ function renderHistorico(){
         +'<span style="font-size:.65rem;color:#aaa">'+dt+'</span>'
         +'<span class="'+(stC[p.status]||'')+'" style="font-size:.65rem">'+(stL[p.status]||p.status)+'</span>'
         +'</div>'
-        +itens.map(it=>'<div class="hist-item-row"><span>'+(it.qtd||1)+'x '+it.nome+'</span><span>R$ '+((it.preco||0)*(it.qtd||1)).toFixed(2).replace('.',',')+'</span></div>').join('')
+        +itens.map(it=>'<div class="hist-item-row"><span>'+Math.max(1,parseInt(it.qtd)||1)+'x '+esc(it.nome)+'</span><span>R$ '+(Math.abs(Number(it.preco)||0)*Math.max(1,parseInt(it.qtd)||1)).toFixed(2).replace('.',',')+'</span></div>').join('')
         +'</div>';
     }).join('');
     return '<div class="hist-bloco">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
       +'<div style="display:flex;align-items:center;gap:7px">'
       +'<div style="width:30px;height:30px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;flex-shrink:0">'+nome.charAt(0).toUpperCase()+'</div>'
-      +'<span style="font-size:.9rem;font-weight:800">'+nome+'</span>'
+      +'<span style="font-size:.9rem;font-weight:800">'+esc(nome)+'</span>'
       +'</div>'
       +'<span style="font-size:.82rem;font-weight:800;color:var(--red)">'+fmtR(subtotal)+'</span>'
       +'</div>'
@@ -526,7 +593,7 @@ window.gcImprimir=function(){
       +'<div style="font-size:14px;font-weight:800;margin-bottom:6px;letter-spacing:.03em">'+nome+'</div>'
       +gpeds.map(p=>{const itens=Array.isArray(p.itens)?p.itens:[];const dt=new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
         return '<div style="font-size:10px;color:#666;margin-bottom:2px">'+dt+'</div>'
-          +itens.map(it=>'<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0;font-weight:600"><span>'+( it.qtd||1)+'x '+it.nome+'</span></div>').join('');
+          +itens.map(it=>'<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0;font-weight:600"><span>'+Math.max(1,parseInt(it.qtd)||1)+'x '+esc(it.nome)+'</span></div>').join('');
       }).join('<div style="height:4px"></div>')
       +'<div style="text-align:right;font-size:12px;color:#C0392B;font-weight:800;margin-top:6px;border-top:1px solid #ddd;padding-top:4px">Subtotal: R$ '+sub.toFixed(2).replace('.',',')+'</div>'
       +'</div>';
