@@ -215,6 +215,24 @@ export async function initDashboard() {
     } catch(e) { console.warn('[QUENTE] Erro ao expirar:', e); }
   }
   let estab = getEstab();
+
+  // Se não tem estab no localStorage, tenta buscar do banco via sessão ativa
+  if (!estab) {
+    try {
+      const { data: { session } } = await getSupa().auth.getSession();
+      if (session?.user) {
+        const { data: fetchedEstab } = await getSupa()
+          .from('estabelecimentos').select('*')
+          .eq('user_id', session.user.id).maybeSingle();
+        if (fetchedEstab) {
+          estab = fetchedEstab;
+          window._estab = fetchedEstab;
+          localStorage.setItem('pw_estab', JSON.stringify(fetchedEstab));
+        }
+      }
+    } catch(e) { console.warn('initDashboard: erro ao buscar estab da sessão', e); }
+  }
+
   if (!estab) return;
   atualizarLinkSuporte();
   atualizarInfoPlano();
