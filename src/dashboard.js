@@ -1864,6 +1864,16 @@ window.reimprimirCaixa     = window.reimprimirCaixa;
 window.filtrarPedidosData  = window.filtrarPedidosData;
 window.toggleCartaoSubMenu = window.toggleCartaoSubMenu;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPORTS GLOBAIS — obrigatório para auth.js e index.html chamarem
+// ─────────────────────────────────────────────────────────────────────────────
+window.initDashboard          = initDashboard;
+window.renderPedidos          = renderPedidos;
+window.renderFinanceiro       = renderFinanceiro;
+window.setFinPeriodo          = setFinPeriodo;
+window.buscarPeriodoFinanceiro= window.buscarPeriodoFinanceiro;
+window.filtrarPorPagamento    = window.filtrarPorPagamento;
+
 // Formata número de telefone → (88) 98888-8888
 function fmtFone(num) {
   if (!num) return '';
