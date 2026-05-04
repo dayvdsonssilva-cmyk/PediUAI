@@ -6,6 +6,21 @@ import { showToast } from './utils.js';
 // CONSTANTES
 // ─────────────────────────────────────────────────────────────────────────────
 const BASE_URL = 'https://pediway.com.br';
+
+// Garante que o estab salvo não tenha domínio antigo
+(function() {
+  try {
+    const saved = localStorage.getItem('pw_estab');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Limpa qualquer domínio antigo que possa ter sido salvo
+      if (parsed.link && parsed.link.includes('vercel.app')) {
+        delete parsed.link;
+        localStorage.setItem('pw_estab', JSON.stringify(parsed));
+      }
+    }
+  } catch(e) {}
+})();
 const CORES = [
   // Cores sólidas
   '#C0392B','#E74C3C','#E67E22','#F39C12','#F1C40F',
@@ -716,13 +731,13 @@ async function renderCardapio() {
           <div>
             ${p.em_promocao && p.desconto_percent > 0
               ? `<div>
-                  <div style="font-size:.75rem;color:#aaa;text-decoration:line-through;margin-bottom:1px">R$ ${Number(p.preco_original||p.preco).toFixed(2).replace('.',',')}</div>
-                  <div class="item-preco" style="color:var(--red);">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>
+                  <div style="font-size:.75rem;color:#aaa;text-decoration:line-through;margin-bottom:1px">R$ ${Number(p.preco_original||p.preco).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+                  <div class="item-preco" style="color:var(--red);">R$ ${Number(p.preco).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
                 </div>`
               : p.promocao && p.preco_original
-                ? `<div class="item-preco-original">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</div>
-                   <div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`
-                : `<div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`}
+                ? `<div class="item-preco-original">R$ ${Number(p.preco_original).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+                   <div class="item-preco">R$ ${Number(p.preco).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>`
+                : `<div class="item-preco">R$ ${Number(p.preco).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>`}
           </div>
           <div class="item-acoes">
             <button class="btn-icon" onclick="editarItem('${p.id}')">✏️</button>
@@ -774,7 +789,7 @@ function renderCardapioDemo() {
         <div class="item-categoria">${p.categoria}</div>
         <div class="item-nome">${p.nome}</div>
         <div class="item-footer">
-          <div class="item-preco">R$ ${p.preco.toFixed(2).replace('.',',')}</div>
+          <div class="item-preco">R$ ${p.preco.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
         </div>
       </div>
     </div>`).join('');
@@ -1333,7 +1348,7 @@ async function renderPedidos() {
   const totalPeds  = todosHoje.length;
 
   const sp = $('stat-pedidos'); if (sp) sp.textContent = totalPeds;
-  const sf = $('stat-faturamento'); if (sf) sf.textContent = `R$ ${fatHoje.toFixed(2).replace('.',',')}`;
+  const sf = $('stat-faturamento'); if (sf) sf.textContent = `R$ ${fatHoje.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 
   // Área de novos pedidos
   const novos = pedidos.filter(p => p.status === 'novo');
@@ -1358,7 +1373,7 @@ async function renderPedidos() {
     const min = Math.floor((Date.now() - new Date(p.created_at)) / 60000);
     const tempoStr = min < 1 ? 'agora' : min < 60 ? `${min}min` : `${Math.floor(min/60)}h${min%60>0?min%60+'min':''}`;
     const itensStr = Array.isArray(p.itens) ? p.itens.map(i=>`${i.qtd}x ${i.nome}`).join(' · ') : '';
-    const totalFmt = 'R$ ' + Number(p.total||0).toFixed(2).replace('.',',');
+    const totalFmt = 'R$ ' + Number(p.total||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
     const endStr   = p.endereco === 'Retirada no local' ? '🏃 Retirada' : p.endereco ? `🛵 ${p.endereco.split(',')[0]}` : '🏃 Retirada';
     const pgto     = p.pagamento ? p.pagamento.toUpperCase() : '';
     return `<div class="pedido-card ped-status-${p.status||'novo'}" data-id="${p.id}" data-criado="${p.created_at||''}" data-pagamento="${(p.pagamento||'pix').toLowerCase()}">
@@ -1398,7 +1413,7 @@ function cardNovoHTML(p) {
   return `<div class="pedido-novo-card" id="pnc-${p.id}">
     <div class="pnc-id">#${p.id.slice(-4).toUpperCase()}</div>
     <div class="pnc-cliente">${p.cliente_nome||'Cliente'}</div>
-    <div class="pnc-total">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</div>
+    <div class="pnc-total">R$ ${Number(p.total||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
     <div style="font-size:0.72rem;color:#888;margin-bottom:8px">${itens}</div>
     <div class="pnc-actions">
       <button class="btn-aceitar" onclick="aceitarPedido('${p.id}')">Aceitar</button>
@@ -1487,9 +1502,9 @@ window.verPedido = async function(id) {
       <div><b>Entrega:</b> ${p.endereco||'Retirada no local'}</div>
       ${p.observacao?`<div><b>Obs:</b> ${p.observacao}</div>`:''}
       <hr style="border:none;border-top:1px solid var(--border)">
-      ${itens.map(i=>`<div style="display:flex;justify-content:space-between"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco*i.qtd).toFixed(2).replace('.',',')}</span></div>`).join('')}
+      ${itens.map(i=>`<div style="display:flex;justify-content:space-between"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco*i.qtd).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>`).join('')}
       <hr style="border:none;border-top:1px solid var(--border)">
-      <div style="display:flex;justify-content:space-between;font-weight:800"><span>Total</span><span>R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:800"><span>Total</span><span>R$ ${Number(p.total||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
       <div style="display:flex;gap:8px;margin-top:8px">
         ${p.status==='novo'?`<button class="btn-ped-aceitar" onclick="aceitarPedido('${p.id}');fecharModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('${p.id}');fecharModalPedido()">Recusar</button>`:''}
         <button class="btn-ped-imprimir" onclick="imprimirPedido('${p.id}')">🖨️ Imprimir</button>
@@ -1504,7 +1519,7 @@ window.imprimirPedido = async function(id) {
   if (!p) return;
   const estab = getEstab();
   const itens = Array.isArray(p.itens) ? p.itens : [];
-  const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmtR  = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const subtotal  = itens.reduce((s,i) => s + (i.preco||0)*(i.qtd||1), 0);
   const taxa      = Number(p.taxa_entrega||0);
   const total     = Number(p.total||0);
@@ -1731,9 +1746,9 @@ ${p.observacao ? `
 <div class="sec">Itens do Pedido</div>
 
 ${itens.map(i => {
-  const sub = ((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');
+  const sub = ((i.preco||0)*(i.qtd||1)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const adds = Array.isArray(i.adicionais) && i.adicionais.length
-    ? i.adicionais.map(a => `<div class="adicional">+ ${a.nome} (R$ ${Number(a.preco||0).toFixed(2).replace('.',',')})</div>`).join('')
+    ? i.adicionais.map(a => `<div class="adicional">+ ${a.nome} (R$ ${Number(a.preco||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})})</div>`).join('')
     : '';
   return `<div class="item">
     <span class="item-qtd">${i.qtd||1}x</span>
@@ -2200,7 +2215,7 @@ function renderFinanceiro() {
     ? '<tr><td colspan="6" style="text-align:center;padding:24px;color:#aaa;font-size:0.82rem">Nenhum pedido no período</td></tr>'
     : peds.slice(0,100).map(p => {
         const dt = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-        const fmtV = v => 'R$ '+Number(v||0).toFixed(2).replace('.',',');
+        const fmtV = v => 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
         const isMesa   = (p.endereco||'').startsWith('No local');
         const origem   = isMesa ? '🍽️ Mesa' : '🛵 Delivery';
         const endCurto = isMesa
@@ -2274,7 +2289,7 @@ function exportarCSV() {
 function exportarPDF() {
   const estab = getEstab();
   const peds  = filtroPedidosFin();
-  const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmtR  = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const fat   = peds.reduce((s,p)=>s+Number(p.total||0),0);
   const taxa  = peds.reduce((s,p)=>s+Number(p.taxa_entrega||0),0);
   const tick  = peds.length ? fat/peds.length : 0;
@@ -2407,7 +2422,7 @@ window.abrirAdicionais = function(mesaKey, prodJSON) {
   _adicionalSel     = {};
 
   document.getElementById('adicionais-nome').textContent  = prod.nome;
-  document.getElementById('adicionais-preco-base').textContent = 'R$ ' + Number(prod.preco).toFixed(2).replace('.',',');
+  document.getElementById('adicionais-preco-base').textContent = 'R$ ' + Number(prod.preco).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 
   const grupos = Array.isArray(prod.adicionais) ? prod.adicionais : [];
   const el = document.getElementById('adicionais-grupos');
@@ -2425,7 +2440,7 @@ window.abrirAdicionais = function(mesaKey, prodJSON) {
             <div class="adicional-opt-check">✓</div>
             <span class="adicional-opt-nome">${o.nome}</span>
           </div>
-          <span class="adicional-opt-preco">${Number(o.preco||0) > 0 ? '+R$ '+Number(o.preco).toFixed(2).replace('.',',') : 'Grátis'}</span>
+          <span class="adicional-opt-preco">${Number(o.preco||0) > 0 ? '+R$ '+Number(o.preco).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'Grátis'}</span>
         </div>`).join('')}
       <div class="adicional-limite-aviso" id="aviso-${gi}">Limite de ${g.max} opções atingido</div>
     </div>`;
@@ -2468,7 +2483,7 @@ function calcTotalAdicionais() {
   });
   const total = Number(_adicionalProduto.preco) + extra;
   const el = document.getElementById('adicionais-total');
-  if (el) el.textContent = 'R$ ' + total.toFixed(2).replace('.',',');
+  if (el) el.textContent = 'R$ ' + total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 
 window.confirmarAdicionais = function() {
@@ -2508,7 +2523,7 @@ window.imprimirComanda = function() {
   if (!_mesaAtual) return;
   const estab = getEstab();
   const peds  = _pedidosMesas[_mesaAtual] || [];
-  const fmtR  = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmtR  = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const subtotal = peds.reduce((s,p) => s + Number(p.total||0), 0);
   const agora = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const cnpjRaw = (estab?.cnpj || '').replace(/\D/g,'');
@@ -2650,7 +2665,7 @@ ${Object.entries(grupos).map(([nm, gpeds]) => {
     return itens.map(i =>
       `<div class="item">
         <span class="item-nome">${i.qtd||1}x ${i.nome}</span>
-        <span class="item-val">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span>
+        <span class="item-val">R$ ${((i.preco||0)*(i.qtd||1)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
       </div>`
     ).join('');
   }).join('');
@@ -2908,7 +2923,7 @@ function abrirAdicionaisGrupo(mesaKey, prodId, nome, preco, emoji, grupo) {
   _adicionalSel     = {};
 
   document.getElementById('adicionais-nome').textContent       = nome;
-  document.getElementById('adicionais-preco-base').textContent = 'R$ ' + Number(preco).toFixed(2).replace('.',',');
+  document.getElementById('adicionais-preco-base').textContent = 'R$ ' + Number(preco).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 
   const el = document.getElementById('adicionais-grupos'); if (!el) return;
   const maxTxt = grupo.max === 1 ? 'Escolha 1' : grupo.min > 0 ? 'Mín. '+grupo.min+', Máx. '+grupo.max : 'Até '+grupo.max;
@@ -2918,7 +2933,7 @@ function abrirAdicionaisGrupo(mesaKey, prodId, nome, preco, emoji, grupo) {
     + (grupo.opcoes||[]).map((o, oi) =>
         '<div class="adicional-opt" id="aopt-0-' + oi + '" onclick="toggleAdicional(0,' + oi + ',' + grupo.max + ')">'
         + '<div class="adicional-opt-left"><div class="adicional-opt-check">✓</div><span class="adicional-opt-nome">' + o.nome + '</span></div>'
-        + '<span class="adicional-opt-preco">' + (Number(o.preco||0)>0 ? '+R$ '+Number(o.preco).toFixed(2).replace('.',',') : 'Grátis') + '</span>'
+        + '<span class="adicional-opt-preco">' + (Number(o.preco||0)>0 ? '+R$ '+Number(o.preco).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'Grátis') + '</span>'
         + '</div>'
       ).join('')
     + '<div class="adicional-limite-aviso" id="aviso-0">Limite de ' + grupo.max + ' opções</div>'
@@ -3098,7 +3113,7 @@ function _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl) {
 
     <!-- Itens -->
     <div style="background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px">
-      ${itens.map(i=>`<div style="display:flex;justify-content:space-between;font-size:.83rem;padding:2px 0"><span style="font-weight:600">${i.qtd||1}x ${i.nome}</span><span style="color:#888">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span></div>`).join('')}
+      ${itens.map(i=>`<div style="display:flex;justify-content:space-between;font-size:.83rem;padding:2px 0"><span style="font-weight:600">${i.qtd||1}x ${i.nome}</span><span style="color:#888">R$ ${((i.preco||0)*(i.qtd||1)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>`).join('')}
       <div style="text-align:right;font-size:.9rem;font-weight:800;color:var(--red);margin-top:6px;border-top:1px solid #f0e9e0;padding-top:6px">${fmtR(p.total)}</div>
     </div>
 
@@ -3433,7 +3448,7 @@ function renderMesas() {
   const n    = getNumMesas();
   const inp  = document.getElementById('cfg-num-mesas');
   if (inp) inp.value = n;
-  const fmt  = v => 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',');
+  const fmt  = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 
   // Atualiza cards de resumo
   const allPeds   = Object.values(_pedidosMesas).flat();
@@ -3568,7 +3583,7 @@ window.rmItemComanda = rmItemComanda;
 function renderCarrinhoComanda(mesaKey) {
   const carr = _carrinhoComanda[mesaKey] || [];
   const total = carr.reduce((s,i)=>s+i.preco*i.qtd, 0);
-  const fmtR  = v=>'R$ '+Number(v).toFixed(2).replace('.',',');
+  const fmtR  = v=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const el = document.getElementById('comanda-carrinho');
   const elTotal = document.getElementById('comanda-carr-total');
   const btnEnviar = document.getElementById('btn-enviar-comanda');
@@ -3684,7 +3699,7 @@ function renderCardapioComanda(mesaKey, prods) {
     const uid = 'cmd-cat-' + idx;
     const itemsHtml = items.map(p => {
       const nomeEnc  = p.nome.replace(/"/g, '&quot;');
-      const precoFmt = Number(p.preco).toFixed(2).replace('.',',');
+      const precoFmt = Number(p.preco).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
       return `<div class="cmd-item" onclick="tcmdItem(this)"
         data-pid="${p.id}"
         data-nome="${nomeEnc}"
@@ -3773,7 +3788,7 @@ function renderPedidosComanda(mesaKey) {
         +'<span style="font-size:.65rem;color:#aaa">'+dt+'</span>'
         +'<span style="font-size:.65rem;font-weight:700;color:'+stClr[p.status]+'">'+(stLbl[p.status]||p.status)+'</span>'
         +'</div>'
-        +itens.map(i=>'<div style="display:flex;justify-content:space-between;font-size:.82rem"><span>'+(i.qtd||1)+'x '+i.nome+'</span><span>R$ '+((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')+'</span></div>').join('')
+        +itens.map(i=>'<div style="display:flex;justify-content:space-between;font-size:.82rem"><span>'+(i.qtd||1)+'x '+i.nome+'</span><span>R$ '+((i.preco||0)*(i.qtd||1)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</span></div>').join('')
         +'</div>';
     }).join('');
 
@@ -3797,7 +3812,7 @@ window.fecharComanda = function() {
 async function confirmarFecharComanda() {
   if (!_mesaAtual) return;
   const peds  = _pedidosMesas[_mesaAtual] || [];
-  const fmt   = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmt   = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const carr  = _carrinhoComanda[_mesaAtual] || [];
   const totalMesa = peds.reduce((s,p)=>s+Number(p.total||0),0);
 
@@ -3875,7 +3890,7 @@ window.cancelarFecharComanda = function() {
 // Remove a taxa de serviço a pedido do cliente
 window.removerTaxaServico = function() {
   _taxaServicoRemovida = true;
-  const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmt = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   // Esconde a linha da taxa e atualiza os totais
   const taxaLinha = document.getElementById('fechar-taxa-linha');
   if (taxaLinha) taxaLinha.style.display = 'none';
@@ -3961,7 +3976,7 @@ window.executarFecharComanda = async function() {
   if (!_mesaAtual) return;
   const peds = _pedidosMesas[_mesaAtual] || [];
   const mesaFechando = _mesaAtual;
-  const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const fmt = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const subtotal = peds.reduce((s,p)=>s+Number(p.total||0),0);
 
   // Calcula total final considerando taxa de serviço
@@ -4118,7 +4133,7 @@ window.selecionarPctQuente = function(pct) {
   document.querySelectorAll('[data-preco-orig]').forEach(el => {
     const base = parseFloat(el.dataset.precoOrig);
     const desc = base * (1 - _quentePct / 100);
-    el.textContent = 'R$ ' + desc.toFixed(2).replace('.', ',');
+    el.textContent = 'R$ ' + desc.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   });
 };
 
@@ -4161,8 +4176,8 @@ async function carregarProdutosQuente() {
         <div style="font-size:.72rem;color:#aaa">${p.categoria||''}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:.72rem;color:#bbb;text-decoration:line-through">R$ ${precoBase.toFixed(2).replace('.',',')}</div>
-        <div style="font-size:.9rem;font-weight:800;color:#e65e32" data-preco-orig="${precoBase}">R$ ${precoDesc.toFixed(2).replace('.',',')}</div>
+        <div style="font-size:.72rem;color:#bbb;text-decoration:line-through">R$ ${precoBase.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div style="font-size:.9rem;font-weight:800;color:#e65e32" data-preco-orig="${precoBase}">R$ ${precoDesc.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
       </div>
     </label>`;
   }).join('');
@@ -4460,7 +4475,7 @@ window.calcularDiferenca = function() {
   const vFech    = parseFloat(vFechEl.value) || 0;
   const esperado = fecharCard?._esperado || 0;
   const dif      = vFech - esperado;
-  const fmtR     = v => 'R$ ' + Math.abs(v).toFixed(2).replace('.',',');
+  const fmtR     = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   difWrap.style.display = vFechEl.value ? 'block' : 'none';
   if (Math.abs(dif) < 0.01) {
     difWrap.style.cssText += ';background:#dcfce7;color:#166534;border-radius:10px;padding:10px 14px;text-align:center;font-size:.85rem;font-weight:700';
