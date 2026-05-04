@@ -3663,7 +3663,7 @@ async function carregarProdutosQuente() {
       <input type="checkbox" value="${p.id}" ${emPromo?'checked':''}
         data-preco-base="${precoBase}"
         style="width:18px;height:18px;accent-color:#e65e32;cursor:pointer;flex-shrink:0">
-      ${p.foto_url?'<img src="'+(p.foto_url)+'" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">':         '<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>'}
+      ${p.foto_url?`<img src="${p.foto_url}" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`:         '<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>'}
       <div style="flex:1;min-width:0">
         <div style="font-size:.85rem;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nome}</div>
         <div style="font-size:.72rem;color:#aaa">${p.categoria||''}</div>
