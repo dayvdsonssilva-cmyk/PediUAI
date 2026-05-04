@@ -228,11 +228,7 @@ function podeEnviarAgora(){
   _enviosTimes.push(agora);return true;
 }
 
-// ── Verifica se sessão Supabase está ativa ───────────────────────────────────
-async function verificarSessao(){
-  const {data:{session}}=await db.auth.getSession();
-  return !!session?.user;
-}
+
 
 // EXTRAI SLUG — /comandas/nome_da_loja → nome_da_loja
 // Usa o mesmo padrão do cliente.html mas pega o 2o segmento
@@ -247,13 +243,6 @@ let estab=null,produtos=[],pedMesas={},nomes={},carrinhos={},mesaAtual=null,fech
 
 async function init(){
   if(!slug){$('gc-loading').innerHTML='<p style="color:#aaa;padding:40px;text-align:center">Link invalido - slug nao encontrado</p>';return;}
-
-  // ── Autenticação obrigatória — garçom deve estar logado ─────────────────────
-  const autenticado=await verificarSessao();
-  if(!autenticado){
-    $('gc-loading').innerHTML='<div style="padding:40px;text-align:center;color:#c0392b">'      +'<div style="font-size:2rem;margin-bottom:12px">🔒</div>'      +'<div style="font-size:.92rem;font-weight:700;margin-bottom:8px">Acesso restrito</div>'      +'<div style="font-size:.8rem;color:#888">Faça login no painel para acessar o modo garçom.</div>'      +'</div>';
-    return;
-  }
 
   // Busca apenas campos necessários — sem CPF/CNPJ/dados sensíveis
   const CAMPOS_ESTAB='id,nome,slug,num_mesas,status,plano,assinatura_vencimento,taxa_servico,perc_servico';
@@ -453,9 +442,6 @@ window.gcEnviar=async function(){
 
   // Rate limiting
   if(!podeEnviarAgora()){toast('Muitos pedidos em pouco tempo. Aguarde.','#ef4444');return;}
-
-  // Verifica sessão antes de inserir
-  if(!(await verificarSessao())){toast('Sessão expirada. Faça login novamente.','#ef4444');return;}
 
   const btn=$('gc-btn-env');if(btn){btn.disabled=true;btn.textContent='Enviando...';}
   try{
