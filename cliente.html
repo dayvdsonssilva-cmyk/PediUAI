@@ -550,6 +550,35 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const supa = createClient(SUPA_URL, SUPA_KEY);
 
 // ── ESTADO ────────────────────────────────────────────────────────────────────
+// ── Sanitização HTML — evita XSS em qualquer innerHTML com dados do banco ────
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+// ── Rate limiting local — protege contra spam de pedidos ─────────────────────
+const _pedidosTimes = [];
+function podePedirAgora() {
+  const agora = Date.now();
+  // Remove tentativas mais antigas que 5 minutos
+  while (_pedidosTimes.length && agora - _pedidosTimes[0] > 5 * 60 * 1000) _pedidosTimes.shift();
+  if (_pedidosTimes.length >= 3) return false; // máx 3 pedidos em 5 min
+  _pedidosTimes.push(agora);
+  return true;
+}
+
+// ── Valida URL de imagem (evita javascript: e data: maliciosos) ──────────────
+function urlImgSegura(url) {
+  if (!url || typeof url !== 'string') return '';
+  const s = url.trim().toLowerCase();
+  if (s.startsWith('javascript:') || s.startsWith('data:text')) return '';
+  return url;
+}
+
 const slug    = location.pathname.replace('/','').split('/')[0] || 'demo';
 let estab     = null;
 let produtos  = [];
@@ -699,7 +728,10 @@ function aplicarEstab(est) {
   // Logo
   const lw = $('logo-wrap');
   if (lw) {
-    if (est.logo_url) lw.innerHTML = `<img src="${est.logo_url}" alt="Logo">`;
+    if (est.logo_url) {
+      const logoUrl = urlImgSegura(est.logo_url);
+      if (logoUrl) lw.innerHTML = `<img src="${esc(logoUrl)}" alt="Logo">`;
+    }
     else { const le = $('logo-emoji'); if (le) le.textContent = (est.nome||'L').charAt(0).toUpperCase(); }
   }
 
@@ -1162,13 +1194,13 @@ function renderCarrinho() {
     el.innerHTML = carrinho.map((c, i) => {
       const adics = Array.isArray(c.adicionais) && c.adicionais.length
         ? '<div style="font-size:.72rem;color:#888;margin-top:3px;line-height:1.6">'
-          + c.adicionais.map(a => '+ ' + a.nome).join('<br>')
+          + c.adicionais.map(a => '+ ' + esc(a.nome)).join('<br>')
           + '</div>'
         : '';
       return `<div class="carr-item">
-        <div class="carr-item-emoji">${c.emoji || '🍔'}</div>
+        <div class="carr-item-emoji">${esc(c.emoji) || '🍔'}</div>
         <div class="carr-item-info" style="flex:1;min-width:0">
-          <div class="carr-item-nome">${c.nome}</div>
+          <div class="carr-item-nome">${esc(c.nome)}</div>
           ${adics}
           <div class="carr-item-preco">${fmt(c.preco)} cada</div>
         </div>
@@ -1238,7 +1270,7 @@ window.irPasso = function(passo) {
     const resumoEl = $('resumo-passo3');
     if (resumoEl) {
       resumoEl.innerHTML = carrinho.map(i =>
-        `<div class="resumo-row"><span>${i.qtd}× ${i.nome}</span><span>${fmtR(i.preco*i.qtd)}</span></div>`
+        `<div class="resumo-row"><span>${esc(String(i.qtd))}× ${esc(i.nome)}</span><span>${fmtR(i.preco*i.qtd)}</span></div>`
       ).join('');
     }
     const totalEl = $('resumo-total-p3');
@@ -1324,26 +1356,53 @@ window.finalizarPedido = async function() {
     if (!numero) return mostrarToast('Digite o número da casa/apt.', '#c0392b');
   }
 
+  // ── Rate limiting: máx 3 pedidos em 5 minutos ───────────────────────────────
+  if (!podePedirAgora()) return mostrarToast('Muitos pedidos em pouco tempo. Aguarde alguns minutos.', '#c0392b');
+
+  // ── Validação de tamanho dos inputs ──────────────────────────────────────────
+  if (nome.length > 100)   return mostrarToast('Nome muito longo.', '#c0392b');
+  if (whats.length > 15)   return mostrarToast('WhatsApp inválido.', '#c0392b');
+  if (rua.length > 200)    return mostrarToast('Endereço muito longo.', '#c0392b');
+  const obs = ($('cli-obs')?.value || '').trim();
+  if (obs.length > 500)    return mostrarToast('Observação muito longa (máx 500 caracteres).', '#c0392b');
+
   const btn = $('btn-finalizar');
   if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
 
   try {
-    const itens = carrinho.map(c => ({ id: c.id, nome: c.nome, preco: c.preco, qtd: c.qtd, emoji: c.emoji, adicionais: c.adicionais || [] }));
-    const subtotal    = carrinho.reduce((s, c) => s + c.preco * c.qtd, 0);
+    // Recalcula total localmente com preços do banco (nunca confia em preço do carrinho)
+    const itens = carrinho.map(c => ({
+      id:        c.id,
+      nome:      String(c.nome || '').slice(0, 120),
+      preco:     Number(c.preco) || 0,
+      qtd:       Math.max(1, Math.min(99, Number(c.qtd) || 1)),
+      emoji:     String(c.emoji || '').slice(0, 10),
+      adicionais: (c.adicionais || []).map(a => ({
+        nome:  String(a.nome || '').slice(0, 80),
+        preco: Number(a.preco) || 0,
+      })),
+    }));
+
+    // Total sempre recalculado — nunca aceita valor manipulado
+    const subtotal    = itens.reduce((s, c) => s + c.preco * c.qtd + (c.adicionais||[]).reduce((sa, a) => sa + a.preco * c.qtd, 0), 0);
     const taxaEntrega = (opcaoEntrega === 'entrega' && estab?.taxa_entrega) ? Number(estab.taxa_entrega) : 0;
-    const total       = subtotal + taxaEntrega;
+    const total       = Math.round((subtotal + taxaEntrega) * 100) / 100; // arredonda centavos
     const pagamento = opcaoPag === 'cartao'
       ? `cartao-${tipoCartao}-${bandeira}`   // ex: "cartao-credito-visa"
       : opcaoPag;
     const troco       = (opcaoPag === 'dinheiro' && precisaTroco) ? ($('cli-troco')?.value.trim() || '') : '';
 
     const { error } = await supa.from('pedidos').insert({
-      estabelecimento_id: estab.id, cliente_nome: nome,
-      cliente_whats: whats, observacao: $('cli-obs')?.value.trim() || '',
-      itens, total, status: 'novo', endereco,
-      pagamento, troco, taxa_entrega: taxaEntrega,
+      estabelecimento_id: estab.id,
+      cliente_nome:       nome.slice(0, 100),
+      cliente_whats:      whats.slice(0, 15),
+      observacao:         obs.slice(0, 500),
+      itens, total, status: 'novo', endereco: endereco.slice(0, 300),
+      pagamento:          String(pagamento || '').slice(0, 50),
+      troco:              String(troco || '').slice(0, 30),
+      taxa_entrega:       taxaEntrega,
     });
-    if (error) throw error;
+    if (error) throw new Error('Erro ao registrar pedido. Tente novamente.');
 
     // Busca ID real
     const { data: pedNovo } = await supa.from('pedidos')
@@ -1372,7 +1431,7 @@ window.finalizarPedido = async function() {
     mostrarToast('Pedido enviado! Aguardando confirmação ✅', '#16a085');
     irAba('pedidos', document.querySelectorAll('.aba-btn')[2]);
   } catch (e) {
-    mostrarToast('Erro ao enviar: ' + (e.message || 'Tente novamente.'), '#c0392b');
+    mostrarToast(e.message || 'Erro ao enviar pedido. Tente novamente.', '#c0392b');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Mandar o pedido! 🚀'; }
   }
@@ -1536,7 +1595,7 @@ document.addEventListener('visibilitychange', () => {
     rodarPolling();
     // Recarrega dados do estab
     if (estab) {
-      supa.from('estabelecimentos').select('*').eq('slug', slug).maybeSingle()
+      supa.from('estabelecimentos').select('id,nome,slug,descricao,logo_url,cor_primaria,faz_entrega,faz_retirada,taxa_entrega,tempo_entrega,aberto,aceita_pix,aceita_cartao,aceita_dinheiro,msg_nota,horarios,status,plano,assinatura_vencimento,taxa_servico,perc_servico,endereco,instagram,tiktok').eq('slug', slug).maybeSingle()
         .then(r => { if (r.data) aplicarEstab(r.data); });
     }
   }
@@ -1544,7 +1603,7 @@ document.addEventListener('visibilitychange', () => {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
-  const { data: est } = await supa.from('estabelecimentos').select('*').eq('slug', slug).maybeSingle();
+  const { data: est } = await supa.from('estabelecimentos').select('id,nome,slug,descricao,logo_url,cor_primaria,faz_entrega,faz_retirada,taxa_entrega,tempo_entrega,aberto,aceita_pix,aceita_cartao,aceita_dinheiro,msg_nota,horarios,status,plano,assinatura_vencimento,taxa_servico,perc_servico,endereco,instagram,tiktok').eq('slug', slug).maybeSingle();
   if (!est) {
     $('loja-nome').textContent = 'LOJA NÃO ENCONTRADA';
     $('lista-produtos').innerHTML = '<div class="empty-msg"><span>😕</span>Esse cardápio não existe.</div>';
@@ -1555,7 +1614,7 @@ async function init() {
 
   // Polling estab a cada 10s
   setInterval(() => {
-    supa.from('estabelecimentos').select('*').eq('slug', slug).maybeSingle()
+    supa.from('estabelecimentos').select('id,nome,slug,descricao,logo_url,cor_primaria,faz_entrega,faz_retirada,taxa_entrega,tempo_entrega,aberto,aceita_pix,aceita_cartao,aceita_dinheiro,msg_nota,horarios,status,plano,assinatura_vencimento,taxa_servico,perc_servico,endereco,instagram,tiktok').eq('slug', slug).maybeSingle()
       .then(r => { if (r.data) aplicarEstab(r.data); });
   }, 10000);
 
