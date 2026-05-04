@@ -236,6 +236,8 @@ export async function initDashboard() {
     renderMesas();
     window.renderHistoricoMesas();
     renderEmojiGrid();
+    // Carrega estado do caixa na inicialização (persiste após F5)
+    setTimeout(carregarCaixa, 500);
   } else {
     renderCardapioDemo();
     renderPedidosDemo();
@@ -250,13 +252,21 @@ function preencherConfig(estab) {
   const set = (id, val) => { const el = $(id); if (el && val != null) el.value = val; };
   set('cfg-nome',      estab.nome);
   set('cfg-slug',      estab.slug);
-  set('cfg-whats',     estab.whatsapp || '');
+  set('cfg-whats', fmtFone(estab.whatsapp) || '');
   set('cfg-desc', estab.descricao || '');
   const descCount = document.getElementById('cfg-desc-count');
-  if(descCount) descCount.textContent = (estab.descricao||'').length + '/80';
+  if (descCount) descCount.textContent = (estab.descricao||'').length + '/40';
+  // Tipo do estabelecimento
+  if (document.getElementById('cfg-tipo-estab')) {
+    document.getElementById('cfg-tipo-estab').value = estab.tipo_estab || '';
+    setTimeout(() => window.renderTipoCfgGrid?.(estab.tipo_estab || ''), 100);
+  }
+  // Horários de funcionamento
+  setTimeout(() => window.renderHorariosCfg?.(estab.horarios || {}), 120);
+  if(descCount) descCount.textContent = (estab.descricao||'').length + '/40';
   set('cfg-endereco',  estab.endereco || '');
   set('cfg-tempo',     estab.tempo_entrega || '30-45 min');
-  set('cfg-telefone',  estab.telefone_contato || '');
+  set('cfg-telefone', fmtFone(estab.telefone_contato) || '');
   set('cfg-cnpj',      estab.cnpj || '');
   set('cfg-instagram', estab.instagram || '');
   set('cfg-tiktok',    estab.tiktok || '');
@@ -547,6 +557,7 @@ export async function salvarConfig() {
   const tiktok           = ($('cfg-tiktok')?.value || '').trim().replace('@','') || null;
   const site             = $('cfg-site')?.value.trim() || null;
   const msg_nota         = $('cfg-msg-nota')?.value.trim() || null;
+  const tipo_estab       = $('cfg-tipo-estab')?.value || null;
 
   if (!nome || !slug) return showToast('Preencha nome e link.', 'error');
 
@@ -585,6 +596,8 @@ export async function salvarConfig() {
       taxa_entrega, aceita_pix, aceita_cartao, aceita_dinheiro,
       taxa_servico, perc_servico,
       telefone_contato, cnpj, instagram, tiktok, site, msg_nota,
+      tipo_estab,
+      horarios: window.getHorariosFromForm?.() || null,
     };
 
     const { error } = await getSupa().from('estabelecimentos').update(updates).eq('id', estab.id);
@@ -628,9 +641,11 @@ async function renderCardapio() {
   if (stat) stat.textContent = data?.length || 0;
 
   // Filtra por sub-aba
+  // QUENTE: só produtos com promoção ativa
+  // TODOS: todos os produtos EXCETO os que estão no QUENTE
   const filtrado = (_dashSubTab === 'quente')
     ? (data||[]).filter(p => p.em_promocao && parseInt(p.desconto_percent||0) > 0)
-    : (data||[]);
+    : (data||[]).filter(p => !(p.em_promocao && parseInt(p.desconto_percent||0) > 0));
 
   // Atualiza foguinho
   atualizarFireDash();
@@ -645,9 +660,12 @@ async function renderCardapio() {
   grid.innerHTML = filtrado.map(p => `
     <div class="item-card">
       <div class="item-card-img">
-        ${p.foto_url           ? `<img class="item-img" src="${p.foto_url}" alt="${p.nome}">`           : `<div class="item-emoji-bg">${p.emoji || '🍔'}</div>`}
+        ${p.foto_url
+          ? `<img class="item-img" src="${p.foto_url}" alt="${p.nome}">`
+          : `<div class="item-emoji-bg">${p.emoji || '🍔'}</div>`}
         <span class="item-disponivel">${p.disponivel ? 'Disponível' : 'Indisponível'}</span>
-        ${p.promocao ? `<span class="item-promo-badge">🔥 Promoção</span>` : ''}
+        ${p.promocao ? `<span class="item-promo-badge">🏷️ Promoção</span>` : ''}
+        ${p.em_promocao && p.desconto_percent > 0 ? `<span class="item-promo-badge" style="background:linear-gradient(135deg,#e65e32,#c94e24);">🔥 ${p.desconto_percent}% OFF</span>` : ''}
 
       </div>
       <div class="item-body">
@@ -656,7 +674,15 @@ async function renderCardapio() {
         <div class="item-desc-text">${p.descricao || ''}</div>
         <div class="item-footer">
           <div>
-            ${p.em_promocao && p.desconto_percent > 0               ? `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">                   <span class="item-promo-badge" style="background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;">🔥 ${p.desconto_percent}% OFF</span>                   <span class="item-preco-original">R$ ${Number(p.preco_original||p.preco).toFixed(2).replace('.',',')}</span>                 </div>                 <div class="item-preco" style="color:var(--red);">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`               : p.promocao && p.preco_original                 ? `<div class="item-preco-original">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</div>                    <div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`                 : `<div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`}
+            ${p.em_promocao && p.desconto_percent > 0
+              ? `<div>
+                  <div style="font-size:.75rem;color:#aaa;text-decoration:line-through;margin-bottom:1px">R$ ${Number(p.preco_original||p.preco).toFixed(2).replace('.',',')}</div>
+                  <div class="item-preco" style="color:var(--red);">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>
+                </div>`
+              : p.promocao && p.preco_original
+                ? `<div class="item-preco-original">R$ ${Number(p.preco_original).toFixed(2).replace('.',',')}</div>
+                   <div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`
+                : `<div class="item-preco">R$ ${Number(p.preco).toFixed(2).replace('.',',')}</div>`}
           </div>
           <div class="item-acoes">
             <button class="btn-icon" onclick="editarItem('${p.id}')">✏️</button>
@@ -1158,7 +1184,9 @@ async function renderFresquinho() {
     const h = Math.floor(rest/3600000), m = Math.floor((rest%3600000)/60000);
     return `<div class="fresh-story-item">
       <div class="fresh-story-thumb" onclick="abrirStoryDash('${f.url}','${f.tipo||'foto'}')">
-        ${f.tipo === 'video'           ? `<video src="${f.url}" muted playsinline loop style="width:100%;height:100%;object-fit:cover"></video>`           : `<img src="${f.url}" style="width:100%;height:100%;object-fit:cover">`}
+        ${f.tipo === 'video'
+          ? `<video src="${f.url}" muted playsinline loop style="width:100%;height:100%;object-fit:cover"></video>`
+          : `<img src="${f.url}" style="width:100%;height:100%;object-fit:cover">`}
         <div class="fresh-overlay"></div>
         <div class="fresh-timer-badge">⏱ ${h > 0 ? h+'h '+m+'min' : m+'min'}</div>
       </div>
@@ -1613,17 +1641,35 @@ window.imprimirPedido = async function(id) {
   <span class="val">${p.cliente_nome || '-'}</span>
 </div>
 ${p.cliente_whats ? `<div class="linha"><span class="label">WhatsApp</span><span class="val">${p.cliente_whats}</span></div>` : ''}
-${isEntrega ? ` <div class="linha" style="margin-top:3px">   <span class="label">Entrega&nbsp;</span>   <span class="val" style="text-align:right">${p.endereco}</span> </div>` : ''}
+${isEntrega ? `
+<div class="linha" style="margin-top:3px">
+  <span class="label">Entrega&nbsp;</span>
+  <span class="val" style="text-align:right">${p.endereco}</span>
+</div>` : ''}
 
 <!-- OBSERVAÇÃO -->
-${p.observacao ? ` <div class="obs">   <div class="obs-titulo">Observacao</div>   ${p.observacao} </div>` : ''}
+${p.observacao ? `
+<div class="obs">
+  <div class="obs-titulo">Observacao</div>
+  ${p.observacao}
+</div>` : ''}
 
 <hr class="sep-dash">
 
 <!-- ====== ITENS ====== -->
 <div class="sec">Itens do Pedido</div>
 
-${itens.map(i => {   const sub = ((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');   const adds = Array.isArray(i.adicionais) && i.adicionais.length     ? i.adicionais.map(a => `<div class="adicional">+ ${a.nome} (R$ ${Number(a.preco||0).toFixed(2).replace('.',',')})</div>`).join('')     : '';   return `<div class="item">     <span class="item-qtd">${i.qtd||1}x</span>     <span class="item-nome">${i.nome}</span>     <span class="item-val">R$ ${sub}</span>   </div>${adds}`; }).join('')}
+${itens.map(i => {
+  const sub = ((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');
+  const adds = Array.isArray(i.adicionais) && i.adicionais.length
+    ? i.adicionais.map(a => `<div class="adicional">+ ${a.nome} (R$ ${Number(a.preco||0).toFixed(2).replace('.',',')})</div>`).join('')
+    : '';
+  return `<div class="item">
+    <span class="item-qtd">${i.qtd||1}x</span>
+    <span class="item-nome">${i.nome}</span>
+    <span class="item-val">R$ ${sub}</span>
+  </div>${adds}`;
+}).join('')}
 
 <hr class="sep-dash">
 
@@ -1641,7 +1687,13 @@ ${taxa > 0 ? `<div class="subtotal-linha"><span>Entrega</span><span>${fmtR(taxa)
   <span>${pgto}</span>
 </div>
 
-${(insta || ttok || estab?.site) ? ` <hr class="sep-dash"> <div class="social">   ${insta ? `Instagram: <b>${insta}</b><br>` : ''}   ${ttok  ? `TikTok: <b>${ttok}</b><br>`    : ''}   ${estab?.site ? `<span>${estab.site}</span>` : ''} </div>` : ''}
+${(insta || ttok || estab?.site) ? `
+<hr class="sep-dash">
+<div class="social">
+  ${insta ? `Instagram: <b>${insta}</b><br>` : ''}
+  ${ttok  ? `TikTok: <b>${ttok}</b><br>`    : ''}
+  ${estab?.site ? `<span>${estab.site}</span>` : ''}
+</div>` : ''}
 
 <hr class="sep-dash">
 <div class="msg-final">${msgFim}</div>
@@ -1659,9 +1711,60 @@ ${(insta || ttok || estab?.site) ? ` <hr class="sep-dash"> <div class="social"> 
 
 window.buscarPedidos = function(termo) {
   const t = (termo||'').toLowerCase();
+  const de  = document.getElementById('ped-data-de')?.value;
+  const ate = document.getElementById('ped-data-ate')?.value;
   document.querySelectorAll('#todos-pedidos .pedido-card').forEach(c => {
-    c.style.display = (!t || c.textContent.toLowerCase().includes(t)) ? '' : 'none';
+    const textoOk = !t || c.textContent.toLowerCase().includes(t);
+    // Filtro de data via data-criado no card
+    let dataOk = true;
+    const dataCriado = c.dataset.criado;
+    if (dataCriado) {
+      const d = new Date(dataCriado);
+      if (de  && d < new Date(de  + 'T00:00:00')) dataOk = false;
+      if (ate && d > new Date(ate + 'T23:59:59')) dataOk = false;
+    }
+    c.style.display = (textoOk && dataOk) ? '' : 'none';
   });
+};
+
+window.filtrarPedidosData = function() {
+  const de  = document.getElementById('ped-data-de')?.value;
+  const ate = document.getElementById('ped-data-ate')?.value;
+  const busca = document.querySelector('#tab-pedidos-tab input[type=text]')?.value || '';
+  const t = busca.toLowerCase();
+
+  let visiveis = 0;
+  document.querySelectorAll('#todos-pedidos .pedido-card').forEach(c => {
+    const textoOk = !t || c.textContent.toLowerCase().includes(t);
+    let dataOk = true;
+    const dataCriado = c.dataset.criado;
+    if (dataCriado) {
+      const d = new Date(dataCriado);
+      if (de  && d < new Date(de  + 'T00:00:00')) dataOk = false;
+      if (ate && d > new Date(ate + 'T23:59:59')) dataOk = false;
+    }
+    const vis = textoOk && dataOk;
+    c.style.display = vis ? '' : 'none';
+    if (vis) visiveis++;
+  });
+
+  // Feedback visual
+  const cont = document.getElementById('todos-pedidos');
+  let aviso = document.getElementById('ped-filtro-aviso');
+  if (!aviso) {
+    aviso = document.createElement('div');
+    aviso.id = 'ped-filtro-aviso';
+    aviso.style.cssText = 'font-size:.78rem;color:#888;padding:10px 0;text-align:center';
+    cont?.prepend(aviso);
+  }
+  if (de || ate || t) {
+    const label = de && ate ? `${new Date(de+'T00:00:00').toLocaleDateString('pt-BR')} → ${new Date(ate+'T00:00:00').toLocaleDateString('pt-BR')}`
+                 : de ? `A partir de ${new Date(de+'T00:00:00').toLocaleDateString('pt-BR')}`
+                 : ate ? `Até ${new Date(ate+'T00:00:00').toLocaleDateString('pt-BR')}` : '';
+    aviso.textContent = `${visiveis} pedido(s) encontrado(s)${label ? ' — ' + label : ''}`;
+  } else {
+    aviso.textContent = '';
+  }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1839,14 +1942,62 @@ async function carregarFinanceiro() {
 
 function filtroPedidosFin() {
   const now = new Date();
+  const busca = (document.getElementById('fin-busca')?.value || '').toLowerCase().trim();
+  const dataDeEl  = document.getElementById('fin-data-de');
+  const dataAteEl = document.getElementById('fin-data-ate');
+
+  // Mostra/esconde X da busca
+  const clr = document.getElementById('fin-busca-clear');
+  if (clr) clr.style.display = busca ? 'inline' : 'none';
+
   return _finPedidos.filter(p => {
     if (p.status === 'recusado') return false;
     const d = new Date(p.created_at);
-    if (_finPeriodo === 'hoje')   return d.toDateString() === now.toDateString();
-    if (_finPeriodo === 'semana') { const s=new Date(now); s.setDate(s.getDate()-7); return d>=s; }
-    if (_finPeriodo === 'mes')    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+
+    // Filtro de período
+    let passaPeriodo = true;
+    if (_finPeriodo === 'hoje')
+      passaPeriodo = d.toDateString() === now.toDateString();
+    else if (_finPeriodo === 'semana') {
+      const s = new Date(now); s.setDate(s.getDate()-7);
+      passaPeriodo = d >= s;
+    }
+    else if (_finPeriodo === 'mes')
+      passaPeriodo = d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+    else if (_finPeriodo === 'custom') {
+      const de  = dataDeEl?.value  ? new Date(dataDeEl.value  + 'T00:00:00') : null;
+      const ate = dataAteEl?.value ? new Date(dataAteEl.value + 'T23:59:59') : null;
+      if (de  && d < de)  passaPeriodo = false;
+      if (ate && d > ate) passaPeriodo = false;
+    }
+    if (!passaPeriodo) return false;
+
+    // Filtro de busca por nome ou código
+    if (busca) {
+      const cod  = (p.id?.slice(-4) || '').toLowerCase();
+      const nome = (p.cliente_nome || '').toLowerCase();
+      if (!cod.includes(busca) && !nome.includes(busca)) return false;
+    }
     return true;
   });
+}
+
+// Label legível do período atual
+function getPeriodoLabel() {
+  const de  = document.getElementById('fin-data-de')?.value;
+  const ate = document.getElementById('fin-data-ate')?.value;
+  const fmt = v => new Date(v+'T00:00:00').toLocaleDateString('pt-BR');
+  if (_finPeriodo === 'hoje')   return 'Hoje';
+  if (_finPeriodo === 'semana') return 'Últimos 7 dias';
+  if (_finPeriodo === 'mes')    return 'Este mês';
+  if (_finPeriodo === 'tudo')   return 'Todo o período';
+  if (_finPeriodo === 'custom') {
+    if (de && ate) return `${fmt(de)} a ${fmt(ate)}`;
+    if (de)        return `A partir de ${fmt(de)}`;
+    if (ate)       return `Até ${fmt(ate)}`;
+    return 'Período personalizado';
+  }
+  return '';
 }
 
 function renderFinanceiro() {
@@ -1931,12 +2082,24 @@ function renderFinanceiro() {
 
 function setFinPeriodo(p, btn) {
   _finPeriodo = p;
-  ['fin-hoje','fin-semana','fin-mes','fin-tudo'].forEach(id => {
+  ['fin-hoje','fin-semana','fin-mes','fin-tudo','fin-custom'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('ativo');
   });
   if (btn) btn.classList.add('ativo');
-  renderFinanceiro();
+  // Mostra/esconde seletor de período personalizado
+  const cw = document.getElementById('fin-custom-wrap');
+  if (cw) {
+    if (p === 'custom') {
+      cw.style.display = 'block';
+      setTimeout(() => document.getElementById('fin-data-de')?.showPicker?.(), 150);
+    } else {
+      cw.style.display = 'none';
+      renderFinanceiro();
+    }
+  } else {
+    renderFinanceiro();
+  }
 }
 
 function exportarCSV() {
@@ -1968,7 +2131,7 @@ function exportarPDF() {
   const fat   = peds.reduce((s,p)=>s+Number(p.total||0),0);
   const taxa  = peds.reduce((s,p)=>s+Number(p.taxa_entrega||0),0);
   const tick  = peds.length ? fat/peds.length : 0;
-  const periodoLabel = {hoje:'Hoje',semana:'Esta semana',mes:'Este mês',tudo:'Todo o período'}[_finPeriodo]||'';
+  const periodoLabel = getPeriodoLabel();
   const agora = new Date().toLocaleString('pt-BR');
 
   // Breakdown de pagamentos
@@ -2007,7 +2170,7 @@ function exportarPDF() {
     + '@media print{body{padding:0}}'
     + '</style></head><body>'
     + '<div class="header"><div><div class="logo">PEDI<span>WAY</span></div><div style="font-size:13px;font-weight:700;margin-top:4px">'+(estab?.nome||'Estabelecimento')+'</div></div>'
-    + '<div class="meta"><strong style="display:block;font-size:13px;color:#1a1a1a">Relatório Financeiro</strong>Período: '+periodoLabel+'<br>Gerado em: '+agora+'</div></div>'
+    + '<div class="meta"><strong style="display:block;font-size:13px;color:#1a1a1a">Relatório de Vendas</strong>Período: '+periodoLabel+'<br>Gerado em: '+agora+'</div></div>'
     + '<div class="cards">'
     + '<div class="card"><div class="card-label">Faturamento</div><div class="card-val g">'+fmtR(fat)+'</div></div>'
     + '<div class="card"><div class="card-label">Pedidos</div><div class="card-val">'+peds.length+'</div></div>'
@@ -2109,7 +2272,14 @@ window.abrirAdicionais = function(mesaKey, prodJSON) {
     return `<div class="adicional-grupo">
       <div class="adicional-grupo-titulo">${g.grupo} ${obrig?'<span style="color:var(--red);font-size:.65rem">*obrigatório</span>':''}</div>
       <div class="adicional-grupo-desc">${maxTxt}</div>
-      ${g.opcoes.map((o, oi) => `         <div class="adicional-opt" id="aopt-${gi}-${oi}" onclick="toggleAdicional(${gi},${oi},${g.max})">           <div class="adicional-opt-left">             <div class="adicional-opt-check">✓</div>             <span class="adicional-opt-nome">${o.nome}</span>           </div>           <span class="adicional-opt-preco">${Number(o.preco||0) > 0 ? '+R$ '+Number(o.preco).toFixed(2).replace('.',',') : 'Grátis'}</span>         </div>`).join('')}
+      ${g.opcoes.map((o, oi) => `
+        <div class="adicional-opt" id="aopt-${gi}-${oi}" onclick="toggleAdicional(${gi},${oi},${g.max})">
+          <div class="adicional-opt-left">
+            <div class="adicional-opt-check">✓</div>
+            <span class="adicional-opt-nome">${o.nome}</span>
+          </div>
+          <span class="adicional-opt-preco">${Number(o.preco||0) > 0 ? '+R$ '+Number(o.preco).toFixed(2).replace('.',',') : 'Grátis'}</span>
+        </div>`).join('')}
       <div class="adicional-limite-aviso" id="aviso-${gi}">Limite de ${g.max} opções atingido</div>
     </div>`;
   }).join('');
@@ -2325,7 +2495,27 @@ window.imprimirComanda = function() {
 <hr class="sep-dash">
 
 <!-- PEDIDOS POR PESSOA -->
-${Object.entries(grupos).map(([nm, gpeds]) => {   const sub = gpeds.reduce((s,p) => s + Number(p.total||0), 0);   const inicial = nm.charAt(0).toUpperCase();   const itensRows = gpeds.map(p => {     const itens = Array.isArray(p.itens) ? p.itens : [];     return itens.map(i =>       `<div class="item">         <span class="item-nome">${i.qtd||1}x ${i.nome}</span>         <span class="item-val">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span>       </div>`     ).join('');   }).join('');   return `<div class="pessoa-bloco">     <div class="pessoa-nome">       <div class="pessoa-avatar">${inicial}</div>       <span class="pessoa-label">${nm}</span>     </div>     ${itensRows}     <div class="pessoa-sub">${fmtR(sub)}</div>   </div>`; }).join('')}
+${Object.entries(grupos).map(([nm, gpeds]) => {
+  const sub = gpeds.reduce((s,p) => s + Number(p.total||0), 0);
+  const inicial = nm.charAt(0).toUpperCase();
+  const itensRows = gpeds.map(p => {
+    const itens = Array.isArray(p.itens) ? p.itens : [];
+    return itens.map(i =>
+      `<div class="item">
+        <span class="item-nome">${i.qtd||1}x ${i.nome}</span>
+        <span class="item-val">R$ ${((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',')}</span>
+      </div>`
+    ).join('');
+  }).join('');
+  return `<div class="pessoa-bloco">
+    <div class="pessoa-nome">
+      <div class="pessoa-avatar">${inicial}</div>
+      <span class="pessoa-label">${nm}</span>
+    </div>
+    ${itensRows}
+    <div class="pessoa-sub">${fmtR(sub)}</div>
+  </div>`;
+}).join('')}
 
 ${linhaTaxa}
 
@@ -2599,7 +2789,6 @@ window.copiarLinkGarcom = function() {
   navigator.clipboard.writeText(url).then(() => {
     showToast('Link copiado! ✅');
   }).catch(() => {
-    // fallback
     const el = document.createElement('input');
     el.value = url;
     document.body.appendChild(el);
@@ -2608,6 +2797,30 @@ window.copiarLinkGarcom = function() {
     document.body.removeChild(el);
     showToast('Link copiado! ✅');
   });
+};
+
+// Copia o link do cardápio com o domínio correto
+window.copiarLink = function() {
+  const estab = getEstab(); if (!estab) return;
+  const url = `${BASE_URL}/${estab.slug}`;
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('Link do cardápio copiado! ✅');
+  }).catch(() => {
+    const el = document.createElement('input');
+    el.value = url;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast('Link do cardápio copiado! ✅');
+  });
+};
+
+// Atualiza preview do link ao digitar o slug
+window.atualizarCfgLink = function(slug) {
+  const clean = (slug||'').toLowerCase().replace(/[^a-z0-9-]/g,'-');
+  const prev  = document.getElementById('cfg-link-preview');
+  if (prev) prev.textContent = `${BASE_URL}/${clean}`;
 };
 
 
@@ -2682,7 +2895,9 @@ window.renderHistoricoMesas = async function() {
           <div style="font-size:.95rem;font-weight:800">${mesa}</div>
           <div style="font-size:.72rem;margin-top:1px">
             <span style="color:#888">${peds.length} pedido${peds.length!==1?'s':''}</span>
-            ${temAtivo               ? `<span style="color:var(--red);font-weight:700;margin-left:6px">● ativa</span>`               : `<span style="color:#22c55e;font-weight:700;margin-left:6px">✓ encerrada</span>`}
+            ${temAtivo
+              ? `<span style="color:var(--red);font-weight:700;margin-left:6px">● ativa</span>`
+              : `<span style="color:#22c55e;font-weight:700;margin-left:6px">✓ encerrada</span>`}
           </div>
         </div>
         <div style="text-align:right;flex-shrink:0">
@@ -2729,7 +2944,10 @@ function _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl) {
     </div>
 
     <!-- Indicador cozinha inline -->
-    ${p.status !== 'pronto' ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:5px 10px;border-radius:8px;background:${enviado?'#f0fdf4':'#fff5f5'};border:1px solid ${enviado?'#bbf7d0':'#fecaca'}">       <span style="font-size:.75rem">${enviado ? '✅' : '⏳'}</span>       <span style="font-size:.72rem;font-weight:700;color:${enviado?'#15803d':'#C0392B'}">${enviado ? 'Enviado para a cozinha' : 'Aguardando envio para cozinha'}</span>     </div>` : ''}
+    ${p.status !== 'pronto' ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:5px 10px;border-radius:8px;background:${enviado?'#f0fdf4':'#fff5f5'};border:1px solid ${enviado?'#bbf7d0':'#fecaca'}">
+      <span style="font-size:.75rem">${enviado ? '✅' : '⏳'}</span>
+      <span style="font-size:.72rem;font-weight:700;color:${enviado?'#15803d':'#C0392B'}">${enviado ? 'Enviado para a cozinha' : 'Aguardando envio para cozinha'}</span>
+    </div>` : ''}
 
     <!-- Itens -->
     <div style="background:#faf8f5;border-radius:8px;padding:8px 10px;margin-bottom:10px">
@@ -2739,8 +2957,11 @@ function _cardPedidoMesa(p, mesa, fmtR, stCor, stLbl) {
 
     <!-- Ações -->
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      ${p.status==='novo' ? `<button class="btn-ped-aceitar" style="padding:7px 12px;font-size:.75rem" onclick="aceitarPedido('${p.id}')">Aceitar</button>       <button class="btn-ped-recusar" style="padding:7px 10px;font-size:.75rem" onclick="recusarPedido('${p.id}')">Recusar</button>` : ''}
-      ${p.status !== 'pronto' ? `<button class="btn-ped-imprimir" style="font-size:.75rem;background:${enviado?'#f0fdf4':'#fff5f5'};border:1.5px solid ${enviado?'#16a34a':'#C0392B'};color:${enviado?'#16a34a':'#C0392B'};font-weight:700" onclick="imprimirCozinha('${p.id}')">         ${enviado ? '✓ Reenviado' : '🖨️ Enviar cozinha'}       </button>` : ''}
+      ${p.status==='novo' ? `<button class="btn-ped-aceitar" style="padding:7px 12px;font-size:.75rem" onclick="aceitarPedido('${p.id}')">Aceitar</button>
+      <button class="btn-ped-recusar" style="padding:7px 10px;font-size:.75rem" onclick="recusarPedido('${p.id}')">Recusar</button>` : ''}
+      ${p.status !== 'pronto' ? `<button class="btn-ped-imprimir" style="font-size:.75rem;background:${enviado?'#f0fdf4':'#fff5f5'};border:1.5px solid ${enviado?'#16a34a':'#C0392B'};color:${enviado?'#16a34a':'#C0392B'};font-weight:700" onclick="imprimirCozinha('${p.id}')">
+        ${enviado ? '✓ Reenviado' : '🖨️ Enviar cozinha'}
+      </button>` : ''}
       <button class="btn-ped-imprimir" style="font-size:.75rem" onclick="verPedido('${p.id}')">Ver mais</button>
     </div>
   </div>`;
@@ -2882,7 +3103,17 @@ window.imprimirCozinha = function(pedidoId) {
 <hr class="sep-thick">
 
 <!-- IDENTIFICAÇÃO: MESA ou DELIVERY -->
-${isMesa ? ` <div class="mesa-bloco">   <div class="mesa-lbl">Mesa</div>   <div class="mesa-num">${mesa.replace('Mesa ','')}</div>   ${nome ? `<div class="mesa-nome">${nome}</div>` : ''} </div>` : ` <div class="delivery-bloco">   <div class="delivery-badge">DELIVERY / RETIRADA</div>   ${p.cliente_nome ? `<div class="delivery-cliente">${p.cliente_nome}</div>` : ''}   ${p.endereco ? `<div class="delivery-end">${p.endereco}</div>` : ''} </div>`}
+${isMesa ? `
+<div class="mesa-bloco">
+  <div class="mesa-lbl">Mesa</div>
+  <div class="mesa-num">${mesa.replace('Mesa ','')}</div>
+  ${nome ? `<div class="mesa-nome">${nome}</div>` : ''}
+</div>` : `
+<div class="delivery-bloco">
+  <div class="delivery-badge">DELIVERY / RETIRADA</div>
+  ${p.cliente_nome ? `<div class="delivery-cliente">${p.cliente_nome}</div>` : ''}
+  ${p.endereco ? `<div class="delivery-end">${p.endereco}</div>` : ''}
+</div>`}
 
 <div class="hora">${numPed} &nbsp;·&nbsp; ${dt}</div>
 
@@ -2890,9 +3121,22 @@ ${isMesa ? ` <div class="mesa-bloco">   <div class="mesa-lbl">Mesa</div>   <div 
 
 <!-- ITENS -->
 <div class="sec">Itens</div>
-${itens.map(i => {   const adds = Array.isArray(i.adicionais) && i.adicionais.length     ? i.adicionais.map(a => `<div class="adicional">+ ${a.nome}</div>`).join('')     : '';   return `<div class="item">     <span class="item-qtd">${i.qtd||1}x</span>     <span class="item-nome">${i.nome}</span>   </div>${adds}`; }).join('')}
+${itens.map(i => {
+  const adds = Array.isArray(i.adicionais) && i.adicionais.length
+    ? i.adicionais.map(a => `<div class="adicional">+ ${a.nome}</div>`).join('')
+    : '';
+  return `<div class="item">
+    <span class="item-qtd">${i.qtd||1}x</span>
+    <span class="item-nome">${i.nome}</span>
+  </div>${adds}`;
+}).join('')}
 
-${p.observacao ? ` <hr class="sep-dash"> <div class="obs">   <div class="obs-titulo">Observacao</div>   <div class="obs-texto">${p.observacao}</div> </div>` : ''}
+${p.observacao ? `
+<hr class="sep-dash">
+<div class="obs">
+  <div class="obs-titulo">Observacao</div>
+  <div class="obs-texto">${p.observacao}</div>
+</div>` : ''}
 
 <hr class="sep-dash">
 <div class="rodape">PEDIWAY &mdash; Sistema de Gestao</div>
@@ -3237,6 +3481,7 @@ function renderCardapioComanda(mesaKey, prods) {
     el.innerHTML = '<div style="color:#aaa;font-size:.8rem;text-align:center;padding:24px">Nenhum produto disponível</div>';
     return;
   }
+  // Agrupa por categoria
   const cats = {};
   prods.forEach(p => {
     const cat = p.categoria || 'Outros';
@@ -3244,7 +3489,8 @@ function renderCardapioComanda(mesaKey, prods) {
     cats[cat].push(p);
   });
 
-  el.innerHTML = Object.entries(cats).map(([cat, items]) => {
+  el.innerHTML = Object.entries(cats).map(([cat, items], idx) => {
+    const uid = 'cmd-cat-' + idx;
     const itemsHtml = items.map(p => {
       const nomeEnc  = p.nome.replace(/"/g, '&quot;');
       const precoFmt = Number(p.preco).toFixed(2).replace('.',',');
@@ -3259,10 +3505,49 @@ function renderCardapioComanda(mesaKey, prods) {
         <span class="cmd-item-preco">R$ ${precoFmt}</span>
       </div>`;
     }).join('');
-    return `<span class="cmd-cat-label">${cat}</span>${itemsHtml}`;
+    return `
+    <div style="margin-bottom:4px">
+      <div onclick="toggleCmdCat('${uid}')" id="${uid}-hdr"
+        style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:#f5f0eb;border-radius:10px;cursor:pointer;user-select:none;margin-bottom:2px">
+        <span style="font-size:.68rem;font-weight:800;color:#666;text-transform:uppercase;letter-spacing:.08em">${cat} <span style="color:#aaa;font-weight:400">(${items.length})</span></span>
+        <span id="${uid}-arrow" style="font-size:.7rem;color:#aaa;transition:transform .2s;transform:rotate(-90deg)">▼</span>
+      </div>
+      <div id="${uid}" style="display:none">${itemsHtml}</div>
+    </div>`;
   }).join('');
 }
 
+
+window.filtrarCardapioComanda = function(q) {
+  const term = (q||'').toLowerCase().trim();
+  // Se vazio, mostra todos os grupos
+  document.querySelectorAll('#comanda-cardapio > div').forEach(grupo => {
+    if (!term) { grupo.style.display = ''; return; }
+    const itens = grupo.querySelectorAll('.cmd-item');
+    let algumVisivel = false;
+    itens.forEach(item => {
+      const nome = (item.dataset.nome||'').toLowerCase();
+      const vis  = nome.includes(term);
+      item.style.display = vis ? '' : 'none';
+      if (vis) algumVisivel = true;
+    });
+    grupo.style.display = algumVisivel ? '' : 'none';
+    // Se busca ativa, abre o grupo
+    if (term && algumVisivel) {
+      const content = grupo.querySelector('[id^="cmd-cat-"]');
+      if (content) content.style.display = 'block';
+    }
+  });
+};
+
+window.toggleCmdCat = function(uid) {
+  const el  = document.getElementById(uid);
+  const arr = document.getElementById(uid + '-arrow');
+  if (!el) return;
+  const isClosed = el.style.display === 'none';
+  el.style.display = isClosed ? 'block' : 'none';
+  if (arr) arr.style.transform = isClosed ? '' : 'rotate(-90deg)';
+};
 
 function renderPedidosComanda(mesaKey) {
   const el   = document.getElementById('comanda-historico');
@@ -3327,16 +3612,28 @@ async function confirmarFecharComanda() {
 
   // Avisa carrinho pendente
   if (carr.length > 0) {
-    if (!confirm('Ha itens nao enviados no carrinho. Deseja fechar mesmo assim?')) return;
+    if (!confirm('Há itens não enviados no carrinho. Deseja fechar mesmo assim?')) return;
   }
 
-  // Reseta seleção de pagamento e abre modal
+  // 1. Imprime a comanda
+  imprimirComanda();
+
+  // 2. Abre o modal de pagamento direto (sem confirm extra)
   _pagamentoComanda = null;
   _taxaServicoRemovida = false;
-  ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
-    const btn = document.getElementById('pgto-btn-' + m);
-    if (btn) { btn.style.borderColor='#e0dbd5'; btn.style.background='#fff'; btn.style.color='#555'; }
+
+  // Reset visual dos botões de pagamento
+  ['PIX','CARTÃO','DINHEIRO','CRÉDITO','DÉBITO'].forEach(m => {
+    const b = document.getElementById('pgto-btn-' + m);
+    if (!b) return;
+    b.style.borderColor = '#e0dbd5';
+    b.style.background  = '#fff';
+    b.style.color       = '#555';
   });
+  const sub = document.getElementById('pgto-cartao-submenu');
+  if (sub) sub.style.display = 'none';
+  const bandWrap = document.getElementById('pgto-bandeiras-wrap');
+  if (bandWrap) bandWrap.style.display = 'none';
   const aviso = document.getElementById('pgto-aviso');
   if (aviso) aviso.style.display = 'none';
 
@@ -3407,23 +3704,60 @@ window.removerTaxaServico = function() {
   if (btn) btn.style.display = 'none';
 };
 
+window.mostrarBandeiras = function() {
+  const wrap = document.getElementById('pgto-bandeiras-wrap');
+  if (wrap) wrap.style.display = 'block';
+};
+
+window.toggleCartaoSubMenu = function() {
+  const sub = document.getElementById('pgto-cartao-submenu');
+  const btn = document.getElementById('pgto-btn-CARTÃO');
+  const bandWrap = document.getElementById('pgto-bandeiras-wrap');
+  if (!sub) return;
+  const isOpen = sub.style.display === 'block';
+  sub.style.display = isOpen ? 'none' : 'block';
+  if (bandWrap) bandWrap.style.display = 'none';
+  if (!isOpen) {
+    if(btn){btn.style.borderColor='var(--red)';btn.style.background='#fff5f0';btn.style.color='var(--red)';}
+  } else {
+    if(btn){btn.style.borderColor='#e0dbd5';btn.style.background='#fff';btn.style.color='#555';}
+    _pagamentoComanda = null;
+  }
+};
+
 window.selecionarPagamentoComanda = function(metodo) {
   _pagamentoComanda = metodo;
-  ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
-    const btn = document.getElementById('pgto-btn-' + m);
-    if (!btn) return;
-    if (m === metodo) {
-      btn.style.borderColor = '#C0392B';
-      btn.style.background  = '#fff5f5';
-      btn.style.color       = '#C0392B';
-    } else {
-      btn.style.borderColor = '#e0dbd5';
-      btn.style.background  = '#fff';
-      btn.style.color       = '#555';
-    }
-  });
+  // Esconde submenu só se não for cartão
+  const sub = document.getElementById('pgto-cartao-submenu');
+  if (sub && metodo !== 'CRÉDITO' && metodo !== 'DÉBITO') sub.style.display = 'none';
   const aviso = document.getElementById('pgto-aviso');
   if (aviso) aviso.style.display = 'none';
+  // Reset todos os botões
+  ['PIX','CARTÃO','DINHEIRO','CRÉDITO','DÉBITO'].forEach(m => {
+    const b = document.getElementById('pgto-btn-' + m);
+    if (!b) return;
+    b.style.borderColor = '#e0dbd5';
+    b.style.background  = '#fff';
+    b.style.color       = '#555';
+  });
+  // Destaca o selecionado
+  const sel = document.getElementById('pgto-btn-' + metodo);
+  if (sel) { sel.style.borderColor='var(--red)'; sel.style.background='#fff5f0'; sel.style.color='var(--red)'; }
+  // Crédito/Débito também destaca o botão Cartão
+  if (metodo === 'CRÉDITO' || metodo === 'DÉBITO') {
+    const cb = document.getElementById('pgto-btn-CARTÃO');
+    if (cb) { cb.style.borderColor='var(--red)'; cb.style.background='#fff5f0'; cb.style.color='var(--red)'; }
+  }
+};
+
+let _bandeiraComanda = 'visa';
+
+window.selecionarBandeiraComanda = function(band) {
+  _bandeiraComanda = band;
+  document.querySelectorAll('.pgto-band-btn').forEach(b => b.classList.remove('ativo'));
+  document.querySelectorAll('.pgto-band-btn').forEach(b => {
+    if (b.getAttribute('onclick')?.includes("'"+band+"'")) b.classList.add('ativo');
+  });
 };
 
 window.executarFecharComanda = async function() {
@@ -3450,13 +3784,22 @@ window.executarFecharComanda = async function() {
   const valorTaxa = taxaAtiva ? subtotal * (percServico / 100) : 0;
   const totalMesa = subtotal + valorTaxa;
 
+  // Monta string de pagamento sem acento (evita bug de encoding)
+  let pgtoStr = _pagamentoComanda.toLowerCase();
+  if (_pagamentoComanda === 'CRÉDITO')      pgtoStr = `cartao-credito-${_bandeiraComanda}`;
+  else if (_pagamentoComanda === 'DÉBITO')  pgtoStr = `cartao-debito-${_bandeiraComanda}`;
+  else if (_pagamentoComanda === 'CARTÃO')  pgtoStr = `cartao-credito-${_bandeiraComanda}`;
+  else if (_pagamentoComanda === 'PIX')     pgtoStr = 'pix';
+  else if (_pagamentoComanda === 'DINHEIRO') pgtoStr = 'dinheiro';
+
   // Salva pagamento + status nos pedidos da mesa
   const ids = peds.map(p=>p.id);
   if (ids.length) {
-    await getSupa().from('pedidos').update({
+    const { error } = await getSupa().from('pedidos').update({
       status: 'pronto',
-      pagamento: _pagamentoComanda,
+      pagamento: pgtoStr,
     }).in('id', ids);
+    if (error) { showToast('❌ Erro ao fechar: ' + error.message, '#ef4444'); return; }
   }
 
   delete _pedidosMesas[mesaFechando];
@@ -3465,6 +3808,7 @@ window.executarFecharComanda = async function() {
   setTimeout(()=>{ _mesasFechadas.delete(mesaFechando); renderMesas(); }, 5000);
 
   _pagamentoComanda = null;
+  _bandeiraComanda  = 'visa';
   _taxaServicoRemovida = false;
   window.fecharComanda();
   showToast('Comanda da ' + mesaFechando + ' fechada! ' + fmt(totalMesa));
@@ -3502,6 +3846,33 @@ window.abrirModalQuente = async function() {
   const modal = document.getElementById('modal-quente');
   if (!modal) return;
 
+  const DIAS = [
+    { idx:0, nome:'Domingo',   criativo:'Domingo Delícia 🌞' },
+    { idx:1, nome:'Segunda',   criativo:'Segundou com Sabor 🔥' },
+    { idx:2, nome:'Terça',     criativo:'Terça da Promo 🎯' },
+    { idx:3, nome:'Quarta',    criativo:'Quartou com Gosto 🍔' },
+    { idx:4, nome:'Quinta',    criativo:'Quintou Gostoso 🤤' },
+    { idx:5, nome:'Sexta',     criativo:'Sextou QUENTE 🔥🔥' },
+    { idx:6, nome:'Sábado',    criativo:'Sábado Irresistível 😋' },
+  ];
+  const hoje = new Date().getDay();
+  window._quenteDia = hoje; // sempre usa o dia de hoje
+  const diaHoje = DIAS[hoje];
+
+  // Mostra apenas o dia de hoje — incentiva a promoção do dia
+  const diasWrap = document.getElementById('quente-dias');
+  if (diasWrap) {
+    diasWrap.innerHTML = `
+      <div style="width:100%;background:linear-gradient(135deg,#e65e32,#c94e24);border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:.68rem;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Promoção de hoje</div>
+          <div style="font-size:1.2rem;font-weight:900;color:#fff">${diaHoje.criativo}</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.65);margin-top:2px">Aparece no slide do app hoje</div>
+        </div>
+        <div style="font-size:2.5rem">🔥</div>
+      </div>`;
+  }
+
   // Gera pills de percentual (5 a 50, step 5)
   const pctWrap = document.getElementById('quente-percentuais');
   if (pctWrap) {
@@ -3515,13 +3886,34 @@ window.abrirModalQuente = async function() {
       </button>`).join('');
   }
 
-  // Mostra preview
   atualizarPreviewQuente();
-
-  // Carrega produtos da loja
   await carregarProdutosQuente();
-
   modal.style.display = 'flex';
+};
+
+window.selecionarDiaQuente = function(idx) {
+  window._quenteDia = idx;
+  const DIAS = [
+    { idx:0, criativo:'Domingo Delícia 🌞' },
+    { idx:1, criativo:'Segundou com Sabor 🔥' },
+    { idx:2, criativo:'Terça da Promo 🎯' },
+    { idx:3, criativo:'Quartou com Gosto 🍔' },
+    { idx:4, criativo:'Quintou Gostoso 🤤' },
+    { idx:5, criativo:'Sextou QUENTE 🔥🔥' },
+    { idx:6, criativo:'Sábado Irresistível 😋' },
+  ];
+  [0,1,2,3,4,5,6].forEach(i => {
+    const b = document.getElementById('qdia-'+i);
+    if (!b) return;
+    b.style.background   = i===idx ? '#e65e32' : '#fff';
+    b.style.borderColor  = i===idx ? '#e65e32' : '#e0dbd5';
+    b.style.color        = i===idx ? '#fff'    : '#555';
+  });
+  const prev = document.getElementById('quente-nome-preview');
+  if (prev) {
+    const dia = DIAS.find(d=>d.idx===idx);
+    prev.textContent = '✨ ' + (dia?.criativo || '');
+  }
 };
 
 window.selecionarPctQuente = function(pct) {
@@ -3575,7 +3967,8 @@ async function carregarProdutosQuente() {
       <input type="checkbox" value="${p.id}" ${emPromo?'checked':''}
         data-preco-base="${precoBase}"
         style="width:18px;height:18px;accent-color:#e65e32;cursor:pointer;flex-shrink:0">
-      ${p.foto_url?`<img src="${p.foto_url}" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`:         `<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>`}
+      ${p.foto_url?`<img src="${p.foto_url}" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`:
+        `<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>`}
       <div style="flex:1;min-width:0">
         <div style="font-size:.85rem;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nome}</div>
         <div style="font-size:.72rem;color:#aaa">${p.categoria||''}</div>
@@ -3626,11 +4019,14 @@ window.salvarQuente = async function() {
     }).eq('id', cb.value);
   }
 
-  // Atualiza flag da loja
+  // Atualiza flag da loja com dia e nome criativo
+  const NOMES_CRIATIVOS = ['Domingo Delícia 🌞','Segundou com Sabor 🔥','Terça da Promo 🎯','Quartou com Gosto 🍔','Quintou Gostoso 🤤','Sextou QUENTE 🔥🔥','Sábado Irresistível 😋'];
   if (estab?.id) {
     await getSupa().from('estabelecimentos').update({
       promocao_ativa:   marcados.length > 0,
       desconto_percent: marcados.length > 0 ? pct : 0,
+      quente_dia:       window._quenteDia ?? new Date().getDay(),
+      quente_nome:      NOMES_CRIATIVOS[window._quenteDia ?? new Date().getDay()],
     }).eq('id', estab.id);
   }
 
@@ -3651,13 +4047,12 @@ let _dashSubTab = 'todos';
 
 window.dashSubTab = async function(tab, btn) {
   _dashSubTab = tab;
-  // Estilo dos botões
   ['todos','quente'].forEach(t => {
     const b = document.getElementById('dash-subtab-' + t);
     if (!b) return;
     const ativo = t === tab;
-    b.style.color       = ativo ? 'var(--red)' : '#aaa';
-    b.style.borderBottom= ativo ? '2.5px solid var(--red)' : '2.5px solid transparent';
+    b.style.color        = ativo ? 'var(--red)' : '#aaa';
+    b.style.borderBottom = ativo ? '2.5px solid var(--red)' : '2.5px solid transparent';
   });
   await renderCardapio();
 };
@@ -3715,3 +4110,403 @@ window.initCfgAccordion = function() {
     });
   });
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🏦 CONTROLE DE CAIXA
+// ═══════════════════════════════════════════════════════════════════════════════
+let _caixaAberto = null; // { id, valor_abertura, created_at }
+
+// Carrega estado do caixa ao abrir a aba
+// ── Auto-refresh Caixa e Financeiro a cada 5 segundos ───────────────────────
+let _autoRefreshTimer = null;
+
+function iniciarAutoRefresh(tab) {
+  pararAutoRefresh(); // limpa timer anterior
+  if (tab === 'caixa') {
+    _autoRefreshTimer = setInterval(async () => {
+      const aba = document.getElementById('tab-caixa');
+      if (aba && (aba.classList.contains('active') || aba.style.display !== 'none')) {
+        await renderCaixa(); // atualiza só os totais (não reload completo)
+      }
+    }, 5000);
+  } else if (tab === 'financeiro') {
+    _autoRefreshTimer = setInterval(() => {
+      const aba = document.getElementById('tab-financeiro');
+      if (aba && (aba.classList.contains('active') || aba.style.display !== 'none')) {
+        renderFinanceiro();
+      }
+    }, 5000);
+  }
+}
+
+function pararAutoRefresh() {
+  if (_autoRefreshTimer) { clearInterval(_autoRefreshTimer); _autoRefreshTimer = null; }
+}
+
+window.showTab = (function(_orig) {
+  return function(tab, btn) {
+    if (typeof _orig === 'function') _orig(tab, btn);
+    if (tab === 'caixa') {
+      setTimeout(carregarCaixa, 80);
+      iniciarAutoRefresh('caixa');
+    } else if (tab === 'financeiro') {
+      iniciarAutoRefresh('financeiro');
+    } else {
+      pararAutoRefresh();
+    }
+  };
+})(window.showTab);
+
+async function carregarCaixa() {
+  const estab = getEstab(); if (!estab?.id) return;
+
+  // BANCO é a única fonte de verdade — localStorage é só cache de ID
+  const { data } = await getSupa().from('controle_caixa')
+    .select('*')
+    .eq('estabelecimento_id', estab.id)
+    .eq('status', 'aberto')
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (data?.[0]) {
+    // Tem caixa aberto no banco → abre
+    _caixaAberto = data[0];
+    localStorage.setItem('pw_caixa_id_' + estab.id, _caixaAberto.id);
+  } else {
+    // Não tem caixa aberto no banco → fecha SEMPRE, independente do localStorage
+    _caixaAberto = null;
+    localStorage.removeItem('pw_caixa_id_' + estab.id);
+  }
+
+  await renderCaixa();
+  await carregarHistoricoCaixa();
+}
+
+async function renderCaixa() {
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const abrirCard   = document.getElementById('caixa-abrir-card');
+  const fecharCard  = document.getElementById('caixa-fechar-card');
+  const statusLbl   = document.getElementById('caixa-status-label');
+  const statusHora  = document.getElementById('caixa-status-hora');
+  const statusCard  = document.getElementById('caixa-status-card');
+  const statusIcon  = document.getElementById('caixa-status-icon');
+
+  if (_caixaAberto) {
+    const horaAb = new Date(_caixaAberto.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const dataAb = new Date(_caixaAberto.created_at).toLocaleDateString('pt-BR');
+    if (statusLbl)  statusLbl.textContent  = '🔓 Caixa Aberto';
+    if (statusHora) statusHora.textContent = `Aberto em ${dataAb} às ${horaAb}`;
+    if (statusCard) statusCard.style.background = 'linear-gradient(135deg,#166534,#15803d)';
+    if (statusIcon) statusIcon.textContent = '🔓';
+    if (abrirCard)  abrirCard.style.display  = 'none';
+    if (fecharCard) fecharCard.style.display = 'block';
+
+    const opLabel = document.getElementById('caixa-operador-label');
+    if (opLabel) opLabel.textContent = _caixaAberto.operador ? `Operador: ${_caixaAberto.operador}` : 'Caixa em andamento';
+
+    // Busca pedidos FRESCOS do banco a cada chamada
+    const estab = getEstab();
+    let pedsCaixa = [];
+    try {
+      const { data: pds } = await getSupa().from('pedidos')
+        .select('total,pagamento,status,created_at')
+        .eq('estabelecimento_id', estab.id)
+        .neq('status', 'recusado')
+        .gte('created_at', _caixaAberto.created_at);
+      pedsCaixa = pds || [];
+    } catch(e) {}
+
+    // Totais por forma de pagamento
+    let totPix=0, totCred=0, totDeb=0, totDin=0, totVendas=0;
+    pedsCaixa.forEach(p => {
+      const v  = Number(p.total||0);
+      const pg = (p.pagamento||'').toLowerCase();
+      if (pg.includes('cred'))       totCred += v;
+      else if (pg.includes('deb'))   totDeb  += v;
+      else if (pg.includes('din'))   totDin  += v;
+      else                            totPix  += v; // PIX é o padrão/fallback
+      totVendas += v;
+    });
+
+    const fundo    = Number(_caixaAberto.valor_abertura||0);
+    const esperado = fundo + totVendas;
+
+    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+    set('caixa-total-pix',     fmtR(totPix));
+    set('caixa-total-credito', fmtR(totCred));
+    set('caixa-total-debito',  fmtR(totDeb));
+    set('caixa-total-dinheiro',fmtR(totDin));
+    set('caixa-total-vendas',  fmtR(totVendas));
+    set('caixa-fundo-display', fmtR(fundo));
+    set('caixa-res-esperado',  fmtR(esperado));
+    set('caixa-qtd-pedidos',   pedsCaixa.length);
+
+    if (fecharCard) fecharCard._esperado  = esperado;
+    if (fecharCard) fecharCard._pedsCaixa = pedsCaixa;
+    if (fecharCard) fecharCard._totais    = { totPix, totCred, totDeb, totDin, totMesa:0, totVendas, fundo };
+
+  } else {
+    if (statusLbl)  statusLbl.textContent  = '— Fechado —';
+    if (statusHora) statusHora.textContent = 'Nenhum caixa aberto';
+    if (statusCard) statusCard.style.background = 'linear-gradient(135deg,#1a1a1a,#333)';
+    if (statusIcon) statusIcon.textContent = '🔒';
+    if (abrirCard)  abrirCard.style.display  = 'block';
+    if (fecharCard) fecharCard.style.display = 'none';
+  }
+}
+
+window.calcularDiferenca = function() {
+  const vFechEl   = document.getElementById('caixa-valor-fechamento');
+  const difWrap   = document.getElementById('caixa-diferenca-wrap');
+  const fecharCard = document.getElementById('caixa-fechar-card');
+  if (!vFechEl || !difWrap) return;
+  const vFech    = parseFloat(vFechEl.value) || 0;
+  const esperado = fecharCard?._esperado || 0;
+  const dif      = vFech - esperado;
+  const fmtR     = v => 'R$ ' + Math.abs(v).toFixed(2).replace('.',',');
+  difWrap.style.display = vFechEl.value ? 'block' : 'none';
+  if (Math.abs(dif) < 0.01) {
+    difWrap.style.cssText += ';background:#dcfce7;color:#166534;border-radius:10px;padding:10px 14px;text-align:center;font-size:.85rem;font-weight:700';
+    difWrap.textContent = '✅ Caixa conferido! Tudo certo.';
+  } else if (dif < 0) {
+    difWrap.style.cssText += ';background:#fef2f2;color:#991b1b;border-radius:10px;padding:10px 14px;text-align:center;font-size:.85rem;font-weight:700';
+    difWrap.textContent = `❌ Faltam ${fmtR(dif)} no caixa`;
+  } else {
+    difWrap.style.cssText += ';background:#fef9c3;color:#854d0e;border-radius:10px;padding:10px 14px;text-align:center;font-size:.85rem;font-weight:700';
+    difWrap.textContent = `⚠️ Sobra de ${fmtR(dif)} no caixa`;
+  }
+};
+
+window.abrirCaixa = async function() {
+  const estab = getEstab(); if (!estab?.id) return;
+  const valor    = parseFloat(document.getElementById('caixa-valor-abertura')?.value) || 0;
+  const obs      = document.getElementById('caixa-obs-abertura')?.value.trim() || '';
+  const operador = document.getElementById('caixa-operador')?.value.trim() || '';
+  const { data, error } = await getSupa().from('controle_caixa').insert({
+    estabelecimento_id: estab.id,
+    valor_abertura: valor,
+    status: 'aberto',
+    obs_abertura: obs,
+    operador,
+    created_at: new Date().toISOString(),
+  }).select().single();
+  if (error) return showToast('❌ Erro: ' + error.message, '#ef4444');
+  _caixaAberto = data;
+  localStorage.setItem('pw_caixa_id_' + estab.id, data.id);
+  // Limpa campos
+  ['caixa-valor-abertura','caixa-obs-abertura','caixa-operador'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  showToast('✅ Caixa aberto!');
+  await renderCaixa();
+  await carregarHistoricoCaixa();
+};
+
+window.fecharCaixa = async function() {
+  if (!_caixaAberto?.id) return;
+  const vFech    = parseFloat(document.getElementById('caixa-valor-fechamento')?.value) || 0;
+  const obs      = document.getElementById('caixa-obs-fechamento')?.value.trim() || '';
+  const fecharCard = document.getElementById('caixa-fechar-card');
+  const esperado = fecharCard?._esperado || 0;
+  const totais   = fecharCard?._totais || {};
+  const dif      = parseFloat((vFech - esperado).toFixed(2));
+
+  showToast('Fechando caixa...', '#f59e0b');
+
+  const { error } = await getSupa().from('controle_caixa').update({
+    valor_fechamento: vFech,
+    diferenca: dif,
+    obs_fechamento: obs,
+    status: 'fechado',
+    fechado_em: new Date().toISOString(),
+    totais_pagamento: totais,
+  }).eq('id', _caixaAberto.id).eq('status', 'aberto'); // só fecha se ainda estiver aberto
+
+  if (error) return showToast('❌ Erro: ' + error.message, '#ef4444');
+
+  // Salva dados para o comprovante ANTES de limpar
+  const caixaParaImprimir = { ..._caixaAberto, totais, esperado, vFech, dif, obs };
+
+  // Limpa estado local
+  const estabId = getEstab()?.id;
+  _caixaAberto = null;
+  if (estabId) localStorage.removeItem('pw_caixa_id_' + estabId);
+
+  // Imprime comprovante
+  imprimirComprovanteComDados(caixaParaImprimir);
+
+  showToast('🔒 Caixa fechado!');
+  await renderCaixa();
+  await carregarHistoricoCaixa();
+};
+
+window.imprimirComprovanteComDados = function(c) {
+  const estab = getEstab();
+  const t = c.totais || {};
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const horaAb = c.created_at ? new Date(c.created_at).toLocaleString('pt-BR') : '—';
+  const agora  = new Date().toLocaleString('pt-BR');
+  const dif = c.dif ?? 0;
+  const difTxt = Math.abs(dif) < 0.01 ? '✅ Conferido' :
+    dif < 0 ? `❌ Falta ${fmtR(Math.abs(dif))}` : `⚠️ Sobra ${fmtR(dif)}`;
+  _abrirJanelaComprovante(estab, t, c.operador||'', horaAb, agora, c.esperado||0, c.vFech||0, difTxt, c.obs||'');
+};
+
+window.imprimirComprovanteCaixa = function() {
+  const fecharCard = document.getElementById('caixa-fechar-card');
+  const estab = getEstab();
+  const t = fecharCard?._totais || {};
+  const esperado = fecharCard?._esperado || 0;
+  const vFech = parseFloat(document.getElementById('caixa-valor-fechamento')?.value) || 0;
+  const dif = vFech - esperado;
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const difTxt = Math.abs(dif) < 0.01 ? '✅ Conferido' :
+    dif < 0 ? `❌ Falta ${fmtR(Math.abs(dif))}` : `⚠️ Sobra ${fmtR(dif)}`;
+  const horaAb = _caixaAberto?.created_at ? new Date(_caixaAberto.created_at).toLocaleString('pt-BR') : '—';
+  const agora  = new Date().toLocaleString('pt-BR');
+  const obs    = document.getElementById('caixa-obs-fechamento')?.value || '';
+  _abrirJanelaComprovante(estab, t, _caixaAberto?.operador||'', horaAb, agora, esperado, vFech, difTxt, obs);
+};
+
+function _abrirJanelaComprovante(estab, t, operador, horaAb, agora, esperado, vFech, difTxt, obs) {
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const win = window.open('', '_blank', 'width=380,height=700');
+  if (!win) { showToast('⚠️ Permita pop-ups para imprimir'); return; }
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comprovante de Caixa</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;font-size:12px;padding:16px;color:#000;max-width:320px;margin:0 auto}h2{font-size:14px;text-align:center;margin-bottom:2px}.center{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.row{display:flex;justify-content:space-between;margin:3px 0}.bold{font-weight:bold}.status{text-align:center;font-size:13px;font-weight:bold;margin:6px 0}</style>
+</head><body>
+<h2>PEDIWAY</h2>
+<p class="center" style="font-size:10px">${estab?.nome||''}</p>
+<p class="center" style="font-size:10px">${estab?.cidade||''}</p>
+<div class="line"></div>
+<p class="center bold" style="font-size:13px">COMPROVANTE DE FECHAMENTO DE CAIXA</p>
+<div class="line"></div>
+<div class="row"><span>Abertura:</span><span>${horaAb}</span></div>
+<div class="row"><span>Fechamento:</span><span>${agora}</span></div>
+${operador?`<div class="row"><span>Operador:</span><span>${operador}</span></div>`:''}
+<div class="line"></div>
+<p class="bold center">VENDAS POR FORMA DE PAGAMENTO</p>
+<div class="line"></div>
+<div class="row"><span>📱 PIX</span><span>${fmtR(t.totPix||0)}</span></div>
+<div class="row"><span>💳 Cartão Crédito</span><span>${fmtR(t.totCred||0)}</span></div>
+<div class="row"><span>💳 Cartão Débito</span><span>${fmtR(t.totDeb||0)}</span></div>
+<div class="row"><span>💵 Dinheiro</span><span>${fmtR(t.totDin||0)}</span></div>
+<div class="row"><span>🍽️ Comandas</span><span>${fmtR(t.totMesa||0)}</span></div>
+<div class="line"></div>
+<div class="row bold"><span>TOTAL VENDAS</span><span>${fmtR(t.totVendas||0)}</span></div>
+<div class="row"><span>+ Fundo inicial</span><span>${fmtR(t.fundo||0)}</span></div>
+<div class="row bold"><span>TOTAL ESPERADO</span><span>${fmtR(esperado)}</span></div>
+${vFech>0?`<div class="row bold"><span>VALOR CONTADO</span><span>${fmtR(vFech)}</span></div>`:''}
+<div class="line"></div>
+<div class="status">${difTxt}</div>
+<div class="line"></div>
+${obs?`<p style="font-size:10px;text-align:center">Obs: ${obs}</p>`:''}
+<p class="center" style="margin-top:8px;font-size:10px">Gerado em ${agora}</p>
+<p class="center" style="font-size:10px">PEDIWAY — Sistema de Delivery</p>
+</body></html>`);
+  win.document.close();
+  setTimeout(() => win.print(), 300);
+}
+
+async function carregarHistoricoCaixa() {
+  const estab = getEstab(); if (!estab?.id) return;
+  const { data } = await getSupa().from('controle_caixa')
+    .select('*').eq('estabelecimento_id', estab.id)
+    .order('created_at', { ascending: false }).limit(20);
+  const el = document.getElementById('caixa-historico');
+  if (!el) return;
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  if (!data?.length) {
+    el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:.82rem;padding:24px">Nenhum registro ainda</div>';
+    return;
+  }
+  el.innerHTML = data.map(c => {
+    const dtAb  = new Date(c.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const dtFch = c.fechado_em ? new Date(c.fechado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+    const dif   = c.diferenca || 0;
+    const difColor = dif < -0.01 ? '#ef4444' : dif > 0.01 ? '#f59e0b' : '#22c55e';
+    const totais = c.totais_pagamento || {};
+    return `<div style="background:#faf8f5;border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:.7rem;font-weight:700;padding:2px 10px;border-radius:50px;background:${c.status==='aberto'?'#dcfce7':'#f0ebe4'};color:${c.status==='aberto'?'#166534':'#888'}">${c.status==='aberto'?'🔓 Aberto':'🔒 Fechado'}</span>
+          <span style="font-size:.7rem;color:#aaa">${dtAb}${dtFch?' → '+dtFch:''}</span>
+        </div>
+        ${c.status==='fechado'?`<button onclick="reimprimirCaixa('${c.id}')" style="background:none;border:1px solid #ddd;border-radius:8px;padding:3px 10px;font-size:.68rem;font-weight:700;cursor:pointer;color:#555">🖨️</button>`:''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.72rem">
+        <span style="color:#888">Fundo: <b>${fmtR(c.valor_abertura)}</b></span>
+        ${c.valor_fechamento!=null?`<span style="color:#888">Fechado: <b>${fmtR(c.valor_fechamento)}</b></span>`:'<span></span>'}
+        ${totais.totVendas!=null?`<span style="color:#888">Vendas: <b style="color:var(--red)">${fmtR(totais.totVendas)}</b></span>`:'<span></span>'}
+        ${c.diferenca!=null?`<span style="color:#888">Diferença: <b style="color:${difColor}">${dif>=0?'+':''}${fmtR(dif)}</b></span>`:'<span></span>'}
+      </div>
+      ${c.operador?`<div style="font-size:.68rem;color:#aaa;margin-top:4px">👤 ${c.operador}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+window.reimprimirCaixa = async function(caixaId) {
+  const { data } = await getSupa().from('controle_caixa').select('*').eq('id', caixaId).single();
+  if (!data) return;
+  const estab = getEstab();
+  const t = data.totais_pagamento || {};
+  const fmtR = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const horaAb = new Date(data.created_at).toLocaleString('pt-BR');
+  const horaFch = data.fechado_em ? new Date(data.fechado_em).toLocaleString('pt-BR') : '—';
+  const esperado = (data.valor_abertura||0) + (t.totVendas||0);
+  const dif = (data.valor_fechamento||0) - esperado;
+  const difTxt = Math.abs(dif) < 0.01 ? '✅ Conferido' :
+    dif < 0 ? `❌ Falta ${fmtR(Math.abs(dif))}` : `⚠️ Sobra ${fmtR(dif)}`;
+  const win = window.open('','_blank','width=380,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comprovante</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;font-size:12px;padding:16px;max-width:320px;margin:0 auto}.center{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.row{display:flex;justify-content:space-between;margin:3px 0}.bold{font-weight:bold}</style>
+</head><body>
+<h2 class="center">PEDIWAY</h2>
+<p class="center" style="font-size:10px">${estab?.nome||''} — ${estab?.cidade||''}</p>
+<div class="line"></div>
+<p class="center bold">2ª VIA — FECHAMENTO DE CAIXA</p>
+<div class="line"></div>
+<div class="row"><span>Abertura:</span><span>${horaAb}</span></div>
+<div class="row"><span>Fechamento:</span><span>${horaFch}</span></div>
+${data.operador?`<div class="row"><span>Operador:</span><span>${data.operador}</span></div>`:''}
+<div class="line"></div>
+<div class="row"><span>📱 PIX</span><span>${fmtR(t.totPix||0)}</span></div>
+<div class="row"><span>💳 Crédito</span><span>${fmtR(t.totCred||0)}</span></div>
+<div class="row"><span>💳 Débito</span><span>${fmtR(t.totDeb||0)}</span></div>
+<div class="row"><span>💵 Dinheiro</span><span>${fmtR(t.totDin||0)}</span></div>
+<div class="row"><span>🍽️ Comandas</span><span>${fmtR(t.totMesa||0)}</span></div>
+<div class="line"></div>
+<div class="row bold"><span>TOTAL VENDAS</span><span>${fmtR(t.totVendas||0)}</span></div>
+<div class="row bold"><span>TOTAL ESPERADO</span><span>${fmtR(esperado)}</span></div>
+${data.valor_fechamento!=null?`<div class="row bold"><span>VALOR CONTADO</span><span>${fmtR(data.valor_fechamento)}</span></div>`:''}
+<p class="center bold" style="margin:8px 0">${difTxt}</p>
+<div class="line"></div>
+<p class="center" style="font-size:10px">PEDIWAY — ${new Date().toLocaleString('pt-BR')}</p>
+</body></html>`);
+  win.document.close(); win.print();
+};
+
+window.abrirCaixa          = window.abrirCaixa;
+window.fecharCaixa         = window.fecharCaixa;
+window.calcularDiferenca   = window.calcularDiferenca;
+window.imprimirComprovanteCaixa = window.imprimirComprovanteCaixa;
+window.reimprimirCaixa     = window.reimprimirCaixa;
+window.filtrarPedidosData  = window.filtrarPedidosData;
+window.toggleCartaoSubMenu = window.toggleCartaoSubMenu;
+
+// Formata número de telefone → (88) 98888-8888
+function fmtFone(num) {
+  if (!num) return '';
+  const d = String(num).replace(/\D/g,'');
+  if (d.length === 11) return '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7);
+  if (d.length === 10) return '(' + d.slice(0,2) + ') ' + d.slice(2,6) + '-' + d.slice(6);
+  if (d.length === 13) return '+' + d.slice(0,2) + ' (' + d.slice(2,4) + ') ' + d.slice(4,9) + '-' + d.slice(9);
+  return d;
+}
+function wppLink(num) {
+  const d = String(num||'').replace(/\D/g,'');
+  const n = d.length <= 11 ? '55' + d : d;
+  return 'https://wa.me/' + n;
+}
+window.fmtFone = fmtFone;
+window.wppLink = wppLink;
