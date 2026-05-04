@@ -4219,7 +4219,7 @@ function renderHorariosCfg(horariosObj) {
         <input type="time" id="cfg-fechamento-${i}" value="${h.fechamento||'22:00'}"
           style="border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-family:'Poppins',sans-serif;font-size:.78rem;flex:1;background:#fff">
       </div>
-      ${!h.ativo ? `<span style="font-size:.7rem;color:#bbb;font-style:italic">Fechado</span>` : ''}
+      ${!h.ativo ? '<span style="font-size:.7rem;color:#bbb;font-style:italic">Fechado</span>' : ''}
     </div>`;
   }).join('');
 }
