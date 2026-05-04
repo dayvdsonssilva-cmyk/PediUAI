@@ -3825,28 +3825,14 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
         <div id="pgto-cartao-submenu" style="display:none;gap:8px;padding:10px;background:#faf8f5;border-radius:12px;border:1px solid #f0ebe4">
           <div style="font-size:.62rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.08em">Tipo</div>
           <div style="display:flex;gap:6px">
-            <button onclick="selecionarPagamentoComanda('CRÉDITO');mostrarBandeiras()" id="pgto-btn-CRÉDITO"
+            <button onclick="selecionarPagamentoComanda('CRÉDITO')" id="pgto-btn-CRÉDITO"
               style="flex:1;padding:8px;border-radius:9px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer;transition:all .15s">
               💳 Crédito
             </button>
-            <button onclick="selecionarPagamentoComanda('DÉBITO');mostrarBandeiras()" id="pgto-btn-DÉBITO"
+            <button onclick="selecionarPagamentoComanda('DÉBITO')" id="pgto-btn-DÉBITO"
               style="flex:1;padding:8px;border-radius:9px;border:2px solid #e0dbd5;background:#fff;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;color:#555;cursor:pointer;transition:all .15s">
               💳 Débito
             </button>
-          </div>
-          <!-- Etapa 3: Bandeiras (aparece após escolher tipo) -->
-          <div id="pgto-bandeiras-wrap" style="display:none">
-            <div style="font-size:.62rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Bandeira</div>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px" id="pgto-bandeiras-grid">
-              <button class="pgto-band-btn ativo" onclick="selecionarBandeiraComanda('visa')"><span style="font-size:.85rem">💙</span><span style="font-size:.55rem;font-weight:800">Visa</span></button>
-              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('master')"><span style="font-size:.85rem">🔴</span><span style="font-size:.55rem;font-weight:800">Master</span></button>
-              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('elo')"><span style="font-size:.85rem">⭐</span><span style="font-size:.55rem;font-weight:800">Elo</span></button>
-              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('hipercard')"><span style="font-size:.85rem">🔶</span><span style="font-size:.55rem;font-weight:800">Hiper</span></button>
-              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('amex')"><span style="font-size:.85rem">🔵</span><span style="font-size:.55rem;font-weight:800">Amex</span></button>
-              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('cabal')"><span style="font-size:.85rem">🟢</span><span style="font-size:.55rem;font-weight:800">Cabal</span></button>
-              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('pix-cred')"><span style="font-size:.85rem">💜</span><span style="font-size:.55rem;font-weight:800">PIX C.</span></button>
-              <button class="pgto-band-btn" onclick="selecionarBandeiraComanda('outro')"><span style="font-size:.85rem">💳</span><span style="font-size:.55rem;font-weight:800">Outro</span></button>
-            </div>
           </div>
         </div>
 
