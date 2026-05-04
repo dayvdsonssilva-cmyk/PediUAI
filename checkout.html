@@ -491,6 +491,15 @@ async function iniciarBrick() {
   }
 }
 
+// ── Controle de intervalos — evita múltiplos timers rodando em paralelo ─────────
+let _timerInt = null;
+let _pollInt  = null;
+
+function limparIntervals() {
+  if (_timerInt) { clearInterval(_timerInt); _timerInt = null; }
+  if (_pollInt)  { clearInterval(_pollInt);  _pollInt  = null; }
+}
+
 // ── MÉTODO ───────────────────────────────────────────────────────────────────────
 function setMetodo(m) {
   metodo = m;
@@ -628,14 +637,21 @@ function mostrarPix(data) {
     });
   };
 
+  // ── Limpa intervalos anteriores antes de criar novos ──────────────────────────
+  limparIntervals();
+
   // Countdown 5min
   let secsLeft = 5 * 60;
-  const timerEl = document.getElementById('pix-countdown');
+  const timerEl   = document.getElementById('pix-countdown');
   const timerWrap = document.getElementById('pix-timer');
-  const timerInt = setInterval(() => {
+
+  // Reseta o display do timer
+  if (timerEl) timerEl.textContent = '05:00';
+
+  _timerInt = setInterval(() => {
     secsLeft--;
     if (secsLeft <= 0) {
-      clearInterval(timerInt);
+      limparIntervals();
       if (timerWrap) timerWrap.textContent = '⚠️ Código expirado. Gere um novo pagamento.';
       return;
     }
@@ -647,10 +663,10 @@ function mostrarPix(data) {
   // Polling verificar aprovação a cada 4s
   if (data.id) {
     let pollCount = 0;
-    const pollInt = setInterval(async () => {
+    _pollInt = setInterval(async () => {
       pollCount++;
       // Para de verificar após 10 minutos (150 tentativas)
-      if (pollCount > 150) { clearInterval(pollInt); return; }
+      if (pollCount > 150) { limparIntervals(); return; }
       try {
         const tkn = getSupaToken();
         const res = await fetch('/api/verificar-pagamento?id=' + data.id, {
@@ -659,8 +675,7 @@ function mostrarPix(data) {
         if (!res.ok) return;
         const d = await res.json();
         if (d.status === 'approved') {
-          clearInterval(pollInt);
-          clearInterval(timerInt);
+          limparIntervals();
           const aw = document.getElementById('pix-aguardando');
           const ap = document.getElementById('pix-aprovado');
           if (aw) aw.style.display = 'none';
