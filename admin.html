@@ -545,10 +545,10 @@ function esc(s) {
 
 // ── Validação de PIN — mínimo 8 chars, não aceita sequências óbvias ──────────
 function validarPin(pin) {
-  if (pin.length < 8) return 'Mínimo 8 caracteres.';
-  if (/^(.)+$/.test(pin)) return 'PIN não pode ter todos os caracteres iguais.';
+  if (pin.length < 8) return "Mínimo 8 caracteres.";
+  if (/^(.)+$/.test(pin)) return "PIN não pode ter todos os caracteres iguais.";
   if (/^(012|123|234|345|456|567|678|789|890|987|876|765|654|543|432|321|210)/.test(pin))
-    return 'PIN não pode ser uma sequência simples.';
+    return "PIN não pode ser uma sequência simples.";
   return null;
 }
 
@@ -586,7 +586,7 @@ function verificarPrimeiroAcesso() {
       const erroPin = validarPin(novo);
       const errEl = document.getElementById('setup-err');
       if (erroPin)        { errEl.textContent = erroPin; return; }
-      if (novo !== conf)  { errEl.textContent = 'Os códigos não coincidem.'; return; }
+      if (novo !== conf)  { errEl.textContent = "Os códigos não coincidem."; return; }
       cfg.codigo = novo;
       saveCfg();
       // Remove setup e faz login
