@@ -1399,8 +1399,7 @@ window.verPedido = async function(id) {
       <div style="display:flex;justify-content:space-between;font-weight:800"><span>Total</span><span>R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</span></div>
       <div style="display:flex;gap:8px;margin-top:8px">
         ${p.status==='novo'?'<button class="btn-ped-aceitar" onclick="aceitarPedido('+p.id+');fecharModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('+p.id+');fecharModalPedido()">Recusar</button>':''}
-        <button class="btn-ped-imprimir" onclick="imprimirPedido('${p.id}')">🖨️ Nota</button>
-        <button class="btn-ped-imprimir" onclick="imprimirComprovanteCliente('${p.id}')" style="background:#f0f7ff;color:#1d4ed8;border-color:#bfdbfe">📄 Cliente</button>
+        <button class="btn-ped-imprimir" onclick="imprimirPedido('${p.id}')">🖨️ Imprimir</button>
       </div>
     </div>`;
   $('modal-pedido').classList.add('open');
@@ -1418,8 +1417,12 @@ window.imprimirPedido = async function(id) {
   const total     = Number(p.total||0);
   const agora     = new Date(p.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const isEntrega = p.endereco && p.endereco !== 'Retirada no local' && !p.endereco.startsWith('No local');
-  const cnpjRaw   = (estab?.cnpj || '').replace(/\D/g,'');
-  const cnpjFmt   = cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+  const cnpjRaw   = (estab?.cpf_cnpj || estab?.cnpj || '').replace(/\D/g,'');
+  const cnpjFmt   = cnpjRaw.length === 14
+    ? cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5')
+    : cnpjRaw.length === 11
+      ? cnpjRaw.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4')
+      : cnpjRaw;
   const insta     = estab?.instagram ? '@' + estab.instagram : '';
   const ttok      = estab?.tiktok   ? '@' + estab.tiktok   : '';
   const msgFim    = estab?.msg_nota || 'Obrigado pela preferencia!';
@@ -1595,9 +1598,10 @@ window.imprimirPedido = async function(id) {
   <div class="empresa">${estab?.nome || 'Estabelecimento'}</div>
   <div class="info-sm">
     ${estab?.endereco ? ''+(estab.endereco)+'<br>' : ''}
+    ${estab?.cidade ? ''+(estab.cidade)+'<br>' : ''}
     ${estab?.telefone_contato ? 'Tel: '+(estab.telefone_contato)+'<br>' : ''}
     ${estab?.whatsapp ? 'WhatsApp: '+(estab.whatsapp)+'<br>' : ''}
-    ${cnpjFmt ? 'CNPJ: '+(cnpjFmt)+'' : ''}
+    ${cnpjFmt ? 'CNPJ/CPF: '+(cnpjFmt)+'' : ''}
   </div>
 </div>
 
