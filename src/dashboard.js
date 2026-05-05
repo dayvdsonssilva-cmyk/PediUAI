@@ -646,55 +646,31 @@ async function renderCardapio() {
     return;
   }
 
-  // Agrupa por categoria com colapso
-  const _cats = {};
-  filtrado.forEach(p => {
-    const c = p.categoria || 'SEM CATEGORIA';
-    if (!_cats[c]) _cats[c] = [];
-    _cats[c].push(p);
-  });
-
-  grid.innerHTML = Object.keys(_cats).sort().map(cat => {
-    const items = _cats[cat];
-    const catId = 'cat-' + cat.replace(/[^a-z0-9]/gi,'-').toLowerCase();
-    const itemsHtml = items.map(p =>
-      `<div class="item-card">
-        <div class="item-card-img">
-          ${p.foto_url ? '<img class="item-img" src="'+(p.foto_url)+'" alt="'+(p.nome)+'">' : '<div class="item-emoji-bg">'+(p.emoji||'🍔')+'</div>'}
-          ${p.promocao ? '<span class="item-promo-badge">🔥 Promoção</span>' : ''}
-        </div>
-        <div class="item-body">
-          <div class="item-categoria">${p.categoria||'SEM CATEGORIA'}</div>
-          <div class="item-nome">${p.nome}</div>
-          <div class="item-desc-text">${p.descricao||''}</div>
-          <div class="item-footer">
-            <div>
-              ${p.em_promocao && p.desconto_percent > 0
-                ? '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span class="item-promo-badge" style="background:#e65e32;color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;">🔥 '+(p.desconto_percent)+'% OFF</span><span class="item-preco-original">R$ '+(Number(p.preco_original||p.preco).toFixed(2).replace('.',','))+'</span></div><div class="item-preco" style="color:#e65e32;">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'
-                : p.promocao && p.preco_original
-                  ? '<div class="item-preco-original">R$ '+(Number(p.preco_original).toFixed(2).replace('.',','))+'</div><div class="item-preco">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'
-                  : '<div class="item-preco">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'}
-            </div>
-            <div class="item-acoes">
-              <button class="btn-icon" onclick="editarItem('${p.id}')">✏️</button>
-              <button class="btn-icon danger" onclick="deletarItem('${p.id}')">🗑️</button>
-            </div>
+  grid.innerHTML = filtrado.map(p => `
+    <div class="item-card">
+      <div class="item-card-img">
+        ${p.foto_url ? '<img class="item-img" src="'+(p.foto_url)+'" alt="'+(p.nome)+'">' : '<div class="item-emoji-bg">'+(p.emoji||'🍔')+'</div>'}
+        ${p.promocao ? '<span class="item-promo-badge">🔥 Promoção</span>' : ''}
+      </div>
+      <div class="item-body">
+        <div class="item-categoria">${p.categoria||'SEM CATEGORIA'}</div>
+        <div class="item-nome">${p.nome}</div>
+        <div class="item-desc-text">${p.descricao||''}</div>
+        <div class="item-footer">
+          <div>
+            ${p.em_promocao && p.desconto_percent > 0
+              ? '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span class="item-promo-badge" style="background:#e65e32;color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;">🔥 '+(p.desconto_percent)+'% OFF</span><span class="item-preco-original">R$ '+(Number(p.preco_original||p.preco).toFixed(2).replace('.',','))+'</span></div><div class="item-preco" style="color:#e65e32;">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'
+              : p.promocao && p.preco_original
+                ? '<div class="item-preco-original">R$ '+(Number(p.preco_original).toFixed(2).replace('.',','))+'</div><div class="item-preco">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'
+                : '<div class="item-preco">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'}
+          </div>
+          <div class="item-acoes">
+            <button class="btn-icon" onclick="editarItem('${p.id}')">✏️</button>
+            <button class="btn-icon danger" onclick="deletarItem('${p.id}')">🗑️</button>
           </div>
         </div>
-      </div>`
-    ).join('');
-
-    return `<div style="grid-column:1/-1;margin-bottom:4px;">
-        <button onclick="toggleCatCardapio('${catId}')"
-          style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f5f2ef;border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:800;color:#1a1a1a;text-align:left;text-transform:uppercase;letter-spacing:.04em;">
-          <span>📂 ${cat} <span style="font-weight:500;color:#888;font-size:.75rem;">(${items.length} item${items.length>1?'s':''})</span></span>
-          <span id="arrow-${catId}" style="font-size:.7rem;transition:transform .2s;display:inline-block;">▼</span>
-        </button>
       </div>
-      <div id="${catId}" style="grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:16px;">
-        ${itemsHtml}
-      </div>`;
-  }).join('');
+    </div>`).join('');
 }
 
 function renderPedidosDemo() {
@@ -1875,6 +1851,20 @@ function filtroPedidosFin() {
     if (_finPeriodo === 'hoje')   return d.toDateString() === now.toDateString();
     if (_finPeriodo === 'semana') { const s=new Date(now); s.setDate(s.getDate()-7); return d>=s; }
     if (_finPeriodo === 'mes')    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+    if (_finPeriodo === 'custom') {
+      // Lê as datas do calendário
+      const deVal  = document.getElementById('fin-data-de')?.value;
+      const ateVal = document.getElementById('fin-data-ate')?.value;
+      if (deVal) {
+        const de = new Date(deVal + 'T00:00:00');
+        if (d < de) return false;
+      }
+      if (ateVal) {
+        const ate = new Date(ateVal + 'T23:59:59');
+        if (d > ate) return false;
+      }
+      return true;
+    }
     return true;
   });
 }
@@ -3592,6 +3582,7 @@ window.abrirCaixa = async function() {
   if (el('caixa-operador-label')) el('caixa-operador-label').textContent   = 'Operador: ' + operador;
 
   await atualizarResumoCaixa();
+  iniciarAutoRefreshCaixa();
   showToast('✅ Caixa aberto!');
 };
 
@@ -3617,6 +3608,18 @@ async function atualizarResumoCaixa() {
 }
 window.atualizarResumoCaixa = atualizarResumoCaixa;
 
+// Auto-atualiza resumo do caixa a cada 30s quando aberto
+let _caixaAutoRefreshInterval = null;
+function iniciarAutoRefreshCaixa() {
+  if (_caixaAutoRefreshInterval) clearInterval(_caixaAutoRefreshInterval);
+  _caixaAutoRefreshInterval = setInterval(async () => {
+    if (_caixaAberto) await atualizarResumoCaixa();
+  }, 30000);
+}
+function pararAutoRefreshCaixa() {
+  if (_caixaAutoRefreshInterval) { clearInterval(_caixaAutoRefreshInterval); _caixaAutoRefreshInterval = null; }
+}
+
 window.fecharCaixa = async function() {
   if (!confirm('Confirma o fechamento do caixa?')) return;
   const agora = new Date();
@@ -3629,6 +3632,7 @@ window.fecharCaixa = async function() {
   if (el('caixa-status-icon'))  el('caixa-status-icon').textContent        = '🔒';
   if (el('caixa-abrir-card'))   el('caixa-abrir-card').style.display       = 'block';
   if (el('caixa-fechar-card'))  el('caixa-fechar-card').style.display      = 'none';
+  pararAutoRefreshCaixa();
   showToast('🔒 Caixa fechado!');
 };
 
