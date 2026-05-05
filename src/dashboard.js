@@ -3641,7 +3641,10 @@ window.abrirCaixa = async function() {
   const obs           = document.getElementById('caixa-obs-abertura')?.value.trim() || '';
   const agora         = new Date();
   _caixaAberto   = true;
-  _caixaAbertura = { valorAbertura, operador, obs, hora: agora.toISOString() };
+  _caixaAbertura = { valorAbertura, operador, obs, hora: agora.toISOString(), aberto: true };
+
+  // Persiste no localStorage — sobrevive a refresh e fechamento do browser
+  try { localStorage.setItem('pw_caixa_' + estab.id, JSON.stringify(_caixaAbertura)); } catch(e) {}
 
   const el = id => document.getElementById(id);
   if (el('caixa-status-card'))  el('caixa-status-card').style.background  = 'linear-gradient(135deg,#16a34a,#15803d)';
@@ -3679,6 +3682,30 @@ async function atualizarResumoCaixa() {
 }
 window.atualizarResumoCaixa = atualizarResumoCaixa;
 
+async function restaurarCaixa() {
+  const estab = getEstab();
+  if (!estab || estab.id === 'demo') return;
+  try {
+    const salvo = JSON.parse(localStorage.getItem('pw_caixa_' + estab.id) || 'null');
+    if (!salvo || !salvo.aberto || !salvo.hora) return;
+    _caixaAberto   = true;
+    _caixaAbertura = salvo;
+    // Restaura UI
+    const el = id => document.getElementById(id);
+    const agora = new Date(salvo.hora);
+    if (el('caixa-status-card'))    el('caixa-status-card').style.background    = 'linear-gradient(135deg,#16a34a,#15803d)';
+    if (el('caixa-status-label'))   el('caixa-status-label').textContent         = '— Aberto —';
+    if (el('caixa-status-hora'))    el('caixa-status-hora').textContent           = 'Desde ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    if (el('caixa-status-icon'))    el('caixa-status-icon').textContent           = '🔓';
+    if (el('caixa-abrir-card'))     el('caixa-abrir-card').style.display          = 'none';
+    if (el('caixa-fechar-card'))    el('caixa-fechar-card').style.display         = 'block';
+    if (el('caixa-operador-label')) el('caixa-operador-label').textContent        = 'Operador: ' + (salvo.operador||'Operador');
+    await atualizarResumoCaixa();
+    iniciarAutoRefreshCaixa();
+  } catch(e) {}
+}
+window.restaurarCaixa = restaurarCaixa;
+
 // Auto-atualiza resumo do caixa a cada 30s quando aberto
 let _caixaAberto    = false;
 let _caixaAbertura  = null;
@@ -3695,10 +3722,38 @@ function pararAutoRefreshCaixa() {
 }
 
 window.fecharCaixa = async function() {
-  if (!confirm('Confirma o fechamento do caixa?')) return;
+  if (!confirm('Confirma o fechamento do caixa? Um comprovante será gerado.')) return;
+  const estab = getEstab();
   const agora = new Date();
+  const fmt   = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+
+  // Coleta totais do período
+  let totalPix = 0, totalCartao = 0, totalDinheiro = 0, numPedidos = 0;
+  try {
+    const { data: peds } = await getSupa().from('pedidos')
+      .select('total,pagamento')
+      .eq('estabelecimento_id', estab.id)
+      .gte('created_at', _caixaAbertura?.hora || agora.toISOString());
+    const todos = peds || [];
+    numPedidos    = todos.length;
+    totalPix      = todos.filter(p=>p.pagamento==='PIX').reduce((s,p)=>s+Number(p.total||0),0);
+    totalCartao   = todos.filter(p=>['CRÉDITO','DÉBITO','CARTÃO'].includes(p.pagamento)).reduce((s,p)=>s+Number(p.total||0),0);
+    totalDinheiro = todos.filter(p=>p.pagamento==='DINHEIRO').reduce((s,p)=>s+Number(p.total||0),0);
+  } catch(e) {}
+
+  const totalGeral    = totalPix + totalCartao + totalDinheiro + Number(_caixaAbertura?.valorAbertura||0);
+  const horaAbertura  = _caixaAbertura?.hora ? new Date(_caixaAbertura.hora).toLocaleString('pt-BR') : '—';
+  const operador      = _caixaAbertura?.operador || 'Operador';
+  const valorAbertura = _caixaAbertura?.valorAbertura || 0;
+
+  // Limpa persistência
+  try { localStorage.removeItem('pw_caixa_' + estab?.id); } catch(e) {}
+  pararAutoRefreshCaixa();
+
   _caixaAberto   = false;
   _caixaAbertura = null;
+  _caixaId       = null;
+
   const el = id => document.getElementById(id);
   if (el('caixa-status-card'))  el('caixa-status-card').style.background  = 'linear-gradient(135deg,#1a1a1a,#333)';
   if (el('caixa-status-label')) el('caixa-status-label').textContent       = '— Fechado —';
@@ -3706,8 +3761,44 @@ window.fecharCaixa = async function() {
   if (el('caixa-status-icon'))  el('caixa-status-icon').textContent        = '🔒';
   if (el('caixa-abrir-card'))   el('caixa-abrir-card').style.display       = 'block';
   if (el('caixa-fechar-card'))  el('caixa-fechar-card').style.display      = 'none';
-  pararAutoRefreshCaixa();
+
   showToast('🔒 Caixa fechado!');
+
+  // Gera comprovante de fechamento
+  const sep  = '════════════════════';
+  const nl   = '\n';
+  const corpo = [
+    'FECHAMENTO DE CAIXA',
+    sep,
+    estab?.nome || 'Estabelecimento',
+    sep,
+    'Operador: ' + operador,
+    'Abertura: ' + horaAbertura,
+    'Fechamento: ' + agora.toLocaleString('pt-BR'),
+    sep,
+    'Fundo de caixa: ' + fmt(valorAbertura),
+    sep,
+    'RECEBIMENTOS:',
+    '  PIX:      ' + fmt(totalPix),
+    '  Cartao:   ' + fmt(totalCartao),
+    '  Dinheiro: ' + fmt(totalDinheiro),
+    sep,
+    'TOTAL GERAL: ' + fmt(totalGeral),
+    sep,
+    'Pedidos: ' + numPedidos,
+    sep,
+    'Gerado em: ' + agora.toLocaleString('pt-BR'),
+  ].join(nl);
+
+  const htmlComp = '<!DOCTYPE html><html><head>'
+    + '<meta charset="UTF-8"><title>Fechamento de Caixa</title>'
+    + '<style>body{font-family:Courier New,monospace;font-size:14px;padding:20px;max-width:360px;margin:0 auto}'
+    + 'pre{white-space:pre-wrap;margin:0}'
+    + '@media print{body{padding:4px}}</style>'
+    + '</head><body><pre>' + corpo + '</pre></body></html>';
+
+  const w = window.open('', '_blank', 'width=400,height=600');
+  if (w) { w.document.write(htmlComp); w.document.close(); setTimeout(function(){ w.print(); }, 500); }
 };
 
 // ── Fix selecionarPagamentoComanda para Crédito/Débito ────────────────────────
@@ -3822,240 +3913,6 @@ setInterval(verificarExpiracaoQuente, 60 * 60 * 1000);
 // ═══════════════════════════════════════════════════════════════════════════════
 // CAIXA PERSISTENTE (Supabase) + HISTÓRICO + COMPROVANTE
 // ═══════════════════════════════════════════════════════════════════════════════
-
-function iniciarAutoRefreshCaixa() {
-  if (_caixaAutoRefreshInterval) clearInterval(_caixaAutoRefreshInterval);
-  _caixaAutoRefreshInterval = setInterval(async () => {
-    if (_caixaAberto) await atualizarResumoCaixa();
-  }, 30000);
-}
-function pararAutoRefreshCaixa() {
-  if (_caixaAutoRefreshInterval) { clearInterval(_caixaAutoRefreshInterval); _caixaAutoRefreshInterval = null; }
-}
-
-async function atualizarResumoCaixa() {
-  const estab = getEstab();
-  if (!estab || !_caixaAberto || !_caixaAbertura) return;
-  const { data: peds } = await getSupa().from('pedidos')
-    .select('total,pagamento')
-    .eq('estabelecimento_id', estab.id)
-    .gte('created_at', _caixaAbertura.hora);
-  const todos = peds || [];
-  const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  const totalPix      = todos.filter(p=>p.pagamento==='PIX').reduce((s,p)=>s+Number(p.total||0),0);
-  const totalCartao   = todos.filter(p=>['CRÉDITO','DÉBITO','CARTÃO'].includes(p.pagamento)).reduce((s,p)=>s+Number(p.total||0),0);
-  const totalDinheiro = todos.filter(p=>p.pagamento==='DINHEIRO').reduce((s,p)=>s+Number(p.total||0),0);
-  const totalGeral    = totalPix + totalCartao + totalDinheiro + Number(_caixaAbertura.valorAbertura||0);
-  const el = id => document.getElementById(id);
-  if (el('caixa-total-pix'))      el('caixa-total-pix').textContent      = fmt(totalPix);
-  if (el('caixa-total-cartao'))   el('caixa-total-cartao').textContent   = fmt(totalCartao);
-  if (el('caixa-total-dinheiro')) el('caixa-total-dinheiro').textContent = fmt(totalDinheiro);
-  if (el('caixa-total-geral'))    el('caixa-total-geral').textContent    = fmt(totalGeral);
-  if (el('caixa-num-pedidos'))    el('caixa-num-pedidos').textContent    = todos.length + ' pedido(s)';
-}
-window.atualizarResumoCaixa = atualizarResumoCaixa;
-
-function aplicarUICaixaAberto(operador, horaAbertura) {
-  const el = id => document.getElementById(id);
-  const agora = new Date(horaAbertura);
-  if (el('caixa-status-card'))    el('caixa-status-card').style.background    = 'linear-gradient(135deg,#16a34a,#15803d)';
-  if (el('caixa-status-label'))   el('caixa-status-label').textContent         = '— Aberto —';
-  if (el('caixa-status-hora'))    el('caixa-status-hora').textContent           = 'Desde ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  if (el('caixa-status-icon'))    el('caixa-status-icon').textContent           = '🔓';
-  if (el('caixa-abrir-card'))     el('caixa-abrir-card').style.display          = 'none';
-  if (el('caixa-fechar-card'))    el('caixa-fechar-card').style.display         = 'block';
-  if (el('caixa-operador-label')) el('caixa-operador-label').textContent        = 'Operador: ' + operador;
-}
-
-function aplicarUICaixaFechado(horaFechamento) {
-  const el = id => document.getElementById(id);
-  if (el('caixa-status-card'))  el('caixa-status-card').style.background  = 'linear-gradient(135deg,#1a1a1a,#333)';
-  if (el('caixa-status-label')) el('caixa-status-label').textContent       = '— Fechado —';
-  if (el('caixa-status-hora'))  el('caixa-status-hora').textContent        = horaFechamento ? 'Fechado às ' + new Date(horaFechamento).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
-  if (el('caixa-status-icon'))  el('caixa-status-icon').textContent        = '🔒';
-  if (el('caixa-abrir-card'))   el('caixa-abrir-card').style.display       = 'block';
-  if (el('caixa-fechar-card'))  el('caixa-fechar-card').style.display      = 'none';
-}
-
-// Restaura caixa ao carregar a página (verifica Supabase + localStorage)
-async function restaurarCaixa() {
-  const estab = getEstab();
-  if (!estab || estab.id === 'demo') return;
-
-  // PRIMÁRIO: localStorage (sempre disponível, sem depender do Supabase)
-  try {
-    const salvo = JSON.parse(localStorage.getItem('pw_caixa_' + estab.id) || 'null');
-    if (salvo?.aberto && salvo?.hora) {
-      _caixaAberto   = true;
-      _caixaId       = salvo.supabaseId || null;
-      _caixaAbertura = salvo;
-      aplicarUICaixaAberto(salvo.operador, salvo.hora);
-      await atualizarResumoCaixa();
-      iniciarAutoRefreshCaixa();
-      return;
-    }
-  } catch(e) {}
-
-  // SECUNDÁRIO: Supabase (quando a tabela existir)
-  try {
-    const { data: caixasSupa } = await getSupa()
-      .from('caixas')
-      .select('*')
-      .eq('estabelecimento_id', estab.id)
-      .eq('status', 'aberto')
-      .order('aberto_em', { ascending: false })
-      .limit(1);
-
-    if (caixasSupa?.length) {
-      const c = caixasSupa[0];
-      _caixaAberto   = true;
-      _caixaId       = c.id;
-      _caixaAbertura = { valorAbertura: c.valor_abertura, operador: c.operador, obs: c.obs_abertura, hora: c.aberto_em, supabaseId: c.id, aberto: true };
-      // Salva no localStorage também para próximo load
-      localStorage.setItem('pw_caixa_' + estab.id, JSON.stringify(_caixaAbertura));
-      aplicarUICaixaAberto(c.operador, c.aberto_em);
-      await atualizarResumoCaixa();
-      iniciarAutoRefreshCaixa();
-    }
-  } catch(e) { /* tabela ainda não existe */ }
-}
-window.restaurarCaixa = restaurarCaixa;
-
-window.abrirCaixa = async function() {
-  const estab = getEstab();
-  if (!estab) return;
-  const valorAbertura = parseFloat(document.getElementById('caixa-valor-abertura')?.value || 0);
-  const operador      = (document.getElementById('caixa-operador')?.value.trim() || 'Operador').slice(0,100);
-  const obs           = (document.getElementById('caixa-obs-abertura')?.value.trim() || '').slice(0,300);
-  const agora         = new Date();
-
-  _caixaAberto   = true;
-  _caixaAbertura = { valorAbertura, operador, obs, hora: agora.toISOString() };
-
-  // Salva no Supabase
-  try {
-    const { data } = await getSupa().from('caixas').insert({
-      estabelecimento_id: estab.id,
-      operador,
-      valor_abertura:     valorAbertura,
-      obs_abertura:       obs,
-      status:             'aberto',
-      aberto_em:          agora.toISOString(),
-    }).select('id').single();
-    if (data?.id) _caixaId = data.id;
-  } catch(e) {}
-
-  // Fallback localStorage
-  const salvarCaixa = { ..._caixaAbertura, aberto: true, supabaseId: _caixaId };
-  localStorage.setItem('pw_caixa_' + estab.id, JSON.stringify(salvarCaixa));
-
-  aplicarUICaixaAberto(operador, agora.toISOString());
-  await atualizarResumoCaixa();
-  iniciarAutoRefreshCaixa();
-  showToast('✅ Caixa aberto!');
-};
-
-function imprimirComprovanteCaixa(dados) {
-  const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  const agora = new Date();
-  const w = window.open('', '_blank', 'width=400,height=600');
-  w.document.write(`<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Fechamento de Caixa</title>
-<style>
-  body{font-family:'Courier New',monospace;font-size:13px;padding:20px;color:#111;max-width:360px;margin:0 auto}
-  h2{text-align:center;font-size:16px;margin-bottom:4px}
-  .sub{text-align:center;color:#555;font-size:11px;margin-bottom:16px}
-  hr{border:none;border-top:1px dashed #999;margin:10px 0}
-  .row{display:flex;justify-content:space-between;padding:3px 0}
-  .row.total{font-weight:bold;font-size:15px;border-top:2px solid #111;margin-top:6px;padding-top:6px}
-  .center{text-align:center}
-  .badge{background:#16a34a;color:#fff;padding:4px 12px;border-radius:20px;font-size:11px}
-</style></head><body>
-<h2>FECHAMENTO DE CAIXA</h2>
-<div class="sub">${dados.estabNome}</div>
-<hr>
-<div class="row"><span>Operador:</span><span>${dados.operador}</span></div>
-<div class="row"><span>Abertura:</span><span>${new Date(dados.horaAbertura).toLocaleString('pt-BR')}</span></div>
-<div class="row"><span>Fechamento:</span><span>${agora.toLocaleString('pt-BR')}</span></div>
-<hr>
-<div class="row"><span>Fundo de caixa:</span><span>${fmt(dados.valorAbertura)}</span></div>
-<hr>
-<div style="font-weight:bold;margin:8px 0 4px">Recebimentos:</div>
-<div class="row"><span>📱 PIX:</span><span>${fmt(dados.totalPix)}</span></div>
-<div class="row"><span>💳 Cartão:</span><span>${fmt(dados.totalCartao)}</span></div>
-<div class="row"><span>💵 Dinheiro:</span><span>${fmt(dados.totalDinheiro)}</span></div>
-<div class="row total"><span>TOTAL GERAL:</span><span>${fmt(dados.totalGeral)}</span></div>
-<hr>
-<div class="row"><span>Nº de pedidos:</span><span>${dados.numPedidos}</span></div>
-<hr>
-<div class="center" style="margin-top:16px">
-  <span class="badge">✓ Caixa Fechado</span>
-  <div style="margin-top:12px;font-size:10px;color:#888">Gerado em ${agora.toLocaleString('pt-BR')}</div>
-</div>
-</body></html>`);
-  w.document.close();
-  setTimeout(() => w.print(), 500);
-}
-
-window.fecharCaixa = async function() {
-  if (!confirm('Confirma o fechamento do caixa? Um comprovante será gerado.')) return;
-
-  const estab = getEstab();
-  if (!estab) return;
-
-  // Coleta totais antes de fechar
-  const { data: peds } = await getSupa().from('pedidos')
-    .select('total,pagamento')
-    .eq('estabelecimento_id', estab.id)
-    .gte('created_at', _caixaAbertura?.hora || new Date().toISOString());
-
-  const todos        = peds || [];
-  const fmt          = v => Number(v||0);
-  const totalPix     = todos.filter(p=>p.pagamento==='PIX').reduce((s,p)=>s+fmt(p.total),0);
-  const totalCartao  = todos.filter(p=>['CRÉDITO','DÉBITO','CARTÃO'].includes(p.pagamento)).reduce((s,p)=>s+fmt(p.total),0);
-  const totalDinheiro= todos.filter(p=>p.pagamento==='DINHEIRO').reduce((s,p)=>s+fmt(p.total),0);
-  const totalGeral   = totalPix + totalCartao + totalDinheiro + Number(_caixaAbertura?.valorAbertura||0);
-
-  const dadosComprovante = {
-    estabNome:     estab.nome || 'Estabelecimento',
-    operador:      _caixaAbertura?.operador || 'Operador',
-    horaAbertura:  _caixaAbertura?.hora || new Date().toISOString(),
-    valorAbertura: _caixaAbertura?.valorAbertura || 0,
-    totalPix, totalCartao, totalDinheiro, totalGeral,
-    numPedidos:    todos.length,
-  };
-
-  // Fecha no Supabase
-  const agora = new Date();
-  try {
-    if (_caixaId) {
-      await getSupa().from('caixas').update({
-        status:          'fechado',
-        fechado_em:      agora.toISOString(),
-        total_pix:       totalPix,
-        total_cartao:    totalCartao,
-        total_dinheiro:  totalDinheiro,
-        total_geral:     totalGeral,
-        num_pedidos:     todos.length,
-      }).eq('id', _caixaId);
-    }
-  } catch(e) {}
-
-  // Limpa localStorage
-  localStorage.removeItem('pw_caixa_' + estab?.id);
-
-  _caixaAberto   = false;
-  _caixaAbertura = null;
-  _caixaId       = null;
-  pararAutoRefreshCaixa();
-
-  aplicarUICaixaFechado(agora.toISOString());
-  showToast('🔒 Caixa fechado!');
-
-  // Imprime comprovante
-  imprimirComprovanteCaixa(dadosComprovante);
-};
-
 // Exports das comandas — precisam estar em window para o onclick funcionar
 window.abrirComanda           = abrirComanda;
 window.confirmarFecharComanda = confirmarFecharComanda;
