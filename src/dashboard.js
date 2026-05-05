@@ -3309,14 +3309,9 @@ function renderCardapioComanda(mesaKey, prods) {
         <span class="cmd-item-preco">R$ ${precoFmt}</span>
       </div>`;
     }).join('');
-    var catSlug = cat.toLowerCase().split('').map(function(c){ return /[a-z0-9]/.test(c) ? c : '-'; }).join('');
-    var catId = 'comanda-cat-' + catSlug;
-    return '<div style="margin-bottom:4px">'
-      + '<div style="display:flex;align-items:center;gap:8px;padding:6px 0 4px;cursor:pointer" data-cid="' + catId + '" onclick="window.toggleComandaCat(this.getAttribute('data-cid'))">'
-      + '<span style="font-size:.6rem;font-weight:800;color:#aaa;text-transform:uppercase;letter-spacing:.08em;flex:1">' + cat + '</span>'
-      + '<span id="arrow-' + catId + '" style="font-size:.6rem;color:#ccc">v</span>'
-      + '</div>'
-      + '<div id="' + catId + '">' + itemsHtml + '</div>'
+    return '<div style="margin-bottom:12px">'
+      + '<div style="font-size:.6rem;font-weight:800;color:#aaa;text-transform:uppercase;letter-spacing:.08em;padding:8px 0 4px;border-bottom:1px solid #f0ebe4;margin-bottom:4px">' + cat + '</div>'
+      + itemsHtml
       + '</div>';
   }).join('');
 }
