@@ -3680,6 +3680,9 @@ async function atualizarResumoCaixa() {
 window.atualizarResumoCaixa = atualizarResumoCaixa;
 
 // Auto-atualiza resumo do caixa a cada 30s quando aberto
+let _caixaAberto    = false;
+let _caixaAbertura  = null;
+let _caixaId        = null;
 let _caixaAutoRefreshInterval = null;
 function iniciarAutoRefreshCaixa() {
   if (_caixaAutoRefreshInterval) clearInterval(_caixaAutoRefreshInterval);
@@ -3819,10 +3822,6 @@ setInterval(verificarExpiracaoQuente, 60 * 60 * 1000);
 // ═══════════════════════════════════════════════════════════════════════════════
 // CAIXA PERSISTENTE (Supabase) + HISTÓRICO + COMPROVANTE
 // ═══════════════════════════════════════════════════════════════════════════════
-let _caixaAberto    = false;
-let _caixaAbertura  = null;
-let _caixaId        = null;
-let _caixaAutoRefreshInterval = null;
 
 function iniciarAutoRefreshCaixa() {
   if (_caixaAutoRefreshInterval) clearInterval(_caixaAutoRefreshInterval);
