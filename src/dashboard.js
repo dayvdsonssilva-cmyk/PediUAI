@@ -2870,8 +2870,7 @@ window.imprimirComprovanteCliente = async function(id) {
       ? '+ Adicionais'
       : '';
     return `${i.qtd||1}x ${i.nome}${adds ? '   '+adds : ''}   R$ ${sub}`;
-  }).join('
-');
+  }).join('\n');
 
   const w = window.open('','_blank','width=420,height=680');
   w.document.write(`<!DOCTYPE html><html><head>
