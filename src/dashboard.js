@@ -3311,7 +3311,7 @@ function renderCardapioComanda(mesaKey, prods) {
     }).join('');
     const catId = 'comanda-cat-' + cat.replace(/[^a-z0-9]/gi,'-').toLowerCase();
     return '<div style="margin-bottom:4px">'
-      + '<div style="display:flex;align-items:center;gap:8px;padding:6px 0 4px;cursor:pointer" onclick="toggleComandaCat('' + catId + '')">'
+      + '<div style="display:flex;align-items:center;gap:8px;padding:6px 0 4px;cursor:pointer" onclick="toggleComandaCat(this.dataset.cid)" data-cid="' + catId + '">'
       + '<span style="font-size:.6rem;font-weight:800;color:#aaa;text-transform:uppercase;letter-spacing:.08em;flex:1">' + cat + '</span>'
       + '<span id="arrow-' + catId + '" style="font-size:.6rem;color:#ccc">▼</span>'
       + '</div>'
@@ -3321,6 +3321,7 @@ function renderCardapioComanda(mesaKey, prods) {
 }
 
 window.toggleComandaCat = function(catId) {
+  if (!catId) return;
   var el = document.getElementById(catId);
   var arrow = document.getElementById('arrow-' + catId);
   if (!el) return;
