@@ -7,7 +7,7 @@ import { showToast } from './utils.js';
 // ─────────────────────────────────────────────────────────────────────────────
 const BASE_URL = 'https://pediway.com.br';
 const CORES = [
-  // Cores sólidas
+  // Cores sólidas 
   '#C0392B','#E74C3C','#E67E22','#F39C12','#F1C40F',
   '#27AE60','#16A085','#1ABC9C','#2980B9','#3498DB',
   '#8E44AD','#9B59B6','#2C3E50','#34495E','#7F8C8D',
