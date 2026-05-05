@@ -1401,7 +1401,8 @@ window.verPedido = async function(id) {
       <div style="display:flex;justify-content:space-between;font-weight:800"><span>Total</span><span>R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</span></div>
       <div style="display:flex;gap:8px;margin-top:8px">
         ${p.status==='novo'?'<button class="btn-ped-aceitar" onclick="aceitarPedido('+p.id+');fecharModalPedido()">Aceitar</button><button class="btn-ped-recusar" onclick="recusarPedido('+p.id+');fecharModalPedido()">Recusar</button>':''}
-        <button class="btn-ped-imprimir" onclick="imprimirPedido('${p.id}')">🖨️ Imprimir</button>
+        <button class="btn-ped-imprimir" onclick="imprimirPedido('${p.id}')">🖨️ Nota</button>
+        <button class="btn-ped-imprimir" onclick="imprimirComprovanteCliente('${p.id}')" style="background:#f0f7ff;color:#1d4ed8;border-color:#bfdbfe">📄 Cliente</button>
       </div>
     </div>`;
   $('modal-pedido').classList.add('open');
@@ -2844,6 +2845,69 @@ function marcarEnviadoCozinha(pedidoId) {
 }
 
 // ── Imprimir ticket de cozinha (pedido individual) ────────────────────────────
+// ── Comprovante estilo WhatsApp para o cliente ───────────────────────────────
+window.imprimirComprovanteCliente = async function(id) {
+  const { data: p } = await getSupa().from('pedidos').select('*').eq('id', id).maybeSingle();
+  if (!p) return;
+  const estab  = getEstab();
+  const itens  = Array.isArray(p.itens) ? p.itens : [];
+  const fmtR   = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const numPed = '#' + p.id.slice(-6).toUpperCase();
+  const data   = new Date(p.created_at);
+  const dataFmt= data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const isEntrega = p.endereco && p.endereco !== 'Retirada no local' && !p.endereco.startsWith('No local');
+  const insta  = estab?.instagram ? '@' + estab.instagram.replace('@','') : '';
+  const ttok   = estab?.tiktok   ? '@' + estab.tiktok.replace('@','')   : '';
+  const tel    = estab?.telefone_contato || estab?.whatsapp || '';
+  const msgFim = estab?.msg_nota || 'Obrigado pela preferência!';
+  const pgto   = (p.pagamento || 'Não informado').toUpperCase();
+  const total  = Number(p.total||0);
+  const taxa   = Number(p.taxa_entrega||0);
+
+  const itensHtml = itens.map(i => {
+    const sub  = Number((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');
+    const adds = Array.isArray(i.adicionais) && i.adicionais.length
+      ? '+ Adicionais'
+      : '';
+    return `${i.qtd||1}x ${i.nome}${adds ? '   '+adds : ''}   R$ ${sub}`;
+  }).join('
+');
+
+  const w = window.open('','_blank','width=420,height=680');
+  w.document.write(`<!DOCTYPE html><html><head>
+<meta charset="UTF-8"><title>Comprovante ${numPed}</title>
+<style>
+  body{font-family:'Courier New',monospace;font-size:13px;background:#fff;padding:20px;max-width:380px;margin:0 auto;color:#111}
+  pre{font-family:inherit;white-space:pre-wrap;word-break:break-word;margin:0}
+  @media print{body{padding:4px}@page{margin:0;size:80mm auto}}
+</style></head><body><pre>
+🍔 ${estab?.nome||'Estabelecimento'}
+${estab?.endereco||''}
+${tel ? '📞 '+tel : ''}
+━━━━━━━━━━━━━━━━━━━
+🧾 PEDIDO ${numPed}
+📅 ${dataFmt}
+${isEntrega ? '🔵 ENTREGA
+📍 '+p.endereco : '🔴 RETIRADA'}
+━━━━━━━━━━━━━━━━━━━
+👤 CLIENTE ${p.cliente_nome||'-'}
+${p.cliente_whats ? '📱 '+p.cliente_whats : ''}
+━━━━━━━━━━━━━━━━━━━
+🛒 ITENS DO PEDIDO
+${itensHtml}
+━━━━━━━━━━━━━━━━━━━
+${taxa > 0 ? '📦 Entrega: '+fmtR(taxa)+'
+' : ''}💰 TOTAL ${fmtR(total)}
+━━━━━━━━━━━━━━━━━━━
+💳 PAGAMENTO ${pgto}
+━━━━━━━━━━━━━━━━━━━
+${insta ? '📲 Instagram: '+insta+'   ' : ''}${ttok ? '🎵 TikTok: '+ttok : ''}
+🙏 ${msgFim}
+</pre></body></html>`);
+  w.document.close();
+  setTimeout(() => w.print(), 400);
+};
+
 window.imprimirCozinha = function(pedidoId) {
   getSupa().from('pedidos').select('*').eq('id', pedidoId).maybeSingle().then(({ data: p }) => {
     if (!p) return;
@@ -3812,9 +3876,23 @@ async function restaurarCaixa() {
   const estab = getEstab();
   if (!estab || estab.id === 'demo') return;
 
+  // PRIMÁRIO: localStorage (sempre disponível, sem depender do Supabase)
   try {
-    // Tenta restaurar do Supabase primeiro
-    const { data: caixas } = await getSupa()
+    const salvo = JSON.parse(localStorage.getItem('pw_caixa_' + estab.id) || 'null');
+    if (salvo?.aberto && salvo?.hora) {
+      _caixaAberto   = true;
+      _caixaId       = salvo.supabaseId || null;
+      _caixaAbertura = salvo;
+      aplicarUICaixaAberto(salvo.operador, salvo.hora);
+      await atualizarResumoCaixa();
+      iniciarAutoRefreshCaixa();
+      return;
+    }
+  } catch(e) {}
+
+  // SECUNDÁRIO: Supabase (quando a tabela existir)
+  try {
+    const { data: caixasSupa } = await getSupa()
       .from('caixas')
       .select('*')
       .eq('estabelecimento_id', estab.id)
@@ -3822,31 +3900,18 @@ async function restaurarCaixa() {
       .order('aberto_em', { ascending: false })
       .limit(1);
 
-    if (caixas?.length) {
-      const c = caixas[0];
+    if (caixasSupa?.length) {
+      const c = caixasSupa[0];
       _caixaAberto   = true;
       _caixaId       = c.id;
-      _caixaAbertura = { valorAbertura: c.valor_abertura, operador: c.operador, obs: c.obs_abertura, hora: c.aberto_em };
+      _caixaAbertura = { valorAbertura: c.valor_abertura, operador: c.operador, obs: c.obs_abertura, hora: c.aberto_em, supabaseId: c.id, aberto: true };
+      // Salva no localStorage também para próximo load
+      localStorage.setItem('pw_caixa_' + estab.id, JSON.stringify(_caixaAbertura));
       aplicarUICaixaAberto(c.operador, c.aberto_em);
       await atualizarResumoCaixa();
       iniciarAutoRefreshCaixa();
-      return;
     }
-  } catch(e) {
-    // Supabase pode não ter a tabela ainda — usa localStorage como fallback
-  }
-
-  // Fallback: localStorage
-  try {
-    const salvo = JSON.parse(localStorage.getItem('pw_caixa_' + estab.id) || 'null');
-    if (salvo?.aberto) {
-      _caixaAberto   = true;
-      _caixaAbertura = salvo;
-      aplicarUICaixaAberto(salvo.operador, salvo.hora);
-      await atualizarResumoCaixa();
-      iniciarAutoRefreshCaixa();
-    }
-  } catch(e) {}
+  } catch(e) { /* tabela ainda não existe */ }
 }
 window.restaurarCaixa = restaurarCaixa;
 
@@ -3875,7 +3940,8 @@ window.abrirCaixa = async function() {
   } catch(e) {}
 
   // Fallback localStorage
-  localStorage.setItem('pw_caixa_' + estab.id, JSON.stringify({ ..._caixaAbertura, aberto: true }));
+  const salvarCaixa = { ..._caixaAbertura, aberto: true, supabaseId: _caixaId };
+  localStorage.setItem('pw_caixa_' + estab.id, JSON.stringify(salvarCaixa));
 
   aplicarUICaixaAberto(operador, agora.toISOString());
   await atualizarResumoCaixa();
