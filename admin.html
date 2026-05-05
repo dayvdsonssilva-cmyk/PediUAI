@@ -977,8 +977,8 @@ function detLoja(id) {
     <div class="drow"><span class="dlbl">Nome</span><span class="dval">${esc(l.nome)}</span></div>
     <div class="drow"><span class="dlbl">Slug</span><span class="dval"><a href="/${l.slug}" target="_blank" style="color:var(--red)">/${l.slug}</a></span></div>
     <div class="drow"><span class="dlbl">WhatsApp</span><span class="dval">${l.whatsapp?`<a href="${wppLink(l.whatsapp)}" target="_blank" style="color:var(--red);text-decoration:none">${fmtFone(l.whatsapp)}</a>`:'—'}</span></div>
-    <div class="drow"><span class="dlbl">Cidade</span><span class="dval">${esc(l.cidade||'—'}</span></div>
-    <div class="drow"><span class="dlbl">Tipo</span><span class="dval">${esc(l.tipo_estab||'—'}</span></div>
+    <div class="drow"><span class="dlbl">Cidade</span><span class="dval">${esc(l.cidade||'—')}</span></div>
+    <div class="drow"><span class="dlbl">Tipo</span><span class="dval">${esc(l.tipo_estab||'—')}</span></div>
     <div class="drow"><span class="dlbl">Plano</span><span class="dval">${{basico:'Trial',pro:'Pro',premium:'Premium'}[l.plano]||'Trial'} · ${l.pagamento_status||'pendente'}</span></div>
     <div class="drow"><span class="dlbl">Vencimento</span><span class="dval">${l.assinatura_vencimento?new Date(l.assinatura_vencimento).toLocaleDateString('pt-BR'):'—'}</span></div>
     <div class="drow"><span class="dlbl">Situação</span><span class="dval">${l.aberto!==false?'✅ Ativa':'🚫 Desativada'}</span></div>
