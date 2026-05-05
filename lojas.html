@@ -605,6 +605,22 @@ const IBGE = 'https://servicodados.ibge.gov.br/api/v1/localidades';
 const { createClient } = supabase;
 const db = createClient(SUPA_URL, SUPA_KEY);
 
+// ── Sanitização HTML — evita XSS com dados do banco ──────────────────────────
+function esc(s){
+  return String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+}
+
+// ── Rate limiting — protege contra spam de pedidos ───────────────────────────
+const _pedidosTimes=[];
+function podePedirAgora(){
+  const agora=Date.now();
+  while(_pedidosTimes.length&&agora-_pedidosTimes[0]>5*60*1000)_pedidosTimes.shift();
+  if(_pedidosTimes.length>=3)return false;
+  _pedidosTimes.push(agora);return true;
+}
+
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
@@ -639,15 +655,19 @@ let _pollingId = null;
 let _statusAnt = {};
 let _avaliacoesMostradas = new Set();
 
+// ── Helper centralizado de status de abertura ───────────────────────────────
+// Regra: toggle manual (aberto:true/false) sempre tem prioridade sobre horários
+function calcularAberto(l) {
+  if (l.aberto === false) return false;  // fechou manual → fechado
+  if (l.aberto === true)  return true;   // abriu manual → aberto (ignora horário)
+  // Sem toggle explícito → usa horários programados
+  return !l.horarios || dentroDoHorario(l.horarios);
+}
+
 // Atualiza status de aberto/fechado a cada minuto (para respeitar horários)
 setInterval(() => {
   if (!_lojas.length) return;
-  _lojas = _lojas.map(l => {
-    const dentroHorario = !l.horarios || dentroDoHorario(l.horarios);
-    const estaAberto = l.aberto !== false && dentroHorario;
-    return { ...l, _aberto: estaAberto };
-  });
-  // Re-renderiza home se estiver na tela
+  _lojas = _lojas.map(l => ({ ...l, _aberto: calcularAberto(l) }));
   if (_screen === 'home') renderHome();
 }, 60 * 1000);
 
@@ -747,18 +767,13 @@ async function init() {
     .select('id,nome,slug,logo_url,cor_primaria,cidade,aberto,descricao,taxa_entrega,tempo_entrega,faz_entrega,faz_retirada,whatsapp,promocao_ativa,desconto_percent,tipo_estab,horarios,quente_dia,quente_nome')
     .order('nome');
   if(!error) {
-    _lojas = (data||[]).map(l => {
-      // Verifica horário de funcionamento programado
-      const dentroHorario = !l.horarios || dentroDoHorario(l.horarios);
-      const estaAberto = l.aberto !== false && dentroHorario;
-      return {
-        ...l,
-        _emoji: lojaEmoji(l.nome),
-        _bg: l.cor_primaria||'#C0001A',
-        _aberto: estaAberto,
-        _horarioHoje: horarioHoje(l.horarios),
-      };
-    });
+    _lojas = (data||[]).map(l => ({
+      ...l,
+      _emoji:       lojaEmoji(l.nome),
+      _bg:          l.cor_primaria||'#C0001A',
+      _aberto:      calcularAberto(l), // usa helper centralizado
+      _horarioHoje: horarioHoje(l.horarios),
+    }));
 
     // Busca médias de avaliação
     try {
@@ -955,14 +970,14 @@ function toggleCardStyle() {
 let _cardStyle = 'A';
 
 function storeCardHTML(l) {
-  const ab = l._aberto !== undefined ? l._aberto : l.aberto!==false;
+  const ab = l._aberto !== undefined ? l._aberto : calcularAberto(l);
   const temPromo = l.promocao_ativa || _promoItems.some(p=>p.estabelecimento_id===l.id);
   const promosDaLoja = _promoItems.filter(p=>p.estabelecimento_id===l.id).map(p=>p.desconto);
   const maxDesc = temPromo && promosDaLoja.length ? Math.max(...promosDaLoja, l.desconto_percent||0) : (l.desconto_percent||0);
   if(_cardStyle === 'B') return storeCardHTMLb(l, ab, temPromo);
   const hex = normalizeHex(l.cor_primaria||'#C0001A');
   const logoContent = l.logo_url
-    ? `<img class="store-hero-logo" src="${l.logo_url}" alt="${l.nome}" onerror="this.outerHTML='<div class=store-hero-emoji>${l._emoji}</div>'">`
+    ? `<img class="store-hero-logo" src="${esc(l.logo_url)}" alt="${esc(l.nome)}" onerror="this.style.display='none'">`
     : `<div class="store-hero-emoji">${l._emoji}</div>`;
   return `<div class="store-card" onclick="abrirLoja('${l.id}')">
     <div class="store-hero" style="background:linear-gradient(160deg,${hex}cc,${darken(hex,35)}ff);">
@@ -989,7 +1004,7 @@ function storeCardHTML(l) {
       </div>`:''}
     </div>
     <div class="store-info">
-      <div class="store-name">${l.nome}</div>
+      <div class="store-name">${esc(l.nome)}</div>
       <div class="store-meta">
         <div class="store-tag"><span class="status-dot" style="background:${ab?'#22C55E':'#EF4444'};"></span>${ab?'Aberto':'Fechado'}</div>
         ${l.tempo_entrega?`<div class="store-tag">⏱ ${l.tempo_entrega}</div>`:`<div class="store-tag">⏱ 25–40 min</div>`}
@@ -1287,8 +1302,8 @@ async function abrirLoja(id) {
 
   // Carrega dados em paralelo
   const [prodRes, frRes] = await Promise.all([
-    db.from('produtos').select('*').eq('estabelecimento_id', loja.id).eq('disponivel', true).order('created_at',{ascending:false}),
-    db.from('fresquinhos').select('*').eq('estabelecimento_id', loja.id).gt('expires_at', new Date().toISOString()).order('created_at',{ascending:false})
+    db.from('produtos').select('id,nome,preco,preco_original,desconto_percent,em_promocao,promocao,emoji,foto_url,categoria,disponivel,grupo_adicional_id,estabelecimento_id').eq('estabelecimento_id', loja.id).eq('disponivel', true).order('created_at',{ascending:false}),
+    db.from('fresquinhos').select('id,titulo,descricao,midia_url,tipo,expires_at,estabelecimento_id').eq('estabelecimento_id', loja.id).gt('expires_at', new Date().toISOString()).order('created_at',{ascending:false})
   ]);
 
   _produtos = prodRes.data||[];
@@ -1298,7 +1313,7 @@ async function abrirLoja(id) {
   const gIds = [...new Set(_produtos.filter(p=>p.grupo_adicional_id).map(p=>p.grupo_adicional_id))];
   if(gIds.length) {
     try {
-      const {data:grupos} = await db.from('grupos_adicionais').select('*').in('id', gIds);
+      const {data:grupos} = await db.from('grupos_adicionais').select('id,nome,opcoes,minimo,maximo,obrigatorio').in('id', gIds);
       const gMap = {}; (grupos||[]).forEach(g=>{ gMap[g.id]=g; });
       _produtos.forEach(p => { if(p.grupo_adicional_id) p.grupo_adicionais = gMap[p.grupo_adicional_id]||null; });
     } catch(e){}
@@ -1310,7 +1325,7 @@ async function abrirLoja(id) {
 
 function renderStore(fresquinhos=[]) {
   const l = _loja;
-  const ab = l._aberto !== undefined ? l._aberto : l.aberto!==false;
+  const ab = l._aberto !== undefined ? l._aberto : calcularAberto(l);
   const cats = ['Todos', ...new Set(_produtos.map(p=>p.categoria).filter(Boolean))];
   const promos  = _produtos.filter(p=>p.promocao);                                    // PROMOÇÃO normal
   const quentes = _produtos.filter(p=>p.em_promocao && parseInt(p.desconto_percent||0)>0); // QUENTE
@@ -1971,9 +1986,20 @@ function renderCheckoutLoja(c) {
           <button id="pcred-${lid}" class="pag-btn ativo" onclick="setTipoCartao('${lid}','credito')" style="flex:1;">💳 Crédito</button>
           <button id="pdeb-${lid}"  class="pag-btn"       onclick="setTipoCartao('${lid}','debito')"  style="flex:1;">💳 Débito</button>
         </div>
-      </div>
+        <div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Bandeira</div>
+        <div id="bandeiras-${lid}" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+          <button class="bandeira-btn-sm ativo" onclick="setBandeira('${lid}','visa')"><span style="font-size:1.1rem">💙</span>Visa</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','master')"><span style="font-size:1.1rem">🔴</span>Master</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','elo')"><span style="font-size:1.1rem">⭐</span>Elo</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','hipercard')"><span style="font-size:1.1rem">🔶</span>Hiper</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','amex')"><span style="font-size:1.1rem">🔵</span>Amex</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','cabal')"><span style="font-size:1.1rem">🟢</span>Cabal</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','pix-cred')"><span style="font-size:1.1rem">💜</span>PIX C.</button>
+          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','outro')"><span style="font-size:1.1rem">💳</span>Outro</button>
+        </div>
+      </div>div>
 
-    <div style="display:flex;gap:10px;margin-top:20px;">
+    <div style="display:flex;gap:10px;">
       <button onclick="saveStepData('${lid}');prevStep('${lid}')" style="padding:15px 20px;border-radius:14px;background:var(--cream);border:1.5px solid var(--border);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;color:var(--mid);">← Voltar</button>
       <button onclick="finalizarPedido('${lid}')" style="flex:1;padding:15px;border-radius:14px;background:#E8001C;color:#fff;border:none;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;" id="btn-fin-${lid}">
         Mandar o pedido! 🚀
@@ -2068,7 +2094,7 @@ window.finalizarPedido = async function(lid) {
   saveStepData(lid);
   const c=_carrinhos[lid]; if(!c||!c.itens.length) return toast('Sacola vazia');
   const l=c.loja;
-  if(!l._aberto && (l.aberto===false || !dentroDoHorario(l.horarios||null))) return toast(l.horarios?'🕐 Fora do horário de atendimento':'Loja fechada no momento');
+  if(!calcularAberto(l)) return toast(l.horarios?'🕐 Fora do horário de atendimento':'Loja fechada no momento');
   const d=_checkoutData[lid]||{};
   const nome  = d.nome?.trim();
   const whats = (d.tel||'').replace(/\D/g,'');
@@ -2085,11 +2111,32 @@ window.finalizarPedido = async function(lid) {
     if(!num) return toast('Digite o número');
   }
 
-  const endereco = op==='entrega' ? [rua, num?'Nº '+num:'', compl].filter(Boolean).join(', ') : 'Retirada no local';
-  const sub = c.itens.reduce((s,i)=>s+i.preco*i.qtd,0);
+  // ── Validações de tamanho ────────────────────────────────────────────────
+  if(nome.length>100)  return toast('Nome muito longo');
+  if(whats.length>15)  return toast('WhatsApp inválido');
+  if(rua.length>200)   return toast('Endereço muito longo');
+  if(obs.length>500)   return toast('Observação muito longa (máx 500 caracteres)');
+
+  // ── Rate limiting — máx 3 pedidos em 5 minutos ───────────────────────────
+  if(!podePedirAgora()) return toast('Muitos pedidos em pouco tempo. Aguarde alguns minutos.');
+
+  const endereco = op==='entrega' ? [rua, num?'Nº '+num:'', compl].filter(Boolean).join(', ').slice(0,300) : 'Retirada no local';
+
+  // ── Total sempre recalculado — nunca aceita preço do carrinho sem validar ─
+  const itens = c.itens.map(i=>({
+    id:    i.id,
+    nome:  String(i.nome||'').slice(0,120),
+    preco: Number(i.preco)||0,
+    qtd:   Math.max(1,Math.min(99,Number(i.qtd)||1)),
+    emoji: String(i.emoji||'').slice(0,10),
+    adicionais:(i.adicionais||[]).map(a=>({
+      nome:  String(a.nome||'').slice(0,80),
+      preco: Number(a.preco)||0,
+    })),
+  }));
+  const sub = itens.reduce((s,i)=>s+i.preco*i.qtd+(i.adicionais||[]).reduce((sa,a)=>sa+a.preco*i.qtd,0),0);
   const taxa = op==='retirada' ? 0 : parseFloat(l.taxa_entrega||0);
-  const total = sub+taxa;
-  const itens = c.itens.map(i=>({id:i.id,nome:i.nome,preco:i.preco,qtd:i.qtd,emoji:i.emoji,adicionais:i.adicionais||[]}));
+  const total = Math.round((sub+taxa)*100)/100;
 
   const btn=document.querySelector(`[onclick="finalizarPedido('${lid}')"]`);
   if(btn){btn.disabled=true;btn.textContent='Enviando...';}
@@ -2109,7 +2156,7 @@ window.finalizarPedido = async function(lid) {
         : (d.pag||'pix'),
       taxa_entrega: taxa,
     }).select('id').single();
-    if(error) throw error;
+    if(error) throw new Error('Erro ao registrar pedido. Tente novamente.');
 
     const pedId = insertData?.id || ('local_'+Date.now());
 
