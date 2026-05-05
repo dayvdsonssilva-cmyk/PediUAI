@@ -515,7 +515,7 @@ const db   = createClient(SURL, SKEY);
 const CFG_KEY = 'pw_ceo_cfg_v2';
 let cfg = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
 // PIN inicial — troque após o primeiro acesso em Configurações
-if (!cfg.codigo) { cfg.codigo = 'Mandão@Deyvin2026'; saveCfg(); }
+if (!cfg.codigo) { cfg.codigo = 'Mandão@Deyvin2026'; localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }
 const saveCfg = () => localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
 const $R = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
 
