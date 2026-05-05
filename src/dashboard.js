@@ -3807,7 +3807,7 @@ window.filtrarPedidosData = function() {
   const deVal  = document.getElementById('ped-data-de')?.value;
   const ateVal = document.getElementById('ped-data-ate')?.value;
   document.querySelectorAll('#todos-pedidos .pedido-card').forEach(function(card) {
-    const dataStr = card.dataset.createdAt || '';
+    const dataStr = card.dataset.createdAt || card.dataset.criado || '';
     if (!dataStr) { card.style.display = ''; return; }
     const d = new Date(dataStr);
     var mostrar = true;
@@ -3895,6 +3895,7 @@ function aplicarUICaixaAberto(operador, hora) {
 async function restaurarCaixa() {
   var estab = getEstab();
   if (!estab || estab.id === 'demo') return;
+  renderHistoricoCaixa();
   try {
     var salvo = JSON.parse(localStorage.getItem('pw_caixa_' + estab.id) || 'null');
     if (salvo && salvo.aberto && salvo.hora) {
@@ -3953,6 +3954,25 @@ window.fecharCaixa = async function() {
   if (el('caixa-status-icon'))  el('caixa-status-icon').textContent        = '🔒';
   if (el('caixa-abrir-card'))   el('caixa-abrir-card').style.display       = 'block';
   if (el('caixa-fechar-card'))  el('caixa-fechar-card').style.display      = 'none';
+  // Salva no histórico local
+  try {
+    var hist = JSON.parse(localStorage.getItem('pw_caixa_hist_' + estab?.id) || '[]');
+    hist.unshift({
+      fechadoEm:      agora.toISOString(),
+      operador:       _caixaAbertura?.operador || 'Operador',
+      aberturaEm:     _caixaAbertura?.hora || agora.toISOString(),
+      valorAbertura:  Number(_caixaAbertura?.valorAbertura || 0),
+      totalPix:       totalPix,
+      totalCartao:    totalCartao,
+      totalDinheiro:  totalDinheiro,
+      totalGeral:     totalGeral,
+      numPedidos:     numPedidos,
+    });
+    if (hist.length > 20) hist = hist.slice(0, 20);
+    localStorage.setItem('pw_caixa_hist_' + estab?.id, JSON.stringify(hist));
+    renderHistoricoCaixa();
+  } catch(e) {}
+
   showToast('🔒 Caixa fechado!');
   // Comprovante completo de fechamento
   var nl  = '\n';
@@ -3994,12 +4014,58 @@ window.fecharCaixa = async function() {
     sep,
     '     Obrigado pela preferência!',
   ].filter(function(l){return l !== '';}).join(nl);
+  var estabNome = (estab && estab.nome ? estab.nome : 'Estabelecimento').toUpperCase();
+  var estabEnd  = estab && estab.endereco ? estab.endereco : '';
+  var estabTel  = estab && (estab.telefone_contato || estab.whatsapp) ? (estab.telefone_contato || estab.whatsapp) : '';
+  var estabCnpj = estab && estab.cpf_cnpj ? estab.cpf_cnpj : '';
   var htmlComp = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fechamento de Caixa</title>'
-    + '<style>*{margin:0;padding:0;box-sizing:border-box}'
-    + 'body{font-family:Courier New,monospace;font-size:13px;padding:16px;max-width:400px;margin:0 auto;background:#fff;color:#111}'
-    + 'pre{white-space:pre-wrap;word-break:break-word;line-height:1.6}'
-    + '@media print{body{padding:4px}@page{margin:4mm;size:80mm auto}}'
-    + '</style></head><body><pre>' + corpo + '</pre></body></html>';
+    + '<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">'
+    + '<style>'
+    + '*{margin:0;padding:0;box-sizing:border-box}'
+    + 'body{font-family:Poppins,Arial,sans-serif;font-size:12px;background:#fff;color:#000;width:300px;max-width:300px;margin:0 auto;padding:12px 10px}'
+    + '.center{text-align:center}'
+    + '.logo{font-size:18px;font-weight:900;letter-spacing:.06em}.logo-red{color:#C0392B}'
+    + '.emp{font-size:13px;font-weight:700;margin-top:2px}'
+    + '.info{font-size:10px;color:#333;line-height:1.7;margin-top:2px}'
+    + '.sep-thick{border:none;border-top:3px solid #000;margin:8px 0}'
+    + '.sep-dash{border:none;border-top:1px dashed #888;margin:7px 0}'
+    + '.sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#555;border-bottom:1px solid #ccc;padding-bottom:2px;margin:7px 0 4px}'
+    + '.row{display:flex;justify-content:space-between;font-size:11px;padding:1px 0;gap:6px}'
+    + '.row .lbl{color:#555}.row .val{font-weight:700;text-align:right}'
+    + '.total-bloco{border-top:2px solid #000;border-bottom:2px solid #000;padding:5px 0;margin:5px 0;display:flex;justify-content:space-between;align-items:center}'
+    + '.total-lbl{font-size:14px;font-weight:900}'
+    + '.total-val{font-size:16px;font-weight:900;color:#16a34a}'
+    + '.rodape{font-size:9px;text-align:center;color:#888;margin-top:8px;letter-spacing:.04em}'
+    + '@media print{body{padding:4px}@page{margin:0;size:80mm auto}}'
+    + '</style></head><body>'
+    + '<div class="center">'
+    + '<div class="logo">PEDI<span class="logo-red">WAY</span></div>'
+    + '<div class="emp">' + estabNome + '</div>'
+    + '<div class="info">'
+    + (estabEnd  ? estabEnd  + '<br>' : '')
+    + (estabTel  ? 'Tel: ' + estabTel + '<br>' : '')
+    + (estabCnpj ? 'CNPJ: ' + estabCnpj : '')
+    + '</div>'
+    + '</div>'
+    + '<hr class="sep-thick">'
+    + '<div class="center" style="font-size:13px;font-weight:900;letter-spacing:.05em">FECHAMENTO DE CAIXA</div>'
+    + '<hr class="sep-dash">'
+    + '<div class="sec">Período</div>'
+    + '<div class="row"><span class="lbl">Operador</span><span class="val">' + (_caixaAbertura && _caixaAbertura.operador ? _caixaAbertura.operador : 'Operador') + '</span></div>'
+    + '<div class="row"><span class="lbl">Abertura</span><span class="val">' + new Date(_caixaAbertura && _caixaAbertura.hora ? _caixaAbertura.hora : agora).toLocaleString('pt-BR') + '</span></div>'
+    + '<div class="row"><span class="lbl">Fechamento</span><span class="val">' + agora.toLocaleString('pt-BR') + '</span></div>'
+    + '<hr class="sep-dash">'
+    + '<div class="sec">Fundo de Caixa</div>'
+    + '<div class="row"><span class="lbl">Valor inicial</span><span class="val">' + fmt(_caixaAbertura && _caixaAbertura.valorAbertura ? _caixaAbertura.valorAbertura : 0) + '</span></div>'
+    + '<hr class="sep-dash">'
+    + '<div class="sec">Recebimentos</div>'
+    + '<div class="row"><span class="lbl">PIX</span><span class="val">' + fmt(totalPix) + '</span></div>'
+    + '<div class="row"><span class="lbl">Cartão</span><span class="val">' + fmt(totalCartao) + '</span></div>'
+    + '<div class="row"><span class="lbl">Dinheiro</span><span class="val">' + fmt(totalDinheiro) + '</span></div>'
+    + '<div class="row" style="margin-top:3px"><span class="lbl">Nº de pedidos</span><span class="val">' + numPedidos + '</span></div>'
+    + '<div class="total-bloco"><span class="total-lbl">TOTAL EM CAIXA</span><span class="total-val">' + fmt(totalGeral) + '</span></div>'
+    + '<div class="center rodape">Gerado em: ' + agora.toLocaleString('pt-BR') + '<br>PEDIWAY · Plataforma de delivery independente</div>'
+    + '</body></html>';
   var w = window.open('', '_blank', 'width=440,height=700');
   if (w) { w.document.write(htmlComp); w.document.close(); setTimeout(function(){w.print();},600); }
 };
@@ -4072,3 +4138,42 @@ window.imprimirComprovanteCliente = async function(id) {
   var w = window.open('', '_blank', 'width=440,height=700');
   if (w) { w.document.write(htmlComp); w.document.close(); setTimeout(function(){w.print();},500); }
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HISTÓRICO DE CAIXAS
+// ═══════════════════════════════════════════════════════════════════════════
+function renderHistoricoCaixa() {
+  var estab = getEstab();
+  var el    = document.getElementById('caixa-historico');
+  if (!el) return;
+  if (!estab || estab.id === 'demo') { el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:.82rem;padding:24px">Nenhum registro ainda</div>'; return; }
+  try {
+    var hist = JSON.parse(localStorage.getItem('pw_caixa_hist_' + estab.id) || '[]');
+    if (!hist.length) { el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:.82rem;padding:24px">Nenhum fechamento registrado ainda</div>'; return; }
+    var fmt = function(v){return 'R$ ' + Number(v||0).toFixed(2).replace('.',',');};
+    el.innerHTML = hist.map(function(h) {
+      var dt = new Date(h.fechadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      var ab = new Date(h.aberturaEm).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      return '<div style="border:1.5px solid #f0ebe4;border-radius:12px;padding:12px;margin-bottom:8px;background:#fff">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+        + '<div style="font-size:.78rem;font-weight:800;color:#1a1a1a">' + dt + '</div>'
+        + '<div style="font-size:.72rem;color:#888">Operador: ' + (h.operador||'—') + '</div>'
+        + '</div>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:.75rem">'
+        + '<span style="color:#888">Abertura:</span><span style="font-weight:700;text-align:right">' + ab + '</span>'
+        + '<span style="color:#888">PIX:</span><span style="font-weight:700;text-align:right">' + fmt(h.totalPix) + '</span>'
+        + '<span style="color:#888">Cartão:</span><span style="font-weight:700;text-align:right">' + fmt(h.totalCartao) + '</span>'
+        + '<span style="color:#888">Dinheiro:</span><span style="font-weight:700;text-align:right">' + fmt(h.totalDinheiro) + '</span>'
+        + '<span style="color:#888">Pedidos:</span><span style="font-weight:700;text-align:right">' + (h.numPedidos||0) + '</span>'
+        + '</div>'
+        + '<div style="margin-top:8px;padding-top:8px;border-top:1px solid #f0ebe4;display:flex;justify-content:space-between;align-items:center">'
+        + '<span style="font-size:.8rem;font-weight:800;color:#555">TOTAL EM CAIXA</span>'
+        + '<span style="font-size:.9rem;font-weight:900;color:#16a34a">' + fmt(h.totalGeral) + '</span>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:.82rem;padding:24px">Erro ao carregar histórico</div>';
+  }
+}
+window.renderHistoricoCaixa = renderHistoricoCaixa;
