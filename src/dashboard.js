@@ -232,6 +232,8 @@ export async function initDashboard() {
   // Dados
   if (!window._isDemo) {
     await renderCardapio();
+  await restaurarCaixa();
+  await verificarExpiracaoQuente();
     await renderFresquinho();
     await renderPedidos();
     await carregarFinanceiro();
@@ -3559,9 +3561,7 @@ window.toggleCartaoSubMenu = function() {
 };
 
 // ── CAIXA ─────────────────────────────────────────────────────────────────────
-let _caixaAberto = false;
-let _caixaAbertura = null;
-
+// abrirCaixa definida abaixo
 window.abrirCaixa = async function() {
   const estab = getEstab();
   if (!estab) return;
@@ -3661,6 +3661,327 @@ window.selecionarPagamentoComanda = function(metodo) {
   if (_selPagComandaOriginal) _selPagComandaOriginal(metodo);
   const aviso = document.getElementById('pgto-aviso');
   if (aviso) aviso.style.display = 'none';
+};
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FILTRO DE PEDIDOS POR DATA
+// ═══════════════════════════════════════════════════════════════════════════════
+window.filtrarPedidosData = function() {
+  const deVal  = document.getElementById('ped-data-de')?.value;
+  const ateVal = document.getElementById('ped-data-ate')?.value;
+
+  document.querySelectorAll('#todos-pedidos .pedido-card').forEach(card => {
+    const dataStr = card.dataset.createdAt || card.querySelector('[data-created]')?.dataset.created || '';
+    if (!dataStr) { card.style.display = ''; return; }
+
+    const d = new Date(dataStr);
+    let mostrar = true;
+
+    if (deVal) {
+      const de = new Date(deVal + 'T00:00:00');
+      if (d < de) mostrar = false;
+    }
+    if (ateVal && mostrar) {
+      const ate = new Date(ateVal + 'T23:59:59');
+      if (d > ate) mostrar = false;
+    }
+
+    card.style.display = mostrar ? '' : 'none';
+  });
+
+  // Se não há cards visíveis, mostra mensagem
+  const todos = document.querySelectorAll('#todos-pedidos .pedido-card');
+  const visiveis = [...todos].filter(c => c.style.display !== 'none');
+  const lista = document.getElementById('todos-pedidos');
+  const msgId = 'ped-sem-resultado';
+  document.getElementById(msgId)?.remove();
+  if (todos.length > 0 && visiveis.length === 0) {
+    const msg = document.createElement('div');
+    msg.id = msgId;
+    msg.className = 'empty-state-light';
+    msg.innerHTML = '<span>📅</span><p>Nenhum pedido no período selecionado.</p>';
+    lista?.appendChild(msg);
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// QUENTE — DESATIVA PROMOÇÕES AUTOMATICAMENTE À MEIA-NOITE
+// ═══════════════════════════════════════════════════════════════════════════════
+async function verificarExpiracaoQuente() {
+  const estab = getEstab();
+  if (!estab || estab.id === 'demo') return;
+
+  const hoje = new Date().toDateString();
+  const chave = 'pw_quente_dia_' + estab.id;
+  const diaSalvo = localStorage.getItem(chave);
+
+  if (diaSalvo === hoje) return; // já verificou hoje
+
+  // Dia mudou — desativa todas as promoções QUENTE
+  try {
+    const { data: promos } = await getSupa()
+      .from('produtos')
+      .select('id, preco_original')
+      .eq('estabelecimento_id', estab.id)
+      .eq('em_promocao', true);
+
+    if (promos?.length) {
+      for (const p of promos) {
+        await getSupa().from('produtos').update({
+          em_promocao:      false,
+          desconto_percent: 0,
+          preco:            p.preco_original || undefined,
+        }).eq('id', p.id);
+      }
+      showToast('🌅 Promoções QUENTE do dia anterior foram desativadas.');
+      await renderCardapio();
+    }
+  } catch(e) { /* falha silenciosa */ }
+
+  localStorage.setItem(chave, hoje);
+}
+
+// Verifica a cada hora se o dia mudou
+setInterval(verificarExpiracaoQuente, 60 * 60 * 1000);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CAIXA PERSISTENTE (Supabase) + HISTÓRICO + COMPROVANTE
+// ═══════════════════════════════════════════════════════════════════════════════
+let _caixaAberto    = false;
+let _caixaAbertura  = null;
+let _caixaId        = null;
+let _caixaAutoRefreshInterval = null;
+
+function iniciarAutoRefreshCaixa() {
+  if (_caixaAutoRefreshInterval) clearInterval(_caixaAutoRefreshInterval);
+  _caixaAutoRefreshInterval = setInterval(async () => {
+    if (_caixaAberto) await atualizarResumoCaixa();
+  }, 30000);
+}
+function pararAutoRefreshCaixa() {
+  if (_caixaAutoRefreshInterval) { clearInterval(_caixaAutoRefreshInterval); _caixaAutoRefreshInterval = null; }
+}
+
+async function atualizarResumoCaixa() {
+  const estab = getEstab();
+  if (!estab || !_caixaAberto || !_caixaAbertura) return;
+  const { data: peds } = await getSupa().from('pedidos')
+    .select('total,pagamento')
+    .eq('estabelecimento_id', estab.id)
+    .gte('created_at', _caixaAbertura.hora);
+  const todos = peds || [];
+  const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const totalPix      = todos.filter(p=>p.pagamento==='PIX').reduce((s,p)=>s+Number(p.total||0),0);
+  const totalCartao   = todos.filter(p=>['CRÉDITO','DÉBITO','CARTÃO'].includes(p.pagamento)).reduce((s,p)=>s+Number(p.total||0),0);
+  const totalDinheiro = todos.filter(p=>p.pagamento==='DINHEIRO').reduce((s,p)=>s+Number(p.total||0),0);
+  const totalGeral    = totalPix + totalCartao + totalDinheiro + Number(_caixaAbertura.valorAbertura||0);
+  const el = id => document.getElementById(id);
+  if (el('caixa-total-pix'))      el('caixa-total-pix').textContent      = fmt(totalPix);
+  if (el('caixa-total-cartao'))   el('caixa-total-cartao').textContent   = fmt(totalCartao);
+  if (el('caixa-total-dinheiro')) el('caixa-total-dinheiro').textContent = fmt(totalDinheiro);
+  if (el('caixa-total-geral'))    el('caixa-total-geral').textContent    = fmt(totalGeral);
+  if (el('caixa-num-pedidos'))    el('caixa-num-pedidos').textContent    = todos.length + ' pedido(s)';
+}
+window.atualizarResumoCaixa = atualizarResumoCaixa;
+
+function aplicarUICaixaAberto(operador, horaAbertura) {
+  const el = id => document.getElementById(id);
+  const agora = new Date(horaAbertura);
+  if (el('caixa-status-card'))    el('caixa-status-card').style.background    = 'linear-gradient(135deg,#16a34a,#15803d)';
+  if (el('caixa-status-label'))   el('caixa-status-label').textContent         = '— Aberto —';
+  if (el('caixa-status-hora'))    el('caixa-status-hora').textContent           = 'Desde ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  if (el('caixa-status-icon'))    el('caixa-status-icon').textContent           = '🔓';
+  if (el('caixa-abrir-card'))     el('caixa-abrir-card').style.display          = 'none';
+  if (el('caixa-fechar-card'))    el('caixa-fechar-card').style.display         = 'block';
+  if (el('caixa-operador-label')) el('caixa-operador-label').textContent        = 'Operador: ' + operador;
+}
+
+function aplicarUICaixaFechado(horaFechamento) {
+  const el = id => document.getElementById(id);
+  if (el('caixa-status-card'))  el('caixa-status-card').style.background  = 'linear-gradient(135deg,#1a1a1a,#333)';
+  if (el('caixa-status-label')) el('caixa-status-label').textContent       = '— Fechado —';
+  if (el('caixa-status-hora'))  el('caixa-status-hora').textContent        = horaFechamento ? 'Fechado às ' + new Date(horaFechamento).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+  if (el('caixa-status-icon'))  el('caixa-status-icon').textContent        = '🔒';
+  if (el('caixa-abrir-card'))   el('caixa-abrir-card').style.display       = 'block';
+  if (el('caixa-fechar-card'))  el('caixa-fechar-card').style.display      = 'none';
+}
+
+// Restaura caixa ao carregar a página (verifica Supabase + localStorage)
+async function restaurarCaixa() {
+  const estab = getEstab();
+  if (!estab || estab.id === 'demo') return;
+
+  try {
+    // Tenta restaurar do Supabase primeiro
+    const { data: caixas } = await getSupa()
+      .from('caixas')
+      .select('*')
+      .eq('estabelecimento_id', estab.id)
+      .eq('status', 'aberto')
+      .order('aberto_em', { ascending: false })
+      .limit(1);
+
+    if (caixas?.length) {
+      const c = caixas[0];
+      _caixaAberto   = true;
+      _caixaId       = c.id;
+      _caixaAbertura = { valorAbertura: c.valor_abertura, operador: c.operador, obs: c.obs_abertura, hora: c.aberto_em };
+      aplicarUICaixaAberto(c.operador, c.aberto_em);
+      await atualizarResumoCaixa();
+      iniciarAutoRefreshCaixa();
+      return;
+    }
+  } catch(e) {
+    // Supabase pode não ter a tabela ainda — usa localStorage como fallback
+  }
+
+  // Fallback: localStorage
+  try {
+    const salvo = JSON.parse(localStorage.getItem('pw_caixa_' + estab.id) || 'null');
+    if (salvo?.aberto) {
+      _caixaAberto   = true;
+      _caixaAbertura = salvo;
+      aplicarUICaixaAberto(salvo.operador, salvo.hora);
+      await atualizarResumoCaixa();
+      iniciarAutoRefreshCaixa();
+    }
+  } catch(e) {}
+}
+window.restaurarCaixa = restaurarCaixa;
+
+window.abrirCaixa = async function() {
+  const estab = getEstab();
+  if (!estab) return;
+  const valorAbertura = parseFloat(document.getElementById('caixa-valor-abertura')?.value || 0);
+  const operador      = (document.getElementById('caixa-operador')?.value.trim() || 'Operador').slice(0,100);
+  const obs           = (document.getElementById('caixa-obs-abertura')?.value.trim() || '').slice(0,300);
+  const agora         = new Date();
+
+  _caixaAberto   = true;
+  _caixaAbertura = { valorAbertura, operador, obs, hora: agora.toISOString() };
+
+  // Salva no Supabase
+  try {
+    const { data } = await getSupa().from('caixas').insert({
+      estabelecimento_id: estab.id,
+      operador,
+      valor_abertura:     valorAbertura,
+      obs_abertura:       obs,
+      status:             'aberto',
+      aberto_em:          agora.toISOString(),
+    }).select('id').single();
+    if (data?.id) _caixaId = data.id;
+  } catch(e) {}
+
+  // Fallback localStorage
+  localStorage.setItem('pw_caixa_' + estab.id, JSON.stringify({ ..._caixaAbertura, aberto: true }));
+
+  aplicarUICaixaAberto(operador, agora.toISOString());
+  await atualizarResumoCaixa();
+  iniciarAutoRefreshCaixa();
+  showToast('✅ Caixa aberto!');
+};
+
+function imprimirComprovanteCaixa(dados) {
+  const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
+  const agora = new Date();
+  const w = window.open('', '_blank', 'width=400,height=600');
+  w.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Fechamento de Caixa</title>
+<style>
+  body{font-family:'Courier New',monospace;font-size:13px;padding:20px;color:#111;max-width:360px;margin:0 auto}
+  h2{text-align:center;font-size:16px;margin-bottom:4px}
+  .sub{text-align:center;color:#555;font-size:11px;margin-bottom:16px}
+  hr{border:none;border-top:1px dashed #999;margin:10px 0}
+  .row{display:flex;justify-content:space-between;padding:3px 0}
+  .row.total{font-weight:bold;font-size:15px;border-top:2px solid #111;margin-top:6px;padding-top:6px}
+  .center{text-align:center}
+  .badge{background:#16a34a;color:#fff;padding:4px 12px;border-radius:20px;font-size:11px}
+</style></head><body>
+<h2>FECHAMENTO DE CAIXA</h2>
+<div class="sub">${dados.estabNome}</div>
+<hr>
+<div class="row"><span>Operador:</span><span>${dados.operador}</span></div>
+<div class="row"><span>Abertura:</span><span>${new Date(dados.horaAbertura).toLocaleString('pt-BR')}</span></div>
+<div class="row"><span>Fechamento:</span><span>${agora.toLocaleString('pt-BR')}</span></div>
+<hr>
+<div class="row"><span>Fundo de caixa:</span><span>${fmt(dados.valorAbertura)}</span></div>
+<hr>
+<div style="font-weight:bold;margin:8px 0 4px">Recebimentos:</div>
+<div class="row"><span>📱 PIX:</span><span>${fmt(dados.totalPix)}</span></div>
+<div class="row"><span>💳 Cartão:</span><span>${fmt(dados.totalCartao)}</span></div>
+<div class="row"><span>💵 Dinheiro:</span><span>${fmt(dados.totalDinheiro)}</span></div>
+<div class="row total"><span>TOTAL GERAL:</span><span>${fmt(dados.totalGeral)}</span></div>
+<hr>
+<div class="row"><span>Nº de pedidos:</span><span>${dados.numPedidos}</span></div>
+<hr>
+<div class="center" style="margin-top:16px">
+  <span class="badge">✓ Caixa Fechado</span>
+  <div style="margin-top:12px;font-size:10px;color:#888">Gerado em ${agora.toLocaleString('pt-BR')}</div>
+</div>
+</body></html>`);
+  w.document.close();
+  setTimeout(() => w.print(), 500);
+}
+
+window.fecharCaixa = async function() {
+  if (!confirm('Confirma o fechamento do caixa? Um comprovante será gerado.')) return;
+
+  const estab = getEstab();
+  if (!estab) return;
+
+  // Coleta totais antes de fechar
+  const { data: peds } = await getSupa().from('pedidos')
+    .select('total,pagamento')
+    .eq('estabelecimento_id', estab.id)
+    .gte('created_at', _caixaAbertura?.hora || new Date().toISOString());
+
+  const todos        = peds || [];
+  const fmt          = v => Number(v||0);
+  const totalPix     = todos.filter(p=>p.pagamento==='PIX').reduce((s,p)=>s+fmt(p.total),0);
+  const totalCartao  = todos.filter(p=>['CRÉDITO','DÉBITO','CARTÃO'].includes(p.pagamento)).reduce((s,p)=>s+fmt(p.total),0);
+  const totalDinheiro= todos.filter(p=>p.pagamento==='DINHEIRO').reduce((s,p)=>s+fmt(p.total),0);
+  const totalGeral   = totalPix + totalCartao + totalDinheiro + Number(_caixaAbertura?.valorAbertura||0);
+
+  const dadosComprovante = {
+    estabNome:     estab.nome || 'Estabelecimento',
+    operador:      _caixaAbertura?.operador || 'Operador',
+    horaAbertura:  _caixaAbertura?.hora || new Date().toISOString(),
+    valorAbertura: _caixaAbertura?.valorAbertura || 0,
+    totalPix, totalCartao, totalDinheiro, totalGeral,
+    numPedidos:    todos.length,
+  };
+
+  // Fecha no Supabase
+  const agora = new Date();
+  try {
+    if (_caixaId) {
+      await getSupa().from('caixas').update({
+        status:          'fechado',
+        fechado_em:      agora.toISOString(),
+        total_pix:       totalPix,
+        total_cartao:    totalCartao,
+        total_dinheiro:  totalDinheiro,
+        total_geral:     totalGeral,
+        num_pedidos:     todos.length,
+      }).eq('id', _caixaId);
+    }
+  } catch(e) {}
+
+  // Limpa localStorage
+  localStorage.removeItem('pw_caixa_' + estab?.id);
+
+  _caixaAberto   = false;
+  _caixaAbertura = null;
+  _caixaId       = null;
+  pararAutoRefreshCaixa();
+
+  aplicarUICaixaFechado(agora.toISOString());
+  showToast('🔒 Caixa fechado!');
+
+  // Imprime comprovante
+  imprimirComprovanteCaixa(dadosComprovante);
 };
 
 // Exports das comandas — precisam estar em window para o onclick funcionar
