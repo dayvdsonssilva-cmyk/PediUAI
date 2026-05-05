@@ -546,9 +546,9 @@ function esc(s) {
 // ── Validação de PIN — mínimo 8 chars, não aceita sequências óbvias ──────────
 function validarPin(pin) {
   if (pin.length < 8) return "Mínimo 8 caracteres.";
-  if (/^(.)+$/.test(pin)) return "PIN não pode ter todos os caracteres iguais.";
-  if (/^(012|123|234|345|456|567|678|789|890|987|876|765|654|543|432|321|210)/.test(pin))
-    return "PIN não pode ser uma sequência simples.";
+  if (new Set(pin).size === 1) return "PIN não pode ter todos os caracteres iguais.";
+  var seqs = ["012","123","234","345","456","567","678","789","890","987","876","765","654","543","432","321","210"];
+  for (var i = 0; i < seqs.length; i++) { if (pin.indexOf(seqs[i]) === 0) return "PIN não pode ser uma sequência simples."; }
   return null;
 }
 
