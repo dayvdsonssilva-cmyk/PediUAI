@@ -1986,18 +1986,7 @@ function renderCheckoutLoja(c) {
           <button id="pcred-${lid}" class="pag-btn ativo" onclick="setTipoCartao('${lid}','credito')" style="flex:1;">💳 Crédito</button>
           <button id="pdeb-${lid}"  class="pag-btn"       onclick="setTipoCartao('${lid}','debito')"  style="flex:1;">💳 Débito</button>
         </div>
-        <div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Bandeira</div>
-        <div id="bandeiras-${lid}" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
-          <button class="bandeira-btn-sm ativo" onclick="setBandeira('${lid}','visa')"><span style="font-size:1.1rem">💙</span>Visa</button>
-          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','master')"><span style="font-size:1.1rem">🔴</span>Master</button>
-          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','elo')"><span style="font-size:1.1rem">⭐</span>Elo</button>
-          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','hipercard')"><span style="font-size:1.1rem">🔶</span>Hiper</button>
-          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','amex')"><span style="font-size:1.1rem">🔵</span>Amex</button>
-          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','cabal')"><span style="font-size:1.1rem">🟢</span>Cabal</button>
-          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','pix-cred')"><span style="font-size:1.1rem">💜</span>PIX C.</button>
-          <button class="bandeira-btn-sm"       onclick="setBandeira('${lid}','outro')"><span style="font-size:1.1rem">💳</span>Outro</button>
-        </div>
-      </div>div>
+      </div>
 
     <div style="display:flex;gap:10px;">
       <button onclick="saveStepData('${lid}');prevStep('${lid}')" style="padding:15px 20px;border-radius:14px;background:var(--cream);border:1.5px solid var(--border);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;color:var(--mid);">← Voltar</button>
