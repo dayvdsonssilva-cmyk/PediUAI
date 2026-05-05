@@ -647,25 +647,24 @@ async function renderCardapio() {
   }
 
   // Agrupa por categoria com colapso
-  const cats = {};
+  const _cats = {};
   filtrado.forEach(p => {
     const c = p.categoria || 'SEM CATEGORIA';
-    if (!cats[c]) cats[c] = [];
-    cats[c].push(p);
+    if (!_cats[c]) _cats[c] = [];
+    _cats[c].push(p);
   });
 
-  const catKeys = Object.keys(cats).sort();
-
-  grid.innerHTML = catKeys.map(cat => {
-    const items = cats[cat];
-    const catId = 'cat-' + cat.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-    const itemsHtml = items.map(p => `
-      <div class="item-card">
+  grid.innerHTML = Object.keys(_cats).sort().map(cat => {
+    const items = _cats[cat];
+    const catId = 'cat-' + cat.replace(/[^a-z0-9]/gi,'-').toLowerCase();
+    const itemsHtml = items.map(p =>
+      `<div class="item-card">
         <div class="item-card-img">
           ${p.foto_url ? '<img class="item-img" src="'+(p.foto_url)+'" alt="'+(p.nome)+'">' : '<div class="item-emoji-bg">'+(p.emoji||'🍔')+'</div>'}
           ${p.promocao ? '<span class="item-promo-badge">🔥 Promoção</span>' : ''}
         </div>
         <div class="item-body">
+          <div class="item-categoria">${p.categoria||'SEM CATEGORIA'}</div>
           <div class="item-nome">${p.nome}</div>
           <div class="item-desc-text">${p.descricao||''}</div>
           <div class="item-footer">
@@ -682,10 +681,10 @@ async function renderCardapio() {
             </div>
           </div>
         </div>
-      </div>`).join('');
+      </div>`
+    ).join('');
 
-    return `
-      <div style="grid-column:1/-1;margin-bottom:4px;">
+    return `<div style="grid-column:1/-1;margin-bottom:4px;">
         <button onclick="toggleCatCardapio('${catId}')"
           style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f5f2ef;border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:800;color:#1a1a1a;text-align:left;text-transform:uppercase;letter-spacing:.04em;">
           <span>📂 ${cat} <span style="font-weight:500;color:#888;font-size:.75rem;">(${items.length} item${items.length>1?'s':''})</span></span>
@@ -695,6 +694,244 @@ async function renderCardapio() {
       <div id="${catId}" style="grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:16px;">
         ${itemsHtml}
       </div>`;
+  }).join('');
+}
+
+function renderPedidosDemo() {
+  // Visão geral zerada — demo mostruário
+  const sp = $('stat-pedidos');     if (sp) sp.textContent = '0';
+  const sf = $('stat-faturamento'); if (sf) sf.textContent = 'R$ 0,00';
+
+  // Sem pedidos na lista
+  const lista = $('pedidos-novos-lista');
+  if (lista) {
+    lista.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#aaa">
+      <div style="font-size:2.5rem;margin-bottom:10px">🎉</div>
+      <div style="font-size:.88rem;font-weight:700;color:#555;margin-bottom:6px">Nenhum pedido ainda</div>
+      <div style="font-size:.76rem">Crie sua conta e receba pedidos reais!</div>
+    </div>`;
+  }
+
+  // Badge sem notificação
+  const badgeW = $('badge-pedidos-wrap'); if (badgeW) badgeW.style.display = 'none';
+}
+
+
+function renderCardapioDemo() {
+  const grid = $('cardapio-grid'); const stat = $('stat-itens');
+  const demo = [
+    { nome:'X-Burguer Especial', categoria:'LANCHES', preco:28.90, emoji:'🍔' },
+    { nome:'X-Tudo',             categoria:'LANCHES', preco:34.90, emoji:'🍔' },
+    { nome:'Batata Frita Grande', categoria:'ACOMPANHAMENTOS', preco:14.90, emoji:'🍟' },
+    { nome:'Onion Rings',        categoria:'ACOMPANHAMENTOS', preco:12.90, emoji:'🧅' },
+    { nome:'Refrigerante 350ml', categoria:'BEBIDAS', preco:7.90, emoji:'🥤' },
+    { nome:'Suco Natural 400ml', categoria:'BEBIDAS', preco:11.90, emoji:'🥤' },
+    { nome:'Sorvete Caseiro',    categoria:'SOBREMESAS', preco:9.90, emoji:'🍦' },
+    { nome:'Combo Família',      categoria:'COMBOS', preco:89.90, emoji:'🎁' },
+  ];
+  if (stat) stat.textContent = String(demo.length);
+  if (!grid) return;
+  grid.innerHTML = demo.map(p => `
+    <div class="item-card">
+      <div class="item-card-img"><div class="item-emoji-bg">${p.emoji}</div></div>
+      <div class="item-body">
+        <div class="item-categoria">${p.categoria}</div>
+        <div class="item-nome">${p.nome}</div>
+        <div class="item-footer">
+          <div class="item-preco">R$ ${p.preco.toFixed(2).replace('.',',')}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderEmojiGrid() {
+  const grid = $('emoji-grid'); if (!grid) return;
+  grid.innerHTML = EMOJIS.map(e =>
+    `<button class="emoji-btn ${e === emojiSel ? 'selected' : ''}" onclick="selecionarEmoji('${e}',this)">${e}</button>`
+  ).join('');
+}
+
+// ─── Modal de item ───────────────────────────────────────────────────────────
+export function abrirModalItem() {
+  $('modal-item').classList.add('open');
+  ['item-nome','item-desc','item-cat','item-preco','item-preco-orig'].forEach(id => { const el=$(id); if(el) el.value=''; });
+  const dd=$('item-desconto-percent'); if(dd) dd.value='0';
+  const dg=$('desconto-group'); if(dg) dg.style.display='none';
+  const pr = $('item-promocao'); if (pr) pr.checked = false;
+  const pg = $('preco-orig-group'); if (pg) pg.style.display = 'none';
+  fotosFiles = []; fotosPosX = []; fotosPosY = [];
+  renderFotosGrid();
+  emojiSel = '🍔'; renderEmojiGrid();
+  // Reset botão salvar
+  const btn = document.querySelector('#modal-item .btn-primary');
+  if (btn) { btn.textContent = 'Salvar item'; btn.onclick = salvarItem; }
+}
+export function fecharModal() { $('modal-item').classList.remove('open'); }
+export function fecharModalFora(e) { if (e.target.id === 'modal-item') fecharModal(); }
+export function selecionarEmoji(emoji, btn) {
+  emojiSel = emoji;
+  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// ─── Fotos com drag de posição ───────────────────────────────────────────────
+export function previewFotos(event) {
+  const file = event.target.files[0]; if (!file) return;
+  event.target.value = '';
+  // Abre modal de crop para ajuste antes de adicionar
+  abrirCropFoto(file);
+}
+export function previewFoto(e) { previewFotos(e); }
+
+
+
+// ── CROP DE FOTO DO PRODUTO ────────────────────────────────────────────────
+let _cropFotoFile  = null;
+let _cropFotoUrl   = null;
+let _cropFotoPosX  = 50;
+let _cropFotoPosY  = 50;
+let _cropFotoDragAtivo = false;
+let _cropFotoDragX = 0, _cropFotoDragY = 0;
+
+window.abrirCropFoto = function(file) {
+  _cropFotoFile = file;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    _CRP.img = img; _CRP.offX = 0; _CRP.offY = 0;
+    _CRP.canvasId = 'crop-foto-canvas'; _CRP.stageId = 'crop-foto-stage'; _CRP.safePrefix = 'cfso';
+    crpApplyMinScale(); _CRP.scale = _CRP.minScale;
+    crpInitDrag('crop-foto-stage');
+    const modal = $('modal-crop-foto');
+    if (modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    setTimeout(() => { crpApplyMinScale(); crpDraw(); }, 50);
+  };
+  img.src = url;
+  _cropFotoUrl = url;
+};
+
+window.confirmarCropFoto = function() {
+  if (!_CRP.img) { console.warn('[crop] sem imagem'); return; }
+
+  // Crop via canvas da imagem original (mais confiável que drawImage canvas->canvas)
+  const stage  = $('crop-foto-stage');
+  const W      = stage ? stage.offsetWidth : 340;
+  const safe   = Math.floor(W * 0.82);
+  const sx     = Math.floor((W - safe) / 2);
+
+  const out    = document.createElement('canvas');
+  out.width    = safe; out.height = safe;
+  const ctx    = out.getContext('2d');
+
+  // Calcula onde a imagem está posicionada no stage
+  const iw = _CRP.img.naturalWidth, ih = _CRP.img.naturalHeight;
+  const dw = iw * _CRP.scale, dh = ih * _CRP.scale;
+  const dx = W/2 - dw/2 + _CRP.offX;
+  const dy = W/2 - dh/2 + _CRP.offY;
+
+  // Desenha a porção da imagem que está dentro da safe area
+  ctx.drawImage(_CRP.img, dx - sx, dy - sx, dw, dh);
+
+  out.toBlob(blob => {
+    if (!blob || blob.size < 100) {
+      // Fallback: salva sem crop
+      const fallbackFile = _cropFotoFile;
+      if (fallbackFile) {
+        fallbackFile._urlExistente = null;
+        fotosFiles.push(fallbackFile); fotosPosX.push(50); fotosPosY.push(50);
+      }
+    } else {
+      const file = new File([blob], _cropFotoFile?.name || 'foto.jpg', { type:'image/jpeg' });
+      file._urlExistente = null;
+      const editIdx = window._cropFotoEditIdx;
+      if (editIdx != null && editIdx >= 0 && editIdx < fotosFiles.length) {
+        fotosFiles[editIdx] = file; fotosPosX[editIdx] = 50; fotosPosY[editIdx] = 50;
+        window._cropFotoEditIdx = null;
+      } else {
+        fotosFiles.push(file); fotosPosX.push(50); fotosPosY.push(50);
+      }
+    }
+
+    renderFotosGrid();
+    const modal = $('modal-crop-foto');
+    if (modal) { modal.classList.remove('open'); document.body.style.overflow = ''; }
+    _CRP.img = null;
+
+    if (_fotoQueue && _fotoQueue.length > 0) {
+      const next = _fotoQueue.shift(); _cropFotoFile = next;
+      setTimeout(() => window.abrirCropFoto(next), 200);
+    }
+  }, 'image/jpeg', 0.92);
+};
+
+// Função chamada pelo foto-input (modal de item)
+window.adicionarFotos = function(event) {
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
+  event.target.value = '';
+  // Processa um arquivo de cada vez via fila
+  let idx = 0;
+  const next = () => {
+    if (idx >= files.length) return;
+    _cropFotoFile = files[idx++];
+    window.abrirCropFoto(_cropFotoFile);
+    // Após confirmar, se houver mais arquivos, o próximo será aberto
+    // via _fotoQueue que guardamos aqui
+    _fotoQueue = files.slice(idx);
+  };
+  _fotoQueue = files.slice(1);
+  window.abrirCropFoto(files[0]);
+  _cropFotoFile = files[0];
+};
+
+let _fotoQueue = [];
+
+window.fecharCropFoto = function() {
+  const m = $('modal-crop-foto'); if (m) m.classList.remove('open');
+  document.body.style.overflow = '';
+  _cropFotoFile = null;
+  crpCleanup();
+};
+
+// Drag no modal de crop
+
+
+function renderFotosGrid() {
+  const grid = $('fotos-grid'); if (!grid) return;
+
+  if (!fotosFiles.length) {
+    grid.innerHTML = `<div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
+      <span style="font-size:1.5rem">📷</span>
+      <span style="font-size:0.72rem;color:#aaa">Adicionar foto</span>
+    </div>`;
+    return;
+  }
+
+  let html = fotosFiles.map((f, i) => {
+    const url = f._urlExistente || URL.createObjectURL(f);
+    const px  = fotosPosX[i] ?? 50;
+    const py  = fotosPosY[i] ?? 50;
+    const isExist = !!f._urlExistente;
+    return `<div class="foto-thumb-wrap" id="foto-wrap-${i}">
+      <div style="position:relative;width:100%;aspect-ratio:1/1;max-height:280px;border-radius:14px;overflow:hidden;background:#f0ebe4;border:2px solid var(--border);margin-bottom:8px;cursor:grab;touch-action:none" id="foto-drag-${i}">
+        <img src="${url}" id="foto-img-${i}" draggable="false"
+          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:${px}% ${py}%;pointer-events:none;user-select:none">
+        ${i===0 ? '<div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:.62rem;font-weight:800;padding:3px 10px;border-radius:50px;z-index:3;letter-spacing:.04em">PRINCIPAL</div>' : ''}
+        <div style="position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;pointer-events:none;z-index:2">
+          <div style="background:rgba(0,0,0,.55);color:#fff;font-size:.62rem;font-weight:600;padding:4px 12px;border-radius:50px;backdrop-filter:blur(6px)">
+            ✋ Arraste para reposicionar
+          </div>
+        </div>
+        <div style="position:absolute;bottom:10px;right:10px;width:44px;height:44px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,.6);border:2px solid rgba(255,255,255,.35);z-index:3">
+          <img src="${url}" style="width:100%;height:100%;object-fit:cover;opacity:.7">
+          <div id="foto-pin-${i}" style="position:absolute;width:8px;height:8px;background:#fff;border-radius:50%;border:1.5px solid var(--red);transform:translate(-50%,-50%);left:${px}%;top:${py}%;box-shadow:0 1px 4px rgba(0,0,0,.5)"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:.65rem;color:#aaa">${isExist ? '📎 Existente' : '✨ Nova'}</span>
+        <button onclick="removerFotoItem(${i})" style="background:none;border:1px solid #e0dbd5;color:#aaa;padding:4px 12px;border-radius:8px;font-size:.7rem;font-weight:600;cursor:pointer" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='#e0dbd5';this.style.color='#aaa'">🗑 Remover</button>
+      </div>
+    </div>`;
   }).join('');
 
   html += `<div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
@@ -3236,61 +3473,21 @@ window.removerTaxaServico = function() {
   if (btn) btn.style.display = 'none';
 };
 
-// Abre/fecha submenu de cartão (Crédito/Débito)
-window.toggleCartaoSubMenu = function() {
-  const sub = document.getElementById('pgto-cartao-submenu');
-  const btn = document.getElementById('pgto-btn-CARTÃO');
-  if (!sub) return;
-  const abrindo = sub.style.display === 'none' || !sub.style.display;
-  sub.style.display = abrindo ? 'flex' : 'none';
-  sub.style.flexDirection = 'column';
-  // Destaca botão Cartão quando submenu aberto
-  if (btn) {
-    btn.style.borderColor = abrindo ? '#C0392B' : '#e0dbd5';
-    btn.style.background  = abrindo ? '#fff5f5' : '#fff';
-    btn.style.color       = abrindo ? '#C0392B' : '#555';
-  }
-};
-
 window.selecionarPagamentoComanda = function(metodo) {
   _pagamentoComanda = metodo;
-
-  // Reseta todos os botões principais
   ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
     const btn = document.getElementById('pgto-btn-' + m);
     if (!btn) return;
-    btn.style.borderColor = '#e0dbd5';
-    btn.style.background  = '#fff';
-    btn.style.color       = '#555';
-  });
-
-  // Reseta botões de crédito/débito
-  ['CRÉDITO','DÉBITO'].forEach(m => {
-    const btn = document.getElementById('pgto-btn-' + m);
-    if (!btn) return;
-    btn.style.borderColor = '#e0dbd5';
-    btn.style.background  = '#fff';
-    btn.style.color       = '#555';
-  });
-
-  // Destaca o botão selecionado
-  const btnSel = document.getElementById('pgto-btn-' + metodo);
-  if (btnSel) {
-    btnSel.style.borderColor = '#C0392B';
-    btnSel.style.background  = '#fff5f5';
-    btnSel.style.color       = '#C0392B';
-  }
-
-  // Se é crédito ou débito, destaca também o botão "Cartão" pai
-  if (metodo === 'CRÉDITO' || metodo === 'DÉBITO') {
-    const btnCartao = document.getElementById('pgto-btn-CARTÃO');
-    if (btnCartao) {
-      btnCartao.style.borderColor = '#C0392B';
-      btnCartao.style.background  = '#fff5f5';
-      btnCartao.style.color       = '#C0392B';
+    if (m === metodo) {
+      btn.style.borderColor = '#C0392B';
+      btn.style.background  = '#fff5f5';
+      btn.style.color       = '#C0392B';
+    } else {
+      btn.style.borderColor = '#e0dbd5';
+      btn.style.background  = '#fff';
+      btn.style.color       = '#555';
     }
-  }
-
+  });
   const aviso = document.getElementById('pgto-aviso');
   if (aviso) aviso.style.display = 'none';
 };
@@ -3346,8 +3543,7 @@ window.executarFecharComanda = async function() {
 
 
 
-
-// ── Toggle categoria colapsável no cardápio ───────────────────────────────────
+// ── Toggle categoria colapsável no cardápio ──────────────────────────────────
 window.toggleCatCardapio = function(catId) {
   const el    = document.getElementById(catId);
   const arrow = document.getElementById('arrow-' + catId);
@@ -3357,6 +3553,21 @@ window.toggleCatCardapio = function(catId) {
   if (arrow) arrow.style.transform = aberto ? 'rotate(-90deg)' : 'rotate(0deg)';
 };
 
+// ── Toggle submenu Cartão nas comandas ────────────────────────────────────────
+window.toggleCartaoSubMenu = function() {
+  const sub = document.getElementById('pgto-cartao-submenu');
+  const btn = document.getElementById('pgto-btn-CARTÃO');
+  if (!sub) return;
+  const abrindo = sub.style.display === 'none' || !sub.style.display;
+  sub.style.display = abrindo ? 'flex' : 'none';
+  sub.style.flexDirection = 'column';
+  if (btn) {
+    btn.style.borderColor = abrindo ? '#C0392B' : '#e0dbd5';
+    btn.style.background  = abrindo ? '#fff5f5' : '#fff';
+    btn.style.color       = abrindo ? '#C0392B' : '#555';
+  }
+};
+
 // ── CAIXA ─────────────────────────────────────────────────────────────────────
 let _caixaAberto = false;
 let _caixaAbertura = null;
@@ -3364,115 +3575,89 @@ let _caixaAbertura = null;
 window.abrirCaixa = async function() {
   const estab = getEstab();
   if (!estab) return;
-
   const valorAbertura = parseFloat(document.getElementById('caixa-valor-abertura')?.value || 0);
   const operador      = document.getElementById('caixa-operador')?.value.trim() || 'Operador';
   const obs           = document.getElementById('caixa-obs-abertura')?.value.trim() || '';
-
-  const agora = new Date();
+  const agora         = new Date();
   _caixaAberto   = true;
   _caixaAbertura = { valorAbertura, operador, obs, hora: agora.toISOString() };
 
-  // Salva no Supabase
-  try {
-    await getSupa().from('caixas').insert({
-      estabelecimento_id: estab.id,
-      operador,
-      valor_abertura:     valorAbertura,
-      obs_abertura:       obs,
-      status:             'aberto',
-      aberto_em:          agora.toISOString(),
-    });
-  } catch(e) { /* tabela pode não existir ainda */ }
-
-  // Atualiza UI
-  const statusCard  = document.getElementById('caixa-status-card');
-  const statusLabel = document.getElementById('caixa-status-label');
-  const statusHora  = document.getElementById('caixa-status-hora');
-  const statusIcon  = document.getElementById('caixa-status-icon');
-  const abrirCard   = document.getElementById('caixa-abrir-card');
-  const fecharCard  = document.getElementById('caixa-fechar-card');
-  const opLabel     = document.getElementById('caixa-operador-label');
-
-  if (statusCard)  statusCard.style.background  = 'linear-gradient(135deg,#16a34a,#15803d)';
-  if (statusLabel) statusLabel.textContent       = '— Aberto —';
-  if (statusHora)  statusHora.textContent        = 'Desde ' + agora.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
-  if (statusIcon)  statusIcon.textContent        = '🔓';
-  if (abrirCard)   abrirCard.style.display       = 'none';
-  if (fecharCard)  fecharCard.style.display      = 'block';
-  if (opLabel)     opLabel.textContent           = 'Operador: ' + operador;
+  const el = id => document.getElementById(id);
+  if (el('caixa-status-card'))  el('caixa-status-card').style.background  = 'linear-gradient(135deg,#16a34a,#15803d)';
+  if (el('caixa-status-label')) el('caixa-status-label').textContent       = '— Aberto —';
+  if (el('caixa-status-hora'))  el('caixa-status-hora').textContent        = 'Desde ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  if (el('caixa-status-icon'))  el('caixa-status-icon').textContent        = '🔓';
+  if (el('caixa-abrir-card'))   el('caixa-abrir-card').style.display       = 'none';
+  if (el('caixa-fechar-card'))  el('caixa-fechar-card').style.display      = 'block';
+  if (el('caixa-operador-label')) el('caixa-operador-label').textContent   = 'Operador: ' + operador;
 
   await atualizarResumoCaixa();
-  showToast('✅ Caixa aberto com sucesso!');
+  showToast('✅ Caixa aberto!');
 };
 
 async function atualizarResumoCaixa() {
   const estab = getEstab();
   if (!estab || !_caixaAberto || !_caixaAbertura) return;
-
-  const desde = _caixaAbertura.hora;
-
-  const { data: peds } = await getSupa()
-    .from('pedidos')
-    .select('total,pagamento,status')
+  const { data: peds } = await getSupa().from('pedidos')
+    .select('total,pagamento')
     .eq('estabelecimento_id', estab.id)
-    .gte('created_at', desde)
-    .in('status', ['pronto','entregue','novo','preparo']);
-
+    .gte('created_at', _caixaAbertura.hora);
   const todos = peds || [];
-  const totalPix      = todos.filter(p => p.pagamento === 'PIX').reduce((s,p) => s + Number(p.total||0), 0);
-  const totalCartao   = todos.filter(p => ['CRÉDITO','DÉBITO','CARTÃO'].includes(p.pagamento)).reduce((s,p) => s + Number(p.total||0), 0);
-  const totalDinheiro = todos.filter(p => p.pagamento === 'DINHEIRO').reduce((s,p) => s + Number(p.total||0), 0);
-  const totalGeral    = totalPix + totalCartao + totalDinheiro + Number(_caixaAbertura.valorAbertura||0);
-
   const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-
-  const el = (id) => document.getElementById(id);
+  const totalPix      = todos.filter(p=>p.pagamento==='PIX').reduce((s,p)=>s+Number(p.total||0),0);
+  const totalCartao   = todos.filter(p=>['CRÉDITO','DÉBITO','CARTÃO'].includes(p.pagamento)).reduce((s,p)=>s+Number(p.total||0),0);
+  const totalDinheiro = todos.filter(p=>p.pagamento==='DINHEIRO').reduce((s,p)=>s+Number(p.total||0),0);
+  const totalGeral    = totalPix + totalCartao + totalDinheiro + Number(_caixaAbertura.valorAbertura||0);
+  const el = id => document.getElementById(id);
   if (el('caixa-total-pix'))      el('caixa-total-pix').textContent      = fmt(totalPix);
   if (el('caixa-total-cartao'))   el('caixa-total-cartao').textContent   = fmt(totalCartao);
   if (el('caixa-total-dinheiro')) el('caixa-total-dinheiro').textContent = fmt(totalDinheiro);
   if (el('caixa-total-geral'))    el('caixa-total-geral').textContent    = fmt(totalGeral);
   if (el('caixa-num-pedidos'))    el('caixa-num-pedidos').textContent    = todos.length + ' pedido(s)';
 }
+window.atualizarResumoCaixa = atualizarResumoCaixa;
 
 window.fecharCaixa = async function() {
   if (!confirm('Confirma o fechamento do caixa?')) return;
-
-  const estab = getEstab();
-  if (!estab) return;
-
-  const obs = document.getElementById('caixa-obs-fechamento')?.value.trim() || '';
   const agora = new Date();
-
-  try {
-    await getSupa().from('caixas')
-      .update({ status: 'fechado', fechado_em: agora.toISOString(), obs_fechamento: obs })
-      .eq('estabelecimento_id', estab.id)
-      .eq('status', 'aberto');
-  } catch(e) { /* tabela pode não existir */ }
-
   _caixaAberto   = false;
   _caixaAbertura = null;
-
-  // Reseta UI
-  const statusCard  = document.getElementById('caixa-status-card');
-  const statusLabel = document.getElementById('caixa-status-label');
-  const statusHora  = document.getElementById('caixa-status-hora');
-  const statusIcon  = document.getElementById('caixa-status-icon');
-  const abrirCard   = document.getElementById('caixa-abrir-card');
-  const fecharCard  = document.getElementById('caixa-fechar-card');
-
-  if (statusCard)  statusCard.style.background  = 'linear-gradient(135deg,#1a1a1a,#333)';
-  if (statusLabel) statusLabel.textContent       = '— Fechado —';
-  if (statusHora)  statusHora.textContent        = 'Fechado às ' + agora.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
-  if (statusIcon)  statusIcon.textContent        = '🔒';
-  if (abrirCard)   abrirCard.style.display       = 'block';
-  if (fecharCard)  fecharCard.style.display      = 'none';
-
+  const el = id => document.getElementById(id);
+  if (el('caixa-status-card'))  el('caixa-status-card').style.background  = 'linear-gradient(135deg,#1a1a1a,#333)';
+  if (el('caixa-status-label')) el('caixa-status-label').textContent       = '— Fechado —';
+  if (el('caixa-status-hora'))  el('caixa-status-hora').textContent        = 'Fechado às ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  if (el('caixa-status-icon'))  el('caixa-status-icon').textContent        = '🔒';
+  if (el('caixa-abrir-card'))   el('caixa-abrir-card').style.display       = 'block';
+  if (el('caixa-fechar-card'))  el('caixa-fechar-card').style.display      = 'none';
   showToast('🔒 Caixa fechado!');
 };
 
-window.atualizarResumoCaixa = atualizarResumoCaixa;
+// ── Fix selecionarPagamentoComanda para Crédito/Débito ────────────────────────
+const _selPagComandaOriginal = window.selecionarPagamentoComanda;
+window.selecionarPagamentoComanda = function(metodo) {
+  ['PIX','CARTÃO','DINHEIRO','CRÉDITO','DÉBITO'].forEach(m => {
+    const btn = document.getElementById('pgto-btn-' + m);
+    if (!btn) return;
+    btn.style.borderColor = '#e0dbd5';
+    btn.style.background  = '#fff';
+    btn.style.color       = '#555';
+  });
+  const btnSel = document.getElementById('pgto-btn-' + metodo);
+  if (btnSel) {
+    btnSel.style.borderColor = '#C0392B';
+    btnSel.style.background  = '#fff5f5';
+    btnSel.style.color       = '#C0392B';
+  }
+  if (metodo === 'CRÉDITO' || metodo === 'DÉBITO') {
+    const btnC = document.getElementById('pgto-btn-CARTÃO');
+    if (btnC) { btnC.style.borderColor='#C0392B'; btnC.style.background='#fff5f5'; btnC.style.color='#C0392B'; }
+  }
+  if (typeof _pagamentoComanda !== 'undefined') window._pagamentoComanda = metodo;
+  // Chama original para setar _pagamentoComanda interno
+  if (_selPagComandaOriginal) _selPagComandaOriginal(metodo);
+  const aviso = document.getElementById('pgto-aviso');
+  if (aviso) aviso.style.display = 'none';
+};
 
 // Exports das comandas — precisam estar em window para o onclick funcionar
 window.abrirComanda           = abrirComanda;
