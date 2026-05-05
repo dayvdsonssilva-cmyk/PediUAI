@@ -14,12 +14,17 @@ export function goTo(id) {
 }
 
 export function showTab(tabId, btn) {
+  // Salva posição do scroll antes de trocar aba (evita salto de posição)
+  const scrollY = window.scrollY;
+
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(`tab-${tabId}`)?.classList.add('active');
   btn?.classList.add('active');
-  // Salva aba ativa
   localStorage.setItem('pw_aba_ativa', tabId);
+
+  // Restaura scroll imediatamente — evita o salto visual ao trocar aba
+  requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: 'instant' }));
 }
 
 export function gerarSlug(nome) {
