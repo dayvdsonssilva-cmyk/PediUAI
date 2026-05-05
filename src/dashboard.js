@@ -7,7 +7,7 @@ import { showToast } from './utils.js';
 // ─────────────────────────────────────────────────────────────────────────────
 const BASE_URL = 'https://pediway.com.br';
 const CORES = [
-  // Cores sólidas 
+  // Cores sólidas
   '#C0392B','#E74C3C','#E67E22','#F39C12','#F1C40F',
   '#27AE60','#16A085','#1ABC9C','#2980B9','#3498DB',
   '#8E44AD','#9B59B6','#2C3E50','#34495E','#7F8C8D',
@@ -232,8 +232,8 @@ export async function initDashboard() {
   // Dados
   if (!window._isDemo) {
     await renderCardapio();
-  await restaurarCaixa();
-  await verificarExpiracaoQuente();
+    await restaurarCaixa();
+    await verificarExpiracaoQuente();
     await renderFresquinho();
     await renderPedidos();
     await carregarFinanceiro();
@@ -651,20 +651,18 @@ async function renderCardapio() {
   grid.innerHTML = filtrado.map(p => `
     <div class="item-card">
       <div class="item-card-img">
-        ${p.foto_url ? '<img class="item-img" src="'+(p.foto_url)+'" alt="'+(p.nome)+'">' : '<div class="item-emoji-bg">'+(p.emoji||'🍔')+'</div>'}
+        ${p.foto_url           ? '<img class="item-img" src="'+(p.foto_url)+'" alt="'+(p.nome)+'">'           : '<div class="item-emoji-bg">'+(p.emoji || '🍔')+'</div>'}
+        <span class="item-disponivel">${p.disponivel ? 'Disponível' : 'Indisponível'}</span>
         ${p.promocao ? '<span class="item-promo-badge">🔥 Promoção</span>' : ''}
+
       </div>
       <div class="item-body">
-        <div class="item-categoria">${p.categoria||'SEM CATEGORIA'}</div>
+        <div class="item-categoria">${p.categoria || 'SEM CATEGORIA'}</div>
         <div class="item-nome">${p.nome}</div>
-        <div class="item-desc-text">${p.descricao||''}</div>
+        <div class="item-desc-text">${p.descricao || ''}</div>
         <div class="item-footer">
           <div>
-            ${p.em_promocao && p.desconto_percent > 0
-              ? '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span class="item-promo-badge" style="background:#e65e32;color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;">🔥 '+(p.desconto_percent)+'% OFF</span><span class="item-preco-original">R$ '+(Number(p.preco_original||p.preco).toFixed(2).replace('.',','))+'</span></div><div class="item-preco" style="color:#e65e32;">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'
-              : p.promocao && p.preco_original
-                ? '<div class="item-preco-original">R$ '+(Number(p.preco_original).toFixed(2).replace('.',','))+'</div><div class="item-preco">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'
-                : '<div class="item-preco">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'}
+            ${p.em_promocao && p.desconto_percent > 0               ? '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">                   <span class="item-promo-badge" style="background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;">🔥 '+(p.desconto_percent)+'% OFF</span>                   <span class="item-preco-original">R$ '+(Number(p.preco_original||p.preco).toFixed(2).replace('.',','))+'</span>                 </div>                 <div class="item-preco" style="color:var(--red);">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'               : p.promocao && p.preco_original                 ? '<div class="item-preco-original">R$ '+(Number(p.preco_original).toFixed(2).replace('.',','))+'</div>                    <div class="item-preco">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'                 : '<div class="item-preco">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'}
           </div>
           <div class="item-acoes">
             <button class="btn-icon" onclick="editarItem('${p.id}')">✏️</button>
@@ -1855,17 +1853,10 @@ function filtroPedidosFin() {
     if (_finPeriodo === 'semana') { const s=new Date(now); s.setDate(s.getDate()-7); return d>=s; }
     if (_finPeriodo === 'mes')    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
     if (_finPeriodo === 'custom') {
-      // Lê as datas do calendário
       const deVal  = document.getElementById('fin-data-de')?.value;
       const ateVal = document.getElementById('fin-data-ate')?.value;
-      if (deVal) {
-        const de = new Date(deVal + 'T00:00:00');
-        if (d < de) return false;
-      }
-      if (ateVal) {
-        const ate = new Date(ateVal + 'T23:59:59');
-        if (d > ate) return false;
-      }
+      if (deVal && d < new Date(deVal + 'T00:00:00')) return false;
+      if (ateVal && d > new Date(ateVal + 'T23:59:59')) return false;
       return true;
     }
     return true;
@@ -2845,76 +2836,6 @@ function marcarEnviadoCozinha(pedidoId) {
 }
 
 // ── Imprimir ticket de cozinha (pedido individual) ────────────────────────────
-// ── Comprovante estilo WhatsApp para o cliente ───────────────────────────────
-window.imprimirComprovanteCliente = async function(id) {
-  const { data: p } = await getSupa().from('pedidos').select('*').eq('id', id).maybeSingle();
-  if (!p) return;
-  const estab  = getEstab();
-  const itens  = Array.isArray(p.itens) ? p.itens : [];
-  const fmtR   = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  const numPed = '#' + p.id.slice(-6).toUpperCase();
-  const data   = new Date(p.created_at);
-  const dataFmt= data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  const isEntrega = p.endereco && p.endereco !== 'Retirada no local' && !p.endereco.startsWith('No local');
-  const insta  = estab?.instagram ? '@' + estab.instagram.replace('@','') : '';
-  const ttok   = estab?.tiktok   ? '@' + estab.tiktok.replace('@','')   : '';
-  const tel    = estab?.telefone_contato || estab?.whatsapp || '';
-  const msgFim = estab?.msg_nota || 'Obrigado pela preferência!';
-  const pgto   = (p.pagamento || 'Não informado').toUpperCase();
-  const total  = Number(p.total||0);
-  const taxa   = Number(p.taxa_entrega||0);
-
-  const itensHtml = itens.map(i => {
-    const sub  = Number((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');
-    const adds = Array.isArray(i.adicionais) && i.adicionais.length
-      ? '+ Adicionais'
-      : '';
-    return `${i.qtd||1}x ${i.nome}${adds ? '   '+adds : ''}   R$ ${sub}`;
-  }).join('\n');
-
-  const sep  = '━━━━━━━━━━━━━━━━━━━';
-  const nl   = '\n';
-  const enderecoLinha = isEntrega ? ('🔵 ENTREGA' + nl + '📍 ' + p.endereco) : '🔴 RETIRADA';
-  const taxaLinha     = taxa > 0  ? ('📦 Entrega: ' + fmtR(taxa) + nl) : '';
-  const socialLinha   = [insta ? '📲 Instagram: ' + insta : '', ttok ? '🎵 TikTok: ' + ttok : ''].filter(Boolean).join('   ');
-
-  const corpo = [
-    '🍔 ' + (estab?.nome||'Estabelecimento'),
-    estab?.endereco || '',
-    tel ? '📞 ' + tel : '',
-    sep,
-    '🧾 PEDIDO ' + numPed,
-    '📅 ' + dataFmt,
-    enderecoLinha,
-    sep,
-    '👤 CLIENTE ' + (p.cliente_nome||'-'),
-    p.cliente_whats ? '📱 ' + p.cliente_whats : '',
-    sep,
-    '🛒 ITENS DO PEDIDO',
-    itensHtml,
-    sep,
-    taxaLinha + '💰 TOTAL ' + fmtR(total),
-    sep,
-    '💳 PAGAMENTO ' + pgto,
-    sep,
-    socialLinha,
-    '🙏 ' + msgFim,
-  ].filter(function(l){return l !== '';}).join(nl);
-
-  const htmlComp = '<!DOCTYPE html><html><head>'
-    + '<meta charset="UTF-8"><title>Comprovante ' + numPed + '</title>'
-    + '<style>body{font-family:Courier New,monospace;font-size:13px;background:#fff;padding:20px;max-width:380px;margin:0 auto;color:#111}'
-    + 'pre{font-family:inherit;white-space:pre-wrap;word-break:break-word;margin:0}'
-    + '@media print{body{padding:4px}}</style></head><body><pre>'
-    + corpo + '</pre></body></html>';
-
-  const w = window.open('', '_blank', 'width=420,height=680');
-  w.document.write(htmlComp);
-  w.document.close();
-  setTimeout(() => w.print(), 400);
-
-};
-
 window.imprimirCozinha = function(pedidoId) {
   getSupa().from('pedidos').select('*').eq('id', pedidoId).maybeSingle().then(({ data: p }) => {
     if (!p) return;
@@ -3606,313 +3527,6 @@ window.executarFecharComanda = async function() {
 
 
 
-// ── Toggle categoria colapsável no cardápio ──────────────────────────────────
-window.toggleCatCardapio = function(catId) {
-  const el    = document.getElementById(catId);
-  const arrow = document.getElementById('arrow-' + catId);
-  if (!el) return;
-  const aberto = el.style.display !== 'none';
-  el.style.display = aberto ? 'none' : 'grid';
-  if (arrow) arrow.style.transform = aberto ? 'rotate(-90deg)' : 'rotate(0deg)';
-};
-
-// ── Toggle submenu Cartão nas comandas ────────────────────────────────────────
-window.toggleCartaoSubMenu = function() {
-  const sub = document.getElementById('pgto-cartao-submenu');
-  const btn = document.getElementById('pgto-btn-CARTÃO');
-  if (!sub) return;
-  const abrindo = sub.style.display === 'none' || !sub.style.display;
-  sub.style.display = abrindo ? 'flex' : 'none';
-  sub.style.flexDirection = 'column';
-  if (btn) {
-    btn.style.borderColor = abrindo ? '#C0392B' : '#e0dbd5';
-    btn.style.background  = abrindo ? '#fff5f5' : '#fff';
-    btn.style.color       = abrindo ? '#C0392B' : '#555';
-  }
-};
-
-// ── CAIXA ─────────────────────────────────────────────────────────────────────
-// abrirCaixa definida abaixo
-window.abrirCaixa = async function() {
-  const estab = getEstab();
-  if (!estab) return;
-  const valorAbertura = parseFloat(document.getElementById('caixa-valor-abertura')?.value || 0);
-  const operador      = document.getElementById('caixa-operador')?.value.trim() || 'Operador';
-  const obs           = document.getElementById('caixa-obs-abertura')?.value.trim() || '';
-  const agora         = new Date();
-  _caixaAberto   = true;
-  _caixaAbertura = { valorAbertura, operador, obs, hora: agora.toISOString(), aberto: true };
-
-  // Persiste no localStorage — sobrevive a refresh e fechamento do browser
-  try { localStorage.setItem('pw_caixa_' + estab.id, JSON.stringify(_caixaAbertura)); } catch(e) {}
-
-  const el = id => document.getElementById(id);
-  if (el('caixa-status-card'))  el('caixa-status-card').style.background  = 'linear-gradient(135deg,#16a34a,#15803d)';
-  if (el('caixa-status-label')) el('caixa-status-label').textContent       = '— Aberto —';
-  if (el('caixa-status-hora'))  el('caixa-status-hora').textContent        = 'Desde ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  if (el('caixa-status-icon'))  el('caixa-status-icon').textContent        = '🔓';
-  if (el('caixa-abrir-card'))   el('caixa-abrir-card').style.display       = 'none';
-  if (el('caixa-fechar-card'))  el('caixa-fechar-card').style.display      = 'block';
-  if (el('caixa-operador-label')) el('caixa-operador-label').textContent   = 'Operador: ' + operador;
-
-  await atualizarResumoCaixa();
-  iniciarAutoRefreshCaixa();
-  showToast('✅ Caixa aberto!');
-};
-
-async function atualizarResumoCaixa() {
-  const estab = getEstab();
-  if (!estab || !_caixaAberto || !_caixaAbertura) return;
-  const { data: peds } = await getSupa().from('pedidos')
-    .select('total,pagamento')
-    .eq('estabelecimento_id', estab.id)
-    .gte('created_at', _caixaAbertura.hora);
-  const todos = peds || [];
-  const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-  const totalPix      = todos.filter(p=>p.pagamento==='PIX').reduce((s,p)=>s+Number(p.total||0),0);
-  const totalCartao   = todos.filter(p=>['CRÉDITO','DÉBITO','CARTÃO'].includes(p.pagamento)).reduce((s,p)=>s+Number(p.total||0),0);
-  const totalDinheiro = todos.filter(p=>p.pagamento==='DINHEIRO').reduce((s,p)=>s+Number(p.total||0),0);
-  const totalGeral    = totalPix + totalCartao + totalDinheiro + Number(_caixaAbertura.valorAbertura||0);
-  const el = id => document.getElementById(id);
-  if (el('caixa-total-pix'))      el('caixa-total-pix').textContent      = fmt(totalPix);
-  if (el('caixa-total-cartao'))   el('caixa-total-cartao').textContent   = fmt(totalCartao);
-  if (el('caixa-total-dinheiro')) el('caixa-total-dinheiro').textContent = fmt(totalDinheiro);
-  if (el('caixa-total-geral'))    el('caixa-total-geral').textContent    = fmt(totalGeral);
-  if (el('caixa-num-pedidos'))    el('caixa-num-pedidos').textContent    = todos.length + ' pedido(s)';
-}
-window.atualizarResumoCaixa = atualizarResumoCaixa;
-
-async function restaurarCaixa() {
-  const estab = getEstab();
-  if (!estab || estab.id === 'demo') return;
-  try {
-    const salvo = JSON.parse(localStorage.getItem('pw_caixa_' + estab.id) || 'null');
-    if (!salvo || !salvo.aberto || !salvo.hora) return;
-    _caixaAberto   = true;
-    _caixaAbertura = salvo;
-    // Restaura UI
-    const el = id => document.getElementById(id);
-    const agora = new Date(salvo.hora);
-    if (el('caixa-status-card'))    el('caixa-status-card').style.background    = 'linear-gradient(135deg,#16a34a,#15803d)';
-    if (el('caixa-status-label'))   el('caixa-status-label').textContent         = '— Aberto —';
-    if (el('caixa-status-hora'))    el('caixa-status-hora').textContent           = 'Desde ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    if (el('caixa-status-icon'))    el('caixa-status-icon').textContent           = '🔓';
-    if (el('caixa-abrir-card'))     el('caixa-abrir-card').style.display          = 'none';
-    if (el('caixa-fechar-card'))    el('caixa-fechar-card').style.display         = 'block';
-    if (el('caixa-operador-label')) el('caixa-operador-label').textContent        = 'Operador: ' + (salvo.operador||'Operador');
-    await atualizarResumoCaixa();
-    iniciarAutoRefreshCaixa();
-  } catch(e) {}
-}
-window.restaurarCaixa = restaurarCaixa;
-
-// Auto-atualiza resumo do caixa a cada 30s quando aberto
-let _caixaAberto    = false;
-let _caixaAbertura  = null;
-let _caixaId        = null;
-let _caixaAutoRefreshInterval = null;
-function iniciarAutoRefreshCaixa() {
-  if (_caixaAutoRefreshInterval) clearInterval(_caixaAutoRefreshInterval);
-  _caixaAutoRefreshInterval = setInterval(async () => {
-    if (_caixaAberto) await atualizarResumoCaixa();
-  }, 30000);
-}
-function pararAutoRefreshCaixa() {
-  if (_caixaAutoRefreshInterval) { clearInterval(_caixaAutoRefreshInterval); _caixaAutoRefreshInterval = null; }
-}
-
-window.fecharCaixa = async function() {
-  if (!confirm('Confirma o fechamento do caixa? Um comprovante será gerado.')) return;
-  const estab = getEstab();
-  const agora = new Date();
-  const fmt   = v => 'R$ ' + Number(v||0).toFixed(2).replace('.',',');
-
-  // Coleta totais do período
-  let totalPix = 0, totalCartao = 0, totalDinheiro = 0, numPedidos = 0;
-  try {
-    const { data: peds } = await getSupa().from('pedidos')
-      .select('total,pagamento')
-      .eq('estabelecimento_id', estab.id)
-      .gte('created_at', _caixaAbertura?.hora || agora.toISOString());
-    const todos = peds || [];
-    numPedidos    = todos.length;
-    totalPix      = todos.filter(p=>p.pagamento==='PIX').reduce((s,p)=>s+Number(p.total||0),0);
-    totalCartao   = todos.filter(p=>['CRÉDITO','DÉBITO','CARTÃO'].includes(p.pagamento)).reduce((s,p)=>s+Number(p.total||0),0);
-    totalDinheiro = todos.filter(p=>p.pagamento==='DINHEIRO').reduce((s,p)=>s+Number(p.total||0),0);
-  } catch(e) {}
-
-  const totalGeral    = totalPix + totalCartao + totalDinheiro + Number(_caixaAbertura?.valorAbertura||0);
-  const horaAbertura  = _caixaAbertura?.hora ? new Date(_caixaAbertura.hora).toLocaleString('pt-BR') : '—';
-  const operador      = _caixaAbertura?.operador || 'Operador';
-  const valorAbertura = _caixaAbertura?.valorAbertura || 0;
-
-  // Limpa persistência
-  try { localStorage.removeItem('pw_caixa_' + estab?.id); } catch(e) {}
-  pararAutoRefreshCaixa();
-
-  _caixaAberto   = false;
-  _caixaAbertura = null;
-  _caixaId       = null;
-
-  const el = id => document.getElementById(id);
-  if (el('caixa-status-card'))  el('caixa-status-card').style.background  = 'linear-gradient(135deg,#1a1a1a,#333)';
-  if (el('caixa-status-label')) el('caixa-status-label').textContent       = '— Fechado —';
-  if (el('caixa-status-hora'))  el('caixa-status-hora').textContent        = 'Fechado às ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  if (el('caixa-status-icon'))  el('caixa-status-icon').textContent        = '🔒';
-  if (el('caixa-abrir-card'))   el('caixa-abrir-card').style.display       = 'block';
-  if (el('caixa-fechar-card'))  el('caixa-fechar-card').style.display      = 'none';
-
-  showToast('🔒 Caixa fechado!');
-
-  // Gera comprovante de fechamento
-  const sep  = '════════════════════';
-  const nl   = '\n';
-  const corpo = [
-    'FECHAMENTO DE CAIXA',
-    sep,
-    estab?.nome || 'Estabelecimento',
-    sep,
-    'Operador: ' + operador,
-    'Abertura: ' + horaAbertura,
-    'Fechamento: ' + agora.toLocaleString('pt-BR'),
-    sep,
-    'Fundo de caixa: ' + fmt(valorAbertura),
-    sep,
-    'RECEBIMENTOS:',
-    '  PIX:      ' + fmt(totalPix),
-    '  Cartao:   ' + fmt(totalCartao),
-    '  Dinheiro: ' + fmt(totalDinheiro),
-    sep,
-    'TOTAL GERAL: ' + fmt(totalGeral),
-    sep,
-    'Pedidos: ' + numPedidos,
-    sep,
-    'Gerado em: ' + agora.toLocaleString('pt-BR'),
-  ].join(nl);
-
-  const htmlComp = '<!DOCTYPE html><html><head>'
-    + '<meta charset="UTF-8"><title>Fechamento de Caixa</title>'
-    + '<style>body{font-family:Courier New,monospace;font-size:14px;padding:20px;max-width:360px;margin:0 auto}'
-    + 'pre{white-space:pre-wrap;margin:0}'
-    + '@media print{body{padding:4px}}</style>'
-    + '</head><body><pre>' + corpo + '</pre></body></html>';
-
-  const w = window.open('', '_blank', 'width=400,height=600');
-  if (w) { w.document.write(htmlComp); w.document.close(); setTimeout(function(){ w.print(); }, 500); }
-};
-
-// ── Fix selecionarPagamentoComanda para Crédito/Débito ────────────────────────
-const _selPagComandaOriginal = window.selecionarPagamentoComanda;
-window.selecionarPagamentoComanda = function(metodo) {
-  ['PIX','CARTÃO','DINHEIRO','CRÉDITO','DÉBITO'].forEach(m => {
-    const btn = document.getElementById('pgto-btn-' + m);
-    if (!btn) return;
-    btn.style.borderColor = '#e0dbd5';
-    btn.style.background  = '#fff';
-    btn.style.color       = '#555';
-  });
-  const btnSel = document.getElementById('pgto-btn-' + metodo);
-  if (btnSel) {
-    btnSel.style.borderColor = '#C0392B';
-    btnSel.style.background  = '#fff5f5';
-    btnSel.style.color       = '#C0392B';
-  }
-  if (metodo === 'CRÉDITO' || metodo === 'DÉBITO') {
-    const btnC = document.getElementById('pgto-btn-CARTÃO');
-    if (btnC) { btnC.style.borderColor='#C0392B'; btnC.style.background='#fff5f5'; btnC.style.color='#C0392B'; }
-  }
-  if (typeof _pagamentoComanda !== 'undefined') window._pagamentoComanda = metodo;
-  // Chama original para setar _pagamentoComanda interno
-  if (_selPagComandaOriginal) _selPagComandaOriginal(metodo);
-  const aviso = document.getElementById('pgto-aviso');
-  if (aviso) aviso.style.display = 'none';
-};
-
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// FILTRO DE PEDIDOS POR DATA
-// ═══════════════════════════════════════════════════════════════════════════════
-window.filtrarPedidosData = function() {
-  const deVal  = document.getElementById('ped-data-de')?.value;
-  const ateVal = document.getElementById('ped-data-ate')?.value;
-
-  document.querySelectorAll('#todos-pedidos .pedido-card').forEach(card => {
-    const dataStr = card.dataset.createdAt || card.querySelector('[data-created]')?.dataset.created || '';
-    if (!dataStr) { card.style.display = ''; return; }
-
-    const d = new Date(dataStr);
-    let mostrar = true;
-
-    if (deVal) {
-      const de = new Date(deVal + 'T00:00:00');
-      if (d < de) mostrar = false;
-    }
-    if (ateVal && mostrar) {
-      const ate = new Date(ateVal + 'T23:59:59');
-      if (d > ate) mostrar = false;
-    }
-
-    card.style.display = mostrar ? '' : 'none';
-  });
-
-  // Se não há cards visíveis, mostra mensagem
-  const todos = document.querySelectorAll('#todos-pedidos .pedido-card');
-  const visiveis = [...todos].filter(c => c.style.display !== 'none');
-  const lista = document.getElementById('todos-pedidos');
-  const msgId = 'ped-sem-resultado';
-  document.getElementById(msgId)?.remove();
-  if (todos.length > 0 && visiveis.length === 0) {
-    const msg = document.createElement('div');
-    msg.id = msgId;
-    msg.className = 'empty-state-light';
-    msg.innerHTML = '<span>📅</span><p>Nenhum pedido no período selecionado.</p>';
-    lista?.appendChild(msg);
-  }
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// QUENTE — DESATIVA PROMOÇÕES AUTOMATICAMENTE À MEIA-NOITE
-// ═══════════════════════════════════════════════════════════════════════════════
-async function verificarExpiracaoQuente() {
-  const estab = getEstab();
-  if (!estab || estab.id === 'demo') return;
-
-  const hoje = new Date().toDateString();
-  const chave = 'pw_quente_dia_' + estab.id;
-  const diaSalvo = localStorage.getItem(chave);
-
-  if (diaSalvo === hoje) return; // já verificou hoje
-
-  // Dia mudou — desativa todas as promoções QUENTE
-  try {
-    const { data: promos } = await getSupa()
-      .from('produtos')
-      .select('id, preco_original')
-      .eq('estabelecimento_id', estab.id)
-      .eq('em_promocao', true);
-
-    if (promos?.length) {
-      for (const p of promos) {
-        await getSupa().from('produtos').update({
-          em_promocao:      false,
-          desconto_percent: 0,
-          preco:            p.preco_original || undefined,
-        }).eq('id', p.id);
-      }
-      showToast('🌅 Promoções QUENTE do dia anterior foram desativadas.');
-      await renderCardapio();
-    }
-  } catch(e) { /* falha silenciosa */ }
-
-  localStorage.setItem(chave, hoje);
-}
-
-// Verifica a cada hora se o dia mudou
-setInterval(verificarExpiracaoQuente, 60 * 60 * 1000);
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// CAIXA PERSISTENTE (Supabase) + HISTÓRICO + COMPROVANTE
-// ═══════════════════════════════════════════════════════════════════════════════
 // Exports das comandas — precisam estar em window para o onclick funcionar
 window.abrirComanda           = abrirComanda;
 window.confirmarFecharComanda = confirmarFecharComanda;
@@ -4149,4 +3763,239 @@ window.initCfgAccordion = function() {
       }
     });
   });
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FILTRO DE PEDIDOS POR DATA
+// ═══════════════════════════════════════════════════════════════════════════
+window.filtrarPedidosData = function() {
+  const deVal  = document.getElementById('ped-data-de')?.value;
+  const ateVal = document.getElementById('ped-data-ate')?.value;
+  document.querySelectorAll('#todos-pedidos .pedido-card').forEach(function(card) {
+    const dataStr = card.dataset.createdAt || '';
+    if (!dataStr) { card.style.display = ''; return; }
+    const d = new Date(dataStr);
+    var mostrar = true;
+    if (deVal && d < new Date(deVal + 'T00:00:00')) mostrar = false;
+    if (ateVal && d > new Date(ateVal + 'T23:59:59')) mostrar = false;
+    card.style.display = mostrar ? '' : 'none';
+  });
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// QUENTE — DESATIVA PROMOÇÕES AUTOMATICAMENTE AO VIRAR O DIA
+// ═══════════════════════════════════════════════════════════════════════════
+async function verificarExpiracaoQuente() {
+  const estab = getEstab();
+  if (!estab || estab.id === 'demo') return;
+  const hoje    = new Date().toDateString();
+  const chave   = 'pw_quente_dia_' + estab.id;
+  if (localStorage.getItem(chave) === hoje) return;
+  try {
+    const { data: promos } = await getSupa()
+      .from('produtos').select('id,preco_original')
+      .eq('estabelecimento_id', estab.id).eq('em_promocao', true);
+    if (promos && promos.length) {
+      for (var p of promos) {
+        await getSupa().from('produtos').update({ em_promocao: false, desconto_percent: 0 }).eq('id', p.id);
+      }
+      showToast('Promoções QUENTE do dia anterior foram desativadas.');
+      await renderCardapio();
+    }
+  } catch(e) {}
+  localStorage.setItem(chave, hoje);
+}
+setInterval(function() { verificarExpiracaoQuente(); }, 60 * 60 * 1000);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CAIXA — PERSISTENTE (localStorage primário, Supabase secundário)
+// ═══════════════════════════════════════════════════════════════════════════
+var _caixaAberto   = false;
+var _caixaAbertura = null;
+var _caixaId       = null;
+var _caixaTimer    = null;
+
+function iniciarAutoRefreshCaixa() {
+  if (_caixaTimer) clearInterval(_caixaTimer);
+  _caixaTimer = setInterval(function() { if (_caixaAberto) atualizarResumoCaixa(); }, 30000);
+}
+function pararAutoRefreshCaixa() {
+  if (_caixaTimer) { clearInterval(_caixaTimer); _caixaTimer = null; }
+}
+
+async function atualizarResumoCaixa() {
+  var estab = getEstab();
+  if (!estab || !_caixaAberto || !_caixaAbertura) return;
+  var fmt = function(v) { return 'R$ ' + Number(v||0).toFixed(2).replace('.',','); };
+  try {
+    var res = await getSupa().from('pedidos').select('total,pagamento')
+      .eq('estabelecimento_id', estab.id).gte('created_at', _caixaAbertura.hora);
+    var todos = res.data || [];
+    var totalPix      = todos.filter(function(p){return p.pagamento==='PIX';}).reduce(function(s,p){return s+Number(p.total||0);},0);
+    var totalCartao   = todos.filter(function(p){return ['CRÉDITO','DÉBITO','CARTÃO'].includes(p.pagamento);}).reduce(function(s,p){return s+Number(p.total||0);},0);
+    var totalDinheiro = todos.filter(function(p){return p.pagamento==='DINHEIRO';}).reduce(function(s,p){return s+Number(p.total||0);},0);
+    var totalGeral    = totalPix + totalCartao + totalDinheiro + Number(_caixaAbertura.valorAbertura||0);
+    var el = function(id){return document.getElementById(id);};
+    if (el('caixa-total-pix'))      el('caixa-total-pix').textContent      = fmt(totalPix);
+    if (el('caixa-total-cartao'))   el('caixa-total-cartao').textContent   = fmt(totalCartao);
+    if (el('caixa-total-dinheiro')) el('caixa-total-dinheiro').textContent = fmt(totalDinheiro);
+    if (el('caixa-total-geral'))    el('caixa-total-geral').textContent    = fmt(totalGeral);
+    if (el('caixa-num-pedidos'))    el('caixa-num-pedidos').textContent    = todos.length + ' pedido(s)';
+  } catch(e) {}
+}
+window.atualizarResumoCaixa = atualizarResumoCaixa;
+
+function aplicarUICaixaAberto(operador, hora) {
+  var el = function(id){return document.getElementById(id);};
+  var agora = new Date(hora);
+  if (el('caixa-status-card'))    el('caixa-status-card').style.background    = 'linear-gradient(135deg,#16a34a,#15803d)';
+  if (el('caixa-status-label'))   el('caixa-status-label').textContent         = '— Aberto —';
+  if (el('caixa-status-hora'))    el('caixa-status-hora').textContent           = 'Desde ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  if (el('caixa-status-icon'))    el('caixa-status-icon').textContent           = '🔓';
+  if (el('caixa-abrir-card'))     el('caixa-abrir-card').style.display          = 'none';
+  if (el('caixa-fechar-card'))    el('caixa-fechar-card').style.display         = 'block';
+  if (el('caixa-operador-label')) el('caixa-operador-label').textContent        = 'Operador: ' + (operador||'Operador');
+}
+
+async function restaurarCaixa() {
+  var estab = getEstab();
+  if (!estab || estab.id === 'demo') return;
+  try {
+    var salvo = JSON.parse(localStorage.getItem('pw_caixa_' + estab.id) || 'null');
+    if (salvo && salvo.aberto && salvo.hora) {
+      _caixaAberto   = true;
+      _caixaAbertura = salvo;
+      aplicarUICaixaAberto(salvo.operador, salvo.hora);
+      await atualizarResumoCaixa();
+      iniciarAutoRefreshCaixa();
+    }
+  } catch(e) {}
+}
+window.restaurarCaixa = restaurarCaixa;
+
+window.abrirCaixa = async function() {
+  var estab = getEstab();
+  if (!estab) return;
+  var valorAbertura = parseFloat(document.getElementById('caixa-valor-abertura')?.value || 0);
+  var operador      = (document.getElementById('caixa-operador')?.value.trim() || 'Operador').slice(0,100);
+  var obs           = (document.getElementById('caixa-obs-abertura')?.value.trim() || '').slice(0,300);
+  var agora         = new Date();
+  _caixaAberto   = true;
+  _caixaAbertura = { valorAbertura: valorAbertura, operador: operador, obs: obs, hora: agora.toISOString(), aberto: true };
+  try { localStorage.setItem('pw_caixa_' + estab.id, JSON.stringify(_caixaAbertura)); } catch(e) {}
+  aplicarUICaixaAberto(operador, agora.toISOString());
+  await atualizarResumoCaixa();
+  iniciarAutoRefreshCaixa();
+  showToast('✅ Caixa aberto!');
+};
+
+window.fecharCaixa = async function() {
+  if (!confirm('Confirma o fechamento do caixa? Um comprovante será gerado.')) return;
+  var estab = getEstab();
+  var agora = new Date();
+  var fmt   = function(v){return 'R$ ' + Number(v||0).toFixed(2).replace('.',',');};
+  var totalPix = 0, totalCartao = 0, totalDinheiro = 0, numPedidos = 0;
+  try {
+    var res = await getSupa().from('pedidos').select('total,pagamento')
+      .eq('estabelecimento_id', estab.id)
+      .gte('created_at', _caixaAbertura?.hora || agora.toISOString());
+    var todos = res.data || [];
+    numPedidos    = todos.length;
+    totalPix      = todos.filter(function(p){return p.pagamento==='PIX';}).reduce(function(s,p){return s+Number(p.total||0);},0);
+    totalCartao   = todos.filter(function(p){return ['CRÉDITO','DÉBITO','CARTÃO'].includes(p.pagamento);}).reduce(function(s,p){return s+Number(p.total||0);},0);
+    totalDinheiro = todos.filter(function(p){return p.pagamento==='DINHEIRO';}).reduce(function(s,p){return s+Number(p.total||0);},0);
+  } catch(e) {}
+  var totalGeral = totalPix + totalCartao + totalDinheiro + Number(_caixaAbertura?.valorAbertura||0);
+  try { localStorage.removeItem('pw_caixa_' + estab?.id); } catch(e) {}
+  pararAutoRefreshCaixa();
+  _caixaAberto = false; _caixaAbertura = null; _caixaId = null;
+  var el = function(id){return document.getElementById(id);};
+  if (el('caixa-status-card'))  el('caixa-status-card').style.background  = 'linear-gradient(135deg,#1a1a1a,#333)';
+  if (el('caixa-status-label')) el('caixa-status-label').textContent       = '— Fechado —';
+  if (el('caixa-status-hora'))  el('caixa-status-hora').textContent        = 'Fechado às ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  if (el('caixa-status-icon'))  el('caixa-status-icon').textContent        = '🔒';
+  if (el('caixa-abrir-card'))   el('caixa-abrir-card').style.display       = 'block';
+  if (el('caixa-fechar-card'))  el('caixa-fechar-card').style.display      = 'none';
+  showToast('🔒 Caixa fechado!');
+  var sep = '════════════════════';
+  var nl  = '\n';
+  var corpo = [
+    'FECHAMENTO DE CAIXA', sep,
+    estab?.nome || 'Estabelecimento', sep,
+    'Operador: '   + (_caixaAbertura?.operador || 'Operador'),
+    'Abertura: '   + new Date(_caixaAbertura?.hora || agora).toLocaleString('pt-BR'),
+    'Fechamento: ' + agora.toLocaleString('pt-BR'), sep,
+    'Fundo de caixa: ' + fmt(_caixaAbertura?.valorAbertura || 0), sep,
+    'RECEBIMENTOS:',
+    '  PIX:      ' + fmt(totalPix),
+    '  Cartao:   ' + fmt(totalCartao),
+    '  Dinheiro: ' + fmt(totalDinheiro), sep,
+    'TOTAL GERAL: ' + fmt(totalGeral), sep,
+    'Pedidos: ' + numPedidos, sep,
+    'Gerado em: ' + agora.toLocaleString('pt-BR'),
+  ].join(nl);
+  var htmlComp = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fechamento</title>'
+    + '<style>body{font-family:Courier New,monospace;font-size:14px;padding:20px;max-width:360px;margin:0 auto}'
+    + 'pre{white-space:pre-wrap;margin:0}@media print{body{padding:4px}}</style>'
+    + '</head><body><pre>' + corpo + '</pre></body></html>';
+  var w = window.open('', '_blank', 'width=400,height=600');
+  if (w) { w.document.write(htmlComp); w.document.close(); setTimeout(function(){w.print();}, 500); }
+};
+
+// Comprovante do cliente (estilo cupom)
+window.imprimirComprovanteCliente = async function(id) {
+  var res = await getSupa().from('pedidos').select('*').eq('id', id).maybeSingle();
+  var p   = res.data;
+  if (!p) return;
+  var estab   = getEstab();
+  var itens   = Array.isArray(p.itens) ? p.itens : [];
+  var fmtR    = function(v){return 'R$ ' + Number(v||0).toFixed(2).replace('.',',');};
+  var numPed  = '#' + p.id.slice(-6).toUpperCase();
+  var data    = new Date(p.created_at);
+  var dataFmt = data.toLocaleDateString('pt-BR') + ' as ' + data.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  var isEntrega = p.endereco && p.endereco !== 'Retirada no local' && !p.endereco.startsWith('No local');
+  var insta   = estab?.instagram ? '@' + estab.instagram.replace('@','') : '';
+  var ttok    = estab?.tiktok    ? '@' + estab.tiktok.replace('@','')    : '';
+  var tel     = estab?.telefone_contato || estab?.whatsapp || '';
+  var msgFim  = estab?.msg_nota || 'Obrigado pela preferencia!';
+  var pgto    = (p.pagamento || 'Nao informado').toUpperCase();
+  var taxa    = Number(p.taxa_entrega||0);
+  var total   = Number(p.total||0);
+  var sep     = '━━━━━━━━━━━━━━━━━━━';
+  var nl      = '\n';
+  var itensLinhas = itens.map(function(i) {
+    var sub  = Number((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');
+    var adds = Array.isArray(i.adicionais) && i.adicionais.length ? ' + Adicionais' : '';
+    return (i.qtd||1) + 'x ' + (i.nome||'') + adds + '   R$ ' + sub;
+  }).join(nl);
+  var social = [insta ? 'Instagram: ' + insta : '', ttok ? 'TikTok: ' + ttok : ''].filter(function(s){return s!=='';}).join('   ');
+  var corpo = [
+    (estab?.nome || 'Estabelecimento'),
+    estab?.endereco || '',
+    tel ? 'Tel: ' + tel : '',
+    sep,
+    'PEDIDO ' + numPed,
+    'Data: ' + dataFmt,
+    isEntrega ? ('ENTREGA\nEndereço: ' + p.endereco) : 'RETIRADA',
+    sep,
+    'CLIENTE: ' + (p.cliente_nome||'-'),
+    p.cliente_whats ? 'WhatsApp: ' + p.cliente_whats : '',
+    sep,
+    'ITENS DO PEDIDO',
+    itensLinhas,
+    sep,
+    taxa > 0 ? 'Entrega: ' + fmtR(taxa) : '',
+    'TOTAL: ' + fmtR(total),
+    sep,
+    'PAGAMENTO: ' + pgto,
+    sep,
+    social,
+    msgFim,
+  ].filter(function(l){return l !== '';}).join(nl);
+  var htmlComp = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Pedido ' + numPed + '</title>'
+    + '<style>body{font-family:Courier New,monospace;font-size:13px;padding:20px;max-width:380px;margin:0 auto}'
+    + 'pre{white-space:pre-wrap;margin:0}@media print{body{padding:4px}}</style>'
+    + '</head><body><pre>' + corpo + '</pre></body></html>';
+  var w = window.open('', '_blank', 'width=420,height=680');
+  if (w) { w.document.write(htmlComp); w.document.close(); setTimeout(function(){w.print();}, 400); }
 };
