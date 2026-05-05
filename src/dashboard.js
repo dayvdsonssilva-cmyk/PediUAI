@@ -3309,9 +3309,25 @@ function renderCardapioComanda(mesaKey, prods) {
         <span class="cmd-item-preco">R$ ${precoFmt}</span>
       </div>`;
     }).join('');
-    return `<span class="cmd-cat-label">${cat}</span>${itemsHtml}`;
+    const catId = 'comanda-cat-' + cat.replace(/[^a-z0-9]/gi,'-').toLowerCase();
+    return '<div style="margin-bottom:4px">'
+      + '<div style="display:flex;align-items:center;gap:8px;padding:6px 0 4px;cursor:pointer" onclick="toggleComandaCat('' + catId + '')">'
+      + '<span style="font-size:.6rem;font-weight:800;color:#aaa;text-transform:uppercase;letter-spacing:.08em;flex:1">' + cat + '</span>'
+      + '<span id="arrow-' + catId + '" style="font-size:.6rem;color:#ccc">▼</span>'
+      + '</div>'
+      + '<div id="' + catId + '">' + itemsHtml + '</div>'
+      + '</div>';
   }).join('');
 }
+
+window.toggleComandaCat = function(catId) {
+  var el = document.getElementById(catId);
+  var arrow = document.getElementById('arrow-' + catId);
+  if (!el) return;
+  var aberto = el.style.display !== 'none';
+  el.style.display = aberto ? 'none' : 'block';
+  if (arrow) arrow.textContent = aberto ? '▶' : '▼';
+};
 
 
 function renderPedidosComanda(mesaKey) {
@@ -3457,21 +3473,39 @@ window.removerTaxaServico = function() {
   if (btn) btn.style.display = 'none';
 };
 
+// Toggle submenu Crédito/Débito
+window.toggleCartaoSubMenu = function() {
+  const sub = document.getElementById('pgto-cartao-submenu');
+  const btn = document.getElementById('pgto-btn-CARTÃO');
+  if (!sub) return;
+  const abrindo = sub.style.display === 'none' || !sub.style.display;
+  sub.style.display = abrindo ? 'flex' : 'none';
+  sub.style.flexDirection = 'column';
+  if (btn) {
+    btn.style.borderColor = abrindo ? '#C0392B' : '#e0dbd5';
+    btn.style.background  = abrindo ? '#fff5f5' : '#fff';
+    btn.style.color       = abrindo ? '#C0392B' : '#555';
+  }
+};
+
 window.selecionarPagamentoComanda = function(metodo) {
   _pagamentoComanda = metodo;
-  ['PIX','CARTÃO','DINHEIRO'].forEach(m => {
+  // Reseta todos os botões
+  ['PIX','CARTÃO','DINHEIRO','CRÉDITO','DÉBITO'].forEach(m => {
     const btn = document.getElementById('pgto-btn-' + m);
     if (!btn) return;
-    if (m === metodo) {
-      btn.style.borderColor = '#C0392B';
-      btn.style.background  = '#fff5f5';
-      btn.style.color       = '#C0392B';
-    } else {
-      btn.style.borderColor = '#e0dbd5';
-      btn.style.background  = '#fff';
-      btn.style.color       = '#555';
-    }
+    btn.style.borderColor = '#e0dbd5';
+    btn.style.background  = '#fff';
+    btn.style.color       = '#555';
   });
+  // Destaca o selecionado
+  const sel = document.getElementById('pgto-btn-' + metodo);
+  if (sel) { sel.style.borderColor='#C0392B'; sel.style.background='#fff5f5'; sel.style.color='#C0392B'; }
+  // Se crédito/débito, destaca também o botão pai "Cartão"
+  if (metodo === 'CRÉDITO' || metodo === 'DÉBITO') {
+    const btnC = document.getElementById('pgto-btn-CARTÃO');
+    if (btnC) { btnC.style.borderColor='#C0392B'; btnC.style.background='#fff5f5'; btnC.style.color='#C0392B'; }
+  }
   const aviso = document.getElementById('pgto-aviso');
   if (aviso) aviso.style.display = 'none';
 };
@@ -3892,20 +3926,22 @@ window.abrirCaixa = async function() {
 window.fecharCaixa = async function() {
   if (!confirm('Confirma o fechamento do caixa? Um comprovante será gerado.')) return;
   var estab = getEstab();
+  if (!estab) return;
   var agora = new Date();
   var fmt   = function(v){return 'R$ ' + Number(v||0).toFixed(2).replace('.',',');};
   var totalPix = 0, totalCartao = 0, totalDinheiro = 0, numPedidos = 0;
   try {
-    var res = await getSupa().from('pedidos').select('total,pagamento')
+    var res = await getSupa().from('pedidos').select('total,pagamento,cliente_nome,created_at')
       .eq('estabelecimento_id', estab.id)
-      .gte('created_at', _caixaAbertura?.hora || agora.toISOString());
+      .gte('created_at', _caixaAbertura?.hora || agora.toISOString())
+      .order('created_at', {ascending: true});
     var todos = res.data || [];
     numPedidos    = todos.length;
     totalPix      = todos.filter(function(p){return p.pagamento==='PIX';}).reduce(function(s,p){return s+Number(p.total||0);},0);
     totalCartao   = todos.filter(function(p){return ['CRÉDITO','DÉBITO','CARTÃO'].includes(p.pagamento);}).reduce(function(s,p){return s+Number(p.total||0);},0);
     totalDinheiro = todos.filter(function(p){return p.pagamento==='DINHEIRO';}).reduce(function(s,p){return s+Number(p.total||0);},0);
   } catch(e) {}
-  var totalGeral = totalPix + totalCartao + totalDinheiro + Number(_caixaAbertura?.valorAbertura||0);
+  var totalGeral    = totalPix + totalCartao + totalDinheiro + Number(_caixaAbertura?.valorAbertura||0);
   try { localStorage.removeItem('pw_caixa_' + estab?.id); } catch(e) {}
   pararAutoRefreshCaixa();
   _caixaAberto = false; _caixaAbertura = null; _caixaId = null;
@@ -3917,85 +3953,121 @@ window.fecharCaixa = async function() {
   if (el('caixa-abrir-card'))   el('caixa-abrir-card').style.display       = 'block';
   if (el('caixa-fechar-card'))  el('caixa-fechar-card').style.display      = 'none';
   showToast('🔒 Caixa fechado!');
-  var sep = '════════════════════';
+  // Comprovante completo de fechamento
   var nl  = '\n';
+  var sep = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+  var cnpj = estab.cpf_cnpj ? 'CNPJ: ' + estab.cpf_cnpj : '';
+  var tel  = estab.telefone_contato || estab.whatsapp || '';
+  var end_ = estab.endereco || '';
+  var inst = estab.instagram ? '@' + estab.instagram.replace('@','') : '';
   var corpo = [
-    'FECHAMENTO DE CAIXA', sep,
-    estab?.nome || 'Estabelecimento', sep,
-    'Operador: '   + (_caixaAbertura?.operador || 'Operador'),
-    'Abertura: '   + new Date(_caixaAbertura?.hora || agora).toLocaleString('pt-BR'),
-    'Fechamento: ' + agora.toLocaleString('pt-BR'), sep,
-    'Fundo de caixa: ' + fmt(_caixaAbertura?.valorAbertura || 0), sep,
-    'RECEBIMENTOS:',
-    '  PIX:      ' + fmt(totalPix),
-    '  Cartao:   ' + fmt(totalCartao),
-    '  Dinheiro: ' + fmt(totalDinheiro), sep,
-    'TOTAL GERAL: ' + fmt(totalGeral), sep,
-    'Pedidos: ' + numPedidos, sep,
+    '██████████████████████████████████',
+    '     FECHAMENTO DE CAIXA',
+    '██████████████████████████████████',
+    (estab.nome || 'Estabelecimento').toUpperCase(),
+    end_,
+    tel  ? 'Tel: ' + tel : '',
+    cnpj,
+    inst ? 'Instagram: ' + inst : '',
+    sep,
+    'Operador:   ' + (_caixaAbertura?.operador || 'Operador'),
+    'Abertura:   ' + new Date(_caixaAbertura?.hora || agora).toLocaleString('pt-BR'),
+    'Fechamento: ' + agora.toLocaleString('pt-BR'),
+    sep,
+    'FUNDO DE CAIXA INICIAL:   ' + fmt(_caixaAbertura?.valorAbertura || 0),
+    sep,
+    '  RECEBIMENTOS DO PERÍODO',
+    sep,
+    '  PIX:               ' + fmt(totalPix),
+    '  CARTÃO:            ' + fmt(totalCartao),
+    '  DINHEIRO:          ' + fmt(totalDinheiro),
+    sep,
+    '  SUBTOTAL VENDAS:   ' + fmt(totalPix + totalCartao + totalDinheiro),
+    '  FUNDO INICIAL:   + ' + fmt(_caixaAbertura?.valorAbertura || 0),
+    sep,
+    '  TOTAL EM CAIXA:    ' + fmt(totalGeral),
+    sep,
+    '  Nº DE PEDIDOS: ' + numPedidos,
+    sep,
     'Gerado em: ' + agora.toLocaleString('pt-BR'),
-  ].join(nl);
-  var htmlComp = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fechamento</title>'
-    + '<style>body{font-family:Courier New,monospace;font-size:14px;padding:20px;max-width:360px;margin:0 auto}'
-    + 'pre{white-space:pre-wrap;margin:0}@media print{body{padding:4px}}</style>'
-    + '</head><body><pre>' + corpo + '</pre></body></html>';
-  var w = window.open('', '_blank', 'width=400,height=600');
-  if (w) { w.document.write(htmlComp); w.document.close(); setTimeout(function(){w.print();}, 500); }
+    sep,
+    '     Obrigado pela preferência!',
+  ].filter(function(l){return l !== '';}).join(nl);
+  var htmlComp = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fechamento de Caixa</title>'
+    + '<style>*{margin:0;padding:0;box-sizing:border-box}'
+    + 'body{font-family:Courier New,monospace;font-size:13px;padding:16px;max-width:400px;margin:0 auto;background:#fff;color:#111}'
+    + 'pre{white-space:pre-wrap;word-break:break-word;line-height:1.6}'
+    + '@media print{body{padding:4px}@page{margin:4mm;size:80mm auto}}'
+    + '</style></head><body><pre>' + corpo + '</pre></body></html>';
+  var w = window.open('', '_blank', 'width=440,height=700');
+  if (w) { w.document.write(htmlComp); w.document.close(); setTimeout(function(){w.print();},600); }
 };
 
 // Comprovante do cliente (estilo cupom)
 window.imprimirComprovanteCliente = async function(id) {
   var res = await getSupa().from('pedidos').select('*').eq('id', id).maybeSingle();
-  var p   = res.data;
+  var p   = res?.data;
   if (!p) return;
   var estab   = getEstab();
   var itens   = Array.isArray(p.itens) ? p.itens : [];
   var fmtR    = function(v){return 'R$ ' + Number(v||0).toFixed(2).replace('.',',');};
   var numPed  = '#' + p.id.slice(-6).toUpperCase();
-  var data    = new Date(p.created_at);
-  var dataFmt = data.toLocaleDateString('pt-BR') + ' as ' + data.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  var isEntrega = p.endereco && p.endereco !== 'Retirada no local' && !p.endereco.startsWith('No local');
-  var insta   = estab?.instagram ? '@' + estab.instagram.replace('@','') : '';
-  var ttok    = estab?.tiktok    ? '@' + estab.tiktok.replace('@','')    : '';
+  var dt      = new Date(p.created_at);
+  var dataFmt = dt.toLocaleDateString('pt-BR') + ' as ' + dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  var isEnt   = p.endereco && p.endereco !== 'Retirada no local' && !p.endereco.startsWith('No local');
+  var cnpj    = estab?.cpf_cnpj ? 'CNPJ: ' + estab.cpf_cnpj : '';
   var tel     = estab?.telefone_contato || estab?.whatsapp || '';
-  var msgFim  = estab?.msg_nota || 'Obrigado pela preferencia!';
+  var end_    = estab?.endereco || '';
+  var insta   = estab?.instagram ? 'Instagram: @' + estab.instagram.replace('@','') : '';
+  var ttok    = estab?.tiktok    ? 'TikTok: @'    + estab.tiktok.replace('@','')    : '';
+  var msgFim  = estab?.msg_nota  || 'Obrigado pela preferencia!';
   var pgto    = (p.pagamento || 'Nao informado').toUpperCase();
   var taxa    = Number(p.taxa_entrega||0);
   var total   = Number(p.total||0);
-  var sep     = '━━━━━━━━━━━━━━━━━━━';
   var nl      = '\n';
+  var sep     = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
   var itensLinhas = itens.map(function(i) {
     var sub  = Number((i.preco||0)*(i.qtd||1)).toFixed(2).replace('.',',');
-    var adds = Array.isArray(i.adicionais) && i.adicionais.length ? ' + Adicionais' : '';
-    return (i.qtd||1) + 'x ' + (i.nome||'') + adds + '   R$ ' + sub;
-  }).join(nl);
-  var social = [insta ? 'Instagram: ' + insta : '', ttok ? 'TikTok: ' + ttok : ''].filter(function(s){return s!=='';}).join('   ');
+    var adds = Array.isArray(i.adicionais) && i.adicionais.length
+      ? nl + '  + Adicionais: ' + i.adicionais.map(function(a){return a.nome;}).join(', ')
+      : '';
+    return (i.qtd||1) + 'x ' + (i.nome||'') + adds + nl + '   R$ ' + sub;
+  }).join(nl + '─────────────────────────────────' + nl);
   var corpo = [
-    (estab?.nome || 'Estabelecimento'),
-    estab?.endereco || '',
-    tel ? 'Tel: ' + tel : '',
+    '█████████████████████████████████',
+    '        COMPROVANTE',
+    '█████████████████████████████████',
+    (estab?.nome || 'Estabelecimento').toUpperCase(),
+    end_,
+    tel  ? 'Tel: ' + tel : '',
+    cnpj,
+    insta,
+    ttok,
     sep,
-    'PEDIDO ' + numPed,
-    'Data: ' + dataFmt,
-    isEntrega ? ('ENTREGA\nEndereço: ' + p.endereco) : 'RETIRADA',
+    'PEDIDO: ' + numPed,
+    'Data:   ' + dataFmt,
+    isEnt ? ('ENTREGA' + nl + 'End: ' + p.endereco) : 'RETIRADA NO LOCAL',
     sep,
-    'CLIENTE: ' + (p.cliente_nome||'-'),
+    'CLIENTE: ' + (p.cliente_nome||'—'),
     p.cliente_whats ? 'WhatsApp: ' + p.cliente_whats : '',
     sep,
-    'ITENS DO PEDIDO',
+    'ITENS:',
     itensLinhas,
     sep,
-    taxa > 0 ? 'Entrega: ' + fmtR(taxa) : '',
-    'TOTAL: ' + fmtR(total),
+    taxa > 0 ? 'Taxa entrega: ' + fmtR(taxa) : '',
+    'TOTAL:  ' + fmtR(total),
     sep,
     'PAGAMENTO: ' + pgto,
     sep,
-    social,
     msgFim,
+    'Gerado em: ' + new Date().toLocaleString('pt-BR'),
   ].filter(function(l){return l !== '';}).join(nl);
   var htmlComp = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Pedido ' + numPed + '</title>'
-    + '<style>body{font-family:Courier New,monospace;font-size:13px;padding:20px;max-width:380px;margin:0 auto}'
-    + 'pre{white-space:pre-wrap;margin:0}@media print{body{padding:4px}}</style>'
-    + '</head><body><pre>' + corpo + '</pre></body></html>';
-  var w = window.open('', '_blank', 'width=420,height=680');
-  if (w) { w.document.write(htmlComp); w.document.close(); setTimeout(function(){w.print();}, 400); }
+    + '<style>*{margin:0;padding:0;box-sizing:border-box}'
+    + 'body{font-family:Courier New,monospace;font-size:13px;padding:16px;max-width:400px;margin:0 auto;background:#fff;color:#111}'
+    + 'pre{white-space:pre-wrap;word-break:break-word;line-height:1.6}'
+    + '@media print{body{padding:4px}@page{margin:4mm;size:80mm auto}}'
+    + '</style></head><body><pre>' + corpo + '</pre></body></html>';
+  var w = window.open('', '_blank', 'width=440,height=700');
+  if (w) { w.document.write(htmlComp); w.document.close(); setTimeout(function(){w.print();},500); }
 };
