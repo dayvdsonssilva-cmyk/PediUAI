@@ -74,8 +74,8 @@
       "destination": "/baixar.html"
     },
     {
-      "source": "/admin",
-      "destination": "/admin.html"
+      "source": "/mandaadmin",
+      "destination": "/mandaadmin.html"
     },
     {
       "source": "/checkout",
