@@ -8,7 +8,7 @@ export default defineConfig({
       input: {
         main:     resolve(__dirname, 'index.html'),
         cliente:  resolve(__dirname, 'cliente.html'),
-        admin:    resolve(__dirname, 'admin.html'),
+        admin:    resolve(__dirname, 'mandaadmin.html'),
         checkout: resolve(__dirname, 'checkout.html'),
         garcom:   resolve(__dirname, 'garcom.html'),
         lojas:    resolve(__dirname, 'lojas.html'),
