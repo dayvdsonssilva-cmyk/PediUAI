@@ -2872,39 +2872,47 @@ window.imprimirComprovanteCliente = async function(id) {
     return `${i.qtd||1}x ${i.nome}${adds ? '   '+adds : ''}   R$ ${sub}`;
   }).join('\n');
 
-  const w = window.open('','_blank','width=420,height=680');
-  w.document.write(`<!DOCTYPE html><html><head>
-<meta charset="UTF-8"><title>Comprovante ${numPed}</title>
-<style>
-  body{font-family:'Courier New',monospace;font-size:13px;background:#fff;padding:20px;max-width:380px;margin:0 auto;color:#111}
-  pre{font-family:inherit;white-space:pre-wrap;word-break:break-word;margin:0}
-  @media print{body{padding:4px}@page{margin:0;size:80mm auto}}
-</style></head><body><pre>
-🍔 ${estab?.nome||'Estabelecimento'}
-${estab?.endereco||''}
-${tel ? '📞 '+tel : ''}
-━━━━━━━━━━━━━━━━━━━
-🧾 PEDIDO ${numPed}
-📅 ${dataFmt}
-${isEntrega ? '🔵 ENTREGA
-📍 '+p.endereco : '🔴 RETIRADA'}
-━━━━━━━━━━━━━━━━━━━
-👤 CLIENTE ${p.cliente_nome||'-'}
-${p.cliente_whats ? '📱 '+p.cliente_whats : ''}
-━━━━━━━━━━━━━━━━━━━
-🛒 ITENS DO PEDIDO
-${itensHtml}
-━━━━━━━━━━━━━━━━━━━
-${taxa > 0 ? '📦 Entrega: '+fmtR(taxa)+'
-' : ''}💰 TOTAL ${fmtR(total)}
-━━━━━━━━━━━━━━━━━━━
-💳 PAGAMENTO ${pgto}
-━━━━━━━━━━━━━━━━━━━
-${insta ? '📲 Instagram: '+insta+'   ' : ''}${ttok ? '🎵 TikTok: '+ttok : ''}
-🙏 ${msgFim}
-</pre></body></html>`);
+  const sep  = '━━━━━━━━━━━━━━━━━━━';
+  const nl   = '\n';
+  const enderecoLinha = isEntrega ? ('🔵 ENTREGA' + nl + '📍 ' + p.endereco) : '🔴 RETIRADA';
+  const taxaLinha     = taxa > 0  ? ('📦 Entrega: ' + fmtR(taxa) + nl) : '';
+  const socialLinha   = [insta ? '📲 Instagram: ' + insta : '', ttok ? '🎵 TikTok: ' + ttok : ''].filter(Boolean).join('   ');
+
+  const corpo = [
+    '🍔 ' + (estab?.nome||'Estabelecimento'),
+    estab?.endereco || '',
+    tel ? '📞 ' + tel : '',
+    sep,
+    '🧾 PEDIDO ' + numPed,
+    '📅 ' + dataFmt,
+    enderecoLinha,
+    sep,
+    '👤 CLIENTE ' + (p.cliente_nome||'-'),
+    p.cliente_whats ? '📱 ' + p.cliente_whats : '',
+    sep,
+    '🛒 ITENS DO PEDIDO',
+    itensHtml,
+    sep,
+    taxaLinha + '💰 TOTAL ' + fmtR(total),
+    sep,
+    '💳 PAGAMENTO ' + pgto,
+    sep,
+    socialLinha,
+    '🙏 ' + msgFim,
+  ].filter(function(l){return l !== '';}).join(nl);
+
+  const htmlComp = '<!DOCTYPE html><html><head>'
+    + '<meta charset="UTF-8"><title>Comprovante ' + numPed + '</title>'
+    + '<style>body{font-family:Courier New,monospace;font-size:13px;background:#fff;padding:20px;max-width:380px;margin:0 auto;color:#111}'
+    + 'pre{font-family:inherit;white-space:pre-wrap;word-break:break-word;margin:0}'
+    + '@media print{body{padding:4px}}</style></head><body><pre>'
+    + corpo + '</pre></body></html>';
+
+  const w = window.open('', '_blank', 'width=420,height=680');
+  w.document.write(htmlComp);
   w.document.close();
   setTimeout(() => w.print(), 400);
+
 };
 
 window.imprimirCozinha = function(pedidoId) {
