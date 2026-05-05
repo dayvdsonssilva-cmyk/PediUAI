@@ -14,8 +14,14 @@ export function goTo(id) {
 }
 
 export function showTab(tabId, btn) {
-  // Salva posição do scroll antes de trocar aba (evita salto de posição)
+  // Bloqueia scroll temporariamente durante a troca de aba
+  const html = document.documentElement;
+  const body = document.body;
   const scrollY = window.scrollY;
+
+  // Fixa posição para evitar qualquer salto de layout
+  const prevOverflow = body.style.overflow;
+  body.style.overflow = 'hidden';
 
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -23,8 +29,14 @@ export function showTab(tabId, btn) {
   btn?.classList.add('active');
   localStorage.setItem('pw_aba_ativa', tabId);
 
-  // Restaura scroll imediatamente — evita o salto visual ao trocar aba
-  requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: 'instant' }));
+  // Restaura em dois frames para garantir que o layout foi recalculado
+  requestAnimationFrame(() => {
+    window.scrollTo(0, scrollY);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollY);
+      body.style.overflow = prevOverflow;
+    });
+  });
 }
 
 export function gerarSlug(nome) {
