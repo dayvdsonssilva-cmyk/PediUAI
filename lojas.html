@@ -670,6 +670,56 @@ function podePedirAgora(){
 // ═══════════════════════════════════════════════════════
 let _user     = null;
 let _lojas    = [];
+let _userLat  = null;
+let _userLng  = null;
+let _geoOk    = false;
+const RAIO_KM = 30;
+
+function haversineDist(lat1,lon1,lat2,lon2) {
+  const R=6371,dL=(lat2-lat1)*Math.PI/180,dO=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dL/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dO/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function distanciaLabel(l) {
+  if(!_geoOk||!l.latitude||!l.longitude) return '';
+  var d=haversineDist(_userLat,_userLng,Number(l.latitude),Number(l.longitude));
+  var s=d<1?(d*1000).toFixed(0)+'m':d.toFixed(1)+'km';
+  return '<span style="font-size:.68rem;color:#888;font-weight:600;display:inline-flex;align-items:center;gap:2px;">📍 '+s+'</span>';
+}
+
+function pedirLocalizacao() {
+  if(_geoOk && _userLat!==null){ renderHome(); return; }
+  renderHome(); // mostra tela "ative localização" enquanto aguarda
+  if(!navigator.geolocation){ toast('Navegador sem suporte a GPS 😕'); return; }
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      _userLat=pos.coords.latitude; _userLng=pos.coords.longitude; _geoOk=true;
+      if(_screen==='home') renderHome();
+    },
+    function(){ _geoOk=false; _userLat=null; _userLng=null; if(_screen==='home') renderHome(); },
+    {enableHighAccuracy:false,timeout:8000,maximumAge:300000}
+  );
+}
+window.pedirLocalizacao = pedirLocalizacao;
+
+const VAPID_PUBLIC_KEY = 'BCJEaYAZTbr7qY6KXR1JQC5zYC3IvjAxKO5JcMol_S2y1g3DKDK_qB7VFAd9rJRVDi3aYeQv6tyiNIcEWOrtsOc';
+function urlBase64ToUint8Array(b64){
+  var pad='='.repeat((4-b64.length%4)%4),b=atob((b64+pad).replace(/-/g,'+').replace(/_/g,'/'));
+  return Uint8Array.from(b,c=>c.charCodeAt(0));
+}
+async function registrarPush(whatsapp){
+  try{
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)) return;
+    if(Notification.permission!=='granted') return;
+    var sw=await navigator.serviceWorker.ready;
+    var sub=await sw.pushManager.getSubscription();
+    if(!sub) sub=await sw.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)});
+    var j=sub.toJSON();
+    await db.from('push_subscriptions').upsert({endpoint:sub.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,user_identifier:whatsapp||null},{onConflict:'endpoint'});
+  }catch(e){}
+}
+window.registrarPush = registrarPush;
 let _pedidosLocais = []; // pedidos colocados nessa sessão, exibidos imediatamente
 let _catAtiva = 'all';
 let _busca    = '';
@@ -838,9 +888,11 @@ async function init() {
       }
     } catch(e) {}
 
-    renderHome();
+    // NÃO renderiza lojas ainda — pede GPS primeiro
+    renderHome();       // mostra tela "Ative sua localização"
     renderBanner();
     renderSearchCats();
+    pedirLocalizacao(); // pede GPS → ao obter, chama renderHome() com lojas
   }
 
   // Modal primeira visita
@@ -905,7 +957,16 @@ function renderHome() {
     ? '🔥 Restaurantes em promoção'
     : catLabel + ' os restaurantes';
   const grid = $('home-grid');
-  if(!filtered.length) {
+  if(!_geoOk) {
+    grid.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;gap:16px;">'
+      + '<div style="width:72px;height:72px;background:linear-gradient(135deg,#E8001C,#C0001A);border-radius:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(232,0,28,.3);">'
+      + '<span style="font-size:2rem;">📍</span></div>'
+      + '<div style="font-size:1.05rem;font-weight:800;color:#111;">Ative sua localização</div>'
+      + '<div style="font-size:.82rem;color:#888;line-height:1.6;max-width:260px;">Mostramos apenas restaurantes próximos de você. Precisamos saber onde você está.</div>'
+      + '<button onclick="Notification.requestPermission();pedirLocalizacao()" style="background:#E8001C;color:#fff;border:none;border-radius:14px;padding:14px 28px;font-family:var(--font);font-size:.9rem;font-weight:800;cursor:pointer;box-shadow:0 6px 20px rgba(232,0,28,.35);">📍 Usar minha localização</button>'
+      + '<div style="font-size:.7rem;color:#ccc;">Seus dados não são armazenados.</div>'
+      + '</div>';
+  } else if(!filtered.length) {
     grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Nenhum restaurante</div><div class="empty-desc">Tente outra cidade ou categoria</div></div>';
   } else {
     grid.innerHTML = filtered.map(l => storeCardHTML(l)).join('');
@@ -965,10 +1026,12 @@ function filtrarLojas() {
   const lojasComPromo = new Set(_promoItems.map(p=>p.estabelecimento_id));
 
   return _lojas.filter(l => {
-    const lojaCidade = (l.cidade||'').trim().toLowerCase();
-    const userCidade = (_cidade||'').trim().toLowerCase();
-    const mc = !userCidade || lojaCidade === userCidade;
-    const mb = !_busca  || (l.nome||'').toLowerCase().includes(_busca.toLowerCase());
+    // Filtro GPS obrigatório
+    if (!_geoOk || _userLat === null) return false;
+    if (!l.latitude || !l.longitude) return false;
+    if (haversineDist(_userLat, _userLng, Number(l.latitude), Number(l.longitude)) > RAIO_KM) return false;
+    const mc = true;
+    const mb = !_busca || (l.nome||'').toLowerCase().includes(_busca.toLowerCase());
 
     if(_catAtiva==='promo') {
       return mc && mb && (lojasComPromo.has(l.id) || l.promocao_ativa);
