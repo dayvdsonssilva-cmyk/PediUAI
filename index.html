@@ -2797,6 +2797,34 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
   <!-- Visao Geral -->
   <div class="tab-content active" id="tab-visao-geral">
     <div class="dash-container">
+      <!-- Card de boas-vindas — só na primeira vez -->
+      <div id="card-boas-vindas" style="background:linear-gradient(135deg,#fff5f5 0%,#fff 100%);border:1.5px solid rgba(232,0,28,.18);border-radius:16px;padding:16px;margin-bottom:16px;display:none;box-shadow:0 4px 20px rgba(232,0,28,.08);">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:44px;height:44px;background:linear-gradient(135deg,#E8001C,#C0001A);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(232,0,28,.3);">
+            <span style="font-size:1.4rem;">🚀</span>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:.9rem;font-weight:800;color:#111;margin-bottom:2px;">Bem-vindo ao PEDIWAY!</div>
+            <div style="font-size:.73rem;color:#888;line-height:1.5;">Configure sua loja e comece a receber pedidos agora.</div>
+          </div>
+          <button onclick="var e=document.getElementById('card-boas-vindas');e.style.display='none';" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:#ccc;flex-shrink:0;padding:4px;">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px;">
+          <div onclick="showTab('cardapio',document.querySelector('[data-tab=cardapio]'))" style="background:#fff;border:1px solid #f0ebe4;border-radius:10px;padding:10px;text-align:center;cursor:pointer;">
+            <div style="font-size:1.2rem;">🍔</div>
+            <div style="font-size:.68rem;font-weight:700;color:#333;margin-top:4px;">Cardápio</div>
+          </div>
+          <div onclick="showTab('fresquinho',document.querySelector('[data-tab=fresquinho]'))" style="background:#fff;border:1px solid #f0ebe4;border-radius:10px;padding:10px;text-align:center;cursor:pointer;">
+            <div style="font-size:1.2rem;">✨</div>
+            <div style="font-size:.68rem;font-weight:700;color:#333;margin-top:4px;">Fresquinho</div>
+          </div>
+          <div onclick="showTab('configuracoes',document.querySelector('[data-tab=configuracoes]'));carregarEstadosDash();setTimeout(initCfgAccordion,80)" style="background:#fff;border:1px solid #f0ebe4;border-radius:10px;padding:10px;text-align:center;cursor:pointer;">
+            <div style="font-size:1.2rem;">⚙️</div>
+            <div style="font-size:.68rem;font-weight:700;color:#333;margin-top:4px;">Configurar</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Links da loja -->
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
         <!-- Link clientes -->
@@ -2816,32 +2844,6 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
           <button class="btn-copiar" onclick="copiarLinkGarcom()" style="background:#E8001C;border:none">Copiar</button>
         </div>
       </div>
-      <!-- Card de boas-vindas / onboarding rápido -->
-      <div id="card-boas-vindas" style="background:linear-gradient(135deg,#fff5f5,#fff);border:1.5px solid rgba(232,0,28,.15);border-radius:16px;padding:16px;margin-bottom:16px;display:none;">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <div style="font-size:2rem;flex-shrink:0;">🚀</div>
-          <div>
-            <div style="font-size:.88rem;font-weight:800;color:#111;margin-bottom:2px;">Bem-vindo ao PEDIWAY!</div>
-            <div style="font-size:.75rem;color:#888;line-height:1.5;">Configure sua loja em 3 passos para começar a receber pedidos.</div>
-          </div>
-          <button onclick="document.getElementById('card-boas-vindas').style.display='none'" style="margin-left:auto;background:none;border:none;font-size:1.2rem;cursor:pointer;color:#ccc;flex-shrink:0;">✕</button>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px;">
-          <div onclick="showTab('cardapio',document.querySelector('[data-tab=cardapio]'))" style="background:#fff;border:1px solid #f0ebe4;border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='#E8001C'" onmouseout="this.style.borderColor='#f0ebe4'">
-            <div style="font-size:1.3rem;">🍔</div>
-            <div style="font-size:.68rem;font-weight:700;color:#333;margin-top:4px;">Cardápio</div>
-          </div>
-          <div onclick="showTab('fresquinho',document.querySelector('[data-tab=fresquinho]'))" style="background:#fff;border:1px solid #f0ebe4;border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='#E8001C'" onmouseout="this.style.borderColor='#f0ebe4'">
-            <div style="font-size:1.3rem;">✨</div>
-            <div style="font-size:.68rem;font-weight:700;color:#333;margin-top:4px;">Fresquinho</div>
-          </div>
-          <div onclick="showTab('configuracoes',document.querySelector('[data-tab=configuracoes]'));carregarEstadosDash();setTimeout(initCfgAccordion,80)" style="background:#fff;border:1px solid #f0ebe4;border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='#E8001C'" onmouseout="this.style.borderColor='#f0ebe4'">
-            <div style="font-size:1.3rem;">⚙️</div>
-            <div style="font-size:.68rem;font-weight:700;color:#333;margin-top:4px;">Configurar</div>
-          </div>
-        </div>
-      </div>
-
       <div class="stats-grid">
         <div class="stat-box"><div class="stat-label">HOJE</div><div class="stat-num red" id="stat-pedidos">0</div><div class="stat-desc">pedidos</div></div>
         <div class="stat-box"><div class="stat-label">FATURAMENTO</div><div class="stat-num green" id="stat-faturamento">R$ 0,00</div></div>
@@ -4850,6 +4852,35 @@ function setMobileNav(id) {
   document.querySelectorAll('.dash-mnav-btn').forEach(function(b){b.classList.remove('active');});
   var el = document.getElementById(id); if(el) el.classList.add('active');
 }
+
+// Override showTab to prevent scroll jump completely
+(function() {
+  var _origShowTab = window.showTab;
+  window.showTab = function(tabId, btn) {
+    var sy = window.scrollY;
+    var html = document.documentElement;
+    // Lock scroll position via CSS
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'relative';
+
+    document.querySelectorAll('.tab-content').forEach(function(t){ t.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    var target = document.getElementById('tab-' + tabId);
+    if (target) target.classList.add('active');
+    if (btn) btn.classList.add('active');
+    try { localStorage.setItem('pw_aba_ativa', tabId); } catch(e) {}
+
+    // Restore scroll in next two frames
+    requestAnimationFrame(function() {
+      window.scrollTo(0, sy);
+      requestAnimationFrame(function() {
+        window.scrollTo(0, sy);
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+      });
+    });
+  };
+})();
 // Show mobile nav only when dashboard is active
 function checkMobileNav() {
   var dash = document.querySelector('[data-screen="s-dash"]');
@@ -4892,6 +4923,35 @@ function setMobileNav(id) {
   document.querySelectorAll('.dash-mnav-btn').forEach(function(b){b.classList.remove('active');});
   var el = document.getElementById(id); if(el) el.classList.add('active');
 }
+
+// Override showTab to prevent scroll jump completely
+(function() {
+  var _origShowTab = window.showTab;
+  window.showTab = function(tabId, btn) {
+    var sy = window.scrollY;
+    var html = document.documentElement;
+    // Lock scroll position via CSS
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'relative';
+
+    document.querySelectorAll('.tab-content').forEach(function(t){ t.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    var target = document.getElementById('tab-' + tabId);
+    if (target) target.classList.add('active');
+    if (btn) btn.classList.add('active');
+    try { localStorage.setItem('pw_aba_ativa', tabId); } catch(e) {}
+
+    // Restore scroll in next two frames
+    requestAnimationFrame(function() {
+      window.scrollTo(0, sy);
+      requestAnimationFrame(function() {
+        window.scrollTo(0, sy);
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+      });
+    });
+  };
+})();
 // Show mobile nav only when dashboard is active
 function checkMobileNav() {
   var dash = document.querySelector('[data-screen="s-dash"]');
