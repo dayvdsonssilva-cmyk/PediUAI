@@ -957,17 +957,25 @@ function renderHome() {
     ? '🔥 Restaurantes em promoção'
     : catLabel + ' os restaurantes';
   const grid = $('home-grid');
-  if(!_geoOk) {
-    grid.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;gap:16px;">'
-      + '<div style="width:72px;height:72px;background:linear-gradient(135deg,#E8001C,#C0001A);border-radius:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(232,0,28,.3);">'
-      + '<span style="font-size:2rem;">📍</span></div>'
-      + '<div style="font-size:1.05rem;font-weight:800;color:#111;">Ative sua localização</div>'
-      + '<div style="font-size:.82rem;color:#888;line-height:1.6;max-width:260px;">Mostramos apenas restaurantes próximos de você. Precisamos saber onde você está.</div>'
-      + '<button onclick="Notification.requestPermission();pedirLocalizacao()" style="background:#E8001C;color:#fff;border:none;border-radius:14px;padding:14px 28px;font-family:var(--font);font-size:.9rem;font-weight:800;cursor:pointer;box-shadow:0 6px 20px rgba(232,0,28,.35);">📍 Usar minha localização</button>'
-      + '<div style="font-size:.7rem;color:#ccc;">Seus dados não são armazenados.</div>'
-      + '</div>';
-  } else if(!filtered.length) {
-    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Nenhum restaurante</div><div class="empty-desc">Tente outra cidade ou categoria</div></div>';
+  // GPS banner não-bloqueante — aparece acima dos cards
+  var gpsBanner = document.getElementById('gps-banner');
+  if (!gpsBanner) {
+    gpsBanner = document.createElement('div');
+    gpsBanner.id = 'gps-banner';
+    if (grid.parentNode) grid.parentNode.insertBefore(gpsBanner, grid);
+  }
+  if (!_geoOk) {
+    gpsBanner.innerHTML = '<div onclick="pedirLocalizacao()" style="background:linear-gradient(135deg,#E8001C,#C0001A);color:#fff;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:14px;box-shadow:0 4px 16px rgba(232,0,28,.3);">'
+      + '<span style="font-size:1.4rem;flex-shrink:0;">📍</span>'
+      + '<div><div style="font-size:.85rem;font-weight:800;">Ver restaurantes perto de você</div>'
+      + '<div style="font-size:.72rem;opacity:.85;margin-top:1px;">Toque para ativar sua localização</div></div>'
+      + '<span style="margin-left:auto;font-size:1.1rem;opacity:.8;">›</span></div>';
+  } else {
+    gpsBanner.innerHTML = '';
+  }
+  // Mostra lojas (com ou sem GPS)
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🍽️</div><div class="empty-title">Nenhum restaurante</div><div class="empty-desc">Tente outra categoria.</div></div>';
   } else {
     grid.innerHTML = filtered.map(l => storeCardHTML(l)).join('');
   }
@@ -1025,13 +1033,19 @@ function abrirTelaPromos(pct, itens) {
 function filtrarLojas() {
   const lojasComPromo = new Set(_promoItems.map(p=>p.estabelecimento_id));
 
+  // Verifica se alguma loja tem coordenadas
+  const algumTemCoord = _lojas.some(l => l.latitude && l.longitude);
+
   return _lojas.filter(l => {
-    // Filtro GPS obrigatório
-    if (!_geoOk || _userLat === null) return false;
-    if (!l.latitude || !l.longitude) return false;
-    if (haversineDist(_userLat, _userLng, Number(l.latitude), Number(l.longitude)) > RAIO_KM) return false;
-    const mc = true;
     const mb = !_busca || (l.nome||'').toLowerCase().includes(_busca.toLowerCase());
+
+    // Filtro por GPS — só aplica se tiver GPS E se as lojas tiverem coordenadas
+    if (_geoOk && _userLat !== null && algumTemCoord) {
+      if (!l.latitude || !l.longitude) return mb; // loja sem coord: mostra mesmo assim
+      if (haversineDist(_userLat, _userLng, Number(l.latitude), Number(l.longitude)) > RAIO_KM) return false;
+    }
+    // Sem GPS ou sem coordenadas: mostra todas normalmente
+    const mc = true;
 
     if(_catAtiva==='promo') {
       return mc && mb && (lojasComPromo.has(l.id) || l.promocao_ativa);
