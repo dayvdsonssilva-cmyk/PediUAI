@@ -1681,6 +1681,12 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
 .lp-cta-btn:hover{background:var(--lp-red-d);transform:translateY(-3px);box-shadow:0 22px 54px rgba(232,0,28,0.55);}
 .lp-cta-note { color:rgba(255,255,255,0.3);font-size:.72rem; }
 
+/* ── PAIN GRID RESPONSIVE ── */
+@media(max-width:700px){
+  .lp-pain-grid{grid-template-columns:1fr!important;}
+  .lp-comp-grid{grid-template-columns:1fr!important;}
+}
+
 /* ── FOOTER ── */
 .lp-footer {
   background:#0A0A0A;border-top:1px solid rgba(255,255,255,0.06);
@@ -1830,22 +1836,21 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
     <div style="position:relative;z-index:2;">
       <div class="lp-badge" style="animation:lp-fadeIn .5s ease both;">
         <span class="lp-badge-dot"></span>
-        Plataforma delivery independente
+        A alternativa ao iFood — sem comissão
       </div>
 
       <h1 class="lp-h1" style="animation:lp-fadeUp .65s .15s both;">
-        Seu cardápio.<br>
-        Sua marca.<br>
-        <span class="red">Seu lucro.</span>
+        Pare de entregar<br>seu lucro para<br>
+        <span class="red">aplicativos.</span>
       </h1>
 
       <p class="lp-hero-sub" style="animation:lp-fadeUp .65s .3s both;">
-        Crie sua loja online em minutos, receba pedidos em tempo real e gerencie tudo pelo PEDIWAY. Sem comissão por venda — 100% do lucro é seu.
+        Receba pedidos direto na sua plataforma, sem pagar comissão. O iFood fica com até 30% do seu faturamento. A PEDIWAY fica com <strong>R$0.</strong>
       </p>
 
       <div class="lp-cta-group" style="animation:lp-fadeUp .65s .45s both;">
         <button class="lp-cta-primary" onclick="goTo('s-register')">
-          Criar minha loja grátis →
+          Criar meu delivery agora →
         </button>
         <div class="lp-cta-row">
           <button class="lp-cta-ghost" onclick="openDemo()">Ver demo do painel</button>
@@ -1965,6 +1970,266 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
     </div>
   </div>
 </div>
+
+<!-- ═══ SEÇÃO DE DOR ═══ -->
+<section class="lp-sec white" style="background:linear-gradient(160deg,#0d0d0d 0%,#1a0a0a 100%);">
+  <div class="lp-inner">
+    <div style="text-align:center;margin-bottom:52px;" class="lp-reveal">
+      <div class="lp-sec-eyebrow" style="color:rgba(232,0,28,.7);border-color:rgba(232,0,28,.2);">A realidade que ninguém te conta</div>
+      <div class="lp-sec-title" style="color:#fff;">Você trabalha.<br><span style="color:var(--lp-red);">O iFood lucra.</span></div>
+      <p class="lp-sec-sub" style="color:rgba(255,255,255,.5);max-width:520px;margin:16px auto 0;">Enquanto você acorda cedo, compra ingredientes, contrata equipe e cuida de tudo — os aplicativos ficam em casa contando a comissão do seu suor.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;" class="lp-pain-grid">
+      <div class="lp-reveal lp-reveal-d1" style="background:rgba(232,0,28,.08);border:1px solid rgba(232,0,28,.18);border-radius:20px;padding:28px;text-align:center;">
+        <div style="font-size:3rem;margin-bottom:12px;">😤</div>
+        <div style="font-size:2.4rem;font-weight:900;color:var(--lp-red);letter-spacing:-.04em;line-height:1;">27%</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,.5);margin-top:6px;line-height:1.5;">de comissão por pedido<br>no iFood — e ainda sobem</div>
+      </div>
+      <div class="lp-reveal lp-reveal-d2" style="background:rgba(232,0,28,.08);border:1px solid rgba(232,0,28,.18);border-radius:20px;padding:28px;text-align:center;">
+        <div style="font-size:3rem;margin-bottom:12px;">💸</div>
+        <div style="font-size:2.4rem;font-weight:900;color:var(--lp-red);letter-spacing:-.04em;line-height:1;">R$3k</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,.5);margin-top:6px;line-height:1.5;">perdidos por mês em taxas<br>em média por restaurante</div>
+      </div>
+      <div class="lp-reveal lp-reveal-d3" style="background:rgba(232,0,28,.08);border:1px solid rgba(232,0,28,.18);border-radius:20px;padding:28px;text-align:center;">
+        <div style="font-size:3rem;margin-bottom:12px;">🚫</div>
+        <div style="font-size:2.4rem;font-weight:900;color:var(--lp-red);letter-spacing:-.04em;line-height:1;">0</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,.5);margin-top:6px;line-height:1.5;">controle dos seus<br>próprios clientes</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:52px;" class="lp-reveal">
+      <div style="background:rgba(232,0,28,.1);border:1px solid rgba(232,0,28,.25);border-radius:16px;padding:24px 32px;display:inline-block;max-width:560px;">
+        <p style="color:rgba(255,255,255,.85);font-size:.95rem;line-height:1.75;margin:0;">
+          <strong style="color:#fff;">Você não tem o telefone dos seus clientes.</strong> Você não sabe quem comprou ontem. Você não pode mandar promoção, não pode fidelizar. Eles são clientes <em style="color:var(--lp-red);">do iFood</em> — não seus.
+        </p>
+      </div>
+      <div style="margin-top:28px;">
+        <button class="lp-cta-primary" onclick="goTo('s-register')" style="max-width:340px;margin:0 auto;display:block;">
+          Quero meus clientes de volta →
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PROVA SOCIAL / CARROSSEL ═══ -->
+<section class="lp-sec light" id="lp-provas">
+  <div class="lp-inner">
+    <div style="text-align:center;margin-bottom:48px;" class="lp-reveal">
+      <div class="lp-sec-eyebrow">Quem já migrou</div>
+      <div class="lp-sec-title">Restaurantes que<br>pararam de pagar taxas</div>
+      <p class="lp-sec-sub" style="max-width:440px;margin:14px auto 0;">Resultados reais de quem tomou a decisão de parar de trabalhar para aplicativos.</p>
+    </div>
+    <div style="position:relative;overflow:hidden;" class="lp-reveal">
+      <div id="lp-carousel" style="display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:8px;">
+        <!-- Placeholder 1 -->
+        <div style="flex:0 0 300px;scroll-snap-align:start;background:#fff;border-radius:20px;border:1.5px solid #EBEBEB;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);">
+          <div style="width:100%;height:180px;background:linear-gradient(135deg,#f5f5f5,#ebebeb);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+            <div style="text-align:center;color:#ccc;">
+              <div style="font-size:2rem;">💬</div>
+              <div style="font-size:.7rem;margin-top:6px;">Print do WhatsApp</div>
+            </div>
+          </div>
+          <div style="font-size:.82rem;font-weight:700;color:#111;">Hamburguer da Família</div>
+          <div style="font-size:.72rem;color:#888;margin-top:2px;">São Paulo, SP</div>
+          <div style="font-size:.8rem;color:#555;margin-top:10px;line-height:1.6;">"Economizamos R$2.400 no primeiro mês. Não volto mais pro iFood."</div>
+        </div>
+        <!-- Placeholder 2 -->
+        <div style="flex:0 0 300px;scroll-snap-align:start;background:#fff;border-radius:20px;border:1.5px solid #EBEBEB;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);">
+          <div style="width:100%;height:180px;background:linear-gradient(135deg,#f5f5f5,#ebebeb);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+            <div style="text-align:center;color:#ccc;">
+              <div style="font-size:2rem;">📱</div>
+              <div style="font-size:.7rem;margin-top:6px;">Print do Instagram</div>
+            </div>
+          </div>
+          <div style="font-size:.82rem;font-weight:700;color:#111;">Pizzaria Don Marco</div>
+          <div style="font-size:.72rem;color:#888;margin-top:2px;">Belo Horizonte, MG</div>
+          <div style="font-size:.8rem;color:#555;margin-top:10px;line-height:1.6;">"Em 15 dias já paguei meses de PEDIWAY com o que eu pagaria de taxa."</div>
+        </div>
+        <!-- Placeholder 3 -->
+        <div style="flex:0 0 300px;scroll-snap-align:start;background:#fff;border-radius:20px;border:1.5px solid #EBEBEB;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);">
+          <div style="width:100%;height:180px;background:linear-gradient(135deg,#f5f5f5,#ebebeb);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+            <div style="text-align:center;color:#ccc;">
+              <div style="font-size:2rem;">⭐</div>
+              <div style="font-size:.7rem;margin-top:6px;">Avaliação real</div>
+            </div>
+          </div>
+          <div style="font-size:.82rem;font-weight:700;color:#111;">Açaíteria Tropical</div>
+          <div style="font-size:.72rem;color:#888;margin-top:2px;">Curitiba, PR</div>
+          <div style="font-size:.8rem;color:#555;margin-top:10px;line-height:1.6;">"Finalmente tenho controle do meu negócio. Recomendo demais!"</div>
+        </div>
+        <!-- Placeholder 4 -->
+        <div style="flex:0 0 300px;scroll-snap-align:start;background:#fff;border-radius:20px;border:1.5px solid #EBEBEB;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);">
+          <div style="width:100%;height:180px;background:linear-gradient(135deg,#f5f5f5,#ebebeb);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+            <div style="text-align:center;color:#ccc;">
+              <div style="font-size:2rem;">💬</div>
+              <div style="font-size:.7rem;margin-top:6px;">Depoimento do cliente</div>
+            </div>
+          </div>
+          <div style="font-size:.82rem;font-weight:700;color:#111;">Lanchonete do Bairro</div>
+          <div style="font-size:.72rem;color:#888;margin-top:2px;">Rio de Janeiro, RJ</div>
+          <div style="font-size:.8rem;color:#555;margin-top:10px;line-height:1.6;">"Meus clientes adoraram o cardápio. Muito mais profissional."</div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:16px;font-size:.72rem;color:#aaa;">← deslize para ver mais →</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ COMPARAÇÃO ═══ -->
+<section class="lp-sec white" id="lp-comparacao">
+  <div class="lp-inner">
+    <div style="text-align:center;margin-bottom:48px;" class="lp-reveal">
+      <div class="lp-sec-eyebrow">A comparação honesta</div>
+      <div class="lp-sec-title">iFood vs PEDIWAY</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:800px;margin:0 auto;" class="lp-comp-grid lp-reveal">
+      <!-- iFood -->
+      <div style="border-radius:20px;border:2px solid #EBEBEB;padding:28px;background:#FAFAFA;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+          <div style="width:36px;height:36px;background:#EA1D2C;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+            <span style="color:#fff;font-size:.9rem;font-weight:900;">iF</span>
+          </div>
+          <div style="font-size:1rem;font-weight:800;color:#111;">iFood / Rappi</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:#555;">
+            <span style="color:#ef4444;font-size:1rem;flex-shrink:0;">✗</span>
+            <span>Até <strong>27% de comissão</strong> por pedido</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:#555;">
+            <span style="color:#ef4444;font-size:1rem;flex-shrink:0;">✗</span>
+            <span>Clientes são da plataforma, não do seu restaurante</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:#555;">
+            <span style="color:#ef4444;font-size:1rem;flex-shrink:0;">✗</span>
+            <span>Você compete com centenas de rivais no mesmo app</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:#555;">
+            <span style="color:#ef4444;font-size:1rem;flex-shrink:0;">✗</span>
+            <span>Sem controle sobre promoções e precificação</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:#555;">
+            <span style="color:#ef4444;font-size:1rem;flex-shrink:0;">✗</span>
+            <span>Pode ser desativado a qualquer momento</span>
+          </div>
+        </div>
+      </div>
+      <!-- PEDIWAY -->
+      <div style="border-radius:20px;border:2px solid var(--lp-red);padding:28px;background:linear-gradient(160deg,#fff 0%,#fff8f8 100%);position:relative;overflow:hidden;">
+        <div style="position:absolute;top:12px;right:12px;background:var(--lp-red);color:#fff;font-size:.6rem;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:.06em;">RECOMENDADO</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+          <div style="width:36px;height:36px;background:var(--lp-red);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+            <span style="color:#fff;font-size:.75rem;font-weight:900;">P</span>
+          </div>
+          <div style="font-size:1rem;font-weight:800;color:#111;">PEDIWAY</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:#333;">
+            <span style="color:#16a34a;font-size:1rem;flex-shrink:0;">✓</span>
+            <span><strong>R$0 de comissão.</strong> Sempre.</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:#333;">
+            <span style="color:#16a34a;font-size:1rem;flex-shrink:0;">✓</span>
+            <span>Clientes são <strong>seus</strong> — você tem os dados</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:#333;">
+            <span style="color:#16a34a;font-size:1rem;flex-shrink:0;">✓</span>
+            <span>Seu cardápio exclusivo, sem concorrentes</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:#333;">
+            <span style="color:#16a34a;font-size:1rem;flex-shrink:0;">✓</span>
+            <span>Promoções, preços e marca no seu controle</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:#333;">
+            <span style="color:#16a34a;font-size:1rem;flex-shrink:0;">✓</span>
+            <span>Plataforma sua — ninguém tira do ar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PLANOS ═══ -->
+<section class="lp-sec light" id="lp-planos">
+  <div class="lp-inner">
+    <div style="text-align:center;margin-bottom:48px;" class="lp-reveal">
+      <div class="lp-sec-eyebrow">Simples assim</div>
+      <div class="lp-sec-title">Mensalidade fixa.<br>Lucro infinito.</div>
+      <p class="lp-sec-sub" style="max-width:440px;margin:14px auto 0;">Sem percentual por venda. Quanto mais você vende, mais você ganha. O PEDIWAY não cresce com o seu sucesso — ele te ajuda a crescer.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:760px;margin:0 auto;" class="lp-reveal">
+      <!-- Starter -->
+      <div style="border-radius:22px;border:2px solid #EBEBEB;padding:32px;background:#fff;">
+        <div style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#888;margin-bottom:8px;">Starter</div>
+        <div style="font-size:2.6rem;font-weight:900;color:#111;letter-spacing:-.04em;line-height:1;">R$49<span style="font-size:1rem;color:#888;font-weight:500;">/mês</span></div>
+        <div style="font-size:.72rem;color:#aaa;margin-top:4px;margin-bottom:24px;">14 dias grátis · Sem cartão</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#444;"><span style="color:#16a34a;">✓</span> Cardápio digital completo</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#444;"><span style="color:#16a34a;">✓</span> Pedidos em tempo real</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#444;"><span style="color:#16a34a;">✓</span> Delivery e retirada</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#444;"><span style="color:#16a34a;">✓</span> Fresquinho (stories)</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#444;"><span style="color:#16a34a;">✓</span> R$0 de comissão</div>
+        </div>
+        <button onclick="goTo('s-register')" style="width:100%;padding:14px;border-radius:12px;background:#111;color:#fff;border:none;font-family:'Poppins',sans-serif;font-size:.88rem;font-weight:800;cursor:pointer;">
+          Começar grátis →
+        </button>
+      </div>
+      <!-- Pro -->
+      <div style="border-radius:22px;border:2px solid var(--lp-red);padding:32px;background:linear-gradient(160deg,#fff,#fff8f8);position:relative;overflow:hidden;">
+        <div style="position:absolute;top:16px;right:16px;background:var(--lp-red);color:#fff;font-size:.58rem;font-weight:800;padding:4px 10px;border-radius:20px;letter-spacing:.06em;">MAIS POPULAR</div>
+        <div style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--lp-red);margin-bottom:8px;">Pro</div>
+        <div style="font-size:2.6rem;font-weight:900;color:#111;letter-spacing:-.04em;line-height:1;">R$99<span style="font-size:1rem;color:#888;font-weight:500;">/mês</span></div>
+        <div style="font-size:.72rem;color:#aaa;margin-top:4px;margin-bottom:24px;">14 dias grátis · Sem cartão</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#333;"><span style="color:#16a34a;">✓</span> <strong>Tudo do Starter</strong></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#333;"><span style="color:#16a34a;">✓</span> Comandas digitais por mesa</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#333;"><span style="color:#16a34a;">✓</span> Controle de caixa</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:#333;"><span style="color:#16a34a;">✓</span> Relatório financeiro</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#333;"><span style="color:#16a34a;">✓</span> Suporte prioritário</div>
+        </div>
+        <button onclick="goTo('s-register')" style="width:100%;padding:14px;border-radius:12px;background:var(--lp-red);color:#fff;border:none;font-family:'Poppins',sans-serif;font-size:.88rem;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(232,0,28,.3);">
+          Começar grátis →
+        </button>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:24px;font-size:.75rem;color:#aaa;" class="lp-reveal">
+      💡 Economize até R$3.000/mês em comissões — a mensalidade se paga no primeiro pedido do dia.
+    </div>
+  </div>
+</section>
+
+<!-- ═══ QUEBRA DE OBJEÇÕES ═══ -->
+<section class="lp-sec white" id="lp-faq">
+  <div class="lp-inner" style="max-width:680px;">
+    <div style="text-align:center;margin-bottom:40px;" class="lp-reveal">
+      <div class="lp-sec-eyebrow">Dúvidas frequentes</div>
+      <div class="lp-sec-title">Sem complicação,<br>sem desculpa.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;" class="lp-reveal">
+      <div style="border:1.5px solid #EBEBEB;border-radius:14px;padding:20px 24px;background:#fff;">
+        <div style="font-size:.88rem;font-weight:800;color:#111;margin-bottom:6px;">É difícil de configurar?</div>
+        <div style="font-size:.8rem;color:#666;line-height:1.7;">Não. Em menos de 5 minutos seu cardápio está no ar. Sem técnico, sem código, sem complicação. Se você usa WhatsApp, você consegue usar o PEDIWAY.</div>
+      </div>
+      <div style="border:1.5px solid #EBEBEB;border-radius:14px;padding:20px 24px;background:#fff;">
+        <div style="font-size:.88rem;font-weight:800;color:#111;margin-bottom:6px;">Preciso sair do iFood para usar?</div>
+        <div style="font-size:.8rem;color:#666;line-height:1.7;">Não precisa. Muitos clientes usam os dois em paralelo enquanto constroem a base de clientes própria. Mas quando você vir a diferença nos bolsos, a decisão fica fácil.</div>
+      </div>
+      <div style="border:1.5px solid #EBEBEB;border-radius:14px;padding:20px 24px;background:#fff;">
+        <div style="font-size:.88rem;font-weight:800;color:#111;margin-bottom:6px;">Tem contrato de fidelidade?</div>
+        <div style="font-size:.8rem;color:#666;line-height:1.7;">Absolutamente não. Cancele quando quiser, sem multa, sem burocracia. Mas a gente aposta que você não vai querer sair.</div>
+      </div>
+      <div style="border:1.5px solid #EBEBEB;border-radius:14px;padding:20px 24px;background:#fff;">
+        <div style="font-size:.88rem;font-weight:800;color:#111;margin-bottom:6px;">Como os clientes ficam sabendo do meu cardápio?</div>
+        <div style="font-size:.8rem;color:#666;line-height:1.7;">Você divulga seu link único nas redes sociais, no WhatsApp, na fachada, onde quiser. É seu cardápio, sua marca. Quanto mais você divulga, mais pedidos chegam.</div>
+      </div>
+      <div style="border:1.5px solid #EBEBEB;border-radius:14px;padding:20px 24px;background:#fff;">
+        <div style="font-size:.88rem;font-weight:800;color:#111;margin-bottom:6px;">E se eu tiver dúvidas?</div>
+        <div style="font-size:.8rem;color:#666;line-height:1.7;">Suporte real por WhatsApp — com gente de verdade. Não um robô. Respondemos rápido porque sabemos que quando você está operando, cada minuto importa.</div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- ═══ COMO FUNCIONA ═══ -->
 <section class="lp-sec light" id="lp-como">
@@ -2103,9 +2368,9 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
     <div class="lp-cta-ico">
       <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
     </div>
-    <div class="lp-cta-title">Pronto para começar?</div>
-    <p class="lp-cta-sub">Crie sua conta agora e teste gratuitamente por 14 dias. Sem cartão de crédito, sem surpresas.</p>
-    <button class="lp-cta-btn" onclick="goTo('s-register')">Criar minha loja grátis →</button>
+    <div class="lp-cta-title">Cada dia no iFood é dinheiro que você não vai recuperar.</div>
+    <p class="lp-cta-sub">Restaurantes que migraram para o PEDIWAY pararam de pagar até R$3.000/mês em comissões. Quanto você está perdendo?</p>
+    <button class="lp-cta-btn" onclick="goTo('s-register')">Criar meu delivery agora →</button>
     <p class="lp-cta-note">14 dias grátis &nbsp;·&nbsp; Sem cartão &nbsp;·&nbsp; Cancele quando quiser</p>
   </div>
 </section>
@@ -4427,4 +4692,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </body>
 
 </body>
-</html>   
+</html>
