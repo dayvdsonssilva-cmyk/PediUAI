@@ -183,6 +183,11 @@ function atualizarInfoPlano() {
 export async function initDashboard() {
   let estab = getEstab();
   if (!estab) return;
+
+  // Mostra loading suave enquanto carrega
+  const loadingEl = document.getElementById('dash-loading-overlay');
+  if (loadingEl) loadingEl.style.display = 'flex';
+
   atualizarLinkSuporte();
   atualizarInfoPlano();
   aplicarRestricaoPlano(estab);
@@ -205,6 +210,15 @@ export async function initDashboard() {
       }
     } catch(e) { console.log('Sync estab:', e); }
   }
+
+  // Mostra card de boas-vindas para novos usuários (sem produtos ainda)
+  try {
+    var boasVindas = document.getElementById('card-boas-vindas');
+    if (boasVindas) {
+      var visto = localStorage.getItem('pw_bv_' + estab.id);
+      if (!visto) boasVindas.style.display = 'block';
+    }
+  } catch(e) {}
 
   // Textos do header
   const sn = $('dash-store-name'); if (sn) sn.textContent = estab.nome;
@@ -242,7 +256,15 @@ export async function initDashboard() {
     renderMesas();
     window.renderHistoricoMesas();
     renderEmojiGrid();
-  } else {
+  }
+
+  // Remove loading overlay
+  if (loadingEl) {
+    loadingEl.style.opacity = '0';
+    setTimeout(function(){ loadingEl.style.display = 'none'; loadingEl.style.opacity = '1'; }, 300);
+  }
+
+  if (false) {
     renderCardapioDemo();
     renderPedidosDemo();
     renderEmojiGrid();
@@ -3807,7 +3829,7 @@ window.filtrarPedidosData = function() {
   const deVal  = document.getElementById('ped-data-de')?.value;
   const ateVal = document.getElementById('ped-data-ate')?.value;
   document.querySelectorAll('#todos-pedidos .pedido-card').forEach(function(card) {
-    const dataStr = card.dataset.createdAt || card.dataset.criado || '';
+    const dataStr = card.dataset.criado || card.dataset.createdAt || '';
     if (!dataStr) { card.style.display = ''; return; }
     const d = new Date(dataStr);
     var mostrar = true;
@@ -4151,13 +4173,14 @@ function renderHistoricoCaixa() {
     var hist = JSON.parse(localStorage.getItem('pw_caixa_hist_' + estab.id) || '[]');
     if (!hist.length) { el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:.82rem;padding:24px">Nenhum fechamento registrado ainda</div>'; return; }
     var fmt = function(v){return 'R$ ' + Number(v||0).toFixed(2).replace('.',',');};
-    el.innerHTML = hist.map(function(h) {
+    el.innerHTML = hist.map(function(h, idx) {
       var dt = new Date(h.fechadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
       var ab = new Date(h.aberturaEm).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
       return '<div style="border:1.5px solid #f0ebe4;border-radius:12px;padding:12px;margin-bottom:8px;background:#fff">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-        + '<div style="font-size:.78rem;font-weight:800;color:#1a1a1a">' + dt + '</div>'
-        + '<div style="font-size:.72rem;color:#888">Operador: ' + (h.operador||'—') + '</div>'
+        + '<div><div style="font-size:.78rem;font-weight:800;color:#1a1a1a">' + dt + '</div>'
+        + '<div style="font-size:.68rem;color:#aaa;margin-top:1px">Operador: ' + (h.operador||'—') + '</div></div>'
+        + '<button onclick="reimprirCaixa(' + idx + ')" style="background:#f5f2ef;border:none;border-radius:8px;padding:6px 10px;font-size:.68rem;font-weight:700;color:#555;cursor:pointer">🖨️ Reimprimir</button>'
         + '</div>'
         + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:.75rem">'
         + '<span style="color:#888">Abertura:</span><span style="font-weight:700;text-align:right">' + ab + '</span>'
@@ -4172,8 +4195,61 @@ function renderHistoricoCaixa() {
         + '</div>'
         + '</div>';
     }).join('');
-  } catch(e) {
-    el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:.82rem;padding:24px">Erro ao carregar histórico</div>';
   }
 }
 window.renderHistoricoCaixa = renderHistoricoCaixa;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// REIMPRIMIR CAIXA DO HISTÓRICO
+// ═══════════════════════════════════════════════════════════════════════════
+window.reimprirCaixa = function(idx) {
+  var estab = getEstab();
+  if (!estab) return;
+  try {
+    var hist = JSON.parse(localStorage.getItem('pw_caixa_hist_' + estab.id) || '[]');
+    var h = hist[idx];
+    if (!h) return;
+    var fmt = function(v){return 'R$ ' + Number(v||0).toFixed(2).replace('.',',');};
+    var nl  = '\n';
+    var sep = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+    var corpo = [
+      '█████████████████████████████████',
+      '     FECHAMENTO DE CAIXA',
+      '   (REIMPRESSÃO)',
+      '█████████████████████████████████',
+      (estab.nome||'Estabelecimento').toUpperCase(),
+      estab.endereco||'',
+      estab.telefone_contato ? 'Tel: ' + estab.telefone_contato : '',
+      estab.cpf_cnpj ? 'CNPJ: ' + estab.cpf_cnpj : '',
+      sep,
+      'Operador:   ' + (h.operador||'Operador'),
+      'Abertura:   ' + new Date(h.aberturaEm).toLocaleString('pt-BR'),
+      'Fechamento: ' + new Date(h.fechadoEm).toLocaleString('pt-BR'),
+      sep,
+      'Fundo inicial: ' + fmt(h.valorAbertura||0),
+      sep,
+      '  RECEBIMENTOS:',
+      '  PIX:        ' + fmt(h.totalPix),
+      '  Cartão:     ' + fmt(h.totalCartao),
+      '  Dinheiro:   ' + fmt(h.totalDinheiro),
+      sep,
+      '  TOTAL EM CAIXA:  ' + fmt(h.totalGeral),
+      sep,
+      '  Pedidos: ' + (h.numPedidos||0),
+      sep,
+      'Gerado em: ' + new Date().toLocaleString('pt-BR'),
+      'PEDIWAY · Plataforma de delivery',
+    ].filter(function(l){return l!=='';}).join(nl);
+
+    var htmlComp = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fechamento</title>'
+      + '<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">'
+      + '<style>*{margin:0;padding:0;box-sizing:border-box}'
+      + 'body{font-family:Poppins,monospace;font-size:12px;padding:16px;max-width:320px;margin:0 auto}'
+      + 'pre{white-space:pre-wrap;word-break:break-word;line-height:1.7;font-family:inherit}'
+      + '@media print{body{padding:2px}@page{margin:0;size:80mm auto}}</style>'
+      + '</head><body><pre>' + corpo + '</pre></body></html>';
+
+    var w = window.open('','_blank','width=400,height=600');
+    if (w) { w.document.write(htmlComp); w.document.close(); setTimeout(function(){w.print();},500); }
+  } catch(e) { showToast('Erro ao reimprimir.', 'error'); }
+};
