@@ -2816,6 +2816,32 @@ body:not(:has([data-screen="s-landing"].active)) .lp-header { display:none !impo
           <button class="btn-copiar" onclick="copiarLinkGarcom()" style="background:#E8001C;border:none">Copiar</button>
         </div>
       </div>
+      <!-- Card de boas-vindas / onboarding rápido -->
+      <div id="card-boas-vindas" style="background:linear-gradient(135deg,#fff5f5,#fff);border:1.5px solid rgba(232,0,28,.15);border-radius:16px;padding:16px;margin-bottom:16px;display:none;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="font-size:2rem;flex-shrink:0;">🚀</div>
+          <div>
+            <div style="font-size:.88rem;font-weight:800;color:#111;margin-bottom:2px;">Bem-vindo ao PEDIWAY!</div>
+            <div style="font-size:.75rem;color:#888;line-height:1.5;">Configure sua loja em 3 passos para começar a receber pedidos.</div>
+          </div>
+          <button onclick="document.getElementById('card-boas-vindas').style.display='none'" style="margin-left:auto;background:none;border:none;font-size:1.2rem;cursor:pointer;color:#ccc;flex-shrink:0;">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px;">
+          <div onclick="showTab('cardapio',document.querySelector('[data-tab=cardapio]'))" style="background:#fff;border:1px solid #f0ebe4;border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='#E8001C'" onmouseout="this.style.borderColor='#f0ebe4'">
+            <div style="font-size:1.3rem;">🍔</div>
+            <div style="font-size:.68rem;font-weight:700;color:#333;margin-top:4px;">Cardápio</div>
+          </div>
+          <div onclick="showTab('fresquinho',document.querySelector('[data-tab=fresquinho]'))" style="background:#fff;border:1px solid #f0ebe4;border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='#E8001C'" onmouseout="this.style.borderColor='#f0ebe4'">
+            <div style="font-size:1.3rem;">✨</div>
+            <div style="font-size:.68rem;font-weight:700;color:#333;margin-top:4px;">Fresquinho</div>
+          </div>
+          <div onclick="showTab('configuracoes',document.querySelector('[data-tab=configuracoes]'));carregarEstadosDash();setTimeout(initCfgAccordion,80)" style="background:#fff;border:1px solid #f0ebe4;border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='#E8001C'" onmouseout="this.style.borderColor='#f0ebe4'">
+            <div style="font-size:1.3rem;">⚙️</div>
+            <div style="font-size:.68rem;font-weight:700;color:#333;margin-top:4px;">Configurar</div>
+          </div>
+        </div>
+      </div>
+
       <div class="stats-grid">
         <div class="stat-box"><div class="stat-label">HOJE</div><div class="stat-num red" id="stat-pedidos">0</div><div class="stat-desc">pedidos</div></div>
         <div class="stat-box"><div class="stat-label">FATURAMENTO</div><div class="stat-num green" id="stat-faturamento">R$ 0,00</div></div>
@@ -4798,7 +4824,87 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
+
+<!-- Mobile Bottom Navigation for Dashboard -->
+<nav class="dash-mobile-nav" id="dash-mobile-nav" style="display:none">
+  <div class="dash-mobile-nav-inner">
+    <button class="dash-mnav-btn active" id="mnav-visao" onclick="showTab('visao-geral',document.querySelector('[data-tab=\'visao-geral\']'));setMobileNav('mnav-visao')">
+      <span class="dash-mnav-icon">🏠</span><span class="dash-mnav-label">Início</span>
+    </button>
+    <button class="dash-mnav-btn" id="mnav-pedidos" onclick="showTab('pedidos-tab',document.querySelector('[data-tab=\'pedidos-tab\']'));setMobileNav('mnav-pedidos')">
+      <span class="dash-mnav-icon">📦</span><span class="dash-mnav-label">Pedidos</span>
+    </button>
+    <button class="dash-mnav-btn" id="mnav-cardapio" onclick="showTab('cardapio',document.querySelector('[data-tab=\'cardapio\']'));setMobileNav('mnav-cardapio')">
+      <span class="dash-mnav-icon">🍽️</span><span class="dash-mnav-label">Cardápio</span>
+    </button>
+    <button class="dash-mnav-btn" id="mnav-caixa" onclick="showTab('caixa',document.querySelector('[data-tab=\'caixa\']'));setMobileNav('mnav-caixa')">
+      <span class="dash-mnav-icon">🏦</span><span class="dash-mnav-label">Caixa</span>
+    </button>
+    <button class="dash-mnav-btn" id="mnav-config" onclick="showTab('configuracoes',document.querySelector('[data-tab=\'configuracoes\']'));carregarEstadosDash();setTimeout(initCfgAccordion,80);setMobileNav('mnav-config')">
+      <span class="dash-mnav-icon">⚙️</span><span class="dash-mnav-label">Config</span>
+    </button>
+  </div>
+</nav>
+<script>
+function setMobileNav(id) {
+  document.querySelectorAll('.dash-mnav-btn').forEach(function(b){b.classList.remove('active');});
+  var el = document.getElementById(id); if(el) el.classList.add('active');
+}
+// Show mobile nav only when dashboard is active
+function checkMobileNav() {
+  var dash = document.querySelector('[data-screen="s-dash"]');
+  var nav  = document.getElementById('dash-mobile-nav');
+  if (!nav) return;
+  nav.style.display = (dash && dash.classList.contains('active')) ? 'block' : 'none';
+}
+// Hook into goTo
+var _origGoTo = window.goTo;
+window.goTo = function(screen) {
+  if (_origGoTo) _origGoTo(screen);
+  setTimeout(checkMobileNav, 50);
+};
+</script>
 </body>
 
+
+<!-- Mobile Bottom Navigation for Dashboard -->
+<nav class="dash-mobile-nav" id="dash-mobile-nav" style="display:none">
+  <div class="dash-mobile-nav-inner">
+    <button class="dash-mnav-btn active" id="mnav-visao" onclick="showTab('visao-geral',document.querySelector('[data-tab=\'visao-geral\']'));setMobileNav('mnav-visao')">
+      <span class="dash-mnav-icon">🏠</span><span class="dash-mnav-label">Início</span>
+    </button>
+    <button class="dash-mnav-btn" id="mnav-pedidos" onclick="showTab('pedidos-tab',document.querySelector('[data-tab=\'pedidos-tab\']'));setMobileNav('mnav-pedidos')">
+      <span class="dash-mnav-icon">📦</span><span class="dash-mnav-label">Pedidos</span>
+    </button>
+    <button class="dash-mnav-btn" id="mnav-cardapio" onclick="showTab('cardapio',document.querySelector('[data-tab=\'cardapio\']'));setMobileNav('mnav-cardapio')">
+      <span class="dash-mnav-icon">🍽️</span><span class="dash-mnav-label">Cardápio</span>
+    </button>
+    <button class="dash-mnav-btn" id="mnav-caixa" onclick="showTab('caixa',document.querySelector('[data-tab=\'caixa\']'));setMobileNav('mnav-caixa')">
+      <span class="dash-mnav-icon">🏦</span><span class="dash-mnav-label">Caixa</span>
+    </button>
+    <button class="dash-mnav-btn" id="mnav-config" onclick="showTab('configuracoes',document.querySelector('[data-tab=\'configuracoes\']'));carregarEstadosDash();setTimeout(initCfgAccordion,80);setMobileNav('mnav-config')">
+      <span class="dash-mnav-icon">⚙️</span><span class="dash-mnav-label">Config</span>
+    </button>
+  </div>
+</nav>
+<script>
+function setMobileNav(id) {
+  document.querySelectorAll('.dash-mnav-btn').forEach(function(b){b.classList.remove('active');});
+  var el = document.getElementById(id); if(el) el.classList.add('active');
+}
+// Show mobile nav only when dashboard is active
+function checkMobileNav() {
+  var dash = document.querySelector('[data-screen="s-dash"]');
+  var nav  = document.getElementById('dash-mobile-nav');
+  if (!nav) return;
+  nav.style.display = (dash && dash.classList.contains('active')) ? 'block' : 'none';
+}
+// Hook into goTo
+var _origGoTo = window.goTo;
+window.goTo = function(screen) {
+  if (_origGoTo) _origGoTo(screen);
+  setTimeout(checkMobileNav, 50);
+};
+</script>
 </body>
 </html>
