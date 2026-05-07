@@ -160,3 +160,53 @@ self.addEventListener('notificationclick', event => {
     })
   );
 });
+
+// ── PUSH NOTIFICATIONS ────────────────────────────────────────────────────────
+self.addEventListener('push', event => {
+  if (!event.data) return;
+
+  let data = {};
+  try { data = event.data.json(); } catch { return; }
+
+  const urlNotif = (typeof data.url === 'string' && data.url.startsWith('/'))
+    ? data.url : '/lojas';
+
+  const options = {
+    body:    String(data.body  || 'Você tem uma novidade!').slice(0, 200),
+    icon:    data.icon  || '/icon-192.png',
+    badge:   data.badge || '/favicon-32x32.png',
+    tag:     String(data.tag || 'pediway-notif').slice(0, 50),
+    renotify: true,
+    vibrate: [200, 100, 200, 100, 200],
+    requireInteraction: false,
+    data:    { url: urlNotif, pedidoId: data.data?.pedidoId, status: data.data?.status },
+    actions: [
+      { action: 'ver', title: 'Ver pedido' },
+      { action: 'ok',  title: 'OK'         },
+    ],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(
+      String(data.title || 'PEDIWAY').slice(0, 100),
+      options
+    )
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const action = event.action;
+  const rawUrl = event.notification.data?.url || '/lojas';
+  const target = (typeof rawUrl === 'string' && rawUrl.startsWith('/')) ? rawUrl : '/lojas';
+
+  if (action === 'ok') return; // fecha sem navegar
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
+      const existing = cs.find(c => !c.url.includes('chrome-extension'));
+      if (existing) { existing.focus(); existing.navigate(target); }
+      else clients.openWindow(target);
+    })
+  );
+});
