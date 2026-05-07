@@ -4195,6 +4195,8 @@ function renderHistoricoCaixa() {
         + '</div>'
         + '</div>';
     }).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:.82rem;padding:24px">Erro ao carregar histórico</div>';
   }
 }
 window.renderHistoricoCaixa = renderHistoricoCaixa;
