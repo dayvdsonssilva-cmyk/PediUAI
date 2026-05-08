@@ -2829,6 +2829,10 @@ function fecharModal() {
   if (m) { m.classList.remove('open'); document.body.style.overflow = ''; }
 }
 
+function fecharModalFora(e) {
+  if (e.target === e.currentTarget) fecharModal();
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS GLOBAIS
 // ─────────────────────────────────────────────────────────────────────────────
