@@ -674,9 +674,9 @@ function podePedirAgora(){
 // ═══════════════════════════════════════════════════════
 let _user     = null;
 let _lojas    = [];
-let _userLat  = null;
-let _userLng  = null;
-let _geoOk    = false;
+var _userLat  = null;
+var _userLng  = null;
+var _geoOk    = false;
 const RAIO_KM = 30;
 
 function haversineDist(lat1,lon1,lat2,lon2) {
@@ -3197,8 +3197,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   /* ── Busca por CEP ou texto ──────────────────── */
   window.gpsBuscarEndereco = function () {
-    var inp  = el('gps-addr-input');
-    var q    = (inp ? inp.value : '').trim();
+    var inp = el('gps-addr-input');
+    var q   = (inp ? inp.value : '').trim();
     if (!q) { if (inp) inp.focus(); return; }
 
     // Se Google Places está ativo, ele já tratou via autocomplete
@@ -3207,18 +3207,42 @@ document.addEventListener('DOMContentLoaded',()=>{
     setLoading(true);
 
     var nums = q.replace(/\D/g, '');
+
     if (nums.length === 8) {
-      /* ── CEP via ViaCEP ────────────────────── */
+      var done = false;
+
+      function aplicarCep(cidade, uf) {
+        if (done) return;
+        done = true;
+        aplicar(0, 0, cidade + (uf ? ' - ' + uf : ''));
+      }
+
+      function tentarBrasilAPI() {
+        fetch('https://brasilapi.com.br/api/cep/v1/' + nums)
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (d && d.city) {
+              aplicarCep(d.city, d.state);
+            } else {
+              setError('CEP não encontrado. Tente: 01310-100');
+            }
+          })
+          .catch(function () {
+            setError('Erro ao consultar CEP. Verifique sua conexão.');
+          });
+      }
+
+      // Tenta ViaCEP primeiro; se falhar, cai no BrasilAPI
       fetch('https://viacep.com.br/ws/' + nums + '/json/')
         .then(function (r) { return r.json(); })
         .then(function (d) {
-          if (d.erro) { setError('CEP não encontrado. Tente: 01310-100'); return; }
-          aplicar(0, 0, d.localidade + (d.uf ? ' - ' + d.uf : ''));
+          if (d.erro) { tentarBrasilAPI(); return; }
+          aplicarCep(d.localidade, d.uf);
         })
-        .catch(function () { setError('Erro ao consultar CEP. Verifique sua conexão.'); });
+        .catch(tentarBrasilAPI);
+
     } else {
-      /* ── Texto livre → salva direto ──────────── */
-      // Sem geocoding — funciona pq lojas não têm coords cadastradas
+      /* ── Texto livre (cidade, bairro) → salva direto ── */
       aplicar(0, 0, q);
     }
   };
