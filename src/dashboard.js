@@ -3430,14 +3430,15 @@ window.abrirModalQuente = async function() {
   // Gera pills de percentual (5 a 50, step 5)
   const pctWrap = document.getElementById('quente-percentuais');
   if (pctWrap) {
-    pctWrap.innerHTML = [5,10,15,20,25,30,35,40,45,50].map(p => `
-      <button onclick="selecionarPctQuente(${p})" id="qpct-${p}"
-        style="padding:8px 16px;border-radius:100px;border:2px solid ${p===_quentePct?'#e65e32':'#e0dbd5'};
-               background:${p===_quentePct?'#e65e32':'#fff'};
-               color:${p===_quentePct?'#fff':'#555'};
-               font-family:'Poppins',sans-serif;font-weight:800;font-size:.82rem;cursor:pointer;transition:all .15s">
-        ${p}% OFF
-      </button>`).join('');
+    pctWrap.innerHTML = [5,10,15,20,25,30,35,40,45,50].map(function(p) {
+    var ativo = p === _quentePct;
+    return '<button onclick="selecionarPctQuente(' + p + ')" id="qpct-' + p + '"'
+      + ' style="padding:8px 16px;border-radius:100px;border:2px solid ' + (ativo?'#e65e32':'#e0dbd5') + ';'
+      + 'background:' + (ativo?'#e65e32':'#fff') + ';'
+      + 'color:' + (ativo?'#fff':'#555') + ';'
+      + 'font-family:Poppins,sans-serif;font-weight:800;font-size:.82rem;cursor:pointer;transition:all .15s">'
+      + p + '% OFF</button>';
+  }).join('');
   }
 
   // Duração da promoção
@@ -3534,26 +3535,24 @@ async function carregarProdutosQuente() {
     return;
   }
 
-  lista.innerHTML = prods.map(p => {
-    const emPromo = p.em_promocao && p.desconto_percent > 0;
-    // SEMPRE usa preco_original como base — nunca o preço já descontado
-    const precoBase = parseFloat(p.preco_original || p.preco);
-    const precoDesc = precoBase * (1 - _quentePct / 100);
-    return `
-    <label style="display:flex;align-items:center;gap:12px;background:${emPromo?'#fff8f5':'#faf8f5'};border:1.5px solid ${emPromo?'#e65e32':'#f0ebe4'};border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s">
-      <input type="checkbox" value="${p.id}" ${emPromo?'checked':''}
-        data-preco-base="${precoBase}"
-        style="width:18px;height:18px;accent-color:#e65e32;cursor:pointer;flex-shrink:0">
-      ${p.foto_url?`<img src="${p.foto_url}" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`:         '<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>'}
-      <div style="flex:1;min-width:0">
-        <div style="font-size:.85rem;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nome}</div>
-        <div style="font-size:.72rem;color:#aaa">${p.categoria||''}</div>
-      </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:.72rem;color:#bbb;text-decoration:line-through">R$ ${precoBase.toFixed(2).replace('.',',')}</div>
-        <div style="font-size:.9rem;font-weight:800;color:#e65e32" data-preco-orig="${precoBase}">R$ ${precoDesc.toFixed(2).replace('.',',')}</div>
-      </div>
-    </label>`;
+  lista.innerHTML = prods.map(function(p) {
+    var emPromo   = p.em_promocao && p.desconto_percent > 0;
+    var precoBase = parseFloat(p.preco_original || p.preco);
+    var precoDesc = precoBase * (1 - _quentePct / 100);
+    var fotoEl    = p.foto_url
+      ? '<img src="' + p.foto_url + '" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0">'
+      : '<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>';
+    return '<label style="display:flex;align-items:center;gap:12px;background:' + (emPromo?'#fff8f5':'#faf8f5') + ';border:1.5px solid ' + (emPromo?'#e65e32':'#f0ebe4') + ';border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s">'
+      + '<input type="checkbox" value="' + p.id + '" ' + (emPromo?'checked':'') + ' data-preco-base="' + precoBase + '" style="width:18px;height:18px;accent-color:#e65e32;cursor:pointer;flex-shrink:0">'
+      + fotoEl
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:.85rem;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.nome + '</div>'
+      + '<div style="font-size:.72rem;color:#aaa">' + (p.categoria||'') + '</div>'
+      + '</div>'
+      + '<div style="text-align:right;flex-shrink:0">'
+      + '<div style="font-size:.72rem;color:#bbb;text-decoration:line-through">R$ ' + precoBase.toFixed(2).replace('.',',') + '</div>'
+      + '<div style="font-size:.9rem;font-weight:800;color:#e65e32" data-preco-orig="' + precoBase + '">R$ ' + precoDesc.toFixed(2).replace('.',',') + '</div>'
+      + '</div></label>';
   }).join('');
 }
 
