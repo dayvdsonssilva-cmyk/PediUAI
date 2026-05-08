@@ -3017,147 +3017,195 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 <script>
 // ═══════════════════════════════════════════════════════
-// SISTEMA GPS — PEDIWAY (simplificado e robusto)
+// SISTEMA GPS PEDIWAY — ViaCEP + BrasilAPI + Nominatim
 // ═══════════════════════════════════════════════════════
-(function() {
+(function () {
+  /* ── helpers de UI ─────────────────────────── */
+  function el(id) { return document.getElementById(id); }
 
-  function _showModal() {
-    var m = document.getElementById('gps-modal');
-    if (m) { m.style.display = 'block'; m.style.animation = 'gpsModalIn .35s ease'; }
-  }
-
-  function _hideModal() {
-    var m = document.getElementById('gps-modal');
-    if (!m) return;
-    m.style.animation = 'gpsModalIn .2s ease reverse';
-    setTimeout(function() { m.style.display = 'none'; }, 220);
-  }
-
-  function _setLoading(on) {
-    var el = document.getElementById('gps-loading');
-    var btn = document.getElementById('gps-btn-loc');
-    if (el) el.style.display = on ? 'block' : 'none';
-    if (btn) { btn.style.opacity = on ? '.6' : '1'; btn.style.pointerEvents = on ? 'none' : 'auto'; }
-    var err = document.getElementById('gps-error');
+  function setLoading(on) {
+    var btn = el('gps-btn-loc'), spin = el('gps-loading'), err = el('gps-error');
+    if (btn) { btn.style.opacity = on ? '.55' : '1'; btn.style.pointerEvents = on ? 'none' : 'auto'; }
+    if (spin) spin.style.display = on ? 'block' : 'none';
     if (err) err.style.display = 'none';
   }
 
-  function _setError(msg) {
-    _setLoading(false);
-    var el = document.getElementById('gps-error');
-    var msg_el = document.getElementById('gps-error-msg');
+  function setError(msg) {
+    setLoading(false);
+    var err = el('gps-error'), msg_el = el('gps-error-msg');
     if (msg_el) msg_el.textContent = msg;
-    if (el) el.style.display = 'block';
+    if (err) err.style.display = 'block';
   }
 
-  function _aplicarLocalizacao(lat, lng, label) {
-    try { localStorage.setItem('pw_gps', JSON.stringify({ lat: lat, lng: lng, label: label, ts: Date.now() })); } catch(e){}
-    // Aplica no app
+  function showModal() {
+    var m = el('gps-modal');
+    if (m) { m.style.display = 'block'; }
+  }
+
+  function hideModal() {
+    var m = el('gps-modal');
+    if (!m) return;
+    m.style.opacity = '0';
+    m.style.transition = 'opacity .2s';
+    setTimeout(function () { m.style.display = 'none'; m.style.opacity = ''; m.style.transition = ''; }, 200);
+  }
+
+  /* ── aplica localização no app ──────────────── */
+  function aplicar(lat, lng, label) {
+    try { localStorage.setItem('pw_gps', JSON.stringify({ lat: lat, lng: lng, label: label, ts: Date.now() })); } catch (e) {}
     if (typeof _userLat !== 'undefined') { _userLat = lat; _userLng = lng; _geoOk = true; }
-    // Atualiza cidade na UI
-    if (label) {
-      var el = document.getElementById('home-cidade');
-      if (el) { el.textContent = '📍 ' + label; el.style.display = 'block'; }
-    }
+    // Atualiza header cidade
+    var cidadeEl = el('home-cidade');
+    if (cidadeEl && label) { cidadeEl.textContent = '📍 ' + label; cidadeEl.style.display = 'block'; }
     // Remove banner GPS
-    var banner = document.getElementById('gps-banner');
+    var banner = el('gps-banner');
     if (banner) banner.innerHTML = '';
     // Re-renderiza lojas
     if (typeof renderHome === 'function') renderHome();
-    _hideModal();
-    if (typeof toast === 'function') setTimeout(function(){ toast('📍 Localização ativada!'); }, 300);
+    hideModal();
+    if (typeof toast === 'function') setTimeout(function () { toast('📍 ' + (label || 'Localização ativada!')); }, 300);
   }
 
-  window.gpsUsarLocalizacao = function() {
+  /* ── busca por TEXTO (cidade, bairro, rua) ── */
+  function buscarTexto(q) {
+    // Tenta Nominatim com User-Agent correto
+    var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=BR&accept-language=pt-BR&q=' + encodeURIComponent(q);
+    return fetch(url, {
+      headers: { 'User-Agent': 'PEDIWAY/1.0 (contato@pediway.com.br)', 'Accept-Language': 'pt-BR' }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.length) throw new Error('not_found');
+        var item = d[0];
+        var parts = item.display_name.split(',');
+        var label = parts.slice(0, 2).join(',').trim();
+        aplicar(parseFloat(item.lat), parseFloat(item.lon), label);
+      });
+  }
+
+  /* ── busca por CEP (ViaCEP) ─────────────────── */
+  function buscarCEP(cep) {
+    var c = cep.replace(/\D/g, '');
+    if (c.length !== 8) return Promise.reject(new Error('cep_invalido'));
+    // Tenta ViaCEP
+    return fetch('https://viacep.com.br/ws/' + c + '/json/')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.erro) {
+          // Fallback: BrasilAPI
+          return fetch('https://brasilapi.com.br/api/cep/v1/' + c)
+            .then(function (r) { return r.json(); })
+            .then(function (b) {
+              if (b.message) throw new Error('cep_nao_encontrado');
+              var label = (b.neighborhood ? b.neighborhood + ', ' : '') + b.city + ' - ' + b.state;
+              // Geocodifica cidade para obter lat/lng
+              return buscarTexto(b.city + ', ' + b.state + ', Brasil').catch(function() {
+                // Se falhar geocoding, usa coordenadas aproximadas
+                return buscarTexto(b.city + ', Brasil');
+              });
+            });
+        }
+        var label = (d.bairro ? d.bairro + ', ' : '') + d.localidade + ' - ' + d.uf;
+        return buscarTexto(d.localidade + ', ' + d.uf + ', Brasil')
+          .catch(function() { return buscarTexto(d.localidade + ', Brasil'); });
+      });
+  }
+
+  /* ── GPS do navegador ───────────────────────── */
+  window.gpsUsarLocalizacao = function () {
     if (!navigator.geolocation) {
-      _setError('Seu navegador não suporta GPS. Digite seu endereço abaixo.');
+      setError('GPS não disponível. Digite sua cidade ou CEP abaixo.');
       gpsDigitarEndereco();
       return;
     }
-    _setLoading(true);
+    setLoading(true);
     navigator.geolocation.getCurrentPosition(
-      function(pos) {
-        var lat = pos.coords.latitude;
-        var lng = pos.coords.longitude;
-        // Tenta nome da cidade via Nominatim (com timeout)
+      function (pos) {
+        var lat = pos.coords.latitude, lng = pos.coords.longitude;
+        // Reverse geocoding com Nominatim
         var done = false;
-        var timer = setTimeout(function() {
-          if (!done) { done = true; _aplicarLocalizacao(lat, lng, 'Sua localização'); }
-        }, 4000);
-        fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json&zoom=10', { signal: AbortSignal.timeout ? AbortSignal.timeout(3500) : undefined })
-          .then(function(r) { return r.json(); })
-          .then(function(d) {
-            clearTimeout(timer);
+        var fallback = setTimeout(function () {
+          if (!done) { done = true; aplicar(lat, lng, 'Localização atual'); }
+        }, 5000);
+        fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=10&accept-language=pt-BR', {
+          headers: { 'User-Agent': 'PEDIWAY/1.0', 'Accept-Language': 'pt-BR' }
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            clearTimeout(fallback);
             if (done) return;
             done = true;
-            var city = (d.address && (d.address.city || d.address.town || d.address.village || d.address.municipality)) || 'Sua localização';
-            _aplicarLocalizacao(lat, lng, city);
+            var addr = d.address || {};
+            var city = addr.city || addr.town || addr.village || addr.municipality || addr.county || 'Localização atual';
+            aplicar(lat, lng, city);
           })
-          .catch(function() {
-            clearTimeout(timer);
-            if (!done) { done = true; _aplicarLocalizacao(lat, lng, 'Sua localização'); }
+          .catch(function () {
+            clearTimeout(fallback);
+            if (!done) { done = true; aplicar(lat, lng, 'Localização atual'); }
           });
       },
-      function(err) {
-        var msg = 'Não foi possível obter sua localização.';
-        if (err.code === 1) msg = 'Permissão negada. Ative a localização nas configurações do navegador.';
-        if (err.code === 2) msg = 'Localização indisponível. Verifique sua conexão.';
-        if (err.code === 3) msg = 'Tempo esgotado. Tente novamente.';
-        _setError(msg);
-        if (err.code === 1) setTimeout(gpsDigitarEndereco, 600);
+      function (err) {
+        var msgs = { 1: 'Permissão negada. Digite sua cidade ou CEP abaixo.', 2: 'GPS indisponível. Digite sua cidade ou CEP.', 3: 'Tempo esgotado. Tente novamente ou digite sua cidade.' };
+        setError(msgs[err.code] || 'Erro ao obter localização.');
+        setTimeout(gpsDigitarEndereco, 500);
       },
-      { timeout: 10000, maximumAge: 300000, enableHighAccuracy: false }
+      { timeout: 12000, maximumAge: 600000, enableHighAccuracy: false }
     );
   };
 
-  window.gpsDigitarEndereco = function() {
-    var form = document.getElementById('gps-addr-form');
+  /* ── exibe campo de endereço ─────────────────── */
+  window.gpsDigitarEndereco = function () {
+    var form = el('gps-addr-form');
     if (form) { form.style.display = 'block'; }
-    setTimeout(function() {
-      var inp = document.getElementById('gps-addr-input');
-      if (inp) inp.focus();
-    }, 200);
+    setTimeout(function () { var inp = el('gps-addr-input'); if (inp) inp.focus(); }, 150);
   };
 
-  window.gpsBuscarEndereco = function() {
-    var inp = document.getElementById('gps-addr-input');
+  /* ── busca pelo texto digitado ───────────────── */
+  window.gpsBuscarEndereco = function () {
+    var inp = el('gps-addr-input');
     var q = inp ? inp.value.trim() : '';
-    if (!q) return;
-    _setLoading(true);
-    fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q + ', Brasil') + '&format=json&limit=1')
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        if (!d || !d.length) throw new Error('not found');
-        var label = d[0].display_name.split(',').slice(0,2).join(',').trim();
-        _aplicarLocalizacao(parseFloat(d[0].lat), parseFloat(d[0].lon), label);
-      })
-      .catch(function() {
-        _setError('Endereço não encontrado. Tente: "São Paulo" ou "Belo Horizonte, MG".');
-      });
+    if (!q) { if (inp) inp.focus(); return; }
+    setLoading(true);
+    // Detecta se é CEP (só números ou formato 00000-000)
+    var isCEP = /^\d{5}-?\d{3}$/.test(q);
+    var promise = isCEP ? buscarCEP(q) : buscarTexto(q);
+    promise.catch(function (e) {
+      var msg = e.message === 'cep_invalido' ? 'CEP inválido. Use o formato 00000-000.'
+              : e.message === 'cep_nao_encontrado' ? 'CEP não encontrado. Verifique e tente novamente.'
+              : 'Não encontrado. Tente: "São Paulo, SP" ou "01310-100"';
+      setError(msg);
+    });
   };
 
-  window.gpsFecharModal = function() { _hideModal(); };
+  /* ── Enter no campo ──────────────────────────── */
+  document.addEventListener('DOMContentLoaded', function () {
+    var inp = el('gps-addr-input');
+    if (inp) inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') gpsBuscarEndereco(); });
+  });
 
-  // Verifica se tem GPS salvo (TTL 12h)
-  function _verificarGPS() {
+  window.gpsFecharModal = function () { hideModal(); };
+
+  /* ── inicialização ──────────────────────────── */
+  function init() {
     try {
       var saved = JSON.parse(localStorage.getItem('pw_gps') || 'null');
+      // TTL 12 horas
       if (saved && saved.lat && (Date.now() - (saved.ts || 0)) < 43200000) {
-        _aplicarLocalizacao(saved.lat, saved.lng, saved.label);
+        aplicar(saved.lat, saved.lng, saved.label);
         return;
       }
-    } catch(e) {}
-    // Não tem GPS válido: mostra modal após 1.5s
-    setTimeout(_showModal, 1500);
+    } catch (e) {}
+    // Sem GPS salvo → mostra modal após 1.5s
+    setTimeout(showModal, 1500);
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', _verificarGPS);
+    document.addEventListener('DOMContentLoaded', init);
   } else {
-    _verificarGPS();
+    init();
   }
-
-})();</script>
+})();
+</script>
 
 </body>
 </html>
