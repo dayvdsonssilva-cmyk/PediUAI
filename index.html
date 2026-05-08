@@ -4888,12 +4888,8 @@ function checkMobileNav() {
   if (!nav) return;
   nav.style.display = (dash && dash.classList.contains('active')) ? 'block' : 'none';
 }
-// Hook into goTo
-var _origGoTo = window.goTo;
-window.goTo = function(screen) {
-  if (_origGoTo) _origGoTo(screen);
-  setTimeout(checkMobileNav, 50);
-};
+// Verifica mobile nav sem fazer hook recursivo
+setInterval(checkMobileNav, 200);
 </script>
 </body>
 
