@@ -2798,6 +2798,38 @@ ${p.observacao ? ' <hr class="sep-dash"> <div class="obs">   <div class="obs-tit
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MODAL ITEM — abrir / fechar
+// ─────────────────────────────────────────────────────────────────────────────
+function abrirModalItem() {
+  // Reseta form
+  var campos = ['item-nome','item-desc','item-cat','item-preco','item-preco-orig','item-desconto-percent'];
+  campos.forEach(function(id) { var el = $(id); if (el) el.value = ''; });
+  var pr = $('item-promocao'); if (pr) pr.checked = false;
+  var pg = $('preco-orig-group'); if (pg) pg.style.display = 'none';
+  var dg = $('desconto-group'); if (dg) dg.style.display = 'none';
+  var dp = $('item-disponivel'); if (dp) dp.checked = true;
+  // Reseta fotos
+  if (typeof fotosFiles !== 'undefined') fotosFiles = [];
+  if (typeof fotosUrls !== 'undefined') fotosUrls = [];
+  var fp = $('fotos-preview'); if (fp) fp.innerHTML = '';
+  // Reseta botão
+  var btn = document.querySelector('#modal-item .btn-primary');
+  if (btn) { btn.textContent = 'Salvar item'; btn.disabled = false; }
+  var tit = document.querySelector('#modal-item .modal-title');
+  if (tit) tit.textContent = 'Novo item';
+  // Remove item-edit-id
+  var m = $('modal-item'); if (!m) return;
+  m.dataset.editId = '';
+  m.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharModal() {
+  var m = $('modal-item');
+  if (m) { m.classList.remove('open'); document.body.style.overflow = ''; }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS GLOBAIS
 // ─────────────────────────────────────────────────────────────────────────────
 window.initDashboard     = initDashboard;
