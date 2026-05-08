@@ -4,6 +4,7 @@ import { resolve } from 'path';
 export default defineConfig({
   base: '/',
   build: {
+    target: 'es2020',
     rollupOptions: {
       input: {
         main:     resolve(__dirname, 'index.html'),
@@ -14,5 +15,8 @@ export default defineConfig({
         lojas:    resolve(__dirname, 'lojas.html'),
       },
     },
+  },
+  esbuild: {
+    target: 'es2020',
   },
 });
