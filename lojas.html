@@ -1092,16 +1092,18 @@ async function renderBanner() {
     } catch(e){ _promoItems=[]; }
   }
 
-  // Agrupa por percentual
-  const grupos = {};
-  _promoItems.forEach(item => {
-    const pct = item.desconto;
-    if(!grupos[pct]) grupos[pct] = [];
-    grupos[pct].push(item);
-  });
-  const percentuais = Object.keys(grupos).map(Number).sort((a,b)=>b-a);
+  // ⭐ Filtra promoções pela cidade do usuário
+  const userCidade = (_cidade||'').trim().toLowerCase();
+  const lojasNaCidade = new Set(
+    _lojas
+      .filter(l => !userCidade || (l.cidade||'').trim().toLowerCase() === userCidade)
+      .map(l => String(l.id))
+  );
+  const promosCidade = userCidade
+    ? _promoItems.filter(p => lojasNaCidade.has(String(p.estabelecimento_id)))
+    : _promoItems.slice();
 
-  if(!percentuais.length) {
+  if(!promosCidade.length) {
     $('banner-wrap').innerHTML = '<div style="margin:0 18px;border-radius:20px;overflow:hidden;position:relative;background:linear-gradient(160deg,#FF2D2D 0%,#E8001C 50%,#C0001A 100%);">'
       + '<div style="position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.07);top:-60px;right:-50px;pointer-events:none"></div>'
       + '<div style="position:absolute;top:-6px;right:-10px;opacity:.08;pointer-events:none;"><img src="' + _IMG_LOGO + '" width="100" height="100" style="display:block;"></div>'
@@ -1113,27 +1115,19 @@ async function renderBanner() {
       + '<div style="display:flex;align-items:center;padding:0 0 18px 18px;gap:0;overflow:hidden;">'
       + '<div style="flex:1;">'
       + '<div style="font-size:17px;font-weight:900;color:#fff;line-height:1.2;letter-spacing:-.03em;">Comida boa,<br>perto de você 🔥</div>'
-      + '<div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:6px;">Promoções dos restaurantes<br>próximos aparecem aqui</div>'
+      + '<div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:6px;">Promoções dos restaurantes<br>de ' + (_cidade||'sua cidade') + ' aparecem aqui</div>'
       + '</div>'
       + '<div style="flex-shrink:0;animation:floatBurger 3s ease-in-out infinite;margin-right:-8px;">'
       + '<img src="' + _IMG_BURGER + '" width="130" height="130" style="display:block;object-fit:contain;">'
-      + '</div>'
-      + '<div style="flex-shrink:0;animation:floatBurger 3s ease-in-out infinite;margin-right:-8px;">'
-      + '<img src="' + imgSrc + '" width="120" height="120" style="display:block;object-fit:contain;">'
       + '</div></div></div>';
     return;
   }
 
-  // Um slide por percentual
-  // Pega o nome criativo do dia de cada loja (quente_nome) — usa o mais comum
-  const NOMES_CRIATIVOS = ['Domingo Delícia 🌞','Segundou com Sabor 🔥','Terça da Promo 🎯','Quartou com Gosto 🍔','Quintou Gostoso 🤤','Sextou QUENTE 🔥🔥','Sábado Irresistível 😋'];
-  const nomeCriativo = (() => {
-    // Busca nas lojas que têm quente_nome salvo
-    const nomes = _lojas.filter(l=>l.quente_nome).map(l=>l.quente_nome);
-    return nomes[0] || NOMES_CRIATIVOS[new Date().getDay()];
-  })();
+  // Ordena por % desconto decrescente (maiores ofertas primeiro)
+  promosCidade.sort((a,b) => b.desconto - a.desconto);
 
-  _carouselSlides = percentuais.map(pct => ({ tipo:'grupo', pct, itens:grupos[pct], nomeCriativo }));
+  // ⭐ UM SLIDE POR PROMOÇÃO (estilo mini-catálogo)
+  _carouselSlides = promosCidade.map(item => ({ item }));
   _bannerIdx = 0;
   buildCarousel();
   iniciarTimer();
@@ -1144,50 +1138,87 @@ function buildCarousel() {
   if(!slides.length) return;
 
   const slidesHTML = slides.map(function(s, i) {
-    var item    = s.itens[0];
-    var loja    = _lojas.find(function(l){return String(l.id)===String(item.estabelecimento_id);})||{};
-    var qtdItens = s.itens.length;
-    var foto    = item.foto_url;
-    var imgSrc  = foto || _IMG_BURGER;
-    var imgStyle= foto ? 'width:100%;height:100%;object-fit:cover;display:block;' : 'width:100%;height:100%;object-fit:contain;display:block;';
+    var item     = s.item;
+    var loja     = _lojas.find(function(l){return String(l.id)===String(item.estabelecimento_id);})||{};
+    var pct      = item.desconto;
+    var paleta   = PALETAS[pct] || { cor1:'#FF2D2D', cor2:'#C0001A', emoji:'🔥' };
+    var foto     = item.foto_url;
+    var imgSrc   = foto || _IMG_BURGER;
+    var imgStyle = foto
+      ? 'width:100%;height:100%;object-fit:cover;display:block;'
+      : 'width:100%;height:100%;object-fit:contain;display:block;padding:10px;';
     var lojaLogoSrc = loja.logo_url || _IMG_LOGO;
-    var precoOrig = 'R$ ' + item.preco_cheio.toFixed(2).replace('.',',');
-    var precoDesc = 'R$ ' + item.preco_com_desc.toFixed(2).replace('.',',');
-    var qtdBadge  = qtdItens > 1 ? '<span style="font-size:9px;color:rgba(255,255,255,.55);background:rgba(255,255,255,.12);border-radius:20px;padding:2px 8px;">+' + (qtdItens-1) + ' itens</span>' : '';
+    var precoOrig   = 'R$ ' + item.preco_cheio.toFixed(2).replace('.',',');
+    var precoDesc   = 'R$ ' + item.preco_com_desc.toFixed(2).replace('.',',');
+    var economia    = (item.preco_cheio - item.preco_com_desc).toFixed(2).replace('.',',');
+    var nomeLoja    = (loja.nome||'PEDIWAY');
+
     return '<div class="promo-slide"'
-      + ' style="cursor:pointer;overflow:hidden;position:relative;border-radius:20px;background:linear-gradient(160deg,#FF2D2D 0%,#E8001C 50%,#C0001A 100%);"'
-      + ' onclick="abrirTelaPromos(' + s.pct + ',_promoItems.filter(function(p){return p.desconto===' + s.pct + ';}))">'
-      + '<div style="position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.07);top:-60px;right:-50px;pointer-events:none"></div>'
-      + '<div style="position:absolute;top:-6px;right:-10px;opacity:.08;pointer-events:none;"><img src="' + _IMG_LOGO + '" width="100" height="100" style="display:block;"></div>'
-      // Topo: logo loja + badge %
-      + '<div style="padding:14px 16px 8px;display:flex;align-items:center;justify-content:space-between;">'
-      + '<div style="display:flex;align-items:center;gap:6px;">'
-      + '<img src="' + lojaLogoSrc + '" width="20" height="20" style="border-radius:5px;display:block;flex-shrink:0;">'
-      + '<span style="font-size:9px;font-weight:800;color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:.08em;">' + (loja.nome||'PEDIWAY') + '</span>'
+      + ' style="cursor:pointer;overflow:hidden;position:relative;border-radius:22px;padding:0;background:linear-gradient(135deg,' + paleta.cor1 + ' 0%,' + paleta.cor2 + ' 100%);box-shadow:0 12px 28px rgba(0,0,0,.28);min-height:180px;"'
+      + ' onclick="abrirLoja(\'' + (loja.id||'') + '\')">'
+      // Blob radial decorativo
+      + '<div style="position:absolute;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.12) 0%,transparent 65%);top:-100px;right:-80px;pointer-events:none;"></div>'
+      // Pontilhado decorativo
+      + '<div style="position:absolute;top:14px;right:138px;width:32px;height:22px;background-image:radial-gradient(rgba(255,255,255,.32) 1.2px,transparent 1.2px);background-size:7px 7px;pointer-events:none;opacity:.7;"></div>'
+      // Container flex principal
+      + '<div style="position:relative;z-index:2;display:flex;height:180px;padding:14px;gap:12px;">'
+        // ESQUERDA — texto
+        + '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;">'
+          // Pill da loja
+          + '<div style="display:inline-flex;align-items:center;gap:7px;background:rgba(0,0,0,.32);border-radius:30px;padding:4px 11px 4px 4px;border:1px solid rgba(255,255,255,.12);align-self:flex-start;max-width:100%;">'
+            + '<img src="' + lojaLogoSrc + '" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display=\'none\'">'
+            + '<span style="font-size:10px;font-weight:800;color:#fff;letter-spacing:.05em;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;">' + nomeLoja + '</span>'
+          + '</div>'
+          // Bloco produto (preço + economia)
+          + '<div>'
+            + '<div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-.03em;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 6px rgba(0,0,0,.3);">' + (item.name||'') + '</div>'
+            + '<div style="display:flex;align-items:baseline;gap:7px;margin-top:5px;flex-wrap:wrap;">'
+              + '<span style="font-size:11px;color:rgba(255,255,255,.55);text-decoration:line-through;font-weight:600;">' + precoOrig + '</span>'
+              + '<span style="font-size:22px;font-weight:900;color:#FFD166;letter-spacing:-.03em;text-shadow:0 2px 8px rgba(0,0,0,.35);line-height:1;">' + precoDesc + '</span>'
+            + '</div>'
+            + '<div style="margin-top:7px;display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,.35);padding:3px 10px 3px 8px;border-radius:30px;border:1px solid rgba(255,255,255,.1);">'
+              + '<span style="font-size:10px;">💰</span>'
+              + '<span style="font-size:9.5px;font-weight:800;color:rgba(255,255,255,.95);text-transform:uppercase;letter-spacing:.04em;">Economize R$ ' + economia + '</span>'
+            + '</div>'
+          + '</div>'
+        + '</div>'
+        // DIREITA — imagem com badge SOBREPOSTO
+        + '<div style="position:relative;width:118px;flex-shrink:0;">'
+          + '<div style="width:100%;height:100%;border-radius:16px;overflow:hidden;background:rgba(255,255,255,.12);box-shadow:0 10px 24px rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.22);">'
+            + '<img src="' + imgSrc + '" style="' + imgStyle + '" onerror="this.src=\'' + _IMG_BURGER + '\'">'
+          + '</div>'
+          // ⭐ BADGE MEGA DESTAQUE — % OFF
+          + '<div style="position:absolute;top:-10px;right:-10px;transform:rotate(10deg);filter:drop-shadow(0 8px 16px rgba(0,0,0,.55));">'
+            + '<div style="background:linear-gradient(135deg,#FFE066 0%,#FFB800 50%,#FF8800 100%);color:#1a1a1a;padding:7px 12px;border-radius:13px;text-align:center;line-height:1;border:2.5px solid #fff;">'
+              + '<div style="font-size:9px;font-weight:900;letter-spacing:.1em;opacity:.85;">PROMO</div>'
+              + '<div style="font-size:21px;font-weight:900;letter-spacing:-.05em;line-height:1;margin-top:1px;">-' + pct + '%</div>'
+              + '<div style="font-size:9px;font-weight:900;letter-spacing:.12em;margin-top:1px;">OFF</div>'
+            + '</div>'
+          + '</div>'
+        + '</div>'
       + '</div>'
-      + '<div style="background:#FFD166;border-radius:30px;padding:3px 10px;font-size:12px;font-weight:900;color:#111;">' + s.pct + '% OFF</div>'
-      + '</div>'
-      // Meio: info esquerda, imagem direita SEM box
-      + '<div style="display:flex;align-items:center;padding:0 0 14px 16px;gap:0;overflow:hidden;">'
-      + '<div style="flex:1;min-width:0;">'
-      + '<div style="font-size:15px;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.02em;">' + (item.name||'') + '</div>'
-      + '<div style="display:flex;align-items:center;gap:5px;margin-top:4px;">'
-      + '<span style="font-size:11px;color:rgba(255,255,255,.4);text-decoration:line-through;">' + precoOrig + '</span>'
-      + '<span style="font-size:16px;font-weight:900;color:#FFD166;">' + precoDesc + '</span>'
-      + '</div>'
-      + (qtdItens > 1 ? '<div style="margin-top:5px;">' + qtdBadge + '</div>' : '')
-      + '</div></div></div>';
+    + '</div>';
   }).join('');
 
-  const dotsHTML = slides.length>1 ? `<div class="carousel-dots" id="carousel-dots">
-    ${slides.map((_,i)=>`<div class="carousel-dot" id="cdot-${i}" style="width:${i===0?'18':'6'}px;background:${i===0?'rgba(17,17,17,.5)':'rgba(17,17,17,.18)'};" onclick="irSlide(${i})"></div>`).join('')}
-  </div>` : '';
+  // Dots — até 10 slides; acima disso vira contador "X / N PROMOÇÕES"
+  var dotsHTML = '';
+  if(slides.length>1 && slides.length<=10) {
+    dotsHTML = '<div class="carousel-dots" id="carousel-dots">'
+      + slides.map(function(_,i){
+          return '<div class="carousel-dot" id="cdot-' + i + '" style="width:' + (i===0?'18':'6') + 'px;background:' + (i===0?'rgba(17,17,17,.5)':'rgba(17,17,17,.18)') + ';" onclick="irSlide(' + i + ')"></div>';
+        }).join('')
+      + '</div>';
+  } else if(slides.length>10) {
+    dotsHTML = '<div style="text-align:center;margin-top:8px;font-size:10px;color:var(--gray);font-weight:700;letter-spacing:.04em;">'
+      + '<span id="slide-counter" style="color:var(--dark);">1</span> / ' + slides.length + ' <span style="opacity:.55;">PROMOÇÕES</span>'
+      + '</div>';
+  }
 
-  $('banner-wrap').innerHTML = `
-    <div class="promo-carousel" id="promo-carousel">
-      <div class="promo-slides" id="promo-slides" style="transform:translateX(0%);">${slidesHTML}</div>
-    </div>
-    ${dotsHTML}`;
+  $('banner-wrap').innerHTML = ''
+    + '<div class="promo-carousel" id="promo-carousel" style="margin:0 18px;">'
+      + '<div class="promo-slides" id="promo-slides" style="transform:translateX(0%);">' + slidesHTML + '</div>'
+    + '</div>'
+    + dotsHTML;
 }
 function irSlide(idx) {
   clearTimeout(_bannerTimer);
@@ -1199,11 +1230,15 @@ function irSlide(idx) {
 }
 
 function atualizarDots(idx) {
-  _carouselSlides.forEach((_,i) => {
-    const d=$('cdot-'+i); if(!d) return;
-    d.style.width   = i===idx ? '18px' : '6px';
+  _carouselSlides.forEach(function(_,i){
+    const d = $('cdot-'+i);
+    if(!d) return;
+    d.style.width      = i===idx ? '18px' : '6px';
     d.style.background = i===idx ? 'rgba(17,17,17,.5)' : 'rgba(17,17,17,.18)';
   });
+  // Atualiza contador quando há mais de 10 slides
+  const counter = $('slide-counter');
+  if(counter) counter.textContent = (idx+1);
 }
 
 function iniciarTimer() {
