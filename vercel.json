@@ -90,6 +90,10 @@
       "destination": "/lojas.html"
     },
     {
+      "source": "/delivery",
+      "destination": "/delivery.html"
+    },
+    {
       "source": "/comandas/:slug",
       "destination": "/garcom.html"
     },
