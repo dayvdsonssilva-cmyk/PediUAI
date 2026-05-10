@@ -183,11 +183,6 @@ function atualizarInfoPlano() {
 export async function initDashboard() {
   let estab = getEstab();
   if (!estab) return;
-
-  // Mostra loading suave enquanto carrega
-  const loadingEl = document.getElementById('dash-loading-overlay');
-  if (loadingEl) loadingEl.style.display = 'flex';
-
   atualizarLinkSuporte();
   atualizarInfoPlano();
   aplicarRestricaoPlano(estab);
@@ -210,26 +205,6 @@ export async function initDashboard() {
       }
     } catch(e) { console.log('Sync estab:', e); }
   }
-
-  // Mostra card de boas-vindas APENAS na primeira vez (após cadastro)
-  try {
-    var boasVindas = document.getElementById('card-boas-vindas');
-    if (boasVindas) {
-      var chave = 'pw_bv_visto_' + estab.id;
-      var visto = localStorage.getItem(chave);
-      if (!visto) {
-        // Verifica se é conta nova (criada há menos de 10 minutos)
-        var criadoEm = estab.created_at ? new Date(estab.created_at) : null;
-        var agora    = new Date();
-        var minutos  = criadoEm ? (agora - criadoEm) / 60000 : 999;
-        if (minutos < 10) {
-          boasVindas.style.display = 'block';
-        }
-        // Marca como visto para não aparecer mais
-        localStorage.setItem(chave, '1');
-      }
-    }
-  } catch(e) {}
 
   // Textos do header
   const sn = $('dash-store-name'); if (sn) sn.textContent = estab.nome;
@@ -267,15 +242,7 @@ export async function initDashboard() {
     renderMesas();
     window.renderHistoricoMesas();
     renderEmojiGrid();
-  }
-
-  // Remove loading overlay
-  if (loadingEl) {
-    loadingEl.style.opacity = '0';
-    setTimeout(function(){ loadingEl.style.display = 'none'; loadingEl.style.opacity = '1'; }, 300);
-  }
-
-  if (false) {
+  } else {
     renderCardapioDemo();
     renderPedidosDemo();
     renderEmojiGrid();
@@ -681,61 +648,266 @@ async function renderCardapio() {
     return;
   }
 
-  grid.innerHTML = filtrado.map(function(p) {
-    var emQuente  = p.em_promocao && parseInt(p.desconto_percent||0) > 0;
-    var precoOrig = Number(p.preco_original || p.preco).toFixed(2).replace('.',',');
-    var precoDesc = Number(p.preco).toFixed(2).replace('.',',');
-    var fotoHtml  = p.foto_url
-      ? '<img src="' + p.foto_url + '" style="width:100%;height:100%;object-fit:cover;display:block;">'
-      : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2rem;">' + (p.emoji||'🍔') + '</div>';
+  grid.innerHTML = filtrado.map(p => `
+    <div class="item-card">
+      <div class="item-card-img">
+        ${p.foto_url           ? '<img class="item-img" src="'+(p.foto_url)+'" alt="'+(p.nome)+'">'           : '<div class="item-emoji-bg">'+(p.emoji || '🍔')+'</div>'}
+        <span class="item-disponivel">${p.disponivel ? 'Disponível' : 'Indisponível'}</span>
+        ${p.promocao ? '<span class="item-promo-badge">🔥 Promoção</span>' : ''}
 
-    // Card QUENTE: grande, laranja
-    if (_dashSubTab === 'quente' && emQuente) {
-      return '<div style="grid-column:1/-1;border-radius:18px;overflow:hidden;background:linear-gradient(135deg,#FF6B1A 0%,#e65e32 45%,#c94820 100%);position:relative;" onclick="editarItem(\'' + p.id + '\')">'
-        + '<div style="position:absolute;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.07);top:-50px;right:-40px;pointer-events:none"></div>'
-        + '<div style="display:flex;align-items:center;padding:18px 20px;gap:16px;position:relative;z-index:1;">'
-        + '<div style="flex-shrink:0;width:80px;height:80px;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.15);box-shadow:0 6px 20px rgba(0,0,0,.25);">' + fotoHtml + '</div>'
-        + '<div style="flex:1;min-width:0;">'
-        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">'
-        + '<span style="background:#FFD166;color:#111;font-size:11px;font-weight:900;padding:3px 10px;border-radius:30px;">' + p.desconto_percent + '% OFF 🔥</span>'
-        + '<span style="font-size:10px;color:rgba(255,255,255,.65);">' + (p.categoria||'') + '</span>'
-        + '</div>'
-        + '<div style="font-size:17px;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.02em;">' + p.nome + '</div>'
-        + '<div style="display:flex;align-items:center;gap:8px;margin-top:6px;">'
-        + '<span style="font-size:12px;color:rgba(255,255,255,.45);text-decoration:line-through;">R$ ' + precoOrig + '</span>'
-        + '<span style="font-size:20px;font-weight:900;color:#FFD166;">R$ ' + precoDesc + '</span>'
-        + '</div></div>'
-        + '<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">'
-        + '<button onclick="event.stopPropagation();editarItem(\'' + p.id + '\')" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:7px 12px;font-size:12px;color:#fff;cursor:pointer;font-weight:700;">✏️ Editar</button>'
-        + '<button onclick="event.stopPropagation();deletarItem(\'' + p.id + '\')" style="background:rgba(0,0,0,.15);border:1px solid rgba(0,0,0,.1);border-radius:10px;padding:7px 12px;font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;font-weight:700;">🗑️</button>'
-        + '</div></div></div>';
+      </div>
+      <div class="item-body">
+        <div class="item-categoria">${p.categoria || 'SEM CATEGORIA'}</div>
+        <div class="item-nome">${p.nome}</div>
+        <div class="item-desc-text">${p.descricao || ''}</div>
+        <div class="item-footer">
+          <div>
+            ${p.em_promocao && p.desconto_percent > 0               ? '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">                   <span class="item-promo-badge" style="background:var(--red);color:#fff;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:6px;">🔥 '+(p.desconto_percent)+'% OFF</span>                   <span class="item-preco-original">R$ '+(Number(p.preco_original||p.preco).toFixed(2).replace('.',','))+'</span>                 </div>                 <div class="item-preco" style="color:var(--red);">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'               : p.promocao && p.preco_original                 ? '<div class="item-preco-original">R$ '+(Number(p.preco_original).toFixed(2).replace('.',','))+'</div>                    <div class="item-preco">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'                 : '<div class="item-preco">R$ '+(Number(p.preco).toFixed(2).replace('.',','))+'</div>'}
+          </div>
+          <div class="item-acoes">
+            <button class="btn-icon" onclick="editarItem('${p.id}')">✏️</button>
+            <button class="btn-icon danger" onclick="deletarItem('${p.id}')">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderPedidosDemo() {
+  // Visão geral zerada — demo mostruário
+  const sp = $('stat-pedidos');     if (sp) sp.textContent = '0';
+  const sf = $('stat-faturamento'); if (sf) sf.textContent = 'R$ 0,00';
+
+  // Sem pedidos na lista
+  const lista = $('pedidos-novos-lista');
+  if (lista) {
+    lista.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#aaa">
+      <div style="font-size:2.5rem;margin-bottom:10px">🎉</div>
+      <div style="font-size:.88rem;font-weight:700;color:#555;margin-bottom:6px">Nenhum pedido ainda</div>
+      <div style="font-size:.76rem">Crie sua conta e receba pedidos reais!</div>
+    </div>`;
+  }
+
+  // Badge sem notificação
+  const badgeW = $('badge-pedidos-wrap'); if (badgeW) badgeW.style.display = 'none';
+}
+
+
+function renderCardapioDemo() {
+  const grid = $('cardapio-grid'); const stat = $('stat-itens');
+  const demo = [
+    { nome:'X-Burguer Especial', categoria:'LANCHES', preco:28.90, emoji:'🍔' },
+    { nome:'X-Tudo',             categoria:'LANCHES', preco:34.90, emoji:'🍔' },
+    { nome:'Batata Frita Grande', categoria:'ACOMPANHAMENTOS', preco:14.90, emoji:'🍟' },
+    { nome:'Onion Rings',        categoria:'ACOMPANHAMENTOS', preco:12.90, emoji:'🧅' },
+    { nome:'Refrigerante 350ml', categoria:'BEBIDAS', preco:7.90, emoji:'🥤' },
+    { nome:'Suco Natural 400ml', categoria:'BEBIDAS', preco:11.90, emoji:'🥤' },
+    { nome:'Sorvete Caseiro',    categoria:'SOBREMESAS', preco:9.90, emoji:'🍦' },
+    { nome:'Combo Família',      categoria:'COMBOS', preco:89.90, emoji:'🎁' },
+  ];
+  if (stat) stat.textContent = String(demo.length);
+  if (!grid) return;
+  grid.innerHTML = demo.map(p => `
+    <div class="item-card">
+      <div class="item-card-img"><div class="item-emoji-bg">${p.emoji}</div></div>
+      <div class="item-body">
+        <div class="item-categoria">${p.categoria}</div>
+        <div class="item-nome">${p.nome}</div>
+        <div class="item-footer">
+          <div class="item-preco">R$ ${p.preco.toFixed(2).replace('.',',')}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderEmojiGrid() {
+  const grid = $('emoji-grid'); if (!grid) return;
+  grid.innerHTML = EMOJIS.map(e =>
+    `<button class="emoji-btn ${e === emojiSel ? 'selected' : ''}" onclick="selecionarEmoji('${e}',this)">${e}</button>`
+  ).join('');
+}
+
+// ─── Modal de item ───────────────────────────────────────────────────────────
+export function abrirModalItem() {
+  $('modal-item').classList.add('open');
+  ['item-nome','item-desc','item-cat','item-preco','item-preco-orig'].forEach(id => { const el=$(id); if(el) el.value=''; });
+  const dd=$('item-desconto-percent'); if(dd) dd.value='0';
+  const dg=$('desconto-group'); if(dg) dg.style.display='none';
+  const pr = $('item-promocao'); if (pr) pr.checked = false;
+  const pg = $('preco-orig-group'); if (pg) pg.style.display = 'none';
+  fotosFiles = []; fotosPosX = []; fotosPosY = [];
+  renderFotosGrid();
+  emojiSel = '🍔'; renderEmojiGrid();
+  // Reset botão salvar
+  const btn = document.querySelector('#modal-item .btn-primary');
+  if (btn) { btn.textContent = 'Salvar item'; btn.onclick = salvarItem; }
+}
+export function fecharModal() { $('modal-item').classList.remove('open'); }
+export function fecharModalFora(e) { if (e.target.id === 'modal-item') fecharModal(); }
+export function selecionarEmoji(emoji, btn) {
+  emojiSel = emoji;
+  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// ─── Fotos com drag de posição ───────────────────────────────────────────────
+export function previewFotos(event) {
+  const file = event.target.files[0]; if (!file) return;
+  event.target.value = '';
+  // Abre modal de crop para ajuste antes de adicionar
+  abrirCropFoto(file);
+}
+export function previewFoto(e) { previewFotos(e); }
+
+
+
+// ── CROP DE FOTO DO PRODUTO ────────────────────────────────────────────────
+let _cropFotoFile  = null;
+let _cropFotoUrl   = null;
+let _cropFotoPosX  = 50;
+let _cropFotoPosY  = 50;
+let _cropFotoDragAtivo = false;
+let _cropFotoDragX = 0, _cropFotoDragY = 0;
+
+window.abrirCropFoto = function(file) {
+  _cropFotoFile = file;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    _CRP.img = img; _CRP.offX = 0; _CRP.offY = 0;
+    _CRP.canvasId = 'crop-foto-canvas'; _CRP.stageId = 'crop-foto-stage'; _CRP.safePrefix = 'cfso';
+    crpApplyMinScale(); _CRP.scale = _CRP.minScale;
+    crpInitDrag('crop-foto-stage');
+    const modal = $('modal-crop-foto');
+    if (modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    setTimeout(() => { crpApplyMinScale(); crpDraw(); }, 50);
+  };
+  img.src = url;
+  _cropFotoUrl = url;
+};
+
+window.confirmarCropFoto = function() {
+  if (!_CRP.img) { console.warn('[crop] sem imagem'); return; }
+
+  // Crop via canvas da imagem original (mais confiável que drawImage canvas->canvas)
+  const stage  = $('crop-foto-stage');
+  const W      = stage ? stage.offsetWidth : 340;
+  const safe   = Math.floor(W * 0.82);
+  const sx     = Math.floor((W - safe) / 2);
+
+  const out    = document.createElement('canvas');
+  out.width    = safe; out.height = safe;
+  const ctx    = out.getContext('2d');
+
+  // Calcula onde a imagem está posicionada no stage
+  const iw = _CRP.img.naturalWidth, ih = _CRP.img.naturalHeight;
+  const dw = iw * _CRP.scale, dh = ih * _CRP.scale;
+  const dx = W/2 - dw/2 + _CRP.offX;
+  const dy = W/2 - dh/2 + _CRP.offY;
+
+  // Desenha a porção da imagem que está dentro da safe area
+  ctx.drawImage(_CRP.img, dx - sx, dy - sx, dw, dh);
+
+  out.toBlob(blob => {
+    if (!blob || blob.size < 100) {
+      // Fallback: salva sem crop
+      const fallbackFile = _cropFotoFile;
+      if (fallbackFile) {
+        fallbackFile._urlExistente = null;
+        fotosFiles.push(fallbackFile); fotosPosX.push(50); fotosPosY.push(50);
+      }
+    } else {
+      const file = new File([blob], _cropFotoFile?.name || 'foto.jpg', { type:'image/jpeg' });
+      file._urlExistente = null;
+      const editIdx = window._cropFotoEditIdx;
+      if (editIdx != null && editIdx >= 0 && editIdx < fotosFiles.length) {
+        fotosFiles[editIdx] = file; fotosPosX[editIdx] = 50; fotosPosY[editIdx] = 50;
+        window._cropFotoEditIdx = null;
+      } else {
+        fotosFiles.push(file); fotosPosX.push(50); fotosPosY.push(50);
+      }
     }
 
-    // Card normal (aba Todos)
-    var badgeHtml = emQuente
-      ? '<span class="item-promo-badge" style="background:#e65e32;color:#fff;">🔥 ' + p.desconto_percent + '% OFF</span>'
-      : (p.promocao ? '<span class="item-promo-badge">🔥 Promoção</span>' : '');
-    var precoHtml = emQuente
-      ? '<div style="display:flex;align-items:center;gap:6px;"><span style="font-size:.65rem;font-weight:800;color:#e65e32;">🔥 ' + p.desconto_percent + '% OFF</span><span class="item-preco-original">R$ ' + precoOrig + '</span></div><div class="item-preco" style="color:#e65e32;">R$ ' + precoDesc + '</div>'
-      : (p.promocao && p.preco_original
-          ? '<div class="item-preco-original">R$ ' + precoOrig + '</div><div class="item-preco">R$ ' + precoDesc + '</div>'
-          : '<div class="item-preco">R$ ' + precoDesc + '</div>');
+    renderFotosGrid();
+    const modal = $('modal-crop-foto');
+    if (modal) { modal.classList.remove('open'); document.body.style.overflow = ''; }
+    _CRP.img = null;
 
-    return '<div class="item-card">'
-      + '<div class="item-card-img">'
-      + (p.foto_url ? '<img class="item-img" src="' + p.foto_url + '" alt="' + p.nome + '">' : '<div class="item-emoji-bg">' + (p.emoji||'🍔') + '</div>')
-      + '<span class="item-disponivel">' + (p.disponivel ? 'Disponível' : 'Indisponível') + '</span>'
-      + badgeHtml
-      + '</div>'
-      + '<div class="item-body">'
-      + '<div class="item-categoria">' + (p.categoria||'SEM CATEGORIA') + '</div>'
-      + '<div class="item-nome">' + p.nome + '</div>'
-      + '<div class="item-desc-text">' + (p.descricao||'') + '</div>'
-      + '<div class="item-footer"><div>' + precoHtml + '</div>'
-      + '<div class="item-acoes">'
-      + '<button class="btn-icon" onclick="editarItem(\'' + p.id + '\')">✏️</button>'
-      + '<button class="btn-icon danger" onclick="deletarItem(\'' + p.id + '\')">🗑️</button>'
-      + '</div></div></div></div>';
+    if (_fotoQueue && _fotoQueue.length > 0) {
+      const next = _fotoQueue.shift(); _cropFotoFile = next;
+      setTimeout(() => window.abrirCropFoto(next), 200);
+    }
+  }, 'image/jpeg', 0.92);
+};
+
+// Função chamada pelo foto-input (modal de item)
+window.adicionarFotos = function(event) {
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
+  event.target.value = '';
+  // Processa um arquivo de cada vez via fila
+  let idx = 0;
+  const next = () => {
+    if (idx >= files.length) return;
+    _cropFotoFile = files[idx++];
+    window.abrirCropFoto(_cropFotoFile);
+    // Após confirmar, se houver mais arquivos, o próximo será aberto
+    // via _fotoQueue que guardamos aqui
+    _fotoQueue = files.slice(idx);
+  };
+  _fotoQueue = files.slice(1);
+  window.abrirCropFoto(files[0]);
+  _cropFotoFile = files[0];
+};
+
+let _fotoQueue = [];
+
+window.fecharCropFoto = function() {
+  const m = $('modal-crop-foto'); if (m) m.classList.remove('open');
+  document.body.style.overflow = '';
+  _cropFotoFile = null;
+  crpCleanup();
+};
+
+// Drag no modal de crop
+
+
+function renderFotosGrid() {
+  const grid = $('fotos-grid'); if (!grid) return;
+
+  if (!fotosFiles.length) {
+    grid.innerHTML = `<div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
+      <span style="font-size:1.5rem">📷</span>
+      <span style="font-size:0.72rem;color:#aaa">Adicionar foto</span>
+    </div>`;
+    return;
+  }
+
+  let html = fotosFiles.map((f, i) => {
+    const url = f._urlExistente || URL.createObjectURL(f);
+    const px  = fotosPosX[i] ?? 50;
+    const py  = fotosPosY[i] ?? 50;
+    const isExist = !!f._urlExistente;
+    return `<div class="foto-thumb-wrap" id="foto-wrap-${i}">
+      <div style="position:relative;width:100%;aspect-ratio:1/1;max-height:280px;border-radius:14px;overflow:hidden;background:#f0ebe4;border:2px solid var(--border);margin-bottom:8px;cursor:grab;touch-action:none" id="foto-drag-${i}">
+        <img src="${url}" id="foto-img-${i}" draggable="false"
+          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:${px}% ${py}%;pointer-events:none;user-select:none">
+        ${i===0 ? '<div style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:.62rem;font-weight:800;padding:3px 10px;border-radius:50px;z-index:3;letter-spacing:.04em">PRINCIPAL</div>' : ''}
+        <div style="position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;pointer-events:none;z-index:2">
+          <div style="background:rgba(0,0,0,.55);color:#fff;font-size:.62rem;font-weight:600;padding:4px 12px;border-radius:50px;backdrop-filter:blur(6px)">
+            ✋ Arraste para reposicionar
+          </div>
+        </div>
+        <div style="position:absolute;bottom:10px;right:10px;width:44px;height:44px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,.6);border:2px solid rgba(255,255,255,.35);z-index:3">
+          <img src="${url}" style="width:100%;height:100%;object-fit:cover;opacity:.7">
+          <div id="foto-pin-${i}" style="position:absolute;width:8px;height:8px;background:#fff;border-radius:50%;border:1.5px solid var(--red);transform:translate(-50%,-50%);left:${px}%;top:${py}%;box-shadow:0 1px 4px rgba(0,0,0,.5)"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:.65rem;color:#aaa">${isExist ? '📎 Existente' : '✨ Nova'}</span>
+        <button onclick="removerFotoItem(${i})" style="background:none;border:1px solid #e0dbd5;color:#aaa;padding:4px 12px;border-radius:8px;font-size:.7rem;font-weight:600;cursor:pointer" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='#e0dbd5';this.style.color='#aaa'">🗑 Remover</button>
+      </div>
+    </div>`;
   }).join('');
 
   html += `<div class="foto-add-btn" onclick="document.getElementById('foto-input').click()">
@@ -1591,9 +1763,6 @@ function iniciarRealtime() {
           }
           return;
         }
-        // ── Atualiza caixa em tempo real ao receber pedido ──────────────
-        if (_caixaAberto) { atualizarResumoCaixa(); }
-
         // ── Pedido normal (delivery/retirada) — aparece na aba Pedidos ─
         if (pedidosConhecidos.has(p.id)) return;
         pedidosConhecidos.add(p.id);
@@ -1614,7 +1783,6 @@ function iniciarRealtime() {
         const p = payload.new;
         if (!p || p.estabelecimento_id !== estab.id) return;
         await renderPedidos(); // atualiza visão geral (stat-pedidos, stat-faturamento)
-        if (_caixaAberto) { atualizarResumoCaixa(); }
         // Financeiro em tempo real — recarrega se a aba estiver ativa
         if (document.querySelector('#tab-financeiro.active') ||
             document.querySelector('[data-tab="financeiro"].active')) {
@@ -2798,76 +2966,6 @@ ${p.observacao ? ' <hr class="sep-dash"> <div class="obs">   <div class="obs-tit
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EMOJI + FOTOS
-// ─────────────────────────────────────────────────────────────────────────────
-function renderEmojiGrid() {
-  const grid = document.getElementById('emoji-grid');
-  if (!grid) return;
-  grid.innerHTML = EMOJIS.map(function(e) {
-    var sel = e === emojiSel;
-    return '<div onclick="selecionarEmoji(\'' + e + '\')" style="'
-      + 'width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;'
-      + 'font-size:1.3rem;cursor:pointer;border:2px solid ' + (sel ? 'var(--red)' : 'transparent') + ';'
-      + 'background:' + (sel ? 'rgba(192,57,43,.08)' : '#f5f2ef') + ';transition:all .12s">'
-      + e + '</div>';
-  }).join('');
-}
-
-function selecionarEmoji(emoji) {
-  emojiSel = emoji;
-  renderEmojiGrid();
-}
-
-function previewFotos(event) {
-  // Alias para adicionarFotos (compatibilidade)
-  if (window.adicionarFotos) window.adicionarFotos(event);
-}
-
-function previewFoto(event) {
-  // Processa uma única foto
-  if (event.target.files && event.target.files[0]) {
-    const fakeEvent = { target: event.target };
-    if (window.adicionarFotos) window.adicionarFotos(fakeEvent);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MODAL ITEM — abrir / fechar
-// ─────────────────────────────────────────────────────────────────────────────
-function abrirModalItem() {
-  // Reseta form
-  var campos = ['item-nome','item-desc','item-cat','item-preco','item-preco-orig','item-desconto-percent'];
-  campos.forEach(function(id) { var el = $(id); if (el) el.value = ''; });
-  var pr = $('item-promocao'); if (pr) pr.checked = false;
-  var pg = $('preco-orig-group'); if (pg) pg.style.display = 'none';
-  var dg = $('desconto-group'); if (dg) dg.style.display = 'none';
-  var dp = $('item-disponivel'); if (dp) dp.checked = true;
-  // Reseta fotos
-  if (typeof fotosFiles !== 'undefined') fotosFiles = [];
-  if (typeof fotosUrls !== 'undefined') fotosUrls = [];
-  var fp = $('fotos-preview'); if (fp) fp.innerHTML = '';
-  // Reseta botão
-  var btn = document.querySelector('#modal-item .btn-primary');
-  if (btn) { btn.textContent = 'Salvar item'; btn.disabled = false; }
-  var tit = document.querySelector('#modal-item .modal-title');
-  if (tit) tit.textContent = 'Novo item';
-  // Remove item-edit-id
-  var m = $('modal-item'); if (!m) return;
-  m.dataset.editId = '';
-  m.classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-
-function fecharModal() {
-  var m = $('modal-item');
-  if (m) { m.classList.remove('open'); document.body.style.overflow = ''; }
-}
-
-function fecharModalFora(e) {
-  if (e.target === e.currentTarget) fecharModal();
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS GLOBAIS
 // ─────────────────────────────────────────────────────────────────────────────
 window.initDashboard     = initDashboard;
@@ -3409,13 +3507,6 @@ window.selecionarPagamentoComanda = function(metodo) {
     const btnC = document.getElementById('pgto-btn-CARTÃO');
     if (btnC) { btnC.style.borderColor='#C0392B'; btnC.style.background='#fff5f5'; btnC.style.color='#C0392B'; }
   }
-  // Esconde submenu crédito/débito se selecionou PIX ou DINHEIRO
-  if (metodo === 'PIX' || metodo === 'DINHEIRO') {
-    const sub = document.getElementById('pgto-cartao-submenu');
-    if (sub) sub.style.display = 'none';
-    const btnC = document.getElementById('pgto-btn-CARTÃO');
-    if (btnC) { btnC.style.borderColor='#e0dbd5'; btnC.style.background='#fff'; btnC.style.color='#555'; }
-  }
   const aviso = document.getElementById('pgto-aviso');
   if (aviso) aviso.style.display = 'none';
 };
@@ -3491,7 +3582,6 @@ window.toggleTaxaEntrega = function(ativo) {
 // 🔥 MODAL QUENTE — Promoção por percentual
 // ═══════════════════════════════════════════════════════════════════════════════
 let _quentePct = 10;
-let _quenteHoras = 2; // duração padrão: 2h
 
 window.abrirModalQuente = async function() {
   const modal = document.getElementById('modal-quente');
@@ -3500,15 +3590,14 @@ window.abrirModalQuente = async function() {
   // Gera pills de percentual (5 a 50, step 5)
   const pctWrap = document.getElementById('quente-percentuais');
   if (pctWrap) {
-    pctWrap.innerHTML = [5,10,15,20,25,30,35,40,45,50].map(function(p) {
-    var ativo = p === _quentePct;
-    return '<button onclick="selecionarPctQuente(' + p + ')" id="qpct-' + p + '"'
-      + ' style="padding:8px 16px;border-radius:100px;border:2px solid ' + (ativo?'#e65e32':'#e0dbd5') + ';'
-      + 'background:#fff;'
-      + 'color:' + (ativo?'#e65e32':'#555') + ';'
-      + 'font-weight:800;font-size:.82rem;cursor:pointer;transition:all .15s">'
-      + p + '% OFF</button>';
-  }).join('');
+    pctWrap.innerHTML = [5,10,15,20,25,30,35,40,45,50].map(p => `
+      <button onclick="selecionarPctQuente(${p})" id="qpct-${p}"
+        style="padding:8px 16px;border-radius:100px;border:2px solid ${p===_quentePct?'#e65e32':'#e0dbd5'};
+               background:#fff;
+               color:${p===_quentePct?'#e65e32':'#555'};
+               font-family:'Poppins',sans-serif;font-weight:800;font-size:.82rem;cursor:pointer;transition:all .15s">
+        ${p}% OFF
+      </button>`).join('');
   }
 
   // Mostra preview
@@ -3522,7 +3611,7 @@ window.abrirModalQuente = async function() {
 
 window.selecionarPctQuente = function(pct) {
   _quentePct = pct;
-  // Atualiza visual dos botões — apenas borda laranja, fundo sempre branco
+  // Atualiza visual dos botões
   [5,10,15,20,25,30,35,40,45,50].forEach(p => {
     const btn = document.getElementById('qpct-'+p);
     if (!btn) return;
@@ -3537,26 +3626,6 @@ window.selecionarPctQuente = function(pct) {
     const desc = base * (1 - _quentePct / 100);
     el.textContent = 'R$ ' + desc.toFixed(2).replace('.', ',');
   });
-};
-
-window.selecionarDuracaoQuente = function(horas) {
-  _quenteHoras = horas;
-  [0,1,2,4,8,24].forEach(h => {
-    const b = document.getElementById('qdur-'+h);
-    if (!b) return;
-    b.style.background  = h === horas ? '#e65e32' : '#fff';
-    b.style.borderColor = h === horas ? '#e65e32' : '#e0dbd5';
-    b.style.color       = h === horas ? '#fff'    : '#555';
-  });
-  const info = document.getElementById('quente-expira-info');
-  if (info) {
-    if (horas === 0) {
-      info.textContent = 'Promoção fica ativa até você remover manualmente.';
-    } else {
-      const exp = new Date(Date.now() + horas * 3600000);
-      info.textContent = 'Expira hoje às ' + exp.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) + '.';
-    }
-  }
 };
 
 function atualizarPreviewQuente() {
@@ -3581,24 +3650,26 @@ async function carregarProdutosQuente() {
     return;
   }
 
-  lista.innerHTML = prods.map(function(p) {
-    var emPromo   = p.em_promocao && p.desconto_percent > 0;
-    var precoBase = parseFloat(p.preco_original || p.preco);
-    var precoDesc = precoBase * (1 - _quentePct / 100);
-    var fotoEl    = p.foto_url
-      ? '<img src="' + p.foto_url + '" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0">'
-      : '<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>';
-    return '<label style="display:flex;align-items:center;gap:12px;background:' + (emPromo?'#fff8f5':'#faf8f5') + ';border:1.5px solid ' + (emPromo?'#e65e32':'#f0ebe4') + ';border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s">'
-      + '<input type="checkbox" value="' + p.id + '" ' + (emPromo?'checked':'') + ' data-preco-base="' + precoBase + '" style="width:18px;height:18px;accent-color:#e65e32;cursor:pointer;flex-shrink:0">'
-      + fotoEl
-      + '<div style="flex:1;min-width:0">'
-      + '<div style="font-size:.85rem;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.nome + '</div>'
-      + '<div style="font-size:.72rem;color:#aaa">' + (p.categoria||'') + '</div>'
-      + '</div>'
-      + '<div style="text-align:right;flex-shrink:0">'
-      + '<div style="font-size:.72rem;color:#bbb;text-decoration:line-through">R$ ' + precoBase.toFixed(2).replace('.',',') + '</div>'
-      + '<div style="font-size:.9rem;font-weight:800;color:#e65e32" data-preco-orig="' + precoBase + '">R$ ' + precoDesc.toFixed(2).replace('.',',') + '</div>'
-      + '</div></label>';
+  lista.innerHTML = prods.map(p => {
+    const emPromo = p.em_promocao && p.desconto_percent > 0;
+    // SEMPRE usa preco_original como base — nunca o preço já descontado
+    const precoBase = parseFloat(p.preco_original || p.preco);
+    const precoDesc = precoBase * (1 - _quentePct / 100);
+    return `
+    <label style="display:flex;align-items:center;gap:12px;background:${emPromo?'#fff8f5':'#faf8f5'};border:1.5px solid ${emPromo?'#e65e32':'#f0ebe4'};border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s">
+      <input type="checkbox" value="${p.id}" ${emPromo?'checked':''}
+        data-preco-base="${precoBase}"
+        style="width:18px;height:18px;accent-color:#e65e32;cursor:pointer;flex-shrink:0">
+      ${p.foto_url?`<img src="${p.foto_url}" style="width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`:         '<div style="width:42px;height:42px;border-radius:8px;background:#f0ebe4;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍽️</div>'}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.85rem;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nome}</div>
+        <div style="font-size:.72rem;color:#aaa">${p.categoria||''}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:.72rem;color:#bbb;text-decoration:line-through">R$ ${precoBase.toFixed(2).replace('.',',')}</div>
+        <div style="font-size:.9rem;font-weight:800;color:#e65e32" data-preco-orig="${precoBase}">R$ ${precoDesc.toFixed(2).replace('.',',')}</div>
+      </div>
+    </label>`;
   }).join('');
 }
 
@@ -3640,25 +3711,12 @@ window.salvarQuente = async function() {
     }).eq('id', cb.value);
   }
 
-  // Atualiza flag da loja com expiração
+  // Atualiza flag da loja
   if (estab?.id) {
-    const expiraEm = (_quenteHoras > 0 && marcados.length > 0)
-      ? new Date(Date.now() + _quenteHoras * 3600000).toISOString()
-      : null;
     await getSupa().from('estabelecimentos').update({
       promocao_ativa:   marcados.length > 0,
       desconto_percent: marcados.length > 0 ? pct : 0,
-      promo_expira_em:  expiraEm,
     }).eq('id', estab.id);
-
-    // Agenda expiração local (para o dono ver o aviso sem recarregar)
-    if (_quenteHoras > 0 && marcados.length > 0) {
-      clearTimeout(window._quenteExpiraTimer);
-      window._quenteExpiraTimer = setTimeout(async function() {
-        showToast('⏰ Promoção QUENTE expirou! Renovar?', '#e65e32', 5000);
-        atualizarFireDash();
-      }, _quenteHoras * 3600000);
-    }
   }
 
   fecharModalQuente();
@@ -3749,7 +3807,7 @@ window.filtrarPedidosData = function() {
   const deVal  = document.getElementById('ped-data-de')?.value;
   const ateVal = document.getElementById('ped-data-ate')?.value;
   document.querySelectorAll('#todos-pedidos .pedido-card').forEach(function(card) {
-    const dataStr = card.dataset.criado || card.dataset.createdAt || '';
+    const dataStr = card.dataset.createdAt || card.dataset.criado || '';
     if (!dataStr) { card.style.display = ''; return; }
     const d = new Date(dataStr);
     var mostrar = true;
@@ -4093,14 +4151,13 @@ function renderHistoricoCaixa() {
     var hist = JSON.parse(localStorage.getItem('pw_caixa_hist_' + estab.id) || '[]');
     if (!hist.length) { el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:.82rem;padding:24px">Nenhum fechamento registrado ainda</div>'; return; }
     var fmt = function(v){return 'R$ ' + Number(v||0).toFixed(2).replace('.',',');};
-    el.innerHTML = hist.map(function(h, idx) {
+    el.innerHTML = hist.map(function(h) {
       var dt = new Date(h.fechadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
       var ab = new Date(h.aberturaEm).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
       return '<div style="border:1.5px solid #f0ebe4;border-radius:12px;padding:12px;margin-bottom:8px;background:#fff">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-        + '<div><div style="font-size:.78rem;font-weight:800;color:#1a1a1a">' + dt + '</div>'
-        + '<div style="font-size:.68rem;color:#aaa;margin-top:1px">Operador: ' + (h.operador||'—') + '</div></div>'
-        + '<button onclick="reimprirCaixa(' + idx + ')" style="background:#f5f2ef;border:none;border-radius:8px;padding:6px 10px;font-size:.68rem;font-weight:700;color:#555;cursor:pointer">🖨️ Reimprimir</button>'
+        + '<div style="font-size:.78rem;font-weight:800;color:#1a1a1a">' + dt + '</div>'
+        + '<div style="font-size:.72rem;color:#888">Operador: ' + (h.operador||'—') + '</div>'
         + '</div>'
         + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:.75rem">'
         + '<span style="color:#888">Abertura:</span><span style="font-weight:700;text-align:right">' + ab + '</span>'
@@ -4120,75 +4177,3 @@ function renderHistoricoCaixa() {
   }
 }
 window.renderHistoricoCaixa = renderHistoricoCaixa;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// REIMPRIMIR CAIXA DO HISTÓRICO
-// ═══════════════════════════════════════════════════════════════════════════
-window.reimprirCaixa = function(idx) {
-  var estab = getEstab();
-  if (!estab) return;
-  try {
-    var hist = JSON.parse(localStorage.getItem('pw_caixa_hist_' + estab.id) || '[]');
-    var h = hist[idx];
-    if (!h) return;
-    var fmt = function(v){return 'R$ ' + Number(v||0).toFixed(2).replace('.',',');};
-    var estabNome = (estab.nome||'Estabelecimento').toUpperCase();
-    var estabEnd  = estab.endereco||'';
-    var estabTel  = estab.telefone_contato||estab.whatsapp||'';
-    var estabCnpj = estab.cpf_cnpj||'';
-
-    var htmlComp = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reimpressão · Fechamento de Caixa</title>'
-      + '<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">'
-      + '<style>'
-      + '*{margin:0;padding:0;box-sizing:border-box}'
-      + 'body{font-family:Poppins,Arial,sans-serif;font-size:12px;background:#fff;color:#000;width:300px;max-width:300px;margin:0 auto;padding:12px 10px}'
-      + '.center{text-align:center}'
-      + '.logo{font-size:18px;font-weight:900;letter-spacing:.06em}.logo-red{color:#C0392B}'
-      + '.emp{font-size:13px;font-weight:700;margin-top:2px}'
-      + '.info{font-size:10px;color:#333;line-height:1.7;margin-top:2px}'
-      + '.sep-thick{border:none;border-top:3px solid #000;margin:8px 0}'
-      + '.sep-dash{border:none;border-top:1px dashed #888;margin:7px 0}'
-      + '.sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#555;border-bottom:1px solid #ccc;padding-bottom:2px;margin:7px 0 4px}'
-      + '.row{display:flex;justify-content:space-between;font-size:11px;padding:1px 0;gap:6px}'
-      + '.row .lbl{color:#555}.row .val{font-weight:700;text-align:right}'
-      + '.total-bloco{border-top:2px solid #000;border-bottom:2px solid #000;padding:5px 0;margin:5px 0;display:flex;justify-content:space-between;align-items:center}'
-      + '.total-lbl{font-size:14px;font-weight:900}'
-      + '.total-val{font-size:16px;font-weight:900;color:#16a34a}'
-      + '.reimp{background:#f5f2ef;border-radius:6px;padding:4px 10px;font-size:9px;font-weight:700;color:#888;text-align:center;margin-bottom:6px;letter-spacing:.06em}'
-      + '.rodape{font-size:9px;text-align:center;color:#888;margin-top:8px;letter-spacing:.04em}'
-      + '@media print{body{padding:4px}@page{margin:0;size:80mm auto}}'
-      + '</style></head><body>'
-      + '<div class="reimp">⟳ REIMPRESSÃO</div>'
-      + '<div class="center">'
-      + '<div class="logo">PEDI<span class="logo-red">WAY</span></div>'
-      + '<div class="emp">' + estabNome + '</div>'
-      + '<div class="info">'
-      + (estabEnd  ? estabEnd  + '<br>' : '')
-      + (estabTel  ? 'Tel: ' + estabTel + '<br>' : '')
-      + (estabCnpj ? 'CNPJ: ' + estabCnpj : '')
-      + '</div>'
-      + '</div>'
-      + '<hr class="sep-thick">'
-      + '<div class="center" style="font-size:13px;font-weight:900;letter-spacing:.05em">FECHAMENTO DE CAIXA</div>'
-      + '<hr class="sep-dash">'
-      + '<div class="sec">Período</div>'
-      + '<div class="row"><span class="lbl">Operador</span><span class="val">' + (h.operador||'Operador') + '</span></div>'
-      + '<div class="row"><span class="lbl">Abertura</span><span class="val">' + new Date(h.aberturaEm).toLocaleString('pt-BR') + '</span></div>'
-      + '<div class="row"><span class="lbl">Fechamento</span><span class="val">' + new Date(h.fechadoEm).toLocaleString('pt-BR') + '</span></div>'
-      + '<hr class="sep-dash">'
-      + '<div class="sec">Fundo de Caixa</div>'
-      + '<div class="row"><span class="lbl">Valor inicial</span><span class="val">' + fmt(h.valorAbertura||0) + '</span></div>'
-      + '<hr class="sep-dash">'
-      + '<div class="sec">Recebimentos</div>'
-      + '<div class="row"><span class="lbl">PIX</span><span class="val">' + fmt(h.totalPix) + '</span></div>'
-      + '<div class="row"><span class="lbl">Cartão</span><span class="val">' + fmt(h.totalCartao) + '</span></div>'
-      + '<div class="row"><span class="lbl">Dinheiro</span><span class="val">' + fmt(h.totalDinheiro) + '</span></div>'
-      + '<div class="row" style="margin-top:3px"><span class="lbl">Nº de pedidos</span><span class="val">' + (h.numPedidos||0) + '</span></div>'
-      + '<div class="total-bloco"><span class="total-lbl">TOTAL EM CAIXA</span><span class="total-val">' + fmt(h.totalGeral) + '</span></div>'
-      + '<div class="center rodape">Gerado em: ' + new Date().toLocaleString('pt-BR') + '<br>PEDIWAY · Plataforma de delivery independente</div>'
-      + '</body></html>';
-
-    var w = window.open('','_blank','width=400,height=620');
-    if (w) { w.document.write(htmlComp); w.document.close(); setTimeout(function(){w.print();},600); }
-  } catch(e) { showToast('Erro ao reimprimir.', 'error'); }
-};
