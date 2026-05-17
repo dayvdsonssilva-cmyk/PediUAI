@@ -22,14 +22,15 @@ input, select, textarea { max-width:100%; box-sizing:border-box; }
 .cfg-section { overflow:hidden; }
 /* Bloqueia zoom em toda a plataforma */
 
-/* Toggle switch KDS */
-#cfg-usa-setores:checked + span { background: var(--red); }
-#cfg-usa-setores:checked + span::before { transform: translateX(20px); }
-#kds-toggle-thumb::before {
-  content: ''; position: absolute;
-  height: 18px; width: 18px; left: 3px; bottom: 3px;
-  background: #fff; border-radius: 50%; transition: .3s;
+/* KDS Toggle switch */
+#cfg-usa-setores + span { background:#ddd; transition:background .25s; }
+#cfg-usa-setores:checked + span { background:var(--red) !important; }
+#cfg-usa-setores + span::before {
+  content:''; position:absolute;
+  height:18px; width:18px; left:3px; bottom:3px;
+  background:#fff; border-radius:50%; transition:transform .25s;
 }
+#cfg-usa-setores:checked + span::before { transform:translateX(20px); }
 
 /* Dashboard mobile */
 @media(max-width:600px) {
@@ -2517,42 +2518,8 @@ canvas, [data-touch="free"] { touch-action: none !important; }
               <div style="font-size:.65rem;color:#aaa;margin-top:4px">Compartilhe este link com seus garçons. Todos usam o mesmo link para acessar as comandas digitais.</div>
             </div>
 
-            <!-- ── KDS: Links por setor ── -->
-            <div class="form-group-light" id="cfg-kds-section" style="display:none">
-              <label style="display:flex;align-items:center;gap:6px">
-                🍳 Painéis KDS por Setor
-                <span style="background:#fff0f0;color:#E8001C;padding:1px 7px;border-radius:50px;font-size:.6rem;font-weight:800">KDS</span>
-              </label>
-              <div id="cfg-kds-links" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
-              <div style="font-size:.65rem;color:#aaa;margin-top:6px">
-                Abra cada link em um tablet ou TV na área correspondente. Os painéis atualizam em tempo real.
-              </div>
-            </div>
-
           </div>
         </div>
-
-            <!-- ── KDS Toggle ── -->
-            <div style="border:1.5px solid #ffe0e0;border-radius:12px;padding:14px 16px;background:#fff8f8;margin-top:4px">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-                <div>
-                  <div style="font-size:.82rem;font-weight:800;color:#333;display:flex;align-items:center;gap:6px">
-                    🍳 Separar pedidos por setor (KDS)
-                    <span style="background:#E8001C;color:#fff;padding:1px 7px;border-radius:50px;font-size:.55rem;font-weight:900">NOVO</span>
-                  </div>
-                  <div style="font-size:.68rem;color:#888;margin-top:3px;line-height:1.5">
-                    Ativa painéis independentes para cozinha, bar, sobremesa, etc.
-                  </div>
-                </div>
-                <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
-                  <input type="checkbox" id="cfg-usa-setores"
-                    onchange="toggleUsaSetores(this.checked)"
-                    style="opacity:0;width:0;height:0">
-                  <span style="position:absolute;cursor:pointer;inset:0;background:#ddd;border-radius:34px;transition:.3s"
-                    id="kds-toggle-thumb"></span>
-                </label>
-              </div>
-            </div>
 
         <!-- ══════════════════════════════════════
              TÓPICO 4 · CONTATO E REDES SOCIAIS
@@ -3317,14 +3284,23 @@ canvas, [data-touch="free"] { touch-action: none !important; }
       <div class="form-group-light"><label>Categoria</label><input type="text" class="input-light" id="item-cat" placeholder="Ex: LANCHES, BEBIDAS..."></div>
       <div class="form-group-light">
         <label style="display:flex;align-items:center;gap:6px">
-          Setor (KDS)
-          <span style="background:#fff0f0;color:#E8001C;padding:1px 7px;border-radius:50px;font-size:.6rem;font-weight:800">OPCIONAL</span>
+          Setor de produção (KDS)
+          <span style="background:#fff0f0;color:var(--red);padding:1px 7px;border-radius:50px;font-size:.6rem;font-weight:800">KDS</span>
         </label>
-        <input type="text" class="input-light" id="item-setor" placeholder="Ex: cozinha, bar, sobremesa"
-          style="text-transform:lowercase">
-        <div style="font-size:.65rem;color:#aaa;margin-top:4px">
-          Usado para separar pedidos por setor no painel KDS
+        <div style="display:flex;gap:8px">
+          <select class="input-light" id="item-setor" style="flex:1;text-transform:capitalize">
+            <option value="">— Sem setor —</option>
+            <option value="cozinha">🍳 Cozinha</option>
+            <option value="bar">🥤 Bar</option>
+            <option value="sobremesa">🍰 Sobremesa</option>
+            <option value="cafeteria">☕ Cafeteria</option>
+            <option value="grill">🔥 Grill</option>
+            <option value="padaria">🥖 Padaria</option>
+            <option value="pizza">🍕 Pizza</option>
+            <option value="sushi">🍣 Sushi</option>
+          </select>
         </div>
+        <div style="font-size:.65rem;color:#aaa;margin-top:4px">Onde este item é preparado. Os painéis KDS só mostram os itens do seu setor.</div>
       </div>
       <div class="form-group-light">
         <label>Preço *</label>
