@@ -13,6 +13,7 @@ export default defineConfig({
         checkout: resolve(__dirname, 'checkout.html'),
         garcom:   resolve(__dirname, 'garcom.html'),
         lojas:    resolve(__dirname, 'lojas.html'),
+        kds:      resolve(__dirname, 'kds.html'),
       },
     },
   },
