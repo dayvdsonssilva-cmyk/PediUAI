@@ -282,21 +282,6 @@ function preencherConfig(estab) {
   const ctsToggle = $('cfg-taxa-servico');
   const ctsWrap   = document.getElementById('cfg-taxa-servico-wrap');
   const ctsPerc   = $('cfg-perc-servico');
-
-  // KDS toggle visual
-  try {
-    const _kc=$('cfg-usa-setores');
-    if(_kc) {
-      const _on=!!estab.usa_setores;
-      _kc.checked=_on;
-      const tr=document.getElementById('kds-track'),th=document.getElementById('kds-thumb');
-      if(tr) tr.style.background=_on?'#E8001C':'#ddd';
-      if(th) th.style.transform=_on?'translateX(20px)':'translateX(0)';
-      const sec=$('cfg-kds-section');
-      if(sec) sec.style.display=_on?'block':'none';
-      if(_on) setTimeout(()=>{try{window.renderKdsLinks&&window.renderKdsLinks(estab);}catch(e){}},400);
-    }
-  } catch(e){}
   if (ctsToggle) ctsToggle.checked = estab.taxa_servico === true;
   if (ctsWrap)   ctsWrap.style.display = estab.taxa_servico ? 'block' : 'none';
   if (ctsPerc)   ctsPerc.value = estab.perc_servico || 10;
@@ -571,7 +556,6 @@ export async function salvarConfig() {
 
   if (!nome || !slug) return showToast('Preencha nome e link.', 'error');
 
-  try{const _kc=$('cfg-usa-setores');if(_kc) await getSupa().from('estabelecimentos').update({usa_setores:_kc.checked}).eq('id',estab.id);}catch(e){}
   const btn = document.querySelector('[onclick="salvarConfig()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
 
@@ -1058,10 +1042,13 @@ export async function salvarItem() {
     const foto_url = fotos_urls[0] || null;
     const promocao   = $('item-promocao')?.checked || false;
     const preco_orig = parseFloat($('item-preco-orig')?.value) || null;
-    const _setor = ($('item-setor')?.value||'').trim().toLowerCase()||null;
-    const _ins = { estabelecimento_id:estab.id, nome, descricao:$('item-desc')?.value.trim(), categoria:$('item-cat')?.value.trim().toUpperCase(), preco, preco_original:promocao?preco_orig:null, foto_url, fotos_urls, emoji:emojiSel, disponivel:true, promocao };
-    if(_setor) _ins.setor=_setor;
-    const { error } = await getSupa().from('produtos').insert(_ins);
+    const { error } = await getSupa().from('produtos').insert({
+      estabelecimento_id: estab.id, nome,
+      descricao:    $('item-desc')?.value.trim(),
+      categoria:    $('item-cat')?.value.trim().toUpperCase(),
+      preco, preco_original: promocao ? preco_orig : null,
+      foto_url, fotos_urls, emoji: emojiSel, disponivel: true, promocao,
+    });
     if (error) throw new Error(error.message);
     await renderCardapio(); fecharModal(); showToast('Item adicionado! ✅');
   } catch (e) { showToast(e.message,'error'); }
@@ -1078,7 +1065,6 @@ export async function editarItem(id) {
     const set = (sel, val) => { const el=$(sel); if(el && val!=null) el.value=val; };
     set('item-nome', p.nome); set('item-desc', p.descricao||'');
     set('item-cat', p.categoria||'');
-    const _se=$('item-setor'); if(_se) _se.value=p.setor||'';
     // Se tem desconto %, o campo mostra o preço ORIGINAL (o que o dono digitou)
     set('item-preco', p.em_promocao && p.preco_original ? p.preco_original : p.preco);
     set('item-preco-orig', p.preco_original||'');
@@ -1139,14 +1125,15 @@ export async function editarItem(id) {
             precoOrigU = precoBase;
             precoFinalU = parseFloat((precoBase * (1 - desconto_pct_u / 100)).toFixed(2));
           }
-          const _su=($('item-setor')?.value||'').trim().toLowerCase()||null;
           const { error } = await getSupa().from('produtos').update({
-            nome:$('item-nome')?.value.trim(), descricao:$('item-desc')?.value.trim(),
-            categoria:$('item-cat')?.value.trim().toUpperCase(),
-            setor:_su, preco:precoFinalU, preco_original:precoOrigU,
-            foto_url, fotos_urls, emoji:emojiSel, promocao,
-            em_promocao:promocao&&desconto_pct_u>0,
-            desconto_percent:promocao?desconto_pct_u:0,
+            nome:         $('item-nome')?.value.trim(),
+            descricao:    $('item-desc')?.value.trim(),
+            categoria:    $('item-cat')?.value.trim().toUpperCase(),
+            preco:        precoFinalU,
+            preco_original: precoOrigU,
+            foto_url, fotos_urls, emoji: emojiSel, promocao,
+            em_promocao: promocao && desconto_pct_u > 0,
+            desconto_percent: promocao ? desconto_pct_u : 0,
           }).eq('id', id);
           if (error) throw new Error(error.message);
           await renderCardapio(); fecharModal(); showToast('Item atualizado!');
@@ -1351,18 +1338,11 @@ function removerCardNovo(id) {
 
 window.aceitarPedido = async function(id) {
   pararNotif();
-  const { data: ped } = await getSupa().from('pedidos').select('*').eq('id', id).maybeSingle();
+  // Busca o pedido para saber o tipo antes de aceitar
+  const { data: ped } = await getSupa().from('pedidos').select('endereco').eq('id', id).maybeSingle();
   const isMesa = ped && (ped.endereco||'').startsWith('No local');
 
-  const _upds = { status:'preparo' };
-  try {
-    if(Array.isArray(ped?.itens)) {
-      const _sm={};
-      ped.itens.forEach(it=>{ if(it.setor){const s=it.setor.toLowerCase();if(!_sm[s])_sm[s]='pendente';} });
-      if(Object.keys(_sm).length) _upds.setores_status=_sm;
-    }
-  } catch(e){}
-  const { error } = await getSupa().from('pedidos').update(_upds).eq('id', id);
+  const { error } = await getSupa().from('pedidos').update({ status:'preparo' }).eq('id', id);
   if (error) return showToast('Erro ao aceitar.','error');
   removerCardNovo(id);
 
@@ -2634,9 +2614,10 @@ window.tcmdItem = function(el) {
   const nome    = item.dataset.nome;
   const preco   = parseFloat(item.dataset.preco);
   const emoji   = item.dataset.emoji || '🍽️';
+  const setor   = item.dataset.setor || null;
 
   if (!mesaKey || !pid) return;
-  addItemComanda(mesaKey, pid, nome, preco, emoji);
+  addItemComanda(mesaKey, pid, nome, preco, emoji, setor);
 };
 
 function abrirAdicionaisGrupo(mesaKey, prodId, nome, preco, emoji, grupo) {
@@ -3194,10 +3175,10 @@ window.switchComandaTab = function(tab) {
 };
 
 // ── Adiciona item ao carrinho da mesa ──────────────────────────────────────────
-function addItemComanda(mesaKey, id, nome, preco, emoji) {
+function addItemComanda(mesaKey, id, nome, preco, emoji, setor) {
   if (!_carrinhoComanda[mesaKey]) _carrinhoComanda[mesaKey] = [];
   const ex = _carrinhoComanda[mesaKey].find(x => x.id === id);
-  if (ex) { ex.qtd++; } else { _carrinhoComanda[mesaKey].push({ id, nome, preco, emoji, qtd: 1 }); }
+  if (ex) { ex.qtd++; } else { _carrinhoComanda[mesaKey].push({ id, nome, preco, emoji, setor: setor||null, qtd: 1 }); }
   renderCarrinhoComanda(mesaKey);
 }
 window.addItemComanda = addItemComanda;
@@ -3256,7 +3237,7 @@ window.enviarPedidoComanda = async function() {
       cliente_nome:       nomeCliente,
       cliente_whats:      '',
       endereco:           'No local — ' + _mesaAtual,
-      itens:              carr.map(i=>({nome:i.nome,preco:i.preco,qtd:i.qtd,emoji:i.emoji})),
+      itens:              carr.map(i=>({nome:i.nome,preco:i.preco,qtd:i.qtd,emoji:i.emoji,setor:i.setor||null})),
       total,
       status:             'novo',
       pagamento:          'No local',
@@ -3327,6 +3308,7 @@ function renderCardapioComanda(mesaKey, prods) {
         data-nome="${nomeEnc}"
         data-preco="${p.preco}"
         data-emoji="${p.emoji||'🍽️'}"
+        data-setor="${p.setor||''}"
         data-mesa="${mesaKey}">
         <span class="cmd-item-emoji">${p.emoji||'🍽️'}</span>
         <span class="cmd-item-nome">${p.nome}</span>
@@ -4197,49 +4179,3 @@ function renderHistoricoCaixa() {
   }
 }
 window.renderHistoricoCaixa = renderHistoricoCaixa;
-
-
-// ══════════════════════════════════════════════════════
-// KDS — Toggle + Links
-// ══════════════════════════════════════════════════════
-window.toggleUsaSetores = async function(checked) {
-  const estab=getEstab(); if(!estab) return;
-  const tr=document.getElementById('kds-track'),th=document.getElementById('kds-thumb');
-  if(tr) tr.style.background=checked?'#E8001C':'#ddd';
-  if(th) th.style.transform=checked?'translateX(20px)':'translateX(0)';
-  try {
-    await getSupa().from('estabelecimentos').update({usa_setores:checked}).eq('id',estab.id);
-    const sec=$('cfg-kds-section');
-    if(sec) sec.style.display=checked?'block':'none';
-    try{const o=JSON.parse(localStorage.getItem('pw_estab')||'{}');o.usa_setores=checked;localStorage.setItem('pw_estab',JSON.stringify(o));if(window._estab)window._estab.usa_setores=checked;}catch(e){}
-    if(checked) setTimeout(()=>{try{window.renderKdsLinks(estab);}catch(e){}},300);
-    showToast(checked?'🍳 KDS ativado!':'KDS desativado');
-  } catch(e) {
-    showToast('⚠️ Execute o SQL no Supabase primeiro.','error');
-    const chk=$('cfg-usa-setores');
-    if(chk){chk.checked=!checked;if(tr)tr.style.background=!checked?'#E8001C':'#ddd';if(th)th.style.transform=!checked?'translateX(20px)':'translateX(0)';}
-  }
-};
-
-window.renderKdsLinks = function(estab) {
-  const wrap=$('cfg-kds-links'),sec=$('cfg-kds-section');
-  if(!wrap||!estab) return;
-  getSupa().from('produtos').select('setor').eq('estabelecimento_id',estab.id).eq('disponivel',true)
-    .then(({data,error})=>{
-      if(error){wrap.innerHTML='<div style="font-size:.73rem;color:#c00;background:#fff0f0;padding:10px;border-radius:8px">⚠️ Execute o SQL no Supabase:<br><code>ALTER TABLE produtos ADD COLUMN IF NOT EXISTS setor text;</code></div>';return;}
-      const setores=[...new Set((data||[]).map(p=>p.setor).filter(Boolean).map(s=>s.toLowerCase()))].sort();
-      if(!setores.length){wrap.innerHTML='<div style="font-size:.73rem;color:#aaa;line-height:1.7">Nenhum produto com setor ainda.<br>Edite produtos → campo <b>Setor KDS</b>.<br>Ex: <code>cozinha</code>, <code>bar</code></div>';return;}
-      const EM={cozinha:'🍳',bar:'🥤',sobremesa:'🍰',cafeteria:'☕',grill:'🔥',padaria:'🥖',pizza:'🍕',sushi:'🍣',geral:'📋'};
-      const slug=estab.slug||'';
-      wrap.innerHTML=setores.map(s=>{
-        const url=`https://pediway.com.br/kds/${s}?loja=${slug}`;
-        return `<div style="display:flex;align-items:center;gap:8px;background:#faf8f5;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px">
-          <span style="font-size:1rem">${EM[s]||'🏷️'}</span>
-          <div style="flex:1;min-width:0"><div style="font-size:.72rem;font-weight:800;color:#555;text-transform:capitalize">${s}</div>
-          <div style="font-size:.62rem;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${url}</div></div>
-          <button onclick="navigator.clipboard.writeText('${url}').then(()=>showToast('✅ Copiado!'))"
-            style="border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;font-family:'Poppins',sans-serif;font-size:.7rem;font-weight:700;color:#555;cursor:pointer;background:none;flex-shrink:0">Copiar</button>
-        </div>`;
-      }).join('');
-    });
-};
