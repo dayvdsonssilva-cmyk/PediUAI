@@ -451,7 +451,7 @@ window.gcAdd=function(id,nome,preco,emoji){
   const precoSeguro=prodReal?Number(prodReal.preco):Number(preco)||0;
   const nomeSeguro=prodReal?prodReal.nome:String(nome||'').slice(0,120);
   const ex=carrinhos[mesaAtual].find(x=>x.id===id);
-  if(ex)ex.qtd++;else carrinhos[mesaAtual].push({id,nome:nomeSeguro,preco:precoSeguro,emoji:String(emoji||'🍽️').slice(0,10),qtd:1});
+  if(ex)ex.qtd++;else carrinhos[mesaAtual].push({id,nome:nomeSeguro,preco:precoSeguro,emoji:String(emoji||'🍽️').slice(0,10),setor:prodReal?.setor||null,qtd:1});
   renderCarrinho();
 };
 window.gcRm=function(id){
