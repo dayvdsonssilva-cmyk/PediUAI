@@ -282,6 +282,21 @@ function preencherConfig(estab) {
   const ctsToggle = $('cfg-taxa-servico');
   const ctsWrap   = document.getElementById('cfg-taxa-servico-wrap');
   const ctsPerc   = $('cfg-perc-servico');
+
+  // KDS toggle visual
+  try {
+    const _kc=$('cfg-usa-setores');
+    if(_kc) {
+      const _on=!!estab.usa_setores;
+      _kc.checked=_on;
+      const tr=document.getElementById('kds-track'),th=document.getElementById('kds-thumb');
+      if(tr) tr.style.background=_on?'#E8001C':'#ddd';
+      if(th) th.style.transform=_on?'translateX(20px)':'translateX(0)';
+      const sec=$('cfg-kds-section');
+      if(sec) sec.style.display=_on?'block':'none';
+      if(_on) setTimeout(()=>{try{window.renderKdsLinks&&window.renderKdsLinks(estab);}catch(e){}},400);
+    }
+  } catch(e){}
   if (ctsToggle) ctsToggle.checked = estab.taxa_servico === true;
   if (ctsWrap)   ctsWrap.style.display = estab.taxa_servico ? 'block' : 'none';
   if (ctsPerc)   ctsPerc.value = estab.perc_servico || 10;
@@ -556,6 +571,7 @@ export async function salvarConfig() {
 
   if (!nome || !slug) return showToast('Preencha nome e link.', 'error');
 
+  try{const _kc=$('cfg-usa-setores');if(_kc) await getSupa().from('estabelecimentos').update({usa_setores:_kc.checked}).eq('id',estab.id);}catch(e){}
   const btn = document.querySelector('[onclick="salvarConfig()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
 
@@ -1062,7 +1078,7 @@ export async function editarItem(id) {
     const set = (sel, val) => { const el=$(sel); if(el && val!=null) el.value=val; };
     set('item-nome', p.nome); set('item-desc', p.descricao||'');
     set('item-cat', p.categoria||'');
-    const _setEl=$('item-setor'); if(_setEl) _setEl.value=p.setor||'';
+    const _se=$('item-setor'); if(_se) _se.value=p.setor||'';
     // Se tem desconto %, o campo mostra o preço ORIGINAL (o que o dono digitou)
     set('item-preco', p.em_promocao && p.preco_original ? p.preco_original : p.preco);
     set('item-preco-orig', p.preco_original||'');
@@ -1123,9 +1139,15 @@ export async function editarItem(id) {
             precoOrigU = precoBase;
             precoFinalU = parseFloat((precoBase * (1 - desconto_pct_u / 100)).toFixed(2));
           }
-          const _setorUpd=($('item-setor')?.value||'').trim().toLowerCase()||null;
-          const _upd={nome:$('item-nome')?.value.trim(),descricao:$('item-desc')?.value.trim(),categoria:$('item-cat')?.value.trim().toUpperCase(),preco:precoFinalU,preco_original:precoOrigU,foto_url,fotos_urls,emoji:emojiSel,promocao,em_promocao:promocao&&desconto_pct_u>0,desconto_percent:promocao?desconto_pct_u:0,setor:_setorUpd};
-          const { error } = await getSupa().from('produtos').update(_upd).eq('id', id);
+          const _su=($('item-setor')?.value||'').trim().toLowerCase()||null;
+          const { error } = await getSupa().from('produtos').update({
+            nome:$('item-nome')?.value.trim(), descricao:$('item-desc')?.value.trim(),
+            categoria:$('item-cat')?.value.trim().toUpperCase(),
+            setor:_su, preco:precoFinalU, preco_original:precoOrigU,
+            foto_url, fotos_urls, emoji:emojiSel, promocao,
+            em_promocao:promocao&&desconto_pct_u>0,
+            desconto_percent:promocao?desconto_pct_u:0,
+          }).eq('id', id);
           if (error) throw new Error(error.message);
           await renderCardapio(); fecharModal(); showToast('Item atualizado!');
         } catch (e) { showToast(e.message,'error'); }
@@ -1332,12 +1354,11 @@ window.aceitarPedido = async function(id) {
   const { data: ped } = await getSupa().from('pedidos').select('*').eq('id', id).maybeSingle();
   const isMesa = ped && (ped.endereco||'').startsWith('No local');
 
-  // Monta setores_status automaticamente se os itens têm setor definido
   const _upds = { status:'preparo' };
   try {
     if(Array.isArray(ped?.itens)) {
       const _sm={};
-      ped.itens.forEach(it=>{ if(it.setor){const s=it.setor.toLowerCase(); if(!_sm[s])_sm[s]='pendente';} });
+      ped.itens.forEach(it=>{ if(it.setor){const s=it.setor.toLowerCase();if(!_sm[s])_sm[s]='pendente';} });
       if(Object.keys(_sm).length) _upds.setores_status=_sm;
     }
   } catch(e){}
@@ -4176,3 +4197,49 @@ function renderHistoricoCaixa() {
   }
 }
 window.renderHistoricoCaixa = renderHistoricoCaixa;
+
+
+// ══════════════════════════════════════════════════════
+// KDS — Toggle + Links
+// ══════════════════════════════════════════════════════
+window.toggleUsaSetores = async function(checked) {
+  const estab=getEstab(); if(!estab) return;
+  const tr=document.getElementById('kds-track'),th=document.getElementById('kds-thumb');
+  if(tr) tr.style.background=checked?'#E8001C':'#ddd';
+  if(th) th.style.transform=checked?'translateX(20px)':'translateX(0)';
+  try {
+    await getSupa().from('estabelecimentos').update({usa_setores:checked}).eq('id',estab.id);
+    const sec=$('cfg-kds-section');
+    if(sec) sec.style.display=checked?'block':'none';
+    try{const o=JSON.parse(localStorage.getItem('pw_estab')||'{}');o.usa_setores=checked;localStorage.setItem('pw_estab',JSON.stringify(o));if(window._estab)window._estab.usa_setores=checked;}catch(e){}
+    if(checked) setTimeout(()=>{try{window.renderKdsLinks(estab);}catch(e){}},300);
+    showToast(checked?'🍳 KDS ativado!':'KDS desativado');
+  } catch(e) {
+    showToast('⚠️ Execute o SQL no Supabase primeiro.','error');
+    const chk=$('cfg-usa-setores');
+    if(chk){chk.checked=!checked;if(tr)tr.style.background=!checked?'#E8001C':'#ddd';if(th)th.style.transform=!checked?'translateX(20px)':'translateX(0)';}
+  }
+};
+
+window.renderKdsLinks = function(estab) {
+  const wrap=$('cfg-kds-links'),sec=$('cfg-kds-section');
+  if(!wrap||!estab) return;
+  getSupa().from('produtos').select('setor').eq('estabelecimento_id',estab.id).eq('disponivel',true)
+    .then(({data,error})=>{
+      if(error){wrap.innerHTML='<div style="font-size:.73rem;color:#c00;background:#fff0f0;padding:10px;border-radius:8px">⚠️ Execute o SQL no Supabase:<br><code>ALTER TABLE produtos ADD COLUMN IF NOT EXISTS setor text;</code></div>';return;}
+      const setores=[...new Set((data||[]).map(p=>p.setor).filter(Boolean).map(s=>s.toLowerCase()))].sort();
+      if(!setores.length){wrap.innerHTML='<div style="font-size:.73rem;color:#aaa;line-height:1.7">Nenhum produto com setor ainda.<br>Edite produtos → campo <b>Setor KDS</b>.<br>Ex: <code>cozinha</code>, <code>bar</code></div>';return;}
+      const EM={cozinha:'🍳',bar:'🥤',sobremesa:'🍰',cafeteria:'☕',grill:'🔥',padaria:'🥖',pizza:'🍕',sushi:'🍣',geral:'📋'};
+      const slug=estab.slug||'';
+      wrap.innerHTML=setores.map(s=>{
+        const url=`https://pediway.com.br/kds/${s}?loja=${slug}`;
+        return `<div style="display:flex;align-items:center;gap:8px;background:#faf8f5;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px">
+          <span style="font-size:1rem">${EM[s]||'🏷️'}</span>
+          <div style="flex:1;min-width:0"><div style="font-size:.72rem;font-weight:800;color:#555;text-transform:capitalize">${s}</div>
+          <div style="font-size:.62rem;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${url}</div></div>
+          <button onclick="navigator.clipboard.writeText('${url}').then(()=>showToast('✅ Copiado!'))"
+            style="border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;font-family:'Poppins',sans-serif;font-size:.7rem;font-weight:700;color:#555;cursor:pointer;background:none;flex-shrink:0">Copiar</button>
+        </div>`;
+      }).join('');
+    });
+};
