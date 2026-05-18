@@ -152,13 +152,20 @@ const $ = id => document.getElementById(id);
 
 let ESTAB=null, SETOR_URL='', SETOR_ATIVO='', SETORES=[], PEDIDOS=[], _canal=null, _timers={};
 
-// ÁUDIO
+// ÁUDIO — bip único alto e simples
 let _ctx=null;
 function beep() {
   try {
     if(!_ctx) _ctx=new(window.AudioContext||window.webkitAudioContext)();
-    const p=(f,t)=>{const o=_ctx.createOscillator(),g=_ctx.createGain();o.connect(g);g.connect(_ctx.destination);o.frequency.value=f;g.gain.value=.22;o.start(t);o.stop(t+.18);};
-    p(880,_ctx.currentTime); p(1100,_ctx.currentTime+.22);
+    const o=_ctx.createOscillator(), g=_ctx.createGain();
+    o.connect(g); g.connect(_ctx.destination);
+    o.type='square';
+    o.frequency.setValueAtTime(1200,_ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(800, _ctx.currentTime+0.12);
+    g.gain.setValueAtTime(0.8, _ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, _ctx.currentTime+0.35);
+    o.start(_ctx.currentTime);
+    o.stop(_ctx.currentTime+0.35);
   } catch(e){}
 }
 
