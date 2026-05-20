@@ -221,11 +221,12 @@ h3 { font-size:1.2rem; font-weight:700; color:#1a1a1a; }
 }
 .tab-content-wrap {
   flex:1;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  overflow-anchor: none;
 }
-/* Previne salto de scroll ao carregar conteúdo assíncrono */
-.tab-content { min-height:70vh; }
+.tab-content { min-height:80vh; }
 .tab-content.active { animation:none; }
 
 .dash-container { max-width:1100px; margin:0 auto; padding:28px 5%; box-sizing:border-box; }
@@ -1919,7 +1920,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
     <button class="tab-btn"        data-tab="fresquinho"     onclick="showTab('fresquinho',this)">Fresquinho</button>
     <button class="tab-btn"        data-tab="financeiro"     onclick="showTab('financeiro',this)">📊 Relatório de Vendas</button>
     <button class="tab-btn"        data-tab="caixa"          onclick="showTab('caixa',this)">🏦 Caixa</button>
-    <button class="tab-btn"        data-tab="configuracoes"  onclick="showTab('configuracoes',this);carregarEstadosDash();setTimeout(initCfgAccordion,80);window.scrollTo(0,0)">Configurações</button>
+    <button class="tab-btn"        data-tab="configuracoes"  onclick="showTab('configuracoes',this);carregarEstadosDash();setTimeout(initCfgAccordion,80)">Configurações</button>
   </nav>
 
   <!-- Visao Geral -->
@@ -2046,7 +2047,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
         <div class="section-header" style="margin-bottom:0">
           <h3 style="font-size:1.3rem;font-weight:900">Seu cardápio</h3>
           <div class="cardapio-btns-desktop" style="display:flex;gap:8px">
-            <button onclick="abrirScannerIA()" style="padding:11px 18px;border:none;background:linear-gradient(135deg,#E8001C,#C0001A);border-radius:12px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.82rem;color:#fff;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(99,102,241,.35);display:flex;align-items:center;gap:6px">
+            <button onclick="abrirScannerIA()" style="padding:11px 18px;border:none;background:#7c3aed;border-radius:12px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.82rem;color:#fff;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(124,58,237,.3);display:flex;align-items:center;gap:6px">
               <span style="font-size:.9rem">✨</span> Cardápio em Segundos
             </button>
             <button class="btn-primary" onclick="abrirModalItem()">+ Adicionar item</button>
@@ -2056,7 +2057,7 @@ canvas, [data-touch="free"] { touch-action: none !important; }
         </div>
         <!-- Mobile: botões em linha abaixo do título -->
         <div class="cardapio-btns-mobile" style="display:none;gap:6px;margin-top:10px;flex-wrap:wrap">
-          <button onclick="abrirScannerIA()" style="flex:1;padding:10px 6px;border:none;background:linear-gradient(135deg,#E8001C,#C0001A);border-radius:12px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.75rem;color:#fff;cursor:pointer">✨ IA</button>
+          <button onclick="abrirScannerIA()" style="flex:1;padding:10px 6px;border:none;background:#7c3aed;border-radius:12px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.75rem;color:#fff;cursor:pointer">✨ IA</button>
           <button class="btn-primary" onclick="abrirModalItem()" style="flex:1;padding:10px 6px;font-size:.75rem">+ Adicionar item</button>
           <button onclick="abrirGerenciadorAdicionais()" style="flex:1;padding:10px 6px;border:1.5px solid var(--red);background:none;border-radius:12px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.75rem;color:var(--red);cursor:pointer">🧩 Adicionais</button>
           <button onclick="abrirModalQuente()" style="flex:1;padding:10px 6px;border:none;background:linear-gradient(135deg,#e65e32,#c94e24);border-radius:12px;font-family:'Poppins',sans-serif;font-weight:800;font-size:.75rem;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(230,94,50,.3)">🔥 QUENTE</button>
@@ -4104,7 +4105,7 @@ window.goTo = function(screen) {
   <div style="background:#fff;border-radius:24px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.3)">
 
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#E8001C,#C0001A);border-radius:24px 24px 0 0;padding:20px 24px 18px;position:sticky;top:0;z-index:2">
+    <div style="background:#7c3aed;border-radius:24px 24px 0 0;padding:20px 24px 18px;position:sticky;top:0;z-index:2">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div>
           <div style="font-size:1.1rem;font-weight:900;color:#fff;display:flex;align-items:center;gap:8px">
@@ -4137,7 +4138,7 @@ window.goTo = function(screen) {
 
       <!-- Botão analisar -->
       <button id="ia-btn-analisar" onclick="analisarCardapioIA()"
-        style="width:100%;background:linear-gradient(135deg,#E8001C,#C0001A);color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Poppins',sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;display:none;margin-bottom:4px">
+        style="width:100%;background:#7c3aed;color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Poppins',sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;display:none;margin-bottom:4px">
         ✨ Analisar com IA
       </button>
 
@@ -4146,18 +4147,18 @@ window.goTo = function(screen) {
         <!-- Logo PEDIWAY + cérebro IA pulsando -->
         <div style="position:relative;width:72px;height:72px;margin:0 auto 16px">
           <!-- Anel externo pulsando -->
-          <div style="position:absolute;inset:-8px;border-radius:50%;border:3px solid rgba(232,0,28,.2);animation:ia-ring 1.4s ease-in-out infinite"></div>
-          <div style="position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(232,0,28,.12);animation:ia-ring 1.4s ease-in-out infinite .2s"></div>
+          <div style="position:absolute;inset:-8px;border-radius:50%;border:3px solid rgba(124,58,237,.2);animation:ia-ring 1.4s ease-in-out infinite"></div>
+          <div style="position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(124,58,237,.12);animation:ia-ring 1.4s ease-in-out infinite .2s"></div>
           <!-- Círculo central com ícone IA -->
-          <div style="width:72px;height:72px;background:linear-gradient(135deg,#E8001C,#C0001A);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(232,0,28,.35);animation:ia-pulse 1.4s ease-in-out infinite">
+          <div style="width:72px;height:72px;background:#7c3aed;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(124,58,237,.35);animation:ia-pulse 1.4s ease-in-out infinite">
             <span style="font-size:2rem;filter:grayscale(1) brightness(10)">🤖</span>
           </div>
         </div>
         <!-- Pontos de "pensando" -->
         <div style="display:flex;justify-content:center;gap:5px;margin-bottom:12px">
-          <div style="width:7px;height:7px;background:#E8001C;border-radius:50%;animation:ia-dot 1.2s ease-in-out infinite"></div>
-          <div style="width:7px;height:7px;background:#E8001C;border-radius:50%;animation:ia-dot 1.2s ease-in-out infinite .2s"></div>
-          <div style="width:7px;height:7px;background:#E8001C;border-radius:50%;animation:ia-dot 1.2s ease-in-out infinite .4s"></div>
+          <div style="width:7px;height:7px;background:#7c3aed;border-radius:50%;animation:ia-dot 1.2s ease-in-out infinite"></div>
+          <div style="width:7px;height:7px;background:#7c3aed;border-radius:50%;animation:ia-dot 1.2s ease-in-out infinite .2s"></div>
+          <div style="width:7px;height:7px;background:#7c3aed;border-radius:50%;animation:ia-dot 1.2s ease-in-out infinite .4s"></div>
         </div>
         <div id="ia-loading-txt" style="font-size:.85rem;font-weight:800;color:#333">Analisando cardápio...</div>
         <div style="font-size:.68rem;color:#aaa;margin-top:4px">A IA está lendo todos os itens 👀</div>
