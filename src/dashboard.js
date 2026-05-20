@@ -2,19 +2,6 @@
 import { getSupa } from './supabase.js';
 import { showToast } from './utils.js';
 
-// ── FIX: impede window.scrollTo de causar jumps no dashboard ─────────────────
-(function() {
-  var _origScrollTo = window.scrollTo.bind(window);
-  window.scrollTo = function(x, y) {
-    // No dashboard, rola o content-wrap, não a window
-    var wrap = document.querySelector('.tab-content-wrap');
-    if (wrap && document.querySelector('#s-dash.active, [data-screen="s-dash"].active')) {
-      wrap.scrollTop = (typeof y === 'number' ? y : (x && x.top) || 0);
-    } else {
-      _origScrollTo(x, y);
-    }
-  };
-})();
 
 
 // ─────────────────────────────────────────────────────────────────────────────
