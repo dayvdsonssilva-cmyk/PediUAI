@@ -4347,18 +4347,35 @@ window.iaPreviewImagem = function(input) {
 };
 
 function iaCarregarArquivo(file) {
-  _iaMimeType = file.type || 'image/jpeg';
+  _iaMimeType = 'image/jpeg'; // sempre JPEG para compressão
   const reader = new FileReader();
   reader.onload = function(e) {
-    const dataUrl = e.target.result;
-    _iaImgBase64 = dataUrl.split(',')[1];
-    const img = ia$('ia-preview-img');
-    if (img.src !== undefined) img.src = dataUrl;
-    ia$('ia-upload-zone').style.display = 'none';
-    ia$('ia-preview-wrap').style.display = 'block';
-    ia$('ia-btn-analisar').style.display = 'block';
-    ia$('ia-resultados').style.display = 'none';
-    ia$('ia-erro').style.display = 'none';
+    // Comprime a imagem no canvas antes de enviar (max 1200px, qualidade 0.8)
+    const imgEl = new Image();
+    imgEl.onload = function() {
+      const MAX = 1200;
+      let w = imgEl.width, h = imgEl.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else       { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(imgEl, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.82);
+      _iaImgBase64 = compressed.split(',')[1];
+      const prev = ia$('ia-preview-img');
+      if (prev.src !== undefined) prev.src = compressed;
+      ia$('ia-upload-zone').style.display = 'none';
+      ia$('ia-preview-wrap').style.display = 'block';
+      ia$('ia-btn-analisar').style.display = 'block';
+      ia$('ia-resultados').style.display = 'none';
+      ia$('ia-erro').style.display = 'none';
+      // Mostra tamanho estimado
+      const kb = Math.round(_iaImgBase64.length * 0.75 / 1024);
+      console.log('Imagem comprimida:', kb, 'KB', w+'x'+h);
+    };
+    imgEl.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
