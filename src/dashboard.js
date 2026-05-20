@@ -2870,16 +2870,179 @@ function marcarEnviadoCozinha(pedidoId) {
 }
 
 // ── Imprimir ticket de cozinha (pedido individual) ────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+// ESC/POS Dashboard — Impressão térmica com corte por setor
+// ═══════════════════════════════════════════════════════════════
+var _SETOR_EM_DASH = {cozinha:'🍔',bar:'🥤',sobremesa:'🍰',cafeteria:'☕',grill:'🔥',padaria:'🥖',pizza:'🍕',sushi:'🍣',caixa:'🏦',geral:'📋'};
+var _SETOR_ORDEM   = ['cozinha','grill','pizza','padaria','sobremesa','cafeteria','bar','caixa','geral'];
+
+// ESC/POS bytes
+var _EP = {
+  INIT:        [0x1B,0x40],
+  BOLD_ON:     [0x1B,0x45,0x01], BOLD_OFF:  [0x1B,0x45,0x00],
+  CENTER:      [0x1B,0x61,0x01], LEFT:      [0x1B,0x61,0x00],
+  DBL_BOTH:    [0x1B,0x21,0x30], NORMAL:    [0x1B,0x21,0x00],
+  CUT_PARTIAL: [0x1D,0x56,0x01], CUT_TOTAL: [0x1D,0x56,0x00],
+  CUT_BEMA:    [0x1D,0x56,0x41,0x05],
+  FEED: function(n){return[0x1B,0x64,n];}, LF:[0x0A],
+};
+function _epStr(s){var b=[];for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);b.push(c>255?63:c);}return b;}
+function _epLine(ch,n){return _epStr((ch||'=').repeat(n||32)+'\n');}
+function _epCenter(s,w){var pad=Math.max(0,Math.floor((w-s.length)/2));return _epStr(' '.repeat(pad)+s+'\n');}
+
+var _dashSerialPort=null;
+async function _getDashSerial(){
+  if(!navigator.serial)return null;
+  try{if(_dashSerialPort&&_dashSerialPort.readable)return _dashSerialPort;_dashSerialPort=await navigator.serial.requestPort();await _dashSerialPort.open({baudRate:9600});return _dashSerialPort;}
+  catch(e){return null;}
+}
+async function _sendEscPos(blocos,isBema){
+  var port=await _getDashSerial();if(!port)return false;
+  try{
+    var writer=port.writable.getWriter();
+    var cut=isBema?_EP.CUT_BEMA:_EP.CUT_PARTIAL;
+    for(var i=0;i<blocos.length;i++){
+      await writer.write(new Uint8Array(blocos[i]));
+      if(i<blocos.length-1)await writer.write(new Uint8Array(cut));
+    }
+    await writer.write(new Uint8Array([..._EP.FEED(5),...(isBema?_EP.CUT_BEMA:_EP.CUT_TOTAL)]));
+    writer.releaseLock();return true;
+  }catch(e){return false;}
+}
+
+function _buildSetorBytes(pedNum,setor,itens,obs,nomeEstab,isFirst){
+  var b=[],push=function(){for(var a=0;a<arguments.length;a++){var x=arguments[a];if(Array.isArray(x))for(var j=0;j<x.length;j++)b.push(x[j]);else{var s=_epStr(String(x));for(var j=0;j<s.length;j++)b.push(s[j]);}}};
+  if(isFirst)push(_EP.INIT);
+  push(_EP.CENTER,_EP.BOLD_ON,_EP.DBL_BOTH);push('PEDIDO #'+pedNum+'\n');
+  push(_EP.NORMAL,_EP.BOLD_ON);push(_epCenter(setor.toUpperCase(),32));push(_EP.BOLD_OFF,_EP.LEFT);
+  push(_epLine('='));
+  itens.forEach(function(it){var q=Math.max(1,parseInt(it.qtd)||1);push(_EP.BOLD_ON);push(q+'x '+String(it.nome||'').slice(0,26)+'\n');push(_EP.BOLD_OFF);if(it.obs)push('   -> '+String(it.obs).slice(0,26)+'\n');});
+  if(obs){push(_epLine('-'));push(_EP.BOLD_ON);push('OBS: '+String(obs).slice(0,58)+'\n');push(_EP.BOLD_OFF);}
+  push(_epLine('='));push(_EP.FEED(3));
+  return b;
+}
+
+function _buildSetorHTML(pedNum,setor,itens,obs){
+  var em=_SETOR_EM_DASH[setor.toLowerCase()]||'🏷️';
+  var rows=itens.map(function(it){
+    var q=Math.max(1,parseInt(it.qtd)||1);
+    var adds=Array.isArray(it.adicionais)&&it.adicionais.length?it.adicionais.map(function(a){return'<div class="adicional">+ '+a.nome+'</div>';}).join(''):'';
+    return'<div class="item"><span class="item-qtd">'+q+'x</span><span class="item-nome">'+it.nome+'</span></div>'+adds+(it.obs?'<div class="adicional obs-item">↳ '+it.obs+'</div>':'');
+  }).join('');
+  return'<div class="setor-bloco">'
+    +'<div class="setor-hdr"><div class="s-num">'+pedNum+'</div><div class="s-nome">'+em+' '+setor.toUpperCase()+'</div></div>'
+    +'<div class="s-itens">'+rows+'</div>'
+    +(obs?'<div class="obs-box">⚠️ OBS: '+obs+'</div>':'')
+    +'</div>';
+}
+
+function _agruparSetores(itens){
+  var g={};
+  itens.forEach(function(it){var s=(it.setor||'geral').toLowerCase();if(!g[s])g[s]=[];g[s].push(it);});
+  return g;
+}
+function _ordenarSetores(setores){
+  return setores.sort(function(a,b){var ia=_SETOR_ORDEM.indexOf(a),ib=_SETOR_ORDEM.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib);});
+}
+
+// CSS compartilhado para ticket
+var _CSS_TICKET = '<style>*{margin:0;padding:0;box-sizing:border-box}'
+  +'body{font-family:Arial,sans-serif;font-size:13px;color:#000;background:#fff;width:80mm;margin:0 auto;padding:10px}'
+  +'.center{text-align:center}.logo{font-size:18px;font-weight:900;letter-spacing:.06em}.logo-red{color:#C0392B}'
+  +'.empresa{font-size:12px;font-weight:700;margin-top:2px}.tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#888;margin-top:2px}'
+  +'.sep-dash{border:none;border-top:1px dashed #888;margin:8px 0}.sep-thick{border:none;border-top:3px solid #000;margin:8px 0}'
+  +'.setor-bloco{margin-bottom:0}'
+  +'.setor-hdr{border:3px solid #000;padding:8px 6px;text-align:center;margin:6px 0}'
+  +'.s-num{font-size:14px;font-weight:900;letter-spacing:.04em}'
+  +'.s-nome{font-size:20px;font-weight:900;letter-spacing:.06em;margin-top:4px}'
+  +'.s-itens{padding:4px 0}'
+  +'.item{display:flex;align-items:flex-start;gap:8px;padding:4px 0;border-bottom:1px dotted #ddd}'
+  +'.item-qtd{font-size:16px;font-weight:900;color:#C0392B;flex-shrink:0;min-width:24px}'
+  +'.item-nome{font-size:13px;font-weight:700;flex:1;line-height:1.3}'
+  +'.adicional{font-size:11px;color:#555;padding:1px 0 2px 32px}'
+  +'.obs-item{color:#e65c00;font-style:italic}'
+  +'.obs-box{border:2px solid #C0392B;border-radius:4px;padding:6px 8px;margin:6px 0;font-size:12px;font-weight:700;color:#C0392B}'
+  +'.corte{border-top:2px dashed #aaa;margin:10px 0;text-align:center;position:relative}'
+  +'.corte-txt{font-size:9px;font-weight:700;color:#aaa;letter-spacing:.1em;background:#fff;padding:0 6px;display:inline-block;margin-top:-7px}'
+  +'.mesa-bloco{background:#000;color:#fff;border-radius:6px;padding:10px 8px 8px;text-align:center;margin:6px 0}'
+  +'.mesa-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#aaa}'
+  +'.mesa-num{font-size:42px;font-weight:900;line-height:1.1}'
+  +'.hora{font-size:11px;color:#888;text-align:center;margin-bottom:4px}'
+  +'.rodape{font-size:9px;color:#bbb;text-align:center;margin-top:8px;letter-spacing:.04em}'
+  +'@media print{body{padding:2px;width:100%}.corte{page-break-after:always}@page{margin:0;size:80mm auto}}'
+  +'</style>';
+
+// Imprime pedido separado por setor (browser HTML + ESC/POS se disponível)
+async function imprimirPorSetor(p, loja) {
+  var itens = Array.isArray(p.itens)?p.itens:[];
+  var pedNum = '#'+p.id.slice(-6).toUpperCase();
+  var grupos = _agruparSetores(itens);
+  var setores = _ordenarSetores(Object.keys(grupos));
+  var obs = p.observacao||'';
+  var parts = (p.endereco||'').split('—');
+  var isMesa = (p.endereco||'').startsWith('No local');
+  var mesa = parts.length>=2?parts[1].trim():p.endereco||'';
+  var dt = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  var cabecalhoHTML = '<div class="center">'
+    +'<div class="logo">PEDI<span class="logo-red">WAY</span></div>'
+    +'<div class="empresa">'+loja+'</div>'
+    +'<div class="tag">Ticket de Cozinha</div></div>'
+    +'<hr class="sep-thick">'
+    +(isMesa?'<div class="mesa-bloco"><div class="mesa-lbl">Mesa</div><div class="mesa-num">'+mesa.replace('Mesa ','')+'</div>'+(p.cliente_nome?'<div style="font-size:13px;font-weight:700;color:#ddd;margin-top:2px">'+p.cliente_nome+'</div>':'')+'</div>'
+            :'<div style="border:2px solid #000;border-radius:6px;padding:8px;text-align:center;margin:6px 0"><div style="font-size:14px;font-weight:900">DELIVERY / RETIRADA</div>'+(p.cliente_nome?'<div style="font-size:14px;font-weight:700;margin-top:3px">'+p.cliente_nome+'</div>':'')+(p.endereco?'<div style="font-size:11px;color:#444;margin-top:2px">'+p.endereco+'</div>':'')+'</div>')
+    +'<div class="hora">'+pedNum+' &nbsp;·&nbsp; '+dt+'</div>'
+    +'<hr class="sep-dash">';
+
+  // Tenta ESC/POS
+  if(navigator.serial && _dashSerialPort) {
+    var blocos = setores.map(function(s,i){return _buildSetorBytes(pedNum,s,grupos[s],obs,loja,i===0);});
+    var ok = await _sendEscPos(blocos);
+    if(ok) return;
+  }
+
+  // Fallback HTML
+  var blocosHTML;
+  if(setores.length<=1 && (setores[0]==='geral'||!setores[0])) {
+    // Sem setores: impressão normal com HTML melhorado
+    var rows = itens.map(function(it){
+      var q=Math.max(1,parseInt(it.qtd)||1);
+      var adds=Array.isArray(it.adicionais)&&it.adicionais.length?it.adicionais.map(function(a){return'<div class="adicional">+ '+a.nome+'</div>';}).join(''):'';
+      return'<div class="item"><span class="item-qtd">'+q+'x</span><span class="item-nome">'+it.nome+'</span></div>'+adds+(it.obs?'<div class="adicional obs-item">↳ '+it.obs+'</div>':'');
+    }).join('');
+    blocosHTML = '<div class="s-itens">'+rows+'</div>'+(obs?'<div class="obs-box">⚠️ OBS: '+obs+'</div>':'');
+  } else {
+    // Multi-setor com separadores de corte
+    blocosHTML = setores.map(function(s,i){
+      return _buildSetorHTML(pedNum,s,grupos[s],obs)
+        +(i<setores.length-1?'<div class="corte"><span class="corte-txt">✂ CORTE PARCIAL</span></div>':'');
+    }).join('');
+  }
+
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+pedNum+'</title>'+_CSS_TICKET+'</head><body>'+cabecalhoHTML+blocosHTML+'<div class="rodape">PEDIWAY &mdash; Sistema de Gestão</div></body></html>';
+  var w=window.open('','_blank','width=340,height=700');
+  if(!w){alert('Permita pop-ups.');return;}
+  w.document.write(html);w.document.close();w.focus();setTimeout(function(){w.print();},500);
+}
+
 window.imprimirCozinha = function(pedidoId) {
-  getSupa().from('pedidos').select('*').eq('id', pedidoId).maybeSingle().then(({ data: p }) => {
+  getSupa().from('pedidos').select('*').eq('id', pedidoId).maybeSingle().then(async function({ data: p }) {
     if (!p) return;
+    const loja = getEstab()?.nome || 'Estabelecimento';
+    await imprimirPorSetor(p, loja);
+    marcarEnviadoCozinha(pedidoId);
+    window.renderHistoricoMesas();
+  });
+};
+
+// ── Versão legada preservada (não usada mais, mas mantida para compatibilidade)
+function _imprimirCozinhaLegacy_UNUSED(p, loja) {
     const itens   = Array.isArray(p.itens) ? p.itens : [];
     const parts   = (p.endereco||'').split('—');
     const mesa    = parts.length >= 2 ? parts[1].trim() : p.endereco || '—';
     const isMesa  = (p.endereco||'').startsWith('No local');
     const nome    = (p.cliente_nome && p.cliente_nome !== mesa) ? p.cliente_nome : '';
     const dt      = new Date(p.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    const loja    = getEstab()?.nome || 'Estabelecimento';
     const numPed  = '#' + p.id.slice(-6).toUpperCase();
 
     const html = `<!DOCTYPE html><html><head>
@@ -2983,16 +3146,7 @@ ${p.observacao ? ' <hr class="sep-dash"> <div class="obs">   <div class="obs-tit
 
 </body></html>`;
 
-    const w = window.open('','_blank','width=340,height=680');
-    if (!w) { alert('Permita pop-ups.'); return; }
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    setTimeout(() => w.print(), 600);
-
-    marcarEnviadoCozinha(pedidoId);
-    window.renderHistoricoMesas();
-  });
+}
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
