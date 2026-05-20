@@ -1,5 +1,6 @@
-// api/scan-menu.js
-const https = require('https');
+// api/scan-menu.js — ES Module (compatível com "type":"module" do Vite)
+import https from 'node:https';
+import { Buffer } from 'node:buffer';
 
 function openaiPost(apiKey, payload) {
   return new Promise((resolve, reject) => {
@@ -10,12 +11,12 @@ function openaiPost(apiKey, payload) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Length': Buffer.byteLength(body),
       },
     }, (res) => {
       let data = '';
-      res.on('data', c => data += c);
+      res.on('data', chunk => data += chunk);
       res.on('end', () => resolve({ status: res.statusCode, text: data }));
     });
     req.on('error', reject);
@@ -24,7 +25,7 @@ function openaiPost(apiKey, payload) {
   });
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -35,26 +36,14 @@ module.exports = async function handler(req, res) {
   const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY;
   if (!apiKey) return res.status(500).json({ error: 'OPENAI_API_KEY não configurada.' });
 
-  // Garante que o body está parseado
-  const body = typeof req.body === 'object' && req.body !== null
-    ? req.body
-    : (() => { try { return JSON.parse(req.body || '{}'); } catch(e) { return {}; } })();
-
-  const { image, mimeType = 'image/jpeg' } = body;
+  const { image, mimeType = 'image/jpeg' } = req.body || {};
   if (!image) return res.status(400).json({ error: 'Imagem não enviada.' });
-
-  // Verifica tamanho (base64 ~1.33x o original)
-  const estimatedBytes = Math.ceil(image.length * 0.75);
-  if (estimatedBytes > 4 * 1024 * 1024) {
-    return res.status(413).json({ error: 'Imagem muito grande. Use uma foto menor ou tire pelo celular.' });
-  }
 
   const prompt = `Analise este cardápio e extraia TODOS os itens visíveis.
 Retorne SOMENTE JSON válido sem markdown:
 {"itens":[{"nome":"Nome","categoria":"CATEGORIA","preco":0.00,"descricao":"desc","emoji":"🍔"}]}
 Categorias: LANCHES, PIZZAS, BEBIDAS, SOBREMESAS, PORÇÕES, PRATOS, MASSAS, SALADAS, OUTROS
-Preco: número (0 se não visível). Descricao: max 80 chars. Emoji: representativo.
-Extraia TODOS os itens visíveis.`;
+Preco: número (0 se não visível). Descricao: max 80 chars. Emoji: representativo.`;
 
   try {
     const result = await openaiPost(apiKey, {
@@ -74,7 +63,7 @@ Extraia TODOS os itens visíveis.`;
     catch(e) { return res.status(502).json({ error: 'Resposta inválida da OpenAI.' }); }
 
     if (result.status !== 200) {
-      return res.status(502).json({ error: parsed?.error?.message || 'Erro OpenAI ' + result.status });
+      return res.status(502).json({ error: parsed?.error?.message || `Erro OpenAI ${result.status}` });
     }
 
     const content = parsed.choices?.[0]?.message?.content || '';
@@ -82,11 +71,11 @@ Extraia TODOS os itens visíveis.`;
 
     let items;
     try { items = JSON.parse(clean); }
-    catch(e) { return res.status(502).json({ error: 'Formato inválido retornado pela IA.' }); }
+    catch(e) { return res.status(502).json({ error: 'IA retornou formato inesperado.' }); }
 
     return res.status(200).json(items);
 
   } catch(e) {
     return res.status(500).json({ error: 'Erro interno: ' + e.message });
   }
-};
+}
