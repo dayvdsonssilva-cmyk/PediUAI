@@ -4302,27 +4302,28 @@ window.toggleUsaSetores = async function(checked) {
 
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ✨ CARDÁPIO EM SEGUNDOS — Scanner IA
+// ✨ CARDÁPIO EM SEGUNDOS — Scanner IA (multi-foto, compressão agressiva)
 // ══════════════════════════════════════════════════════════════════════════════
 
-var _iaImgBase64 = null;
-var _iaMimeType  = 'image/jpeg';
-var _iaItens     = [];
+var _iaFotos = []; // [{base64, mimeType, preview}]
+var _iaItens = [];
 
 window.abrirScannerIA = function() {
   const m = document.getElementById('modal-scanner-ia');
   if (m) { m.style.display = 'flex'; iaReset(); }
 };
-
 window.fecharScannerIA = function() {
   const m = document.getElementById('modal-scanner-ia');
   if (m) m.style.display = 'none';
 };
 
+function ia$(id) { return document.getElementById(id) || {}; }
+
 function iaReset() {
-  _iaImgBase64 = null; _iaMimeType = 'image/jpeg'; _iaItens = [];
+  _iaFotos = []; _iaItens = [];
   ia$('ia-upload-zone').style.display = 'block';
-  ia$('ia-preview-wrap').style.display = 'none';
+  ia$('ia-thumbs').innerHTML = '';
+  ia$('ia-thumbs').style.display = 'none';
   ia$('ia-btn-analisar').style.display = 'none';
   ia$('ia-loading').style.display = 'none';
   ia$('ia-resultados').style.display = 'none';
@@ -4332,109 +4333,147 @@ function iaReset() {
   if (inp) inp.value = '';
 }
 
-function ia$(id) { return document.getElementById(id) || {}; }
-
 window.iaHandleDrop = function(e) {
   e.preventDefault();
   ia$('ia-upload-zone').style.borderColor = '#d4d4f9';
-  const file = e.dataTransfer?.files?.[0];
-  if (file && file.type.startsWith('image/')) iaCarregarArquivo(file);
+  const files = [...(e.dataTransfer?.files || [])].filter(f => f.type.startsWith('image/'));
+  files.forEach(iaCarregarArquivo);
 };
 
 window.iaPreviewImagem = function(input) {
-  const file = input.files?.[0];
-  if (file) iaCarregarArquivo(file);
+  const files = [...(input.files || [])].filter(f => f.type.startsWith('image/'));
+  files.forEach(iaCarregarArquivo);
 };
 
-function iaCarregarArquivo(file) {
-  _iaMimeType = 'image/jpeg'; // sempre JPEG para compressão
+// Comprime a imagem no canvas (portrait-first, max 900px, qualidade 0.78)
+function comprimirImagem(file, cb) {
   const reader = new FileReader();
   reader.onload = function(e) {
-    // Comprime a imagem no canvas antes de enviar (max 1200px, qualidade 0.8)
-    const imgEl = new Image();
-    imgEl.onload = function() {
-      const MAX = 1200;
-      let w = imgEl.width, h = imgEl.height;
-      if (w > MAX || h > MAX) {
-        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-        else       { w = Math.round(w * MAX / h); h = MAX; }
-      }
+    const img = new Image();
+    img.onload = function() {
+      const MAX = 900;
+      let w = img.width, h = img.height;
+      // Mantém orientação vertical (portrait)
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      if (h > MAX * 2) { w = Math.round(w * (MAX * 2) / h); h = MAX * 2; } // max 900x1800
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(imgEl, 0, 0, w, h);
-      const compressed = canvas.toDataURL('image/jpeg', 0.82);
-      _iaImgBase64 = compressed.split(',')[1];
-      const prev = ia$('ia-preview-img');
-      if (prev.src !== undefined) prev.src = compressed;
-      ia$('ia-upload-zone').style.display = 'none';
-      ia$('ia-preview-wrap').style.display = 'block';
-      ia$('ia-btn-analisar').style.display = 'block';
-      ia$('ia-resultados').style.display = 'none';
-      ia$('ia-erro').style.display = 'none';
-      // Mostra tamanho estimado
-      const kb = Math.round(_iaImgBase64.length * 0.75 / 1024);
-      console.log('Imagem comprimida:', kb, 'KB', w+'x'+h);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.78);
+      const b64 = compressed.split(',')[1];
+      const kb = Math.round(b64.length * 0.75 / 1024);
+      console.log('Foto comprimida:', kb + 'KB', w + 'x' + h);
+      cb({ base64: b64, mimeType: 'image/jpeg', preview: compressed, kb });
     };
-    imgEl.src = e.target.result;
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-window.iaLimparImagem = function() {
-  iaReset();
+function iaCarregarArquivo(file) {
+  comprimirImagem(file, function(foto) {
+    if (foto.kb > 2000) {
+      showToast('⚠️ Foto ' + Math.round(foto.kb/1024*10)/10 + 'MB ainda grande. Use foto menor.', 'error');
+      return;
+    }
+    _iaFotos.push(foto);
+    iaMostrarThumbs();
+  });
+}
+
+function iaMostrarThumbs() {
+  const zone = ia$('ia-upload-zone');
+  const thumbsWrap = ia$('ia-thumbs');
+  zone.style.display = _iaFotos.length < 6 ? 'block' : 'none'; // permite até 6 fotos
+  thumbsWrap.style.display = 'flex';
+  thumbsWrap.innerHTML = _iaFotos.map(function(f, i) {
+    return '<div style="position:relative;flex-shrink:0">'
+      + '<img src="' + f.preview + '" style="height:90px;width:60px;object-fit:cover;border-radius:8px;border:2px solid #c7d2fe;display:block">'
+      + '<div style="position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:9px;background:rgba(0,0,0,.5);color:#fff;border-radius:0 0 6px 6px;padding:1px">' + f.kb + 'KB</div>'
+      + '<button onclick="iaRemoverFoto(' + i + ')" style="position:absolute;top:-6px;right:-6px;background:#E8001C;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.6rem;cursor:pointer;line-height:18px;text-align:center;padding:0">✕</button>'
+      + '</div>';
+  }).join('');
+  ia$('ia-btn-analisar').style.display = _iaFotos.length > 0 ? 'block' : 'none';
+  ia$('ia-btn-analisar').textContent = _iaFotos.length > 1
+    ? '✨ Analisar ' + _iaFotos.length + ' fotos com IA'
+    : '✨ Analisar com IA';
+}
+
+window.iaRemoverFoto = function(i) {
+  _iaFotos.splice(i, 1);
+  iaMostrarThumbs();
 };
 
 window.analisarCardapioIA = async function() {
-  if (!_iaImgBase64) return;
+  if (!_iaFotos.length) return;
   ia$('ia-btn-analisar').style.display = 'none';
   ia$('ia-loading').style.display = 'block';
   ia$('ia-erro').style.display = 'none';
   ia$('ia-resultados').style.display = 'none';
+  _iaItens = [];
 
-  try {
-    const res = await fetch('/api/scan-menu', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: _iaImgBase64, mimeType: _iaMimeType })
-    });
-    // Lê como texto primeiro para tratar erros não-JSON do Vercel
-    const rawText = await res.text();
-    let json;
-    try { json = JSON.parse(rawText); }
-    catch(e) { throw new Error('Erro do servidor: ' + rawText.slice(0, 120)); }
-    if (!res.ok) throw new Error(json.error || 'Erro na análise (status ' + res.status + ')');
+  const loadTxt = ia$('ia-loading-txt');
 
-    _iaItens = (json.itens || []).map(function(it, i) {
-      return { ...it, _id: i, _sel: true };
-    });
+  for (let i = 0; i < _iaFotos.length; i++) {
+    if (loadTxt && loadTxt.textContent !== undefined)
+      loadTxt.textContent = _iaFotos.length > 1
+        ? 'Analisando foto ' + (i+1) + ' de ' + _iaFotos.length + '...'
+        : 'Analisando cardápio com IA...';
+    try {
+      const rawText = await (await fetch('/api/scan-menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: _iaFotos[i].base64, mimeType: 'image/jpeg' })
+      })).text();
 
-    ia$('ia-loading').style.display = 'none';
-    ia$('ia-resultados').style.display = 'block';
-    ia$('ia-count').textContent = _iaItens.length;
-    iaRenderLista();
+      let json;
+      try { json = JSON.parse(rawText); }
+      catch(e) { throw new Error('Servidor: ' + rawText.slice(0, 100)); }
+      if (json.error) throw new Error(json.error);
 
-  } catch(e) {
-    ia$('ia-loading').style.display = 'none';
-    ia$('ia-btn-analisar').style.display = 'block';
-    const err = ia$('ia-erro');
-    err.style.display = 'block';
-    err.textContent = '❌ ' + (e.message || 'Erro ao analisar. Tente novamente.');
+      const novos = (json.itens || []).map(function(it, j) {
+        return { ...it, _id: i * 1000 + j, _sel: true };
+      });
+      // Evita duplicatas pelo nome
+      novos.forEach(function(n) {
+        const dup = _iaItens.find(function(x) { return x.nome?.toLowerCase() === n.nome?.toLowerCase(); });
+        if (!dup) _iaItens.push(n);
+      });
+    } catch(e) {
+      ia$('ia-loading').style.display = 'none';
+      ia$('ia-btn-analisar').style.display = 'block';
+      const err = ia$('ia-erro');
+      err.style.display = 'block';
+      err.textContent = '❌ Foto ' + (i+1) + ': ' + e.message;
+      return;
+    }
   }
+
+  ia$('ia-loading').style.display = 'none';
+  ia$('ia-resultados').style.display = 'block';
+  ia$('ia-count').textContent = _iaItens.length;
+  iaRenderLista();
 };
 
 function iaRenderLista() {
   const lista = ia$('ia-lista-itens');
-  if (!lista.innerHTML !== undefined) return;
+  if (!lista || lista.innerHTML === undefined) return;
   lista.innerHTML = _iaItens.map(function(it) {
-    const preco = it.preco > 0 ? 'R$ ' + Number(it.preco).toFixed(2).replace('.', ',') : 'Preço não detectado';
-    return '<label style="display:flex;align-items:flex-start;gap:10px;background:#f8f8ff;border:1.5px solid ' + (it._sel ? '#c7d2fe' : '#e5e7eb') + ';border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s">'
-      + '<input type="checkbox" data-iaid="' + it._id + '" ' + (it._sel ? 'checked' : '') + ' onchange="iaToggleItem(' + it._id + ',this.checked)" style="margin-top:2px;accent-color:#6366f1;flex-shrink:0">'
+    const preco = it.preco > 0 ? 'R$ ' + Number(it.preco).toFixed(2).replace('.', ',') : '—';
+    return '<label style="display:flex;align-items:flex-start;gap:10px;background:#f8f8ff;border:1.5px solid '
+      + (it._sel ? '#c7d2fe' : '#e5e7eb') + ';border-radius:10px;padding:10px 12px;cursor:pointer">'
+      + '<input type="checkbox" data-iaid="' + it._id + '" '
+      + (it._sel ? 'checked' : '')
+      + ' onchange="iaToggleItem(' + it._id + ',this.checked)" style="margin-top:3px;accent-color:#6366f1;flex-shrink:0">'
       + '<div style="flex:1;min-width:0">'
-      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">'
-      + '<span style="font-size:1rem">' + (it.emoji || '🍽️') + '</span>'
+      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap">'
+      + '<span>' + (it.emoji || '🍽️') + '</span>'
       + '<span style="font-size:.83rem;font-weight:800;color:#111">' + it.nome + '</span>'
-      + '<span style="background:#e0e7ff;color:#6366f1;font-size:.58rem;font-weight:800;padding:1px 7px;border-radius:50px;margin-left:auto;flex-shrink:0">' + (it.categoria || 'OUTROS') + '</span>'
-      + '</div>'
+      + '<span style="background:#e0e7ff;color:#6366f1;font-size:.56rem;font-weight:800;padding:1px 7px;border-radius:50px;margin-left:auto">'
+      + (it.categoria || 'OUTROS') + '</span></div>'
       + (it.descricao ? '<div style="font-size:.7rem;color:#888;margin-bottom:3px">' + it.descricao + '</div>' : '')
       + '<div style="font-size:.75rem;font-weight:700;color:#6366f1">' + preco + '</div>'
       + '</div></label>';
@@ -4442,45 +4481,44 @@ function iaRenderLista() {
 }
 
 window.iaToggleItem = function(id, checked) {
-  const it = _iaItens.find(function(x){ return x._id === id; });
+  const it = _iaItens.find(function(x) { return x._id === id; });
   if (it) it._sel = checked;
 };
 
 window.iaSelecionarTodos = function() {
-  _iaItens.forEach(function(it){ it._sel = true; });
-  ia$('ia-lista-itens').querySelectorAll('input[type=checkbox]').forEach(function(cb){ cb.checked = true; });
-  ia$('ia-lista-itens').querySelectorAll('label').forEach(function(l){ l.style.border = '1.5px solid #c7d2fe'; });
+  _iaItens.forEach(function(it) { it._sel = true; });
+  ia$('ia-lista-itens').querySelectorAll('input[type=checkbox]').forEach(function(cb) { cb.checked = true; });
 };
 
 window.iaAdicionarSelecionados = async function() {
   const estab = getEstab(); if (!estab) return;
-  const selecionados = _iaItens.filter(function(it){ return it._sel; });
-  if (!selecionados.length) return showToast('Selecione pelo menos um item.');
+  const sel = _iaItens.filter(function(it) { return it._sel; });
+  if (!sel.length) return showToast('Selecione pelo menos um item.');
 
-  const btn = document.querySelector('#ia-resultados button:last-child');
+  const btn = document.querySelector('#modal-scanner-ia button[onclick="iaAdicionarSelecionados()"]');
   if (btn) { btn.textContent = 'Adicionando...'; btn.disabled = true; }
 
   let ok = 0, erros = 0;
-  for (const it of selecionados) {
+  for (const it of sel) {
     try {
       const { error } = await getSupa().from('produtos').insert({
         estabelecimento_id: estab.id,
-        nome:        String(it.nome || '').slice(0, 120),
-        categoria:   String(it.categoria || 'OUTROS').toUpperCase().slice(0, 40),
-        descricao:   String(it.descricao || '').slice(0, 200),
-        emoji:       String(it.emoji || '🍽️').slice(0, 10),
-        preco:       Number(it.preco) || 0,
-        disponivel:  true,
-        promocao:    false,
+        nome:       String(it.nome || '').slice(0, 120),
+        categoria:  String(it.categoria || 'OUTROS').toUpperCase().slice(0, 40),
+        descricao:  String(it.descricao || '').slice(0, 200),
+        emoji:      String(it.emoji || '🍽️').slice(0, 10),
+        preco:      Number(it.preco) || 0,
+        disponivel: true,
+        promocao:   false,
       });
-      if (error) erros++;
-      else ok++;
+      if (error) erros++; else ok++;
     } catch(e) { erros++; }
   }
 
   fecharScannerIA();
-  showToast('✅ ' + ok + ' itens adicionados' + (erros ? ' (' + erros + ' erros)' : '') + '!');
-  // Recarrega o cardápio
-  if (typeof renderProdutos === 'function') renderProdutos();
-  else if (typeof initDashboard === 'function') setTimeout(function(){ document.querySelector('[data-tab="cardapio"]')?.click(); }, 500);
+  showToast('✅ ' + ok + ' itens adicionados ao cardápio!' + (erros ? ' (' + erros + ' erros)' : ''));
+  setTimeout(function() {
+    const cardapioTab = document.querySelector('[data-tab="cardapio"]');
+    if (cardapioTab) cardapioTab.click();
+  }, 600);
 };
